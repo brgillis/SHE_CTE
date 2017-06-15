@@ -24,7 +24,7 @@
 
 import numpy as np
 
-from SHE_SBM_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement import magic_values as mv
 
 class BiasMeasurement(object):
     def __init__(self):

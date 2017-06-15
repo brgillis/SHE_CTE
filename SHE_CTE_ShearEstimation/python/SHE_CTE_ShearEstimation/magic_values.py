@@ -24,7 +24,7 @@
 
 from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
 
-logger_name = "SHE_SBM_EstimateShear"
+logger_name = "SHE_CTE_EstimateShear"
 
 image_tail = ".fits"
 output_tail = "_shear_measurements.fits"

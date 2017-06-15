@@ -26,8 +26,8 @@ import os
 
 from icebrgpy.logging import getLogger
 
-from SHE_SBM_BiasMeasurement import magic_values as mv
-from SHE_SBM_ShearEstimation import magic_values as est_mv
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_ShearEstimation import magic_values as est_mv
 
 def get_input_files(root_dir, required_input_pattern=None, depth=0, input_files=None):
     """

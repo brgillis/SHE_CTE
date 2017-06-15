@@ -30,11 +30,11 @@ from icebrgpy.logging import getLogger
 
 from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
 
-from SHE_SBM_BiasMeasurement import magic_values as mv
-from SHE_SBM_BiasMeasurement.input_file_finding import get_input_files
-from SHE_SBM_BiasMeasurement.measurement_extraction import get_all_shear_measurements
-from SHE_SBM_BiasMeasurement.bias_calculation import calculate_bias
-from SHE_SBM_BiasMeasurement.bias_measurement_outputting import output_bias_measurement
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.input_file_finding import get_input_files
+from SHE_CTE_BiasMeasurement.measurement_extraction import get_all_shear_measurements
+from SHE_CTE_BiasMeasurement.bias_calculation import calculate_bias
+from SHE_CTE_BiasMeasurement.bias_measurement_outputting import output_bias_measurement
 
 def measure_bias_from_args(kwargs):
     """

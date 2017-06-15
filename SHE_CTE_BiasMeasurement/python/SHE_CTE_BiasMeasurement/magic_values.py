@@ -23,9 +23,9 @@
 """
 
 from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
-from SHE_SBM_ShearEstimation import magic_values as est_mv
+from SHE_CTE_ShearEstimation import magic_values as est_mv
 
-logger_name = "SHE_SBM_MeasureBias"
+logger_name = "SHE_CTE_MeasureBias"
 
 default_output_filename = "shear_biases.fits"
 default_output_format = "fits"

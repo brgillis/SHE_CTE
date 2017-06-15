@@ -25,8 +25,8 @@
 import argparse
 from icebrgpy.logging import getLogger
 
-from SHE_SBM_BiasMeasurement import magic_values as mv
-from SHE_SBM_BiasMeasurement.measure_bias import measure_bias_from_args
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 
 def defineSpecificProgramOptions():
     """
@@ -75,7 +75,7 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_SBM_EstimateShears mainMethod()')
+    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
     logger.debug('#')
         
     if args.profile:

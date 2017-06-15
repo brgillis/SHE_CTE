@@ -26,9 +26,9 @@ from astropy.table import Table, join, vstack
 import numpy as np
 
 from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
-from SHE_SBM_ShearEstimation import magic_values as est_mv
+from SHE_CTE_ShearEstimation import magic_values as est_mv
 
-from SHE_SBM_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement import magic_values as mv
 
 def isolate_measurements(measurements_table, var_e = mv.var_e["p0"]):
         

@@ -28,12 +28,12 @@ import galsim
 
 from icebrgpy.logging import getLogger
 
-from SHE_SBM_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
 
-from SHE_SBM_ShearEstimation.estimate_shear import estimate_shear
-from SHE_SBM_ShearEstimation.extract_stamps import extract_stamps
-from SHE_SBM_ShearEstimation.output_shear_estimates import output_shear_estimates
+from SHE_CTE_ShearEstimation.estimate_shear import estimate_shear
+from SHE_CTE_ShearEstimation.extract_stamps import extract_stamps
+from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
 
 
 def find_value(args_value, name, label, detections_table, galaxies_hdulist):

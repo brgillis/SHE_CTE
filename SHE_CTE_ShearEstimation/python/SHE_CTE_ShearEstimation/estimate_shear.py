@@ -30,7 +30,7 @@ from icebrgpy.logging import getLogger
 from SHE_SIM_galaxy_image_generation.noise import get_var_ADU_per_pixel
 from SHE_SIM_galaxy_image_generation.unweighted_moments import get_g_from_e
 
-from SHE_SBM_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation import magic_values as mv
 
 class ShearEstimate(object):
     def __init__(self, g1, g2, gerr=None):

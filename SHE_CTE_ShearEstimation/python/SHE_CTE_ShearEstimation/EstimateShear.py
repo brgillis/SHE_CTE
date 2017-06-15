@@ -25,8 +25,8 @@
 import argparse
 from icebrgpy.logging import getLogger
 
-from SHE_SBM_ShearEstimation import magic_values as mv
-from SHE_SBM_ShearEstimation.estimate_shears import estimate_shears_from_args
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 
 def defineSpecificProgramOptions():
     """
@@ -84,7 +84,7 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_SBM_EstimateShears mainMethod()')
+    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
     logger.debug('#')
         
     if args.profile:

@@ -56,9 +56,9 @@ x_ranges = {"p":(0.75,1.25),
             "s":(7.5,12.5),
             "e":(0.170,0.315)}
 
-target_limit_factors = {"p": {"m": 16, "c": 8},
-                        "s": {"m": 16, "c": 8},
-                        "e": {"m": 8,  "c": 4},}
+target_limit_factors = {"p": {"m": 64, "c": 32},
+                        "s": {"m": 32, "c": 20},
+                        "e": {"m": 24,  "c": 32},}
 
 y_range = (1e-6,5e-1)
 
@@ -344,8 +344,10 @@ def main():
             
             xlim = (-20*target_factor*base_target,20*target_factor*base_target)
             ax.set_xlim(xlim)
+            #ax.set_xscale('symlog',linthreshx=target_factor*base_target)
             ylim = (-20*target_factor*base_target,20*target_factor*base_target)
             ax.set_ylim(ylim)
+            #ax.set_yscale('symlog',linthreshy=target_factor*base_target)
             
             ax.plot(base_target*np.cos(theta_vals),base_target*np.sin(theta_vals),label=None,color="k",linestyle="dashed",)
             ax.plot(20*base_target*np.cos(theta_vals),20*base_target*np.sin(theta_vals),label=None,color="k",linestyle="dotted")

@@ -23,7 +23,7 @@
 """
 
 from astropy.table import Table
-from SHE_SBM_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation import magic_values as mv
 
 def output_shear_estimates(stamps, output_file_name, galaxies_image_file_name):
     """
