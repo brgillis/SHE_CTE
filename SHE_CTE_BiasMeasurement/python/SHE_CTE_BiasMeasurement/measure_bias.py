@@ -26,9 +26,9 @@ from astropy.io import fits
 from astropy.table import Table
 import galsim
 
-from icebrgpy.logging import getLogger
+from SHE_GST_IceBRGpy.logging import getLogger
 
-from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
+from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.input_file_finding import get_input_files

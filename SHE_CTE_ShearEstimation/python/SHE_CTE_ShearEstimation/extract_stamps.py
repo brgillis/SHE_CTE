@@ -24,7 +24,7 @@
 
 import galsim
 
-from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
+from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 

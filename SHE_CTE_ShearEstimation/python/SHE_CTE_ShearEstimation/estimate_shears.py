@@ -26,10 +26,10 @@ from astropy.io import fits
 from astropy.table import Table
 import galsim
 
-from icebrgpy.logging import getLogger
+from SHE_GST_IceBRGpy.logging import getLogger
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
+from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
 from SHE_CTE_ShearEstimation.estimate_shear import estimate_shear
 from SHE_CTE_ShearEstimation.extract_stamps import extract_stamps

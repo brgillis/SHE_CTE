@@ -22,7 +22,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from SHE_SIM_galaxy_image_generation import magic_values as sim_mv
+from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_CTE_ShearEstimation import magic_values as est_mv
 
 logger_name = "SHE_CTE_MeasureBias"

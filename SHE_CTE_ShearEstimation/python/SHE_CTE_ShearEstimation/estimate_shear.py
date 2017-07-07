@@ -25,10 +25,10 @@
 import numpy as np
 import galsim
 
-from icebrgpy.logging import getLogger
+from SHE_GST_IceBRGpy.logging import getLogger
 
-from SHE_SIM_galaxy_image_generation.noise import get_var_ADU_per_pixel
-from SHE_SIM_galaxy_image_generation.unweighted_moments import get_g_from_e
+from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
+from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 

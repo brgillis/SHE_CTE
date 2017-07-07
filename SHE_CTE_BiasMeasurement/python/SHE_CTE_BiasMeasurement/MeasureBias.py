@@ -23,7 +23,7 @@
 """
 
 import argparse
-from icebrgpy.logging import getLogger
+from SHE_GST_IceBRGpy.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
