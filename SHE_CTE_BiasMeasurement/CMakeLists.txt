@@ -3,9 +3,9 @@ elements_subdir(SHE_SBM_BiasMeasurement)
 
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
-elements_depends_on_subdirs(icebrgpy)
-elements_depends_on_subdirs(SHE_SIM_galaxy_image_generation)
-elements_depends_on_subdirs(SHE_SBM_ShearEstimation)
+elements_depends_on_subdirs(SHE_GST_IceBRGpy)
+elements_depends_on_subdirs(SHE_GST_GalaxyImageGeneration)
+elements_depends_on_subdirs(SHE_CTE_ShearEstimation)
 
 # Instruction for Python module installation
 elements_install_python_modules()
