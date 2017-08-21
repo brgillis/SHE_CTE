@@ -30,3 +30,7 @@ New Features
 New config features
 -------------------
 
+
+Miscellaneous
+-------------
+- Relicensed all code to Euclid Science Ground Segment under LGPL
