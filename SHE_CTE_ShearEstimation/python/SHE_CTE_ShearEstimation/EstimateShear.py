@@ -37,6 +37,10 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_EstimateShear defineSpecificProgramOptions()')
+    logger.debug('#')
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--profile',action='store_true',
@@ -68,6 +72,8 @@ def defineSpecificProgramOptions():
     parser.add_argument('--output_file_name',type=str,default=None,
                         help='Desired name of the output fits file containing shape measurements.')
 
+    logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
+
     return parser
 
 
@@ -84,7 +90,7 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
+    logger.debug('# Entering SHE_CTE_EstimateShear mainMethod()')
     logger.debug('#')
         
     if args.profile:
@@ -95,6 +101,23 @@ def mainMethod(args):
     else:
         estimate_shears_from_args(vars(args))
 
-    logger.debug('# Exiting EstimateShear mainMethod()')
+    logger.debug('# Exiting SHE_CTE_EstimateShear mainMethod()')
 
     return
+
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
+    
+    parser = defineSpecificProgramOptions()
+    
+    args = parser.parse_args()
+    
+    mainMethod(args)
+    
+    return
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,9 @@
-""" @file MeasureBias.py
+""" @file MeasureStatistics.py
 
     Created 7 Apr 2017
 
-    Main program for measuring bias of shear estimates.
+    Executable for measuring necessary statistics on a set of shear
+    measurements.
 
     ---------------------------------------------------------------------
 
@@ -26,7 +27,6 @@ import argparse
 from SHE_GST_IceBRGpy.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 
 def defineSpecificProgramOptions():
     """
@@ -37,8 +37,10 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
+    logger = getLogger(mv.logger_name)
+
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_MeasureStatistics defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -47,23 +49,18 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
     
     # Input data
-    parser.add_argument('input_dir',type=str,
-                        help='Path of the directory containing shear measurements and details tables.')
-    parser.add_argument('--required_input_pattern', type=str, default=None,
-                        help='Required pattern in file names for measurements or details tables.')
-    parser.add_argument('--input_depth', type=int, default=0,
-                        help='Maximum subfolder depth to search for input files. 0 = input_dir only.')
+    parser.add_argument('input_cat', type=str,
+                        help="Filename of the input file catalogue, which should be in " +
+                        "ascii.ecsv format.")
     
-    parser.add_argument('--e', type=str, default="p0",
+    parser.add_argument('--Pe', type=str, default="p0",
                         help='P(e) to use. Must be one of m2, m1, p0, p1, or p2.')
     
     # Output data
-    parser.add_argument('--output_file_name',type=str,default=mv.default_output_filename,
-                        help='Desired name of the output table containing bias measurements.')
-    parser.add_argument('--output_format',type=str,default=mv.default_output_format,
-                        help='Desired format of the output table.')
+    parser.add_argument('--output_cat',type=str,
+                        help='Desired name of the output file catalogue.')
 
-    logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_MeasureStatistics mainMethod()')
 
     return parser
 
@@ -81,18 +78,18 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
+    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
     logger.debug('#')
         
     if args.profile:
         import cProfile
-        cProfile.runctx("measure_bias_from_args(vars(args))",{},
-                        {"measure_bias_from_args":measure_bias_from_args,
-                         "args":args},filename="measure_bias.prof")
+        cProfile.runctx("measure_statistics_from_args(vars(args))",{},
+                        {"measure_statistics_from_args":measure_statistics_from_args,
+                         "args":args},filename="measure_statistics.prof")
     else:
-        measure_bias_from_args(vars(args))
+        measure_statistics_from_args(vars(args))
 
-    logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
+    logger.debug('# Exiting MeasureBias mainMethod()')
 
     return
 
