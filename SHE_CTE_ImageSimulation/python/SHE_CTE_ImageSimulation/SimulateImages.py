@@ -127,7 +127,9 @@ def main():
         Alternate entry point for non-Elements execution.
     """
     
-    args = defineSpecificProgramOptions()
+    parser = defineSpecificProgramOptions()
+    
+    args = parser.parse_args()
     
     mainMethod(args)
     

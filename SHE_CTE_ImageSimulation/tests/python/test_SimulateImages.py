@@ -42,7 +42,11 @@ class TestCase:
             @brief Tests that defineSpecificProgramOptions() gives the expected default options.
         """
         
-        arg_lib = vars(defineSpecificProgramOptions())
+        parser = defineSpecificProgramOptions()
+    
+        args = parser.parse_args()
+        
+        arg_lib = vars(args)
         
         # Test the top-level arguments are the defaults
         assert arg_lib["profile"] == False
