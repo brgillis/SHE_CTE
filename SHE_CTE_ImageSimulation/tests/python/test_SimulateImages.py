@@ -43,10 +43,14 @@ class TestCase:
         """
         
         parser = defineSpecificProgramOptions()
+
+        parser.add_argument('program')
     
         args = parser.parse_args()
         
         arg_lib = vars(args)
+
+        print(str(arg_lib))
         
         # Test the top-level arguments are the defaults
         assert arg_lib["profile"] == False
