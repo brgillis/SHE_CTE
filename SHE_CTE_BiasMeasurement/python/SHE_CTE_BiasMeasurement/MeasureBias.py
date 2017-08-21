@@ -89,3 +89,20 @@ def mainMethod(args):
     logger.debug('# Exiting MeasureBias mainMethod()')
 
     return
+
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
+    
+    parser = defineSpecificProgramOptions()
+    
+    args = parser.parse_args()
+    
+    mainMethod(args)
+    
+    return
+
+if __name__ == "__main__":
+    main()
