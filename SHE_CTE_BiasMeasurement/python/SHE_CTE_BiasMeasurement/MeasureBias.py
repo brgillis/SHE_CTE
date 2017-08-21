@@ -37,6 +37,10 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+    logger.debug('#')
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--profile',action='store_true',
@@ -59,6 +63,8 @@ def defineSpecificProgramOptions():
     parser.add_argument('--output_format',type=str,default=mv.default_output_format,
                         help='Desired format of the output table.')
 
+    logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+
     return parser
 
 
@@ -75,7 +81,7 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
+    logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
     logger.debug('#')
         
     if args.profile:
@@ -86,7 +92,7 @@ def mainMethod(args):
     else:
         measure_bias_from_args(vars(args))
 
-    logger.debug('# Exiting MeasureBias mainMethod()')
+    logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
 
     return
 
