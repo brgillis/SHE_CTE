@@ -24,7 +24,7 @@
 
 import pytest
 
-from SHE_CTE_ShearEstimation.SimulateImages import defineSpecificProgramOptions
+from SHE_CTE_ImageSimulation.SimulateImages import defineSpecificProgramOptions
 from SHE_GST_GalaxyImageGeneration.config.config_default import (allowed_options,
                                                             allowed_fixed_params,
                                                             allowed_survey_settings)
