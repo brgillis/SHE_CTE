@@ -233,15 +233,15 @@ def calculate_bias(all_shear_measurements):
      bias_measurement.c1, bias_measurement.c1_err,
      bias_measurement.m1c1_covar) = (
             regress_shear_measurements(all_shear_measurements[mv.fits_table_sim_g1_label],
-                                       all_shear_measurements[mv.fits_table_est_g1_label],
-                                       all_shear_measurements[mv.fits_table_est_g1_err_label]) )
+                                       all_shear_measurements[mv.shear_estimates_gal_g1_label],
+                                       all_shear_measurements[mv.shear_estimates_gal_g1_err_label]) )
     
     (bias_measurement.m2, bias_measurement.m2_err,
      bias_measurement.c2, bias_measurement.c2_err,
      bias_measurement.m2c2_covar) = (
             regress_shear_measurements(all_shear_measurements[mv.fits_table_sim_g2_label],
-                                       all_shear_measurements[mv.fits_table_est_g2_label],
-                                       all_shear_measurements[mv.fits_table_est_g2_err_label]) )
+                                       all_shear_measurements[mv.shear_estimates_gal_g2_label],
+                                       all_shear_measurements[mv.shear_estimates_gal_g2_err_label]) )
      
     return bias_measurement 
         

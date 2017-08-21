@@ -6,6 +6,7 @@ elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(SHE_GST_IceBRGpy)
 elements_depends_on_subdirs(SHE_GST_GalaxyImageGeneration)
 elements_depends_on_subdirs(SHE_CTE_ShearEstimation)
+elements_depends_on_subdirs(SHE_PPT)
 
 # Instruction for Python module installation
 elements_install_python_modules()

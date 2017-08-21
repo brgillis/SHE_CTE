@@ -23,6 +23,8 @@
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_CTE_ShearEstimation import magic_values as est_mv
 
+from SHE_PPT.shear_estimates_format import *
+
 logger_name = "SHE_CTE_MeasureBias"
 
 default_output_filename = "shear_biases.fits"

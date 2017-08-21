@@ -42,16 +42,18 @@ def output_shear_estimates(stamps, output_file_name, galaxies_image_file_name):
         
         # If that failed, make sure we don't overwrite the image
         if output_file_name == galaxies_image_file_name:
-            output_file_name = galaxies_image_file_name + mv.output_tail
+            output_file_name = galaxies_image_file_name + mv.shear_estimates_tail
     
     # Initialize a table for output        
-    otable = Table(names=[mv.fits_table_ID_label,
-                          mv.fits_table_gal_x_label,
-                          mv.fits_table_gal_y_label,
-                          mv.fits_table_gal_g1_label,
-                          mv.fits_table_gal_g2_label,
-                          mv.fits_table_gal_gerr_label,],
+    otable = Table(names=[mv.shear_estimates_ID_label,
+                          mv.shear_estimates_gal_x_label,
+                          mv.shear_estimates_gal_y_label,
+                          mv.shear_estimates_gal_g1_label,
+                          mv.shear_estimates_gal_g2_label,
+                          mv.shear_estimates_gal_g1_err_label,
+                          mv.shear_estimates_gal_g2_err_label,],
                    dtype=[int,
+                          float,
                           float,
                           float,
                           float,
@@ -60,12 +62,13 @@ def output_shear_estimates(stamps, output_file_name, galaxies_image_file_name):
     
     # Add each stamp's data to it in turn
     for stamp in stamps:
-        otable.add_row({mv.fits_table_ID_label       : stamp.ID,
-                        mv.fits_table_gal_x_label    : stamp.center.x,
-                        mv.fits_table_gal_y_label    : stamp.center.y,
-                        mv.fits_table_gal_g1_label   : stamp.shear_estimate.g1,
-                        mv.fits_table_gal_g2_label   : stamp.shear_estimate.g2,
-                        mv.fits_table_gal_gerr_label : stamp.shear_estimate.gerr,})
+        otable.add_row({mv.shear_estimates_ID_label       : stamp.ID,
+                        mv.shear_estimates_gal_x_label    : stamp.center.x,
+                        mv.shear_estimates_gal_y_label    : stamp.center.y,
+                        mv.shear_estimates_gal_g1_label   : stamp.shear_estimate.g1,
+                        mv.shear_estimates_gal_g2_label   : stamp.shear_estimate.g2,
+                        mv.shear_estimates_gal_g1_err_label : stamp.shear_estimate.gerr,
+                        mv.shear_estimates_gal_g2_err_label : stamp.shear_estimate.gerr,})
             
     # Output the table
     otable.write(output_file_name,format='fits',overwrite=True)
