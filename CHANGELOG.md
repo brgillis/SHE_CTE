@@ -7,6 +7,7 @@ Changes from v0.1 to v0.2
 
 API Changes
 -----------
+- Added executable SHE_CTE_SimulateImages
 
 
 Dependency Changes
