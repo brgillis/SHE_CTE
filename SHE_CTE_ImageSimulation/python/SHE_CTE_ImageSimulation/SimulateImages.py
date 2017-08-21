@@ -60,8 +60,9 @@ def defineSpecificProgramOptions():
 
     # Add in each allowed option, with a null default
     for option in allowed_options:
+        default = allowed_options[option][0]
         option_type = allowed_options[option][1]
-        parser.add_argument("--" + option, type=option_type)
+        parser.add_argument("--" + option, default=default, type=option_type)
 
     # Add allowed fixed params
     for allowed_fixed_param in allowed_fixed_params:
