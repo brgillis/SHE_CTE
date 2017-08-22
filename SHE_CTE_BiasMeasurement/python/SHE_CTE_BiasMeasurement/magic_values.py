@@ -21,7 +21,6 @@
 """
 
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
-from SHE_CTE_ShearEstimation import magic_values as est_mv
 
 from SHE_PPT.shear_estimates_format import *
 
@@ -33,13 +32,6 @@ default_output_format = "fits"
 fits_table_ID_label = sim_mv.detections_table_ID_label
 fits_table_sim_g1_label = "GAL_SIM_G1"
 fits_table_sim_g2_label = "GAL_SIM_G2"
-fits_table_est_g1_label = est_mv.fits_table_gal_g1_label
-fits_table_est_g2_label = est_mv.fits_table_gal_g2_label
-fits_table_est_gerr_label = est_mv.fits_table_gal_gerr_label
-fits_table_est_g1_err_label = "GAL_G1_ERR"
-fits_table_est_g2_err_label = "GAL_G2_ERR"
-fits_table_est_e1_err_label = "GAL_ERR_E1"
-fits_table_est_e2_err_label = "GAL_ERR_E2"
 
 details_table_g_label = 'shear_magnitude'
 details_table_beta_label = 'shear_angle'
