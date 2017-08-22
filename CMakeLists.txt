@@ -6,4 +6,4 @@ find_package(ElementsProject)
 #---------------------------------------------------------------
 
 # Declare project name and version
-elements_project(SHE_CTE 0.1.3 USE Elements 4.0 EuclidDmTools 1.2.9 SHE_GST 1.1.1 )
+elements_project(SHE_CTE 0.1.3 USE Elements 4.0 SHE_GST 1.1.1 SHE_PPT 0.1 )
