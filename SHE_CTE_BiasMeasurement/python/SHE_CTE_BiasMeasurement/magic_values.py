@@ -26,15 +26,11 @@ from SHE_PPT.shear_estimates_format import *
 
 logger_name = "SHE_CTE_MeasureBias"
 
+fits_table_sim_g1_label = "SIM_G1"
+fits_table_sim_g2_label = "SIM_G2"
+
 default_output_filename = "shear_biases.fits"
 default_output_format = "fits"
-
-fits_table_ID_label = sim_mv.detections_table_ID_label
-fits_table_sim_g1_label = "GAL_SIM_G1"
-fits_table_sim_g2_label = "GAL_SIM_G2"
-
-details_table_g_label = 'shear_magnitude'
-details_table_beta_label = 'shear_angle'
 
 var_e = {"m2": 0.30241731263684996,
          "m1": 0.27099491059570091,

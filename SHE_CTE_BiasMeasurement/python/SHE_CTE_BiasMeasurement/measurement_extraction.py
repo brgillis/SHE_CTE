@@ -24,6 +24,9 @@ from astropy.table import Table, join, vstack
 import numpy as np
 
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
+from SHE_PPT.details_table_format import tf as datf
+from SHE_PPT.shear_estimates_table_format import tf as setf
+from SHE_PPT.table_utility import is_in_format
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 
@@ -68,7 +71,11 @@ def get_all_shear_measurements(input_files, var_e = mv.var_e["p0"]):
         
         # Load each table
         measurements_table = Table.read(measurements_table_filename)
+        if not is_in_format(measurements_table,setf):
+            raise Exception("Shear estimates table " + measurements_table_filename + " is in wrong format.")
         details_table = Table.read(details_table_filename)
+        if not is_in_format(details_table,datf):
+            raise Exception("Details table " + details_table + " is in wrong format.")
         
         # Get just the needed columns for the measurements table
         isolate_measurements(measurements_table, var_e)
@@ -76,7 +83,7 @@ def get_all_shear_measurements(input_files, var_e = mv.var_e["p0"]):
         # Join the tables
         joined_table = join(measurements_table,
                             details_table,
-                            keys=sim_mv.detections_table_ID_label)
+                            keys=datf.ID)
         
         # Check that the tables were joined properly
         if len(joined_table) != len(measurements_table):
@@ -86,22 +93,22 @@ def get_all_shear_measurements(input_files, var_e = mv.var_e["p0"]):
         
         colnames = joined_table.colnames
         for colname in colnames:
-            if colname not in [sim_mv.detections_table_ID_label,
-                               mv.shear_estimates_gal_g1_label,
-                               mv.shear_estimates_gal_g2_label,
-                               mv.shear_estimates_gal_g1_err_label,
-                               mv.shear_estimates_gal_g2_err_label,
-                               mv.details_table_g_label,
-                               mv.details_table_beta_label,]:
+            if colname not in [datf.ID,
+                               setf.gal_g1,
+                               setf.gal_g2,
+                               setf.gal_g1_err,
+                               setf.gal_g2_err,
+                               datf.shear_magnitude,
+                               datf.shear_angle,]:
                 joined_table.remove_column(colname)
                 
-        joined_table[mv.fits_table_sim_g1_label] = ( joined_table[mv.details_table_g_label] *
-                                                     np.cos(np.pi/90.*joined_table[mv.details_table_beta_label]) )
-        joined_table[mv.fits_table_sim_g2_label] = ( joined_table[mv.details_table_g_label] *
-                                                     np.sin(np.pi/90.*joined_table[mv.details_table_beta_label]) )
+        joined_table[mv.fits_table_sim_g1_label] = ( joined_table[datf.shear_magnitude] *
+                                                     np.cos(np.pi/90.*joined_table[datf.shear_angle]) )
+        joined_table[mv.fits_table_sim_g2_label] = ( joined_table[datf.shear_magnitude] *
+                                                     np.sin(np.pi/90.*joined_table[datf.shear_angle]) )
         
-        joined_table.remove_column(mv.details_table_g_label)
-        joined_table.remove_column(mv.details_table_beta_label)
+        joined_table.remove_column(datf.shear_magnitude)
+        joined_table.remove_column(datf.shear_angle)
         
         joined_tables.append(joined_table)
         
