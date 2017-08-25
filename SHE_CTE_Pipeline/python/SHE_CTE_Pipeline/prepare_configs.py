@@ -20,6 +20,9 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
+from SHE_PPT.io import get_allowed_filename, write_listfile
+from SHE_PPT.utility import hash_any
+
 def prepare_configs_from_args(args):
     """
         @brief Primary function for preparing configuration files.
@@ -29,7 +32,7 @@ def prepare_configs_from_args(args):
     
     image_models, full_options = get_image_models_and_options(args)
     
-    options_hash = hash(frozenset(full_options.items))
+    options_hash = hash_any(frozenset(full_options.items))
     
     model_seed_start = args.model_seed_start
     if args.vary_noise:
@@ -49,18 +52,17 @@ def prepare_configs_from_args(args):
             model_seed = model_seed_start + i
             noise_seed = noise_seed_start
         
-        desired_filename = (args.tag + "_" + str(options_hash) + "_" + str(model_seed) + "_" +
-                            str(noise_seed) + ".fits")
+        instance_id = args.tag + "-" + str(hash_any((options_hash,model_seed,noise_seed),8))
         
-        filename = get_allowed_filename(desired_filename)
+        filename = get_allowed_filename("CTE-CFG",instance_id,".cfg",)
         
         # Write out this config file
-        write_config(filename,full_options)
+        write_config( filename, full_options, model_seed, noise_seed )
         
         filenames.append(filename)
         
     # Save a listfile of the filenames
-    write_listfile(filenames)
+    write_listfile(args.output_listfile,filenames)
     
     return
         

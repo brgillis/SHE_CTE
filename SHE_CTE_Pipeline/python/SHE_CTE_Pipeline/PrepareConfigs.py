@@ -73,7 +73,7 @@ def defineSpecificProgramOptions():
                         help='If set, will vary noise seed instead of model seed for images.')
     
     # Add tag for file labeling
-    parser.add_argument("--tag", type=str, default="sim",
+    parser.add_argument("--tag", type=str, default="def",
                         help='Tag to add to generated file names.')
     
     # Where to start the model seed
