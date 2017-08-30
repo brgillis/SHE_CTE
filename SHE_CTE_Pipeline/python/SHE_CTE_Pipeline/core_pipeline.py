@@ -22,16 +22,18 @@
 
 from SHE_CTE_Pipeline.package_definition import she_estimate_shear
 
-@pipeline(outputs=('shear_measurements_table',))
-def shear_measurement_pipeline( data_image, psf_image, noise_image, mask_image, detections_table ):
+@pipeline(outputs=('shear_measurements_table','mcmc_chain_table'))
+def shear_measurement_pipeline( data_image, psf_image, noise_image, mask_image,
+                                segmentation_image, detections_table ):
     
-    shear_measurements_table = she_estimate_shear( data_image=data_image,
-                                                   psf_image=psf_image,
-                                                   noise_image=noise_image,
-                                                   mask_image=mask_image,
-                                                   detections_table=detections_table )
+    shear_measurements_table, mcmc_chain_table = she_estimate_shear( data_image=data_image,
+                                                                     psf_image=psf_image,
+                                                                     noise_image=noise_image,
+                                                                     mask_image=mask_image,
+                                                                     segmentation_image=segmentation_image,
+                                                                     detections_table=detections_table )
     
-    return shear_measurements_table
+    return shear_measurements_table, mcmc_chain_table
 
 if __name__ == '__main__':
     from euclidwf.framework.graph_builder import build_graph

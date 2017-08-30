@@ -30,13 +30,16 @@ she_simulate_images = Executable(command="E-Run SHE_CTE_SimulateImages",
                                  inputs=[Input("config")],
                                  outputs=[Output("data_image"),Output("psf_image"),
                                           Output("noise_image"),Output("mask_image"),
+                                          Output("segmentation_image"),
                                           Output("detections_table"),Output("details_table")])
 
 she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",
                                  inputs=[Input("data_image"),Input("psf_image"),
                                           Input("noise_image"),Input("mask_image"),
+                                          Input("segmentation_image"),
                                           Input("detections_table")],
-                                 outputs=[Output("shear_measurements_table")])
+                                 outputs=[Output("shear_measurements_table"),
+                                          Output("mcmc_chain_table")])
 
 she_measure_statistics = Executable(command="E-Run SHE_CTE_MeasureStatistics",
                                  inputs=[Input("details_table"),Input("shear_measurements_table")],
