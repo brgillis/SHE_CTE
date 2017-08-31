@@ -1,8 +1,8 @@
-""" @file SimulateImages.py
+""" @file PrepareConfigs.py
 
-    Created 21 Aug 2017
+    Created 25 Aug 2017
 
-    Executable for generating simulated images.
+    Main program for preparing configuration files for parallel runs.
 
     ---------------------------------------------------------------------
 
@@ -21,35 +21,24 @@
 """
 
 import argparse
-
-from SHE_CTE_ImageSimulation import magic_values as mv
-from SHE_GST_GalaxyImageGeneration.config.config_default import (allowed_options,
-                                                            allowed_fixed_params,
-                                                            allowed_survey_settings)
-from SHE_GST_GalaxyImageGeneration.run_from_config import run_from_args
-from SHE_GST_GalaxyImageGeneration.generate_images import generate_images
 from SHE_GST_IceBRGpy.logging import getLogger
+
+from SHE_CTE_ShearEstimation import magic_values as mv
 
 def defineSpecificProgramOptions():
     """
     @brief
-        Defines options for this program, using all possible configurations.
+        Defines options for this program.
 
     @return
-        An  ArgumentParser.
+        An ArgumentParser.
     """
 
-    logger = getLogger(mv.logger_name)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_SimulateImages defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_PrepareConfigs defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
-
-    # Option for profiling
-    parser.add_argument('--profile',action='store_true',
-                        help='Store profiling data for execution.')
     
     # Extra configuration files
     parser.add_argument('--config_files', nargs='*', default=[],
@@ -74,8 +63,28 @@ def defineSpecificProgramOptions():
 
         settings = allowed_survey_setting + "_setting"
         parser.add_argument("--" + settings, type=str)
+        
+    # Where to save a list of the files generated
+    parser.add_argument("--output_listfile", default="config_files.json", type=str,
+                        help="Filename to which to output list of generated config files.")
+        
+    # Add option to vary noise seed instead
+    parser.add_argument("--vary_noise", action="store_true",
+                        help='If set, will vary noise seed instead of model seed for images.')
+    
+    # Add tag for file labeling
+    parser.add_argument("--tag", type=str, default="def",
+                        help='Tag to add to generated file names.')
+    
+    # Where to start the model seed
+    parser.add_argument("--model_seed_start", type=int, default=1,
+                        help="Where to start the model seed from.")
+    
+    # Where to start the noise seed
+    parser.add_argument("--noise_seed_start", type=int, default=0,
+                        help="Where to start the noise seed from. If zero, will follow model seed")
 
-    logger.debug('Exiting SHE_CTE_SimulateImages defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_PrepareConfigs defineSpecificProgramOptions()')
 
     return parser
 
@@ -83,7 +92,7 @@ def defineSpecificProgramOptions():
 def mainMethod(args):
     """
     @brief
-        The "main" method for this program, to generate galaxy images.
+        The "main" method for this program, to estimate shears.
 
     @details
         This method is the entry point to the program. In this sense, it is
@@ -93,30 +102,12 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_SimulateImages mainMethod()')
+    logger.debug('# Entering SHE_CTE_PrepareConfigs mainMethod()')
     logger.debug('#')
-
-    if(args.config_file is None and len(args.config_files)==0):
-        logger.info('Using default configurations.')
-    else:
-        if args.config_file is not None:
-            logger.info('Using primary configuration file: ' + args.config_file)
-        if len(args.config_files)>0:
-            logger.info('Using configurations in file(s): ')
-            for config_file in args.config_files:
-                logger.info('* ' + config_file)
         
-    if args.profile:
-        import cProfile
-        cProfile.runctx("run_from_args(generate_images,args)",{},
-                        {"run_from_args":run_from_args,
-                         "args":args,
-                         "generate_images":generate_images},
-                        filename="gen_galaxy_images.prof")
-    else:
-        run_from_args(generate_images, args)
+    prepare_configs_from_args(args)
 
-    logger.debug('Exiting SHE_CTE_SimulateImages mainMethod()')
+    logger.debug('# Exiting SHE_CTE_PrepareConfigs mainMethod()')
 
     return
 
