@@ -86,7 +86,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
     return shear_estimate
 
 
-def get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var):
+def get_REGAUSS_shear_estimate(galsim_shear_estimate):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_REGAUSS_shear_estimate")
@@ -107,7 +107,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var):
     
     return shear_estimate
 
-def get_shear_estimate(gal_stamp, psf_stamp, sky_var, shape_noise_var, method):
+def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
@@ -127,11 +127,11 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, shape_noise_var, method):
         
         if method == "KSB":
             
-            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate, shape_noise_var)
+            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate)
             
         elif method == "REGAUSS":
             
-            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var)
+            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate)
             
         else:
             raise RuntimeError("Invalid shear estimation method for GalSim: " + str(method))
