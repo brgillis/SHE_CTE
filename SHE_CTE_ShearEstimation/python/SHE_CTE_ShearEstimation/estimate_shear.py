@@ -60,12 +60,12 @@ def get_resampled_image(subsampled_image, resampled_scale):
     return resampled_image
     
 def KSB_estimate_shear(data_stack,method_data):
-    return GS_estimate_shear(data_stack,method="KSB",shape_noise_var=method_data.shape_noise_var)
+    return GS_estimate_shear(data_stack,method="KSB")
     
 def REGAUSS_estimate_shear(data_stack,method_data):
-    return GS_estimate_shear(data_stack,method="REGAUSS",shape_noise_var=method_data.shape_noise_var)
+    return GS_estimate_shear(data_stack,method="REGAUSS")
 
-def get_KSB_shear_estimate(galsim_shear_estimate, shape_noise_var):
+def get_KSB_shear_estimate(galsim_shear_estimate):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_KSB_shear_estimate")
@@ -76,15 +76,10 @@ def get_KSB_shear_estimate(galsim_shear_estimate, shape_noise_var):
     
     if mag > 1:
         raise RuntimeError("HSM Error: Magnitude of g shear is too large: " + str(mag))
-    
-    if np.abs(galsim_shear_estimate.corrected_shape_err) < 1e99:
-        shape_err = np.sqrt(shape_noise_var + galsim_shear_estimate.corrected_shape_err ** 2)
-    else:
-        shape_err = galsim_shear_estimate.corrected_shape_err
         
     shear_estimate = ShearEstimate(galsim_shear_estimate.corrected_g1, 
         galsim_shear_estimate.corrected_g2, 
-        shape_err)
+        galsim_shear_estimate.corrected_shape_err)
         
     logger.debug("Exiting get_KSB_shear_estimate")
     
@@ -105,13 +100,8 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var):
     
     g1, g2 = get_g_from_e(e1, e2)
     gerr = galsim_shear_estimate.corrected_shape_err * np.sqrt((g1 ** 2 + g2 ** 2) / (e1 ** 2 + e2 ** 2))
-    
-    if np.abs(galsim_shear_estimate.corrected_shape_err) < 1e99:
-        shape_err = np.sqrt(shape_noise_var + gerr ** 2)
-    else:
-        shape_err = gerr
         
-    shear_estimate = ShearEstimate(g1, g2, shape_err)
+    shear_estimate = ShearEstimate(g1, g2, gerr)
         
     logger.debug("Exiting get_REGAUSS_shear_estimate")
     
@@ -255,10 +245,10 @@ def GS_estimate_shear( data_stack, method, shape_noise_var ):
         shear_estimates_table.add_row({ setf.ID : detections_table[detf.ID][i],
                                         setf.gal_g1 : g1,
                                         setf.gal_g2 : g2,
-                                        setf.gal_g1_err : gerr1,
-                                        setf.gal_g2_err : gerr2,
-                                        setf.gal_e1_err : np.NaN,
-                                        setf.gal_e2_err : np.NaN,
+                                        setf.gal_g1_err : np.NaN,
+                                        setf.gal_g2_err : np.NaN,
+                                        setf.gal_e1_err : gerr1,
+                                        setf.gal_e2_err : gerr2,
                                        })
         
     
