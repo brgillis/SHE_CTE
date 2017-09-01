@@ -32,7 +32,7 @@ from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
-from SHE_PPT.she_image import SHEImage
+from SHE_PPT.she_stach import SHEStack
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.detections_table import tf as detf
 from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
@@ -73,19 +73,13 @@ def estimate_shears_from_args(kwargs):
     
     logger.debug("Entering estimate_shears_from_args")
     
-    # Load the detections table
-    detections_table = Table.read(kwargs["detections_table"])
-    
-    if not is_in_format(detections_table,detf):
-        raise ValueError("Detections table " + kwargs["detections_table"] + " is in incorrect format.")
-    
     # Load the various images
-    data_image = SHEImage.read_from_fits(filepath = kwargs["data_image"],
-                                         mask_filepath = kwargs["mask_image"],
-                                         noisemap_filepath = kwargs["noise_image"],
-                                         segmentation_filepath = kwargs["segmentation_image"])
-    
-    psf_image = SHEImage.read_from_fits(filepath = kwargs["psf_image"])
+    data_stack = SHEStack.read_from_fits(filepaths = kwargs["data_images"],
+                                         mask_filepaths = kwargs["mask_images"],
+                                         noisemap_filepaths = kwargs["noise_images"],
+                                         segmentation_filepaths = kwargs["segmentation_images"],
+                                         detection_filepaths = kwargs["detection_tables"],
+                                         psf_filepaths = kwargs["psf_images"])
     
     # Load the P(e) table if available
     default_shape_noise_var = 0.06
@@ -114,19 +108,13 @@ def estimate_shears_from_args(kwargs):
         
         try:
             
-            tab, method_mcmc_chains = method( data_image, psf_image, detections_table)
+            tab, method_mcmc_chains = method( data_stack )
             
             if not is_in_format(tab,setf):
                 raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
             
             if method_mcmc_chains is not None:
                 mcmc_chains = method_mcmc_chains
-                
-            # Rename columns to include the method name
-            for col in (setf.gal_g1, setf.gal_g2,
-                        setf.gal_g1_err, setf.gal_g2_err,
-                        setf.gal_e1_err, setf.gal_e2_err,):
-                tab.rename_column(col,method+"_"+col)
                 
         except Exception as e:
             
@@ -138,37 +126,20 @@ def estimate_shears_from_args(kwargs):
             # Fill it with NaN measurements and 1e99 errors
             tab = method_shear_estimates[method]
             tab[setf.ID] = detections_table[detf.ID]
-            tab[setf.gal_x] = detections_table[detf.gal_x]
-            tab[setf.gal_y] = detections_table[detf.gal_y]
             
-            for col in (method + "_" + setf.gal_g1, method + "_" + setf.gal_g2,
-                        method + "_" + setf.gal_e1_err, method + "_" + setf.gal_e2_err,):
+            for col in (setf.gal_g1, setf.gal_g2,
+                        setf.gal_e1_err, setf.gal_e2_err,):
                 tab[col] = np.NaN
             
-            for col in (method + "_" + setf.gal_g1_err, method + "_" + setf.gal_g2_err):
+            for col in (setf.gal_g1_err, setf.gal_g2_err):
                 tab[col] = 1e99
             
         method_shear_estimates[method] = tab
         
-    # Join the tables together
-    full_shear_estimates_table = None
-    
-    for method in methods:
-        
-        new_tab = method_shear_estimates[method]
-        
-        if full_shear_estimates_table is None:
-            
-            full_shear_estimates_table = new_tab
-            
-        else:
-            
-            full_shear_estimates_table = astropy.table.join(full_shear_estimates_table,new_tab)
-            
-        
     logger.info("Finished estimating shear. Outputting results to " + kwargs["shear_measurements_table"] + ".")
         
-    full_shear_estimates_table.write(kwargs["shear_measurements_table"],format="fits")
+    # Output the shear estimates
+    output_shear_estimates( method_shear_estimates, kwargs['shear_measurements_product'])
     
     logger.debug("Exiting estimate_shears_from_args")
     

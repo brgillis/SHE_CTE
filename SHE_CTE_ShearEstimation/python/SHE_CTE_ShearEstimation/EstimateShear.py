@@ -71,11 +71,8 @@ def defineSpecificProgramOptions():
     
     # Output arguments
     
-    parser.add_argument('--shear_measurements_table',type=str,
-                        help='FITS file to contain the shear measurements table.')
-    
-    parser.add_argument('--mcmc_chain_table',type=str,
-                        help='FITS file to contain the MCMC chains table.')
+    parser.add_argument('--shear_measurements_product',type=str,
+                        help='XML data product to contain file links to the shear measurements tables.')
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
 
