@@ -103,7 +103,12 @@ def estimate_shears_from_args(kwargs):
     method_shear_estimates = {}
     mcmc_chains = None
     
-    for method in estimation_methods:
+    if len(kwargs['methods'])==0:
+        methods = estimation_methods.keys()
+    else:
+        methods = kwargs['methods']
+    
+    for method in methods:
         
         estimate_shear = estimation_methods[method]
         

@@ -44,32 +44,37 @@ def defineSpecificProgramOptions():
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
     
-    # Input arguments
+    # Required input arguments
     
-    parser.add_argument('--data_image',type='str',
+    parser.add_argument('--data_image',type=str,
                         help='FITS file containing the observed/simulated image.')
     
-    parser.add_argument('--psf_image',type='str',
+    parser.add_argument('--psf_image',type=str,
                         help='FITS file containing the PSF image.')
     
-    parser.add_argument('--noise_image',type='str',
+    parser.add_argument('--noise_image',type=str,
                         help='FITS file containing the noise map.')
     
-    parser.add_argument('--mask_image',type='str',
+    parser.add_argument('--mask_image',type=str,
                         help='FITS file containing the mask.')
     
-    parser.add_argument('--segmentation_image',type='str',
+    parser.add_argument('--segmentation_image',type=str,
                         help='FITS file containing the segmentation map.')
     
-    parser.add_argument('--detections_table',type='str',
+    parser.add_argument('--detections_table',type=str,
                         help='FITS file containing the detections table.')
+    
+    # Optional input arguments (cannot be used in pipeline)
+    
+    parser.add_argument('--methods',type=str, nargs='*', default=[],
+                        help='Which shear estimation methods to apply. If not specified, all will be run.')
     
     # Output arguments
     
-    parser.add_argument('--shear_measurements_table',type='str',
+    parser.add_argument('--shear_measurements_table',type=str,
                         help='FITS file to contain the shear measurements table.')
     
-    parser.add_argument('--mcmc_chain_table',type='str',
+    parser.add_argument('--mcmc_chain_table',type=str,
                         help='FITS file to contain the MCMC chains table.')
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
