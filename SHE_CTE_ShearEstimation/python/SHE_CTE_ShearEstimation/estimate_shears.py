@@ -22,6 +22,9 @@
 
 from astropy.io import fits
 from astropy.table import Table
+import astropy.table
+
+import numpy as np
 import galsim
 
 from SHE_GST_IceBRGpy.logging import getLogger
@@ -29,10 +32,19 @@ from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
-from SHE_CTE_ShearEstimation.estimate_shear import estimate_shear
-from SHE_CTE_ShearEstimation.extract_stamps import extract_stamps
+from SHE_PPT.she_stach import SHEStack
+from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.detections_table import tf as detf
+from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
+
+from SHE_CTE_ShearEstimation.estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
 
+estimation_methods = {"KSB":KSB_estimate_shear,
+                      "REGAUSS":REGAUSS_estimate_shear,
+                      "MegaLUT":None,
+                      "LensMC":None,
+                      "BFD":None}
 
 def find_value(args_value, name, label, detections_table, galaxies_hdulist):
     if args_value is not None:
@@ -61,64 +73,73 @@ def estimate_shears_from_args(kwargs):
     
     logger.debug("Entering estimate_shears_from_args")
     
-    # Load the detections table
-    detections_table = Table.read(kwargs["detections_table_file_name"])
-    
-    # Load the galaxies and psf images
-    galaxies_hdulist = fits.open(kwargs["galaxies_image_file_name"])
-    psf_hdulist = fits.open(kwargs["psf_image_file_name"])
+    # Load the various images
+    data_stack = SHEStack.read_from_fits(filepaths = kwargs["data_images"],
+                                         mask_filepaths = kwargs["mask_images"],
+                                         noisemap_filepaths = kwargs["noise_images"],
+                                         segmentation_filepaths = kwargs["segmentation_images"],
+                                         detection_filepaths = kwargs["detection_tables"],
+                                         psf_filepaths = kwargs["psf_images"])
     
     # Load the P(e) table if available
-    p_of_e_table_file_name = kwargs["p_of_e_table_file_name"]
-    if p_of_e_table_file_name is not None:
-        p_of_e_table = Table.read(p_of_e_table_file_name)
-        e_half_step = (p_of_e_table["E_LOW"][1] - p_of_e_table["E_LOW"][0])/2.
-        shape_noise_var = (((p_of_e_table["E_LOW"]+e_half_step)**2 * p_of_e_table["E_COUNT"]).sum() /
-                           p_of_e_table["E_COUNT"].sum())
+    default_shape_noise_var = 0.06
+    if "p_of_e_table_file_name" in kwargs:
+        if kwargs["p_of_e_table_file_name"] is not None:
+            p_of_e_table = Table.read(kwargs["p_of_e_table_file_name"])
+            e_half_step = (p_of_e_table["E_LOW"][1] - p_of_e_table["E_LOW"][0])/2.
+            shape_noise_var = (((p_of_e_table["E_LOW"]+e_half_step)**2 * p_of_e_table["E_COUNT"]).sum() /
+                               p_of_e_table["E_COUNT"].sum())
+        else:
+            shape_noise_var = default_shape_noise_var 
     else:
-        shape_noise_var = 0.06
+        shape_noise_var = default_shape_noise_var
     
-    # Get the gain, subtracted sky level, and read noise from the galaxies image
-    # if they weren't passed at the command-line
-    gain = find_value(kwargs["gain"], "gain", sim_mv.fits_header_gain_label, 
-                      detections_table, galaxies_hdulist)
-    subtracted_sky_level = find_value(kwargs["subtracted_sky_level"], "subtracted_sky_level",
-                                      sim_mv.fits_header_subtracted_sky_level_label, 
-                                      detections_table, galaxies_hdulist)
-    read_noise = find_value(kwargs["read_noise"], "read_noise", sim_mv.fits_header_read_noise_label, 
-                            detections_table, galaxies_hdulist)
+    method_shear_estimates = {}
+    mcmc_chains = None
     
-    # Get a list of galaxy postage stamps
-    gal_stamps = extract_stamps(detections_table,
-                                galaxies_hdulist,
-                                sim_mv.detections_table_gal_xc_label,
-                                sim_mv.detections_table_gal_yc_label,)
+    if len(kwargs['methods'])==0:
+        methods = estimation_methods.keys()
+    else:
+        methods = kwargs['methods']
     
-    # Get a list of PSF postage stamps
-    psf_stamps = extract_stamps(detections_table,
-                                psf_hdulist,
-                                sim_mv.detections_table_psf_xc_label,
-                                sim_mv.detections_table_psf_yc_label,)
-    
-    # Estimate the shear for each stamp
-    for i, gal_stamp, psf_stamp in zip(range(len(gal_stamps)), gal_stamps, psf_stamps):
-        if i % 10 == 0:
-            logger.info("Measuring shear for galaxy " + str(i) + "/" + str(len(gal_stamps)) + ".")
-        shear_estimate = estimate_shear(galaxy_image=gal_stamp.image,
-                                        psf_image=psf_stamp.image,
-                                        method=kwargs["method"],
-                                        gain=gain,
-                                        subtracted_sky_level=subtracted_sky_level,
-                                        read_noise=read_noise,
-                                        shape_noise_var=shape_noise_var)
-        gal_stamp.shear_estimate = shear_estimate
+    for method in methods:
         
-    logger.info("Finished estimating shear. Outputting results to " + kwargs["output_file_name"] + ".")
+        estimate_shear = estimation_methods[method]
         
-    # Output the measurements
-    output_shear_estimates(stamps=gal_stamps,
-                           output_file_name=kwargs["output_file_name"], 
-                           galaxies_image_file_name=kwargs["galaxies_image_file_name"])
+        try:
+            
+            tab, method_mcmc_chains = method( data_stack )
+            
+            if not is_in_format(tab,setf):
+                raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
+            
+            if method_mcmc_chains is not None:
+                mcmc_chains = method_mcmc_chains
+                
+        except Exception as e:
+            
+            logger.warning(str(e))
+            
+            # Create an empty estimates table
+            tab = initialise_shear_estimates_table(detections_table)
+            
+            # Fill it with NaN measurements and 1e99 errors
+            tab = method_shear_estimates[method]
+            tab[setf.ID] = detections_table[detf.ID]
+            
+            for col in (setf.gal_g1, setf.gal_g2,
+                        setf.gal_e1_err, setf.gal_e2_err,):
+                tab[col] = np.NaN
+            
+            for col in (setf.gal_g1_err, setf.gal_g2_err):
+                tab[col] = 1e99
+            
+        method_shear_estimates[method] = tab
+        
+    logger.info("Finished estimating shear. Outputting results to " + kwargs["shear_measurements_table"] + ".")
+        
+    # Output the shear estimates
+    output_shear_estimates( method_shear_estimates, kwargs['shear_measurements_product'])
     
     logger.debug("Exiting estimate_shears_from_args")
     

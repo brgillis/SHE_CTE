@@ -44,31 +44,35 @@ def defineSpecificProgramOptions():
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
     
-    # Input data
-    parser.add_argument('detections_table_file_name',type=str,
-                        help='Name of the data table containing positions of detected galaxies')
-    parser.add_argument('galaxies_image_file_name',type=str,
-                        help='Name of the simulated image file to process.')
-    parser.add_argument('psf_image_file_name',type=str,
-                        help='Name of the file containing the PSF image.')
+    # Required input arguments
     
-    # Info on noise
-    parser.add_argument('--gain', type=float,
-                        help="Gain of the galaxy image, in e-/ADU")
-    parser.add_argument('--read_noise', type=float,
-                        help="Read noise of the galaxy image, in e-/pixel")
-    parser.add_argument('--subtracted_sky_level', type=float,
-                        help="Sky level that's been subtracted from the galaxy image, in ADU/arcsec^2")
-    parser.add_argument('--p_of_e_table_file_name',type=str,
-                        help='Name of the file containing the P(e) table.')
+    parser.add_argument('--data_images',type=str, nargs='+',
+                        help='FITS file containing the observed/simulated image.')
     
-    # Method to use
-    parser.add_argument('--method',type=str,default='KSB',
-                        help='Shape measurement method to use. Allowed: \'KSB\' (default)')
+    parser.add_argument('--psf_images',type=str, nargs='+',
+                        help='FITS file containing the PSF image.')
     
-    # Output data
-    parser.add_argument('--output_file_name',type=str,default=None,
-                        help='Desired name of the output fits file containing shape measurements.')
+    parser.add_argument('--noise_images',type=str, nargs='+',
+                        help='FITS file containing the noise map.')
+    
+    parser.add_argument('--mask_images',type=str, nargs='+',
+                        help='FITS file containing the mask.')
+    
+    parser.add_argument('--segmentation_images',type=str, nargs='+',
+                        help='FITS file containing the segmentation map.')
+    
+    parser.add_argument('--detections_tables',type=str, nargs='+',
+                        help='FITS file containing the detections table.')
+    
+    # Optional input arguments (cannot be used in pipeline)
+    
+    parser.add_argument('--methods',type=str, nargs='*', default=[],
+                        help='Which shear estimation methods to apply. If not specified, all will be run.')
+    
+    # Output arguments
+    
+    parser.add_argument('--shear_measurements_product',type=str,
+                        help='XML data product to contain file links to the shear measurements tables.')
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
 

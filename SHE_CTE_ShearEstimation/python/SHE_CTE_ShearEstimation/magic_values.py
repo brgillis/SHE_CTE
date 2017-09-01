@@ -23,5 +23,3 @@
 logger_name = "SHE_CTE_EstimateShear"
 
 default_stamp_size_px = 256
-
-from SHE_PPT.shear_estimates_format import *
