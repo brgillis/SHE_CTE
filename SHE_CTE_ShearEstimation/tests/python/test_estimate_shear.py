@@ -23,6 +23,8 @@
 import pytest
 import numpy as np
 
+import galsim
+
 from SHE_PPT import SHEImage
 from SHE_PPT.magic_values import scale_label
 
@@ -96,3 +98,37 @@ class TestCase:
         
         assert np.isclose( aet2_m, a_m )
         assert np.isclose( aet2_m_err, a_m_err*2 )
+        
+    def test_get_shear_estimate(self):
+        
+        sky_var = 0
+        
+        # Set up the galaxy profile we'll be using
+        base_gal = galsim.Sersic(n=1, half_light_radius=2.0)
+        
+        # Set up the psf we'll be using and a subsampled image of it
+        psf = galsim.Airy(lam_over_diam=0.085)
+        
+        ss_psf_image = galsim.Image(512,512,scale=0.02)
+        psf.drawImage(ss_psf_image,use_true_center=False)
+        
+        psf_stamp = SHEImage(ss_psf_image.data.transpose())
+        psf_stamp.header[scale_label] = ss_psf_image.scale
+        
+        for method in "KSB", "REGAUSS":
+            for g1, g2 in ((0.,0.),
+                           (0.1,0.),
+                           (0.,-0.1)):
+                
+                # Draw the galaxy
+                observed_gal = galsim.Convolve([base_gal,psf])
+                observed_gal_image = galsim.Image(100,100,scale=0.10)
+                observed_gal.drawImage(observed_gal_image.data.transpose())
+                
+                gal_stamp = SHEImage(observed_gal_image)
+                gal_stamp.header[scale_label] = observed_gal_image.scale
+                
+                # Get the shear estimate
+                est_g1, est_g2, _gerr = get_shear_estimate(gal_stamp, psf_stamp, sky_var)
+                
+                assert np.isclose( est_g1, g1, rtol=0.2, atol=0.01 )
