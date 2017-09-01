@@ -45,8 +45,8 @@ def get_resampled_image(subsampled_image, resampled_scale):
     
     ss_scale = subsampled_image.header[scale_label]
     
-    resampled_nx = int(np.shape(subsampled_psf_image.array)[0] / (resampled_scale/ss_scale))
-    resampled_ny = int(np.shape(subsampled_psf_image.array)[1] / (resampled_scale/ss_scale))
+    resampled_nx = int(np.shape(subsampled_image.array)[0] / (resampled_scale/ss_scale))
+    resampled_ny = int(np.shape(subsampled_image.array)[1] / (resampled_scale/ss_scale))
     
     resampled_gs_image = galsim.Image(resampled_nx,resampled_ny, scale = resampled_scale)
     
