@@ -117,7 +117,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     
     return shear_estimate
 
-def get_shear_estimate(gal_stamp, psf_stamp, sky_var):
+def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
@@ -173,7 +173,7 @@ def inv_var_stack( a, a_err ):
         
     logger.debug("Exiting inv_var_stack")
 
-def GS_estimate_shear( data_stack ):
+def GS_estimate_shear( data_stack, method ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering estimate_shear_gs")
@@ -229,7 +229,7 @@ def GS_estimate_shear( data_stack ):
                                                     row[detf.psf_y],
                                                     psf_image.header[stamp_size_label])
         
-                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_vars[table_index])
+                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_vars[table_index], method)
                 
                 g1s.append(shear_estimate.g1)
                 g2s.append(shear_estimate.g2)
