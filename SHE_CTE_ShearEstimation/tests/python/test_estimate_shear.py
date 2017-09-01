@@ -109,7 +109,7 @@ class TestCase:
         base_gal = galsim.Sersic(n=1, half_light_radius=0.5)
         
         # Set up the psf we'll be using and a subsampled image of it
-        psf = galsim.Airy(lam_over_diam=0.03)
+        psf = galsim.Airy(lam_over_diam=0.2)
         
         ss_psf_image = galsim.Image(250,250,scale=0.02)
         psf.drawImage(ss_psf_image,use_true_center=False)
