@@ -31,7 +31,7 @@ from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.she_image import SHEImage
-from SHE_PPT.magic_values import scale_label
+from SHE_PPT.magic_values import scale_label, stamp_size_label
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 
@@ -223,10 +223,10 @@ def GS_estimate_shear( data_stack ):
                 # Get galaxy and PSF stamps
                 gal_stamp = data_image.extract_stamp(row[detf.gal_x],
                                                      row[detf.gal_y],
-                                                     data_image.header["SSIZE"])
+                                                     data_image.header[stamp_size_label])
                 psf_stamp = psf_image.extract_stamp(row[detf.psf_x],
                                                     row[detf.psf_y],
-                                                    psf_image.header["SSIZE"])
+                                                    psf_image.header[stamp_size_label])
         
                 shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_vars[table_index])
                 
