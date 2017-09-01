@@ -123,7 +123,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var):
     logger.debug("Entering get_shear_estimate")
     
     # Get a resampled PSF stamp
-    resampled_psf_stamp = get_resampled_image(psf_stamp, gal_stamp.scale)
+    resampled_psf_stamp = get_resampled_image(psf_stamp, gal_stamp.header[scale_label])
     
     try:
         
