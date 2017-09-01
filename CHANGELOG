@@ -9,11 +9,14 @@ API Changes
 -----------
 - Added executable SHE_CTE_SimulateImages
 - Added executable SHE_CTE_MeasureStatistics
+- Added executable SHE_CTE_PrepareConfigs
+- Added package definitinos for the pipeline runner
+- Added core_pipeline.py pipeline script
 
 
 Dependency Changes
 ------------------
-
+- Now depends on SHE_PPT as well
 
 Deprecated Features
 -------------------
@@ -25,7 +28,7 @@ Bug Fixes
 
 New Features
 ------------
-
+- Control methods now interface properly with expected format for estimate_shear
 
 New config features
 -------------------
