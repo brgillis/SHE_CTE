@@ -28,7 +28,8 @@ import galsim
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label
 
-from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,inv_var_stack)
+from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,inv_var_stack,
+                                                    get_shear_estimate)
 
 class TestCase:
     """
