@@ -77,7 +77,7 @@ class TestCase:
         a_m, a_m_err = inv_var_stack(a,a_err)
         
         assert np.isclose( a_m, 1.8095238095238095)
-        assert np.isclose( a_m_err, 0.19047619047619047)
+        assert np.isclose( a_m_err, 0.4364357804719847)
         
         # Test addition
         
