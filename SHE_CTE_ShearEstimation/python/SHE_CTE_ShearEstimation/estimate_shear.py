@@ -131,8 +131,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var):
                                                          PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(), 
                                                                                 scale=gal_stamp.scale), 
                                                          sky_var=sky_var, 
-                                                         guess_sig_gal=0.5 / galaxy_image.scale, 
-                                                         guess_sig_PSF=0.2 / resampled_psf_image.scale, 
+                                                         guess_sig_gal=0.5 / galaxy_image.header[scale_label], 
+                                                         guess_sig_PSF=0.2 / resampled_psf_image.header[scale_label], 
                                                          shear_est=method)
         
         if method == "KSB":
