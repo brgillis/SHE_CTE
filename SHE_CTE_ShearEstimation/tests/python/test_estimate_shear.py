@@ -28,7 +28,7 @@ import galsim
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label
 
-from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,)
+from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,inv_var_stack)
 
 class TestCase:
     """
@@ -113,7 +113,7 @@ class TestCase:
         ss_psf_image = galsim.Image(512,512,scale=0.02)
         psf.drawImage(ss_psf_image,use_true_center=False)
         
-        psf_stamp = SHEImage(ss_psf_image.data.transpose())
+        psf_stamp = SHEImage(ss_psf_image.array.transpose())
         psf_stamp.header[scale_label] = ss_psf_image.scale
         
         for method in "KSB", "REGAUSS":
@@ -124,9 +124,9 @@ class TestCase:
                 # Draw the galaxy
                 observed_gal = galsim.Convolve([base_gal,psf])
                 observed_gal_image = galsim.Image(100,100,scale=0.10)
-                observed_gal.drawImage(observed_gal_image.data.transpose())
+                observed_gal.drawImage(observed_gal_image)
                 
-                gal_stamp = SHEImage(observed_gal_image)
+                gal_stamp = SHEImage(observed_gal_image.array.transpose())
                 gal_stamp.header[scale_label] = observed_gal_image.scale
                 
                 # Get the shear estimate
