@@ -65,7 +65,7 @@ class TestCase:
                     for j in range(3):
                         assert np.isclose( ss_data[ ss_factor*i:ss_factor*i+ss_factor, ss_factor*j:ss_factor*j+ss_factor ].sum(),
                                            rb_data[ i:i+1, j:j+1 ].sum(),
-                                           rtol=0.01 )
+                                           rtol=0.2 )
         
     def test_inv_var_stack(self):
         
