@@ -106,12 +106,12 @@ class TestCase:
         sky_var = 0
         
         # Set up the galaxy profile we'll be using
-        base_gal = galsim.Sersic(n=1, half_light_radius=2.0)
+        base_gal = galsim.Sersic(n=1, half_light_radius=0.5)
         
         # Set up the psf we'll be using and a subsampled image of it
-        psf = galsim.Airy(lam_over_diam=0.085)
+        psf = galsim.Airy(lam_over_diam=0.03)
         
-        ss_psf_image = galsim.Image(512,512,scale=0.02)
+        ss_psf_image = galsim.Image(250,250,scale=0.02)
         psf.drawImage(ss_psf_image,use_true_center=False)
         
         psf_stamp = SHEImage(ss_psf_image.array.transpose())
@@ -123,9 +123,9 @@ class TestCase:
                            (0.,-0.1)):
                 
                 # Draw the galaxy
-                observed_gal = galsim.Convolve([base_gal,psf])
+                observed_gal = galsim.Convolve([base_gal.shear(g1=g1,g2=g2),psf])
                 observed_gal_image = galsim.Image(100,100,scale=0.10)
-                observed_gal.drawImage(observed_gal_image)
+                observed_gal.drawImage(observed_gal_image,use_true_center=False)
                 
                 gal_stamp = SHEImage(observed_gal_image.array.transpose())
                 gal_stamp.header[scale_label] = observed_gal_image.scale
