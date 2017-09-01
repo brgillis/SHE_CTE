@@ -20,6 +20,7 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
+from math import sqrt
 import numpy as np
 import galsim
 
@@ -166,7 +167,7 @@ def inv_var_stack( a, a_err ):
     
     a_m = (a*a_inv_var).sum()*inv_a_inv_var_sum
     
-    a_m_err = inv_a_inv_var_sum
+    a_m_err = sqrt(inv_a_inv_var_sum)
     
     return a_m, a_m_err
         
