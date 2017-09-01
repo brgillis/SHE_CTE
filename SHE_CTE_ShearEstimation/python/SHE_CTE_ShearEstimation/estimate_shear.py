@@ -154,5 +154,5 @@ def GS_estimate_shear(data_image, psf_image, detections_table):
     
     logger.debug("Exiting GS_estimate_shear")
     
-    return shear_estimates_table
+    return shear_estimates_table, None # No MCMC chains
     
