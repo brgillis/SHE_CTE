@@ -25,7 +25,7 @@ import numpy as np
 
 import galsim
 
-from SHE_PPT import SHEImage
+from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label
 
 from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,)
