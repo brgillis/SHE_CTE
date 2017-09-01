@@ -31,6 +31,7 @@ from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.she_image import SHEImage
+from SHE_PPT.magic_values import scale_label
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 
@@ -42,23 +43,26 @@ class ShearEstimate(object):
         
 def get_resampled_image(subsampled_image, resampled_scale):
     
-    resampled_nx = int(np.shape(subsampled_psf_image.array)[0] / (resampled_scale/subsampled_image.scale))
-    resampled_ny = int(np.shape(subsampled_psf_image.array)[1] / (resampled_scale/subsampled_image.scale))
+    ss_scale = subsampled_image.header[scale_label]
     
-    resampled_gs_image = galsim.Image(resampled_nx,resampled_ny)
+    resampled_nx = int(np.shape(subsampled_psf_image.array)[0] / (resampled_scale/ss_scale))
+    resampled_ny = int(np.shape(subsampled_psf_image.array)[1] / (resampled_scale/ss_scale))
+    
+    resampled_gs_image = galsim.Image(resampled_nx,resampled_ny, scale = resampled_scale)
     
     galsim.InterpolatedImage(galsim.Image(subsampled_image.data,
                                           scale=subsampled_psf_image.scale)).drawImage(resampled_gs_image)
     
-    return SHEImage(resampled_gs_image.data)
+    resampled_image = SHEImage(resampled_gs_image.data)
+    resampled_image.header[scale_label] = resampled_scale
+    
+    return resampled_image
     
 def KSB_estimate_shear(*args,**kwargs):
     return GS_estimate_shear(method="KSB",*args,**kwargs)
     
 def REGAUSS_estimate_shear(*args,**kwargs):
     return GS_estimate_shear(method="REGAUSS",*args,**kwargs)
-    
-
 
 def get_KSB_shear_estimate(galsim_shear_estimate):
 

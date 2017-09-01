@@ -1,8 +1,8 @@
-""" @file test_sample.py
+""" @file test_estimate_shear.py
 
-    Created 21 Aug 2017
+    Created 1 Sep 2017
 
-    Sample unit test.
+    Unit tests for the control shear estimation methods.
 
     ---------------------------------------------------------------------
 
@@ -21,7 +21,12 @@
 """
 
 import pytest
+import numpy as np
 
+from SHE_PPT import SHEImage
+from SHE_PPT.magic_values import scale_label
+
+from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,)
 
 class TestCase:
     """
@@ -30,5 +35,26 @@ class TestCase:
     """
 
 
-    def testExample(self):
+    def test_get_resampled_image(self):
+        
+        ss_factor = 5
+        
+        # Make a mock subsampled image
+        ss_data = np.zeros((3*ss_factor,3*ss_factor))
+        for i in range(3):
+            for j in range(3):
+                ss_data[ ss_factor*i:ss_factor*i+ss_factor, ss_factor*j:ss_factor*j+ss_factor ] += i + 3*j
+                
+        ss_data /= ss_data.sum()
+                
+        ss_image = SHEImage(ss_data)
+        ss_image.header[scale_label] = 1./ss_factor
+        
+        rb_image = get_resampled_image(ss_image,1.)
+        
+        rb_data = rb_image.data
+        
+        rb_data /= rb_data.sum()
+        
+        
         assert True
