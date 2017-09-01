@@ -48,7 +48,7 @@ class TestCase:
                 ss_data = np.zeros((3*ss_factor,3*ss_factor))
                 for i in range(3):
                     for j in range(3):
-                        ss_data[ ss_factor*i:ss_factor*i+ss_factor, ss_factor*j:ss_factor*j+ss_factor ] += i + 3*j
+                        ss_data[ ss_factor*i:ss_factor*i+ss_factor, ss_factor*j:ss_factor*j+ss_factor ] += i + 3*j + 1
                         
                 ss_data /= ss_data.sum()
                         
@@ -64,7 +64,8 @@ class TestCase:
                 for i in range(3):
                     for j in range(3):
                         assert np.isclose( ss_data[ ss_factor*i:ss_factor*i+ss_factor, ss_factor*j:ss_factor*j+ss_factor ].sum(),
-                                           rb_data[ i:i+1, j:j+1 ].sum() )
+                                           rb_data[ i:i+1, j:j+1 ].sum(),
+                                           rtol=0.01 )
         
     def test_inv_var_stack(self):
         
