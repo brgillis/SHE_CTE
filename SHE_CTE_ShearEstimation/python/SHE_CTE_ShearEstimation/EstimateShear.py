@@ -46,22 +46,22 @@ def defineSpecificProgramOptions():
     
     # Required input arguments
     
-    parser.add_argument('--data_image',type=str,
+    parser.add_argument('--data_images',type=str, nargs='+',
                         help='FITS file containing the observed/simulated image.')
     
-    parser.add_argument('--psf_image',type=str,
+    parser.add_argument('--psf_images',type=str, nargs='+',
                         help='FITS file containing the PSF image.')
     
-    parser.add_argument('--noise_image',type=str,
+    parser.add_argument('--noise_images',type=str, nargs='+',
                         help='FITS file containing the noise map.')
     
-    parser.add_argument('--mask_image',type=str,
+    parser.add_argument('--mask_images',type=str, nargs='+',
                         help='FITS file containing the mask.')
     
-    parser.add_argument('--segmentation_image',type=str,
+    parser.add_argument('--segmentation_images',type=str, nargs='+',
                         help='FITS file containing the segmentation map.')
     
-    parser.add_argument('--detections_table',type=str,
+    parser.add_argument('--detections_tables',type=str, nargs='+',
                         help='FITS file containing the detections table.')
     
     # Optional input arguments (cannot be used in pipeline)
