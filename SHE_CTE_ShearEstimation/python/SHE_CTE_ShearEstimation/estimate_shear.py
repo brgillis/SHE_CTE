@@ -59,13 +59,13 @@ def get_resampled_image(subsampled_image, resampled_scale):
     
     return resampled_image
     
-def KSB_estimate_shear(*args,**kwargs):
-    return GS_estimate_shear(method="KSB",*args,**kwargs)
+def KSB_estimate_shear(data_stack,method_data):
+    return GS_estimate_shear(data_stack,method="KSB",shape_noise_var=method_data.shape_noise_var)
     
-def REGAUSS_estimate_shear(*args,**kwargs):
-    return GS_estimate_shear(method="REGAUSS",*args,**kwargs)
+def REGAUSS_estimate_shear(data_stack,method_data):
+    return GS_estimate_shear(data_stack,method="REGAUSS",shape_noise_var=method_data.shape_noise_var)
 
-def get_KSB_shear_estimate(galsim_shear_estimate):
+def get_KSB_shear_estimate(galsim_shear_estimate, shape_noise_var):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_KSB_shear_estimate")
@@ -91,7 +91,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
     return shear_estimate
 
 
-def get_REGAUSS_shear_estimate(galsim_shear_estimate):
+def get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_REGAUSS_shear_estimate")
@@ -117,7 +117,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     
     return shear_estimate
 
-def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
+def get_shear_estimate(gal_stamp, psf_stamp, sky_var, shape_noise_var, method):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
@@ -137,11 +137,11 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
         
         if method == "KSB":
             
-            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate)
+            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate, shape_noise_var)
             
         elif method == "REGAUSS":
             
-            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate)
+            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate, shape_noise_var)
             
         else:
             raise RuntimeError("Invalid shear estimation method for GalSim: " + str(method))
@@ -149,6 +149,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
             raise
+        raise
         logger.debug(str(e))
         shear_estimate = ShearEstimate(np.NaN, np.NaN, 1e99)
         
@@ -173,7 +174,7 @@ def inv_var_stack( a, a_err ):
         
     logger.debug("Exiting inv_var_stack")
 
-def GS_estimate_shear( data_stack, method ):
+def GS_estimate_shear( data_stack, method, shape_noise_var ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering estimate_shear_gs")
@@ -229,7 +230,7 @@ def GS_estimate_shear( data_stack, method ):
                                                     row[detf.psf_y],
                                                     psf_image.header[stamp_size_label])
         
-                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_vars[table_index], method)
+                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_vars[table_index], method, shape_noise_var)
                 
                 g1s.append(shear_estimate.g1)
                 g2s.append(shear_estimate.g2)
