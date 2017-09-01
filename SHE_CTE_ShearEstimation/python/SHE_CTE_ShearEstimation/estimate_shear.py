@@ -132,7 +132,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var):
                                                                                 scale=gal_stamp.header[scale_label]), 
                                                          sky_var=sky_var, 
                                                          guess_sig_gal=0.5 / gal_stamp.header[scale_label], 
-                                                         guess_sig_PSF=0.2 / resampled_psf_image.header[scale_label], 
+                                                         guess_sig_PSF=0.2 / resampled_psf_stamp.header[scale_label], 
                                                          shear_est=method)
         
         if method == "KSB":
