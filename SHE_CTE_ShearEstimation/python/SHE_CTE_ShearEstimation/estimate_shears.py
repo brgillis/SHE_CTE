@@ -124,15 +124,14 @@ def estimate_shears_from_args(kwargs):
             tab = initialise_shear_estimates_table(detections_table)
             
             # Fill it with NaN measurements and 1e99 errors
-            tab = method_shear_estimates[method]
             tab[setf.ID] = detections_table[detf.ID]
             
             for col in (setf.gal_g1, setf.gal_g2,
                         setf.gal_e1_err, setf.gal_e2_err,):
-                tab[col] = np.NaN
+                tab[col] = np.NaN*np.ones_like(tab[setf.ID])
             
             for col in (setf.gal_g1_err, setf.gal_g2_err):
-                tab[col] = 1e99
+                tab[col] = 1e99*np.ones_like(tab[setf.ID])
             
         method_shear_estimates[method] = tab
         
