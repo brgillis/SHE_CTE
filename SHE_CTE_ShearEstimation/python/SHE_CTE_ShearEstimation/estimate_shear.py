@@ -197,7 +197,8 @@ def GS_estimate_shear( data_stack, method, shape_noise_var ):
     for detection_table in detection_tables:
         detection_table.add_index(detf.ID)
     
-    shear_estimates_table = initialise_shear_estimates_table(detections_tables[0])
+    shear_estimates_table = initialise_shear_estimates_table(detections_tables[0],
+                                                             optional_columns=[setf.e1_err,setf.e2_err])
     
     for ID in IDs:
         
@@ -243,12 +244,10 @@ def GS_estimate_shear( data_stack, method, shape_noise_var ):
             
         # Add this row to the estimates table
         shear_estimates_table.add_row({ setf.ID : detections_table[detf.ID][i],
-                                        setf.gal_g1 : g1,
-                                        setf.gal_g2 : g2,
-                                        setf.gal_g1_err : np.NaN,
-                                        setf.gal_g2_err : np.NaN,
-                                        setf.gal_e1_err : gerr1,
-                                        setf.gal_e2_err : gerr2,
+                                        setf.g1 : g1,
+                                        setf.g2 : g2,
+                                        setf.e1_err : gerr1,
+                                        setf.e2_err : gerr2,
                                        })
         
     
