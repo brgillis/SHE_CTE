@@ -40,6 +40,12 @@ from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf a
 from SHE_CTE_ShearEstimation.estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
 
+loading_methods = {"KSB":None,
+                   "REGAUSS":None,
+                   "MegaLUT":None,
+                   "LensMC":None,
+                   "BFD":None}
+
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
                       "MegaLUT":None,
@@ -73,6 +79,13 @@ def estimate_shears_from_args(kwargs):
     
     logger.debug("Entering estimate_shears_from_args")
     
+    # Set up a dictionary of the method data filenames
+    method_data_filenames = {"KSB":kwargs["KSB_data"],
+                             "REGAUSS":kwargs["REGAUSS_data"],
+                             "MegaLUT":kwargs["MegaLUT_data"],
+                             "LensMC":kwargs["LensMC_data"],
+                             "BFD":kwargs["BFD_data"]}
+    
     # Load the various images
     data_stack = SHEStack.read_from_fits(filepaths = kwargs["data_images"],
                                          mask_filepaths = kwargs["mask_images"],
@@ -104,9 +117,16 @@ def estimate_shears_from_args(kwargs):
     
     for method in methods:
         
+        load_method_data = loading_methods[method]
+        method_data_filename = method_data_files[method]
         estimate_shear = estimation_methods[method]
         
         try:
+            
+            if load_method_data is not None:
+                method_data = load_method_data(method_data_filename)
+            else:
+                method_data = None
             
             tab, method_mcmc_chains = method( data_stack )
             

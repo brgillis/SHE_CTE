@@ -64,6 +64,22 @@ def defineSpecificProgramOptions():
     parser.add_argument('--detections_tables',type=str, nargs='+',
                         help='FITS file containing the detections table.')
     
+    # Method data (optional, can be used in pipeline)
+    parser.add_argument('--KSB_data',type=str, default="",
+                        help="Filename containing method data for KSB.")
+    
+    parser.add_argument('--REGAUSS_data',type=str, default="",
+                        help="Filename containing method data for REGAUSS.")
+    
+    parser.add_argument('--MegaLUT_data',type=str, default="",
+                        help="Filename containing method data for MegaLUT.")
+    
+    parser.add_argument('--LensMC_data',type=str, default="",
+                        help="Filename containing method data for LensMC.")
+    
+    parser.add_argument('--BFD_data',type=str, default="",
+                        help="Filename containing method data for BFD.")
+    
     # Optional input arguments (cannot be used in pipeline)
     
     parser.add_argument('--methods',type=str, nargs='*', default=[],
