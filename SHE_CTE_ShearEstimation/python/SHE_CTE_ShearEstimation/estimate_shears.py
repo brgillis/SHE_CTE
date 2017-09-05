@@ -37,7 +37,7 @@ from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.detections_table import tf as detf
 from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
 
-from SHE_CTE_ShearEstimation.estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
 
 loading_methods = {"KSB":None,

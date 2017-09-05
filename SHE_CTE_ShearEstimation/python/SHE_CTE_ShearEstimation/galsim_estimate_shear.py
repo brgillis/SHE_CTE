@@ -1,4 +1,4 @@
-""" @file estimate_shear.py
+""" @file galsim_estimate_shear.py
 
     Created 27 Mar 2017
 
