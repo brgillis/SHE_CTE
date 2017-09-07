@@ -32,13 +32,16 @@ from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 
-from SHE_PPT.she_stach import SHEStack
+from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.detections_table import tf as detf
 from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.bfd_moments_table import initialize_bfd_moments_table, bfdtf as bfdsetf
 
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.output_bfd_moments import output_bfd_moments
 
 loading_methods = {"KSB":None,
                    "REGAUSS":None,
@@ -50,7 +53,7 @@ estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
                       "MegaLUT":None,
                       "LensMC":None,
-                      "BFD":None}
+                      "BFD":BFD_measure_moments}
 
 def find_value(args_value, name, label, detections_table, galaxies_hdulist):
     if args_value is not None:
@@ -141,7 +144,10 @@ def estimate_shears_from_args(kwargs):
             logger.warning(str(e))
             
             # Create an empty estimates table
-            tab = initialise_shear_estimates_table(detections_table)
+            if method == "BFD":
+                tab = initialize_bfd_moments_table(detections_table)
+            else:
+                tab = initialise_shear_estimates_table(detections_table)
             
             # Fill it with NaN measurements and 1e99 errors
             tab[setf.ID] = detections_table[detf.ID]
