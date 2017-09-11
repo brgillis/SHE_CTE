@@ -44,7 +44,7 @@ def get_bfd_moments(gal_stamp, psf_stamp, sky_var, is_target):
     logger.debug("Entering get_bfd_moments")
     
     # create wt function - eventually get from method_data
-    wt = bfd.KSigmaWeight(n=4.0,sigma=3.5)
+    wt = bfd.KSigmaWeight(**method_data['WEIGHT'])
     
     kdata = bfd.simpleImageTEST(gal_stamp,center,psf_stamp,\
                                 pixel_scale=gal_stamp.header[scale_label],\
@@ -53,20 +53,20 @@ def get_bfd_moments(gal_stamp, psf_stamp, sky_var, is_target):
                                 pixel_noise=np.sqrt(sky_var))
 
     mc = bfd.MomentCalculator(kdata,wt)
-    if is_target == True:
-        t = mc.make_templates(**params['TEMPLATE'])
-        xyshift=None
-    else:
-        # for targets get moments at MX=MY=0
-        xyshift,error,msg=mc.recenter()
+#    if is_target == False:
+#        t = mc.make_templates(**method_data['TEMPLATE'])
+#        xyshift=None
+#    else:
+#        # for targets get moments at MX=MY=0
+#        xyshift,error,msg=mc.recenter()
 
     logger.debug("Exiting get_bfd_moments")
     
-    return mc,xyshift
+    return mc
 
 
 
-def measure_moments( data_stack, method, shape_noise_var ):
+def measure_moments( data_stack, method_data ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
@@ -99,15 +99,43 @@ def measure_moments( data_stack, method, shape_noise_var ):
     for detection_table in detection_tables:
         detection_table.add_index(detf.ID)
     
-    bfd_moments_table = initialize_bfd_moments_table(detections_tables[0],
-                                                             optional_columns=[setf.e1_err,setf.e2_err])
+    if method_data['isTarget'] == True:
+        bfd_moments_table = initialize_bfd_moments_table(detections_tables[0],
+                                                         optional_columns=self.PQR)
+
+    else:
+        bfd_moments_table = initialize_bfd_moments_table(detections_tables[0],
+                                                         optional_columns= \
+                                                         [setf.MOM_ODD,
+                                                          setf.DM_DG1,
+                                                          setf.DM_DG2,
+                                                          setf.DM_DMU,
+                                                          setf.D2M_DG1DG1,
+                                                          setf.D2M_DG1DG2,
+                                                          setf.D2M_DG2DG2,
+                                                          setf.D2M_DG1DMU,
+                                                          setf.D2M_DG2DMU,
+                                                          setf.D2M_DMUDMU,
+                                                          setf.WEIGHT,
+                                                          setf.JSUPRESS])
     
     for ID in IDs:
         
         xys = []
-        moments = []
-        if is_target = False:
-            moments_deriv=[]
+        moments_even = []
+        if method_data['isTarget'] == False:
+            moments_odd=[]
+            dm_dg1=[]
+            dm_dg2=[]
+            dm_dmu=[]
+            d2m_dg1dg1=[]
+            d2m_dg1dg2=[]
+            d2m_dg2dg2=[]
+            d2m_dg1dmu=[]
+            d2m_dg2dmu=[]
+            d2m_dmudmu=[]
+            jsuppress=[]
+            weight=[]
 
         for detections_table in detections_tables:
             
@@ -124,12 +152,15 @@ def measure_moments( data_stack, method, shape_noise_var ):
                                                     row[detf.psf_y],
                                                     psf_image.header[stamp_size_label])
         
-                bfd_moments = get_bfd_moments(gal_stamp, psf_stamp, sky_vars[table_index],is_target)
-                
-                xys.append(bfd_moments[1])
-                moments.append(bfd_moments[0].get_moment(0,0))
-                if is_target == False:
-                    moments_deriv.append(bfd_moments)
+                bfd_moments = get_bfd_moments(gal_stamp, psf_stamp, sky_vars[table_index],method_data)
+                if method_data['isTarget'] == True:
+                    xyshift,error,msg=bfd_moments.recenter()
+                    xys.append(xyshift)
+                    moments_even.append(bfd_moments[0].get_moment(0,0).even)
+                else:
+                    t=mc.make_template(**method_data['TEMPLATES'])
+                    moments_even.append()
+                    #etc
                 
             except KeyError as e:
                 if "No matches found for key" in e:
@@ -137,20 +168,20 @@ def measure_moments( data_stack, method, shape_noise_var ):
                 else:
                     raise
                 
-        g1s = np.array(g1s)
-        g2s = np.array(g2s)
-        gerrs = np.array(gerrs)
+        xys = np.array(xys)
+        moments_even = np.array(moments_even)
         
-            
+        
         # Add this row to the estimates table
         bfd_moments_table.add_row({ setf.ID : detections_table[detf.ID][i],
-                                        setf.g1 : g1,
-                                        setf.g2 : g2,
-                                        setf.e1_err : gerr1,
-                                        setf.e2_err : gerr2,
-                                       })
+                                    setf.MOM_EVEN : moments_even,
+                                    setf.XY : xys})
         
-    
+    if method_data['isTarget']:
+        bfd_moments_table.add_to_header(method_data['isTarget'],method_data['WEIGHT']['N'],
+                                        method_data['WEIGHT']['SIGMA'])
+    else:
+        bfd_moments_table.add_to_header(method_data['isTarget'],blah)
     logger.debug("Exiting GS_estimate_shear")
     
     return bfd_moments_table, None # No MCMC chains for this method
