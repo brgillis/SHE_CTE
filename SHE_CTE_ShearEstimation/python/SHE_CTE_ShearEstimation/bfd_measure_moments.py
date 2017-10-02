@@ -28,7 +28,7 @@ from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
 
 from SHE_PPT.detections_table_format import tf as detf
-from SHE_PPT.bfd_moments_table_format import initialize_bfd_moments_table, tf as setf
+
 
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label, stamp_size_label
@@ -100,11 +100,11 @@ def measure_moments( data_stack, method_data ):
         detection_table.add_index(detf.ID)
     
     if method_data['isTarget'] == True:
-        bfd_moments_table = initialize_bfd_moments_table(detections_tables[0],
+        bfd_moments_table = initialize_shear_estimation_table(detections_tables[0],
                                                          optional_columns=self.PQR)
 
     else:
-        bfd_moments_table = initialize_bfd_moments_table(detections_tables[0],
+        bfd_moments_table = initialize_shear_estimation_table(detections_tables[0],
                                                          optional_columns= \
                                                          [setf.MOM_ODD,
                                                           setf.DM_DG1,
