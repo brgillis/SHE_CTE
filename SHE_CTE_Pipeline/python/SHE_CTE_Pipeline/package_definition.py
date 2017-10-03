@@ -23,15 +23,17 @@
 from euclidwf.framework.taskdefs import Executable, Input, Output, ComputingResources
 
 she_prepare_configs = Executable(command="E-Run SHE_CTE_PrepareConfigs",
-                                 inputs=[Input("config_template"),Input("prep_config")],
-                                 outputs=[Output("configs_list", mime_type="json", content_type="listfile")])
+                                 inputs=[Input("simulation_config_template"),Input("prep_config")],
+                                 outputs=[Output("simulation_configs_list", mime_type="json", content_type="listfile")])
 
 she_simulate_images = Executable(command="E-Run SHE_CTE_SimulateImages",
-                                 inputs=[Input("config")],
+                                 inputs=[Input("simulation_config"),
+                                         Input("CTI_calibration_parameters_product"),
+                                         Input("PSF_calibration_parameters_product"),
+                                         Input("galaxy_population_priors_table"),
+                                         Input("Euclidised_HST_galaxy_images_product")],
                                  outputs=[Output("data_image_list", mime_type="json", content_type="listfile"),
                                           Output("psf_image_list", mime_type="json", content_type="listfile"),
-                                          Output("noise_image_list", mime_type="json", content_type="listfile"),
-                                          Output("mask_image_list", mime_type="json", content_type="listfile"),
                                           Output("segmentation_image_list", mime_type="json", content_type="listfile"),
                                           Output("detections_table_list", mime_type="json", content_type="listfile"),
                                           Output("details_table")])
@@ -51,10 +53,17 @@ she_validate_shear = Executable(command="E-Run SHE_CTE_ValidateShear",
                                 outputs=[Output("validated_shear_estimates_table")])
 
 she_measure_statistics = Executable(command="E-Run SHE_CTE_MeasureStatistics",
-                                 inputs=[Input("details_table"),
-                                         Input("shear_measurements_product")],
-                                 outputs=[Output("statistics_product")])
+                                    inputs=[Input("details_table"),
+                                            Input("shear_measurements_product"),
+                                            Input("bias_measurements_plan_product")],
+                                    outputs=[Output("estimation_statistics_product"),
+                                             Output("partial_validation_statistics_product")])
 
 she_measure_bias = Executable(command="E-Run SHE_CTE_MeasureBias",
-                                 inputs=[Input("statistics_product_list",mime_type="json",content_type="listfile")],
-                                 outputs=[Output("bias_measurements")])
+                                 inputs=[Input("estimation_statistics_product_list",mime_type="json",content_type="listfile")],
+                                 outputs=[Output("bias_measurements_product")])
+
+she_compile_statistics = Executatble(command="E-Run SHE_CTE_CompileStatistics",
+                                     inputs=[Input("shear_measurements_product"),
+                                             Input("bias_measurements_product")],
+                                     outputs=[Output("validation_statistics_table")])
