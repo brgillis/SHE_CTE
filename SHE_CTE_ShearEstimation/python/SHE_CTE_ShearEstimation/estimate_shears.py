@@ -131,7 +131,7 @@ def estimate_shears_from_args(kwargs):
             else:
                 method_data = None
             
-            tab, method_mcmc_chains = method( data_stack )
+            tab, method_mcmc_chains = method( data_stack, method_data )
             
             if not is_in_format(tab,setf):
                 raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
