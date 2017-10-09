@@ -40,8 +40,11 @@ she_simulate_images = Executable(command="E-Run SHE_CTE_SimulateImages",
 
 she_fit_psf = Executable(command="E-Run SHE_CTE_FitPSF",
                          inputs=[Input("data_images"),
-                                 Input("psf_calibration_product"),
-                                 Input("detections_tables")],
+                                 Input("detections_tables"),
+                                 Input("astrometry"),
+                                 Input("aocs_time_series"),
+                                 Input("mission_time"),
+                                 Input("psf_calibration_product"),],
                          outputs=[Output("psf_images_and_tables")])
 
 she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",

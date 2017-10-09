@@ -27,13 +27,19 @@ def shear_measurement_pipeline( data_images,
                                 psf_calibration_product,
                                 segmentation_images,
                                 detections_tables,
+                                astrometry,
+                                aocs_time_series,
+                                mission_time,
                                 galaxy_population_priors_table,
                                 calibration_parameters_product,
                                 shear_validation_statistics_table ):
     
     psf_images_and_tables = she_fit_psf( data_images = data_images, 
-                                         psf_calibration_product = psf_calibration_product, 
-                                         detections_tables = detections_tables, )
+                                         detections_tables = detections_tables,
+                                         astrometry = astrometry,
+                                         aocs_time_series = aocs_time_series,
+                                         mission_time = mission_time,
+                                         psf_calibration_product = psf_calibration_product,  )
     
     shear_estimates_product = she_estimate_shear( data_images = data_images,
                                                   psf_images_and_tables = psf_images_and_tables,
