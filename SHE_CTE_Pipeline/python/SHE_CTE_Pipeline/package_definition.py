@@ -38,6 +38,12 @@ she_simulate_images = Executable(command="E-Run SHE_CTE_SimulateImages",
                                           Output("detections_table_list", mime_type="json", content_type="listfile"),
                                           Output("details_table")])
 
+she_fit_psf = Executable(command="E-Run SHE_CTE_FitPSF",
+                         inputs=[Input("data_images"),
+                                 Input("psf_calibration_product"),
+                                 Input("detections_tables")],
+                         outputs=[Output("psf_images_and_tables")])
+
 she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",
                                  inputs=[Input("data_images"),
                                          Input("psf_images_and_tables"),
