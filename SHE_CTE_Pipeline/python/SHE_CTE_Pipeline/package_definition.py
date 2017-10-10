@@ -75,4 +75,4 @@ she_measure_bias = Executable(command="E-Run SHE_CTE_MeasureBias",
 she_compile_statistics = Executatble(command="E-Run SHE_CTE_CompileStatistics",
                                      inputs=[Input("shear_measurements_product"),
                                              Input("bias_measurements_product")],
-                                     outputs=[Output("validation_statistics_table")])
+                                     outputs=[Output("validation_statistics_product")])

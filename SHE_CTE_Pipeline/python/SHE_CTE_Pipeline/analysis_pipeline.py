@@ -49,7 +49,7 @@ def shear_measurement_pipeline( data_images,
                                                   calibration_parameters_product = calibration_parameters_product )
     
     validated_shear_estimates_table = she_validate_shear( shear_estimates_product = shear_estimates_product,
-                                                          shear_validation_statistics_table = shear_validation_statistics_table )
+                                                          validation_statistics_product = validation_statistics_product )
     
     return validated_shear_estimates_table
 
