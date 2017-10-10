@@ -23,7 +23,7 @@
 from SHE_CTE_Pipeline.package_definition import she_estimate_shear, she_validate_shear
 
 @pipeline(outputs=('validated_shear_estimates_table'))
-def shear_measurement_pipeline( data_images,
+def shear_analysis_pipeline( data_images,
                                 psf_calibration_product,
                                 segmentation_images,
                                 detections_tables,
@@ -56,5 +56,5 @@ def shear_measurement_pipeline( data_images,
 if __name__ == '__main__':
     from euclidwf.framework.graph_builder import build_graph
     from euclidwf.utilities import visualizer
-    pydron_graph=build_graph(shear_measurement_pipeline)
+    pydron_graph=build_graph(shear_analysis_pipeline)
     visualizer.visualize_graph(pydron_graph)
