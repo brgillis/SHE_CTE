@@ -32,7 +32,7 @@ from SHE_PPT.file_io import read_listfile, read_pickled_product, write_pickled_p
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
-from SHE_PPT.she_image import she_image
+from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format
 
 def fit_psfs(args):
@@ -43,42 +43,81 @@ def fit_psfs(args):
     
     # Load in the files in turn to make sure there aren't any issues with them.
     
-    # Data images - Read in as list of SHEImage objects
-    data_images = SHEImage.read_from_fits(args.data_images,
-                                          data_ext = ppt_mv.sci_tag,
-                                          mask_ext = ppt_mv.mask_tag,
-                                          noisemap_ext = ppt_mv.noisemap_tag)
+    # Data images - Read in as SHEStack object
+    
+    data_images = read_listfile(args.data_images)
+    she_stack = SHEStack.read(data_images,
+                              data_ext = ppt_mv.sci_tag,
+                              mask_ext = ppt_mv.mask_tag,
+                              noisemap_ext = ppt_mv.noisemap_tag)
     
     # Detections tables
-    detections_tables_hdulist = fits.open(args.detections_tables, mode="readonly", memmap=True)
-    num_detectors = len(detections_tables_hdulist)-1
-    detections_tables = []
-    for i in range(num_detectors):
-        detections_tables.append( Table.read( args.detections_tables, format='fits', hdu=i+1 ) )
-        if not is_in_format(detections_tables[-1],detf):
-            raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
+    
+    detection_table_filenames = read_listfile(args.detections_tables)
+    detection_tables = []
+    
+    for i, filename in enumerate(detection_table_filenames):
         
-    # Astrometry product
-    astrometry_product = read_pickled_product(args.astrometry_product)
-    if not isinstance(astrometry_product, DpdSheAstrometryProduct):
-        raise ValueError("Astrometry product from " + args.astrometry_product + " is invalid type.")
+        detections_tables_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        num_detectors = len(detections_tables_hdulist)-1
         
-    # AOCS time series product
-    aocs_time_series_product = read_pickled_product(args.aocs_time_series_product)
-    if not isinstance(aocs_time_series_product, DpdSheAocsTimeSeriesProduct):
-        raise ValueError("AOCS time series product from " + args.aocs_time_series_product + " is invalid type.")
+        detections_tables.append([])
         
-    # Mission time product
-    mission_time_product = read_pickled_product(args.mission_time_product)
-    if not isinstance(mission_time, DpdSheMissionTimeProduct):
-        raise ValueError("Mission time product from " + args.mission_time_product + " is invalid type.")
+        for j in range(num_detectors):
+            
+            detections_tables[i].append( Table.read( args.detections_tables, format='fits', hdu=j+1 ) )
+            
+            if not is_in_format(detections_tables[i][j],detf):
+                raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
         
-    # PSF calibration product
-    psf_calibration_product = read_pickled_product(args.psf_calibration_product, args.psf_calibration_listfile)
-    if not isinstance(psf_calibration_product, DpdShePSFCalibrationProduct):
-        raise ValueError("Mission time product from " + args.psf_calibration_product + " is invalid type.")
+    # Astrometry products
+    
+    astrometry_product_filenames = read_listfile(args.astrometry_products)
+    astrometry_products = []
+    
+    for i, filename in enumerate(astrometry_product_filenames):
+        astrometry_products.append(read_pickled_product(filename))
+        if not isinstance(astrometry_products[i], DpdSheAstrometryProduct):
+            raise ValueError("Astrometry product from " + filename + " is invalid type.")
+        
+    # AocsTimeSeries products
+    
+    aocs_time_series_product_filenames = read_listfile(args.aocs_time_series_products)
+    aocs_time_series_products = []
+    
+    for i, filename in enumerate(aocs_time_series_product_filenames):
+        aocs_time_series_products.append(read_pickled_product(filename))
+        if not isinstance(aocs_time_series_products[i], DpdSheAocsTimeSeriesProduct):
+            raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
+        
+    # MissionTime products
+    
+    mission_time_product_filenames = read_listfile(args.mission_time_products)
+    mission_time_products = []
+    
+    for i, filename in enumerate(mission_time_product_filenames):
+        mission_time_products.append(read_pickled_product(filename))
+        if not isinstance(mission_time_products[i], DpdSheMissionTimeProduct):
+            raise ValueError("MissionTime product from " + filename + " is invalid type.")
+        
+    # PSFCalibration products
+    
+    all_psf_calibration_product_filenames = read_listfile(args.psf_calibration_products)
+    psf_calibration_product_filenames = all_psf_calibration_product_filenames[0]
+    psf_calibration_product_sub_filenames = all_psf_calibration_product_filenames[1]
+    psf_calibration_products = []
+    
+    for i, filename in enumerate(psf_calibration_product_filenames):
+        
+        psf_calibration_products.append(read_pickled_product(filename, psf_calibration_product_sub_filenames[i]))
+        
+        if not isinstance(psf_calibration_products[i], DpdShePSFCalibrationProduct):
+            raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
     
     # Set up mock output in the correct format
+    
+    num_exposures = len(data_images)
+    psf_image_and_table_filenames = []
     
     def append_hdu(filename, hdu):
         f = fits.open(filename, mode='append')
@@ -87,18 +126,24 @@ def fit_psfs(args):
         finally:
             f.close()
     
-    for i in range(num_detectors):
+    for i in range(num_exposures):
+        
+        filename = get_allowed_filename("PSF_DRY",str(i))
+        
+        for j in range(num_detectors):
             
-        bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                 header=fits.header.Header(("EXTNAME",str(i)+"."+ppt_mv.bulge_psf_tag)))
-        append_hdu( args.psf_images_and_tables, bpsf_hdu)
+            bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+                                     header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.bulge_psf_tag)))
+            append_hdu( filename, bpsf_hdu)
+            
+            dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+                                     header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.disk_psf_tag)))
+            append_hdu( filename, dpsf_hdu)
+            
+            psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
+            append_hdu( filename, psfc_hdu)
         
-        dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                 header=fits.header.Header(("EXTNAME",str(i)+"."+ppt_mv.disk_psf_tag)))
-        append_hdu( args.psf_images_and_tables, dpsf_hdu)
-        
-        psfc_hdu = table_to_hdu(initialise_psf_table(detector=i))
-        append_hdu( args.psf_images_and_tables, psfc_hdu)
+    write_listfile( args.psf_images_and_tables, psf_image_and_table_filenames )
         
     return
     
