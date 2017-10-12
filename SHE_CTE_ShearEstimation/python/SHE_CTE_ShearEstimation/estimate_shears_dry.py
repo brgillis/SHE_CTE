@@ -26,10 +26,14 @@ from astropy.table import Table
 
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.detections_table_format import tf as detf
-from SHE_PPT.file_io import read_listfile, write_listfile, read_pickled_product, write_pickled_product
+from SHE_PPT.file_io import read_listfile, write_listfile, read_pickled_product, write_pickled_product, get_allowed_filename
+from SHE_PPT.galaxy_population_table_format import tf as gptf
 from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_image import she_image
+from SHE_PPT import shear_estimates_product as sep 
 from SHE_PPT.table_utility import is_in_format
+
+sep.init()
 
 def estimate_shears_from_args(args):
     """
@@ -64,32 +68,94 @@ def estimate_shears_from_args(args):
             detections_tables[i].append( Table.read( args.detections_tables, format='fits', hdu=j+1 ) )
             
             if not is_in_format(detections_tables[i][j],detf):
-                raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
-            
+                raise ValueError("Detections table from " + filename + " is in invalid format.")
     
+    # PSF images and tables
+    
+    def find_extension(hdulist,extname):
+        for i, hdu in enumerate(hdulist):
+            if hdu.header["EXTNAME"]==extname:
+                return i
+        return None
+    
+    psf_images_and_table_filenames = read_listfile(args.psf_images_and_tables)
+    psf_tables = []
+    bulge_psf_hdus = []
+    disk_psf_hdus = []
+    
+    for i, filename in enumerate(psf_images_and_table_filenames):
+        
+        psf_images_and_table_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        num_detectors = (len(psf_images_and_table_hdulist)-1) // 3
+        
+        psf_tables.append([])
+        bulge_psf_hdus.append([])
+        disk_psf_hdus.append([])
+        
+        for j in range(num_detectors):
+            
+            table_extname = str(j) + "." + ppt_mv.psf_cat_tag
+            table_index = find_extension(psf_images_and_table_hdulist, table_extname)
+            
+            psf_tables[i].append( Table.read( filename, format='fits', hdu=table_index ) )
+            
+            if not is_in_format(psf_tables[i][j],pstf):
+                raise ValueError("PSF table from " + filename + " is in invalid format.")
+            
+            bulge_extname = str(j) + "." + ppt_mv.bulge_psf_tag
+            bulge_index = find_extension(psf_images_and_table_hdulist, bulge_extname)
+            
+            bulge_psf_hdus[i].append(psf_images_and_table_hdulist[bulge_index])
+            
+            disk_extname = str(j) + "." + ppt_mv.disk_psf_tag
+            disk_index = find_extension(psf_images_and_table_hdulist, disk_extname)
+            
+            disk_psf_hdus[i].append(psf_images_and_table_hdulist[disk_index])
+    
+    # Segmentation images
+    
+    segmentation_filenames = read_listfile(args.segmentation_images)
+    segmentation_hdus = []
+    
+    for i, filename in enumerate(segmentation_filenames):
+        
+        segmentation_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        num_detectors = len(psf_images_and_table_hdulist)-1
+        
+        segmentation_hdus.append([])
+        
+        for j in range(num_detectors):
+            
+            segmentation_extname = str(j) + "." + ppt_mv.segmentation_psf_tag
+            segmentation_index = find_extension(segmentation_hdulist, segmentation_extname)
+            
+            segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])
+            
+    # Galaxy population priors
+    galaxy_population_priors_table = Table.read(args.galaxy_population_priors_table)
+            
+    if not is_in_format(galaxy_population_priors_table,gptf):
+        raise ValueError("Galaxy population priors table from " + args.galaxy_population_priors_table +
+                         " is in invalid format.")
+        
+    # Calibration parameters product
+    
+    calibration_parameters_product = read_pickled_product(args.calibration_parameters_products,
+                                                          args.calibration_parameters_listfile)
+    if not isinstance(calibration_parameters_products[i], DpdSheCalibrationParametersProduct):
+        raise ValueError("CalibrationParameters product from " + args.calibration_parameters_products + " is invalid type.")
     
     # Set up mock output in the correct format
+    shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("DRY_BFD_SHM","0"),
+                                                                 KSB_filename = get_allowed_filename("DRY_KSB_SHM","0"),
+                                                                 LensMC_filename = get_allowed_filename("DRY_LensMC_SHM","0"),
+                                                                 MegaLUT_filename = get_allowed_filename("DRY_MegaLUT_SHM","0"),
+                                                                 REGAUSS_filename = get_allowed_filename("DRY_REGAUSS_SHM","0"))
     
-    def append_hdu(filename, hdu):
-        f = fits.open(filename, mode='append')
-        try:
-            f.append(hdu)
-        finally:
-            f.close()
+    write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
     
-    for i in range(num_detectors):
-            
-        bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                 header=fits.header.Header(("EXTNAME",str(i)+"."+ppt_mv.bulge_psf_tag)))
-        append_hdu( args.psf_images_and_tables, bpsf_hdu)
-        
-        dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                 header=fits.header.Header(("EXTNAME",str(i)+"."+ppt_mv.disk_psf_tag)))
-        append_hdu( args.psf_images_and_tables, dpsf_hdu)
-        
-        psfc_hdu = table_to_hdu(initialise_psf_table(detector=i))
-        append_hdu( args.psf_images_and_tables, psfc_hdu)
-        
+    
+   
     return
     
     

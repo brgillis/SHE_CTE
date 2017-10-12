@@ -54,7 +54,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--data_images',type=str,
                         help='.json listfile containing filenames of data images.')
     
-    parser.add_argument('--psf_images',type=str,
+    parser.add_argument('--psf_images_and_tables',type=str,
                         help='.json listfile containing filenames of psf images.')
     
     parser.add_argument('--segmentation_images',type=str,
