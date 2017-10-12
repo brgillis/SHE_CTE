@@ -10,7 +10,7 @@ elements_depends_on_subdirs(SHE_PPT)
 elements_install_python_modules()
 
 # Instruction for creating a Python executable
-elements_add_python_program(SHE_CTE_FitPSF SHE_CTE_PSFFitting.FitPSFs)
+elements_add_python_program(SHE_CTE_ValidateShear SHE_CTE_ShearValidation.ValidateShear)
 
 # Install the configuration files
 # elements_install_conf_files()

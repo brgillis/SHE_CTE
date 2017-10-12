@@ -143,8 +143,8 @@ def estimate_shears_from_args(args):
     
     calibration_parameters_product = read_pickled_product(args.calibration_parameters_products,
                                                           args.calibration_parameters_listfile)
-    if not isinstance(calibration_parameters_products[i], DpdSheCalibrationParametersProduct):
-        raise ValueError("CalibrationParameters product from " + args.calibration_parameters_products + " is invalid type.")
+    if not isinstance(calibration_parameters_product, DpdSheCalibrationParametersProduct):
+        raise ValueError("CalibrationParameters product from " + args.calibration_parameters_product + " is invalid type.")
     
     # Set up mock output in the correct format
     shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("DRY_BFD_SHM","0"),
@@ -165,7 +165,7 @@ def estimate_shears_from_args(args):
         
         for j in range(num_detectors):
             
-            shm_hdu = table_to_hdu(initialise_psf_table(detector=j))
+            shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
             append_hdu( filename, shm_hdu)
     
     write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
