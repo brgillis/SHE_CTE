@@ -25,8 +25,12 @@ import argparse
 from ElementsKernel.Logging.logging import getLogger
 
 from SHE_CTE_PSFFitting import magic_values as mv
+from SHE_CTE.magic_values import force_dry_run
 
-from SHE_PSM import fit_psfs
+if force_dry_run:
+    from SHE_CTE_PSFFitting.fit_psfs_dry import fit_psfs
+else:
+    from SHE_PSM import fit_psfs
 
 def defineSpecificProgramOptions():
     """
