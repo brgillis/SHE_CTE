@@ -55,23 +55,21 @@ def defineSpecificProgramOptions():
     
     # Input filenames
     parser.add_argument('data_images',type=str,
-                        help='Filename for data images (multi-HDU fits file)')
+                        help='Filename for list of data images (.json listfile)')
     parser.add_argument('detections_tables',type=str,
-                        help='Filename for detections tables (multi-HDU fits file)')
-    parser.add_argument('astrometry_product',type=str,
-                        help='Filename for astrometry data product (XML file)')
-    parser.add_argument('aocs_time_series_product',type=str,
-                        help='Filename for AOCS data series data product (XML file)')
-    parser.add_argument('mission_time_product',type=str,
-                        help='Filename for mission time data product (XML file)')
-    parser.add_argument('psf_calibration_product',type=str,
-                        help='Filename for PSF calibration data product (XML file)')
-    parser.add_argument('psf_calibration_listfile',type=str,
-                        help='Filename for PSF calibration listfile (.json listfile)')
+                        help='Filename for list of detections tables (.json listfile)')
+    parser.add_argument('astrometry_products',type=str,
+                        help='Filename for list of astrometry data products (.json listfile)')
+    parser.add_argument('aocs_time_series_products',type=str,
+                        help='Filename for list of AOCS data series data products (.json listfile)')
+    parser.add_argument('mission_time_products',type=str,
+                        help='Filename for list of mission time data products (.json listfile)')
+    parser.add_argument('psf_calibration_products',type=str,
+                        help='Filename for list of PSF calibration data products (.json listfile)')
     
     # Output filenames
     parser.add_argument('psf_images_and_tables',type=str,
-                        help='Desired filename for output PSF images and tables (multi-HDU fits file).')
+                        help='Desired filename for output list of PSF images and tables (.json listfile).')
     
 
     logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')

@@ -39,23 +39,22 @@ she_simulate_images = Executable(command="E-Run SHE_CTE_SimulateImages",
                                           Output("details_table")])
 
 she_fit_psf = Executable(command="E-Run SHE_CTE_FitPSF",
-                         inputs=[Input("data_images"),
-                                 Input("detections_tables"),
-                                 Input("astrometry_product"),
-                                 Input("aocs_time_series_product"),
-                                 Input("mission_time_product"),
-                                 Input("psf_calibration_product"),
-                                 Input("psf_calibration_listfile", mime_type="json", content_type="listfile"),],
-                         outputs=[Output("psf_images_and_tables")])
+                         inputs=[Input("data_images", mime_type="json", content_type="listfile"),
+                                 Input("detections_tables", mime_type="json", content_type="listfile"),
+                                 Input("astrometry_products", mime_type="json", content_type="listfile"),
+                                 Input("aocs_time_series_products", mime_type="json", content_type="listfile"),
+                                 Input("mission_time_products", mime_type="json", content_type="listfile"),
+                                 Input("psf_calibration_products", mime_type="json", content_type="listfile"),],
+                         outputs=[Output("psf_images_and_tables", mime_type="json", content_type="listfile")])
 
 she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",
-                                 inputs=[Input("data_images"),
-                                         Input("psf_images_and_tables"),
-                                         Input("segmentation_images"),
-                                         Input("detections_tables"),
+                                 inputs=[Input("data_images", mime_type="json", content_type="listfile"),
+                                         Input("psf_images_and_tables", mime_type="json", content_type="listfile"),
+                                         Input("segmentation_images", mime_type="json", content_type="listfile"),
+                                         Input("detections_tables", mime_type="json", content_type="listfile"),
                                          Input("galaxy_population_priors_table"),
                                          Input("calibration_parameters_product"),
-                                         Input("calibration_parameters_listfile")],
+                                         Input("calibration_parameters_listfile", mime_type="json", content_type="listfile")],
                                  outputs=[Output("shear_estimates_product"),
                                           Output("shear_estimates_listfile", mime_type="json", content_type="listfile")])
 

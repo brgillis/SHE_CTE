@@ -24,31 +24,31 @@ from SHE_CTE_Pipeline.package_definition import she_estimate_shear, she_validate
 
 @pipeline(outputs=('validated_shear_estimates_table'))
 def shear_analysis_pipeline( data_images,
-                             psf_calibration_product,
-                             psf_calibration_listfile,
+                             psf_calibration_products,
                              segmentation_images,
                              detections_tables,
-                             astrometry_product,
-                             aocs_time_series_product,
-                             mission_time_product,
+                             astrometry_products,
+                             aocs_time_series_products,
+                             mission_time_products,
                              galaxy_population_priors_table,
                              calibration_parameters_product,
+                             calibration_parameters_listfile,
                              shear_validation_statistics_table ):
     
     psf_images_and_tables = she_fit_psf( data_images = data_images, 
                                          detections_tables = detections_tables,
-                                         astrometry_product = astrometry_product,
-                                         aocs_time_series_product = aocs_time_series_product,
-                                         mission_time_product = mission_time_product,
-                                         psf_calibration_product = psf_calibration_product,
-                                         psf_calibration_listfile = psf_calibration_listfile, )
+                                         astrometry_products = astrometry_products,
+                                         aocs_time_series_products = aocs_time_series_products,
+                                         mission_time_products = mission_time_products,
+                                         psf_calibration_products = psf_calibration_products, )
     
     shear_estimates_product, shear_estimates_listfile = she_estimate_shear( data_images = data_images,
                                                               psf_images_and_tables = psf_images_and_tables,
                                                               segmentation_images = segmentation_images,
                                                               detections_tables = detections_tables,
                                                               galaxy_population_priors_table = galaxy_population_priors_table,
-                                                              calibration_parameters_product = calibration_parameters_product )
+                                                              calibration_parameters_product = calibration_parameters_product,
+                                                              calibration_parameters_listfile = calibration_parameters_listfile )
     
     validated_shear_estimates_table = she_validate_shear( shear_estimates_product = shear_estimates_product,
                                                           shear_estimates_listfile = shear_estimates_listfile,
