@@ -21,10 +21,15 @@
 """
 
 import argparse
-from SHE_GST_IceBRGpy.logging import getLogger
-
+from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+
+if force_dry_run:
+    from SHE_CTE_ShearEstimation.estimate_shears_dry import estimate_shears_from_args
+else:
+    from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+
+from SHE_GST_IceBRGpy.logging import getLogger
 
 def defineSpecificProgramOptions():
     """
@@ -46,39 +51,26 @@ def defineSpecificProgramOptions():
     
     # Required input arguments
     
-    parser.add_argument('--data_images',type=str, nargs='+',
-                        help='FITS file containing the observed/simulated image.')
+    parser.add_argument('--data_images',type=str,
+                        help='.json listfile containing filenames of data images.')
     
-    parser.add_argument('--psf_images',type=str, nargs='+',
-                        help='FITS file containing the PSF image.')
+    parser.add_argument('--psf_images',type=str,
+                        help='.json listfile containing filenames of psf images.')
     
-    parser.add_argument('--noise_images',type=str, nargs='+',
-                        help='FITS file containing the noise map.')
+    parser.add_argument('--segmentation_images',type=str,
+                        help='.json listfile containing filenames of segmentation map images.')
     
-    parser.add_argument('--mask_images',type=str, nargs='+',
-                        help='FITS file containing the mask.')
+    parser.add_argument('--detections_tables',type=str,
+                        help='.json listfile containing filenames of detections tables.')
     
-    parser.add_argument('--segmentation_images',type=str, nargs='+',
-                        help='FITS file containing the segmentation map.')
+    parser.add_argument('--galaxy_population_priors_table',type=str,
+                        help='Filename of galaxy population priors table (fits binary table).')
     
-    parser.add_argument('--detections_tables',type=str, nargs='+',
-                        help='FITS file containing the detections table.')
+    parser.add_argument('--calibration_parameters_product',type=str,
+                        help='Filename of calibration parameters product (XML data product).')
     
-    # Method data (optional, can be used in pipeline)
-    parser.add_argument('--KSB_data',type=str, default="",
-                        help="Filename containing method data for KSB.")
-    
-    parser.add_argument('--REGAUSS_data',type=str, default="",
-                        help="Filename containing method data for REGAUSS.")
-    
-    parser.add_argument('--MegaLUT_data',type=str, default="",
-                        help="Filename containing method data for MegaLUT.")
-    
-    parser.add_argument('--LensMC_data',type=str, default="",
-                        help="Filename containing method data for LensMC.")
-    
-    parser.add_argument('--BFD_data',type=str, default="",
-                        help="Filename containing method data for BFD.")
+    parser.add_argument('--calibration_parameters_listfile',type=str,
+                        help='.json listfile containing filenames of calibration parameters files.')
     
     # Optional input arguments (cannot be used in pipeline)
     
@@ -87,8 +79,10 @@ def defineSpecificProgramOptions():
     
     # Output arguments
     
-    parser.add_argument('--shear_measurements_product',type=str,
-                        help='XML data product to contain file links to the shear measurements tables.')
+    parser.add_argument('--shear_estimates_product',type=str,
+                        help='XML data product to contain file links to the shear estimates tables.')
+    parser.add_argument('--shear_estimates_listfile',type=str,
+                        help='.json listfile to contain filenames of shear estimates tables.')
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
 
