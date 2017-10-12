@@ -2,7 +2,7 @@
 
     Created 12 Oct 2017
 
-    Magic values related to the pipelines.
+    Magic values related to multiple projects in SHE_PPT
 
     ---------------------------------------------------------------------
 
