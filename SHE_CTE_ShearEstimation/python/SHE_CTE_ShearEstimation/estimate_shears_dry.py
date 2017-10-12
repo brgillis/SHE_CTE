@@ -30,7 +30,8 @@ from SHE_PPT.file_io import read_listfile, write_listfile, read_pickled_product,
 from SHE_PPT.galaxy_population_table_format import tf as gptf
 from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_image import she_image
-from SHE_PPT import shear_estimates_product as sep 
+from SHE_PPT import shear_estimates_product as sep
+from SHE_PPT.shear_estimates_table_format import tf as setf 
 from SHE_PPT.table_utility import is_in_format
 
 sep.init()
@@ -151,6 +152,21 @@ def estimate_shears_from_args(args):
                                                                  LensMC_filename = get_allowed_filename("DRY_LensMC_SHM","0"),
                                                                  MegaLUT_filename = get_allowed_filename("DRY_MegaLUT_SHM","0"),
                                                                  REGAUSS_filename = get_allowed_filename("DRY_REGAUSS_SHM","0"))
+    
+    def append_hdu(filename, hdu):
+        f = fits.open(filename, mode='append')
+        try:
+            f.append(hdu)
+        finally:
+            f.close()
+    
+    for filename in shear_estimates_product.get_all_filenames():
+        shear_estimates_table = initialise
+        
+        for j in range(num_detectors):
+            
+            shm_hdu = table_to_hdu(initialise_psf_table(detector=j))
+            append_hdu( filename, shm_hdu)
     
     write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
     

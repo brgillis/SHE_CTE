@@ -35,6 +35,18 @@ from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format
 
+from SHE_PPT import aocs_time_series_product
+aocs_time_series_product.init()
+
+from SHE_PPT import astrometry_product
+astrometry_product.init()
+
+from SHE_PPT import mission_time_product
+mission_time_product.init()
+
+from SHE_PPT import psf_calibration_product
+psf_calibration_product.init()
+
 def fit_psfs(args):
     """
         Dry-run of PSF Fitting, creating only dummy files and not expecting anything of input
