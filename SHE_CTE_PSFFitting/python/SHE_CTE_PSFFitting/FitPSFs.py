@@ -1,8 +1,8 @@
-""" @file SimulateImages.py
+""" @file FitPSFs.py
 
-    Created 21 Aug 2017
+    Created 12 Oct 2017
 
-    Executable for generating simulated images.
+    Executable for fitting PSFs and generating images of them.
 
     ---------------------------------------------------------------------
 
