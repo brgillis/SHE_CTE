@@ -3,7 +3,6 @@ elements_subdir(SHE_CTE_ImageSimulation)
 
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
-elements_depends_on_subdirs(SHE_GST_IceBRGpy)
 
 # Instruction for Python module installation
 elements_install_python_modules()

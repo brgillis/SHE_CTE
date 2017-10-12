@@ -22,8 +22,9 @@
 
 import argparse
 
+from ElementsKernel.Logging.logging import getLogger
+
 from SHE_CTE_PSFFitting import magic_values as mv
-from SHE_GST_IceBRGpy.logging import getLogger
 
 from SHE_PSM import fit_psfs
 
