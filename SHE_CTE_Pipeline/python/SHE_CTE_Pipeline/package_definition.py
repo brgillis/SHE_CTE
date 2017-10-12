@@ -44,7 +44,8 @@ she_fit_psf = Executable(command="E-Run SHE_CTE_FitPSF",
                                  Input("astrometry"),
                                  Input("aocs_time_series"),
                                  Input("mission_time"),
-                                 Input("psf_calibration_product"),],
+                                 Input("psf_calibration_product"),
+                                 Input("psf_calibration_listfile", mime_type="json", content_type="listfile"),],
                          outputs=[Output("psf_images_and_tables")])
 
 she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",
@@ -53,11 +54,14 @@ she_estimate_shear = Executable(command="E-Run SHE_CTE_EstimateShear",
                                          Input("segmentation_images"),
                                          Input("detections_tables"),
                                          Input("galaxy_population_priors_table"),
-                                         Input("calibration_parameters_product")],
-                                 outputs=[Output("shear_estimates_product")])
+                                         Input("calibration_parameters_product"),
+                                         Input("calibration_parameters_listfile")],
+                                 outputs=[Output("shear_estimates_product"),
+                                          Output("shear_estimates_listfile", mime_type="json", content_type="listfile")])
 
 she_validate_shear = Executable(command="E-Run SHE_CTE_ValidateShear",
                                 inputs=[Input("shear_estimates_product"),
+                                        Input("shear_estimates_listfile", mime_type="json", content_type="listfile"),
                                         Input("shear_validation_statistics_table")],
                                 outputs=[Output("validated_shear_estimates_table")])
 
