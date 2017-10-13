@@ -60,37 +60,37 @@ def defineSpecificProgramOptions():
                         help='Number of detectors per exposure.')
     
     # Output filenames
-    parser.add_argument('data_images', type=str, default="mock_data_images.json",
+    parser.add_argument('--data_images', type=str, default="mock_data_images.json",
                         help="Desired name of listfile containing mock data images.")
     
-    parser.add_argument('psf_calibration_products', type=str, default="mock_psf_calibration_products.json",
+    parser.add_argument('--psf_calibration_products', type=str, default="mock_psf_calibration_products.json",
                         help="Desired name of listfile containing mock PSF calibration products.")
     
-    parser.add_argument('segmentation_images', type=str, default="mock_segmentation_images.json",
+    parser.add_argument('--segmentation_images', type=str, default="mock_segmentation_images.json",
                         help="Desired name of listfile containing mock segmentation images.")
     
-    parser.add_argument('detections_tables', type=str, default="mock_detections_tables.json",
+    parser.add_argument('--detections_tables', type=str, default="mock_detections_tables.json",
                         help="Desired name of listfile containing mock detections tables.")
     
-    parser.add_argument('astrometry_products', type=str, default="mock_astrometry_products.json",
+    parser.add_argument('--astrometry_products', type=str, default="mock_astrometry_products.json",
                         help="Desired name of listfile containing mock astrometry products.")
     
-    parser.add_argument('aocs_time_series_products', type=str, default="mock_aocs_time_series_products.json",
+    parser.add_argument('--aocs_time_series_products', type=str, default="mock_aocs_time_series_products.json",
                         help="Desired name of listfile containing mock aocs time series products.")
     
-    parser.add_argument('mission_time_products', type=str, default="mock_mission_time_products.json",
+    parser.add_argument('--mission_time_products', type=str, default="mock_mission_time_products.json",
                         help="Desired name of listfile containing mock mission time products.")
     
-    parser.add_argument('galaxy_population_priors_table', type=str, default="mock_galaxy_population_priors_table.fits",
+    parser.add_argument('--galaxy_population_priors_table', type=str, default="mock_galaxy_population_priors_table.fits",
                         help="Desired name of fits file containing mock galaxy_population_priors.")
     
-    parser.add_argument('calibration_parameters_product', type=str, default="mock_calibration_parameters_product.bin",
+    parser.add_argument('--calibration_parameters_product', type=str, default="mock_calibration_parameters_product.bin",
                         help="Desired name of mock calibration parameters data product.")
     
-    parser.add_argument('calibration_parameters_listfile', type=str, default="mock_calibration_parameters_listfile.json",
+    parser.add_argument('--calibration_parameters_listfile', type=str, default="mock_calibration_parameters_listfile.json",
                         help="Desired name of listfile containing files associated with the mock calibration parameters product.")
     
-    parser.add_argument('shear_validation_statistics_table', type=str, default="shear_validation_statistics_table.fits",
+    parser.add_argument('--shear_validation_statistics_table', type=str, default="shear_validation_statistics_table.fits",
                         help="Desired name of fits file containing mock shear validation statistics.")
     
 
