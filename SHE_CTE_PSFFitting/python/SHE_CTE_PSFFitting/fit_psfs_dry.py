@@ -38,7 +38,7 @@ from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_stack import SHEStack
-from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 
 from SHE_PPT import aocs_time_series_product
