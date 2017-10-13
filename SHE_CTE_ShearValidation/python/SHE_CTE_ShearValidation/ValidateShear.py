@@ -22,7 +22,7 @@
 
 import argparse
 
-from ElementsKernel.Logging.logging import getLogger
+from ElementsKernel.Loggingimport getLogger
 
 from SHE_CTE_ValidateShear import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
