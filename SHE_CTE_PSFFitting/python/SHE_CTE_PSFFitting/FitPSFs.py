@@ -68,7 +68,7 @@ def defineSpecificProgramOptions():
                         help='Filename for list of PSF calibration data products (.json listfile)')
     
     # Output filenames
-    parser.add_argument('psf_images_and_tables',type=str,
+    parser.add_argument('--psf_images_and_tables',type=str,
                         help='Desired filename for output list of PSF images and tables (.json listfile).')
     
 
