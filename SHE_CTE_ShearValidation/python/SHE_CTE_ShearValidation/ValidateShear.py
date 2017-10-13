@@ -54,15 +54,15 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
     
     # Input filenames
-    parser.add_argument('shear_estimates_product',type=str,
+    parser.add_argument('--shear_estimates_product',type=str,
                         help='Filename for shear estimates data product (XML data product)')
-    parser.add_argument('shear_estimates_listfile',type=str,
+    parser.add_argument('--shear_estimates_listfile',type=str,
                         help='Filename for listfile associated with shear estimates data product (.json listfile)')
-    parser.add_argument('shear_validation_statistics_table',type=str,
+    parser.add_argument('--shear_validation_statistics_table',type=str,
                         help='Filename for table of shear validation statistics.')
     
     # Output filenames
-    parser.add_argument('validated_shear_estimates_table',type=str,
+    parser.add_argument('--validated_shear_estimates_table',type=str,
                         help='Desired filename for output shear estimates table (multi-HDU fits file).')
     
 

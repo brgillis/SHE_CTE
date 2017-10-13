@@ -54,17 +54,17 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
     
     # Input filenames
-    parser.add_argument('data_images',type=str,
+    parser.add_argument('--data_images',type=str,
                         help='Filename for list of data images (.json listfile)')
-    parser.add_argument('detections_tables',type=str,
+    parser.add_argument('--detections_tables',type=str,
                         help='Filename for list of detections tables (.json listfile)')
-    parser.add_argument('astrometry_products',type=str,
+    parser.add_argument('--astrometry_products',type=str,
                         help='Filename for list of astrometry data products (.json listfile)')
-    parser.add_argument('aocs_time_series_products',type=str,
+    parser.add_argument('--aocs_time_series_products',type=str,
                         help='Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('mission_time_products',type=str,
+    parser.add_argument('--mission_time_products',type=str,
                         help='Filename for list of mission time data products (.json listfile)')
-    parser.add_argument('psf_calibration_products',type=str,
+    parser.add_argument('--psf_calibration_products',type=str,
                         help='Filename for list of PSF calibration data products (.json listfile)')
     
     # Output filenames
