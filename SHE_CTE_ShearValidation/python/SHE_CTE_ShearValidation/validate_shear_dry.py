@@ -54,6 +54,8 @@ def validate_shear(args):
     
     # Shear estimates product
     
+    logger.info("Reading mock dry shear estimates product...")
+    
     shear_estimates_product = read_pickled_product(args.shear_estimates_product, args.shear_estimates_listfile)
 
     if not isinstance(shear_estimates_product, DpdShearEstimatesProduct):
@@ -77,6 +79,8 @@ def validate_shear(args):
             
     # Shear validation statistics
     
+    logger.info("Reading mock dry shear validation statistics...")
+    
     shear_validation_statistics_table = Table.read(args.shear_validation_statistics_table)
             
     if not is_in_format(shear_validation_statistics_table,setf):
@@ -84,11 +88,15 @@ def validate_shear(args):
     
     
     # Set up mock output in the correct format
+    
+    logger.info("Generating mock dry validated shear estimates...")
         
     for j in range(num_detectors):
         
         shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
         append_hdu( args.validated_shear_estimates_table, shm_hdu)
+    
+    logger.info("Finished mock dry shear validation.")
         
     return
     

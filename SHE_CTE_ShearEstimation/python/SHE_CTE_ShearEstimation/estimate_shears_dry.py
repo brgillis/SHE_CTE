@@ -240,7 +240,7 @@ def estimate_shears_from_args(args):
     
     write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
     
-    
+    logger.info("Finished mock dry shear estimation.")
    
     return
     

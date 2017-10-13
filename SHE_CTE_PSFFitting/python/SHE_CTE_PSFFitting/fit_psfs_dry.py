@@ -230,6 +230,8 @@ def fit_psfs(args):
         logger.info("Finished outputting mock dry PSF images and tables for exposure " + str(i) + ".")
         
     write_listfile( args.psf_images_and_tables, psf_image_and_table_filenames )
+    
+    logger.info("Finished mock dry psf fitting.")
         
     return
     
