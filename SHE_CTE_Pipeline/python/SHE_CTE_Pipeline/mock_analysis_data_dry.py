@@ -92,6 +92,8 @@ def make_mock_analysis_data(args):
             flg_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>i4')),
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
             append_hdu( filename, flg_hdu)
+    
+        logger.info("Finished generating exposure " + str(i) + ".")
         
     write_listfile(args.data_images,data_images)
     
