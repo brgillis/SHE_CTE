@@ -146,12 +146,21 @@ def make_mock_analysis_data(args):
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("SEG_DRY",str(i))
+        filename = get_allowed_filename("SEG_DRY",str(i),
+                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
         
-        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-        append_hdu( filename, null_hdu)
+        hdulist = fits.HDUList()
+        
+        for j in range(num_detectors):
+        
+            seg_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+            hdulist.append(seg_hdu)
+            
+        hdulist.writeto(filename,clobber=True)
         
         segmentation_images_filenames.append(filename)
+    
+        logger.info("Finished generating detections for exposure " + str(i) + ".")
     
     write_listfile(args.segmentation_images,segmentation_images_filenames)
     
@@ -175,6 +184,8 @@ def make_mock_analysis_data(args):
         hdulist.writeto(filename,clobber=True)
         
         detections_tables_filenames.append(filename)
+    
+        logger.info("Finished generating detections for exposure " + str(i) + ".")
     
     write_listfile(args.detections_tables,detections_tables_filenames)
     
