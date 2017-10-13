@@ -28,7 +28,7 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.aocs_time_series_product import DpdSheAocsTimeSeriesProduct
 from SHE_PPT.astrometry_product import DpdSheAstrometryProduct
 from SHE_PPT.detections_table_format import tf as detf
-from SHE_PPT.file_io import read_listfile, read_pickled_product, write_pickled_product
+from SHE_PPT.file_io import read_listfile, read_pickled_product, write_pickled_product, append_hdu
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
@@ -130,13 +130,6 @@ def fit_psfs(args):
     
     num_exposures = len(data_images)
     psf_image_and_table_filenames = []
-    
-    def append_hdu(filename, hdu):
-        f = fits.open(filename, mode='append')
-        try:
-            f.append(hdu)
-        finally:
-            f.close()
     
     for i in range(num_exposures):
         

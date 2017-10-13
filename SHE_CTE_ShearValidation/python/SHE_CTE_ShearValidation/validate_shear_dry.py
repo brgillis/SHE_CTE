@@ -25,7 +25,9 @@ from astropy.io import fits
 from astropy.table import Table
 
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT.file_io import read_listfile, write_listfile, read_pickled_product, write_pickled_product, get_allowed_filename
+from SHE_PPT.file_io import (read_listfile, write_listfile,
+                             read_pickled_product, write_pickled_product,
+                             get_allowed_filename, append_hdu)
 from SHE_PPT import shear_estimates_product as sep
 from SHE_PPT.shear_estimates_table_format import tf as setf
 from SHE_PPT.table_utility import is_in_format
@@ -78,13 +80,6 @@ def validate_shear(args):
     
     
     # Set up mock output in the correct format
-    
-    def append_hdu(filename, hdu):
-        f = fits.open(filename, mode='append')
-        try:
-            f.append(hdu)
-        finally:
-            f.close()
         
     for j in range(num_detectors):
         
