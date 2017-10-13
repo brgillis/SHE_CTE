@@ -24,13 +24,13 @@ import argparse
 
 from ElementsKernel.Logging import getLogger
 
-from SHE_CTE_ValidateShear import magic_values as mv
+from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
 
 if force_dry_run:
-    from SHE_CTE_ValidateShear.validate_shear_dry import validate_shear
+    from SHE_CTE_ShearValidation.validate_shear_dry import validate_shear
 else:
-    from SHE_CTE_ValidateShear.validate_shear import validate_shear
+    from SHE_CTE_ShearValidation.validate_shear import validate_shear
 
 def defineSpecificProgramOptions():
     """
