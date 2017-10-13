@@ -181,7 +181,7 @@ def make_mock_analysis_data(args):
         
         for j in range(num_detectors):
         
-            dtc_hdu = table_to_hdu(initialise_detections_table(detector=i))
+            dtc_hdu = table_to_hdu(initialise_detections_table(detector=j))
             hdulist.append(dtc_hdu)
             
         hdulist.writeto(filename,clobber=True)
