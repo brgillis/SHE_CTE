@@ -111,13 +111,13 @@ def fit_psfs(args):
                                           mask=mask_hdus[i][j].data,
                                           header=sci_hdus[i][j].header))
             
-    num_exposures = len(she_images[0])
+    num_exposures = len(data_images)
     she_stacks = []
     for j in range(num_detectors):
         detector_images = []
         for i in range(num_exposures):
             detector_images.append(she_images[i][j])
-        she_stacks.append(detector_images[j])
+        she_stacks.append(detector_images)
         
     
     # Detections tables
