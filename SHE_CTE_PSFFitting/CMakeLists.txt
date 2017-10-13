@@ -1,5 +1,5 @@
 # Declare this directory as an Elements module
-elements_subdir(SHE_CTE_ImageSimulation)
+elements_subdir(SHE_CTE_PSFFitting)
 
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
