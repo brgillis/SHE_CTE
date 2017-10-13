@@ -35,7 +35,7 @@ from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.file_io import read_listfile, read_pickled_product, write_pickled_product, append_hdu, get_allowed_filename
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
-from SHE_PPT.psf_table_format import tf as psft
+from SHE_PPT.psf_table_format import initialise_psf_table
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
