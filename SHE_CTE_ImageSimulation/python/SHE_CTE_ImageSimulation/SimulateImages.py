@@ -22,12 +22,19 @@
 
 import argparse
 
+from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ImageSimulation import magic_values as mv
+
 from SHE_GST_GalaxyImageGeneration.config.config_default import (allowed_options,
-                                                            allowed_fixed_params,
-                                                            allowed_survey_settings)
-from SHE_GST_GalaxyImageGeneration.run_from_config import run_from_args
+                                                                 allowed_fixed_params,
+                                                                 allowed_survey_settings)
 from SHE_GST_GalaxyImageGeneration.generate_images import generate_images
+
+if force_dry_run:
+    from SHE_CTE_ImageSimulation.simulate_images_dry import run_from_args # TODO - implement this
+else:
+    from SHE_GST_GalaxyImageGeneration.run_from_config import run_from_args
+
 from SHE_GST_IceBRGpy.logging import getLogger
 
 def defineSpecificProgramOptions():

@@ -1,8 +1,8 @@
-""" @file FitPSFs.py
+""" @file ValidateShear.py
 
     Created 12 Oct 2017
 
-    Executable for fitting PSFs and generating images of them.
+    Executable for validating shear measurements and creating a combined catalogue.
 
     ---------------------------------------------------------------------
 
@@ -24,13 +24,13 @@ import argparse
 
 from ElementsKernel.Logging import getLogger
 
-from SHE_CTE_PSFFitting import magic_values as mv
+from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
 
 if force_dry_run:
-    from SHE_CTE_PSFFitting.fit_psfs_dry import fit_psfs
+    from SHE_CTE_ShearValidation.validate_shear_dry import validate_shear
 else:
-    from SHE_PSM import fit_psfs
+    from SHE_CTE_ShearValidation.validate_shear import validate_shear
 
 def defineSpecificProgramOptions():
     """
@@ -44,7 +44,7 @@ def defineSpecificProgramOptions():
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_FitPSFs defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_ValidateShear defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -54,25 +54,19 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
     
     # Input filenames
-    parser.add_argument('--data_images',type=str,
-                        help='Filename for list of data images (.json listfile)')
-    parser.add_argument('--detections_tables',type=str,
-                        help='Filename for list of detections tables (.json listfile)')
-    parser.add_argument('--astrometry_products',type=str,
-                        help='Filename for list of astrometry data products (.json listfile)')
-    parser.add_argument('--aocs_time_series_products',type=str,
-                        help='Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('--mission_time_products',type=str,
-                        help='Filename for list of mission time data products (.json listfile)')
-    parser.add_argument('--psf_calibration_products',type=str,
-                        help='Filename for list of PSF calibration data products (.json listfile)')
+    parser.add_argument('--shear_estimates_product',type=str,
+                        help='Filename for shear estimates data product (XML data product)')
+    parser.add_argument('--shear_estimates_listfile',type=str,
+                        help='Filename for listfile associated with shear estimates data product (.json listfile)')
+    parser.add_argument('--shear_validation_statistics_table',type=str,
+                        help='Filename for table of shear validation statistics.')
     
     # Output filenames
-    parser.add_argument('--psf_images_and_tables',type=str,
-                        help='Desired filename for output list of PSF images and tables (.json listfile).')
+    parser.add_argument('--validated_shear_estimates_table',type=str,
+                        help='Desired filename for output shear estimates table (multi-HDU fits file).')
     
 
-    logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')
+    logger.debug('Exiting SHE_CTE_ValidateShear defineSpecificProgramOptions()')
 
     return parser
 
@@ -90,19 +84,19 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_FitPSFs mainMethod()')
+    logger.debug('# Entering SHE_CTE_ValidateShear mainMethod()')
     logger.debug('#')
         
     if args.profile:
         import cProfile
-        cProfile.runctx("fit_psfs(args)",{},
-                        {"fit_psfs":fit_psfs,
+        cProfile.runctx("validate_shear(args)",{},
+                        {"validate_shear":validate_shear,
                          "args":args,},
-                        filename="fit_psfs.prof")
+                        filename="validate_shear.prof")
     else:
-        fit_psfs(args)
+        validate_shear(args)
 
-    logger.debug('Exiting SHE_CTE_FitPSFs mainMethod()')
+    logger.debug('Exiting SHE_CTE_ValidateShear mainMethod()')
 
     return
 

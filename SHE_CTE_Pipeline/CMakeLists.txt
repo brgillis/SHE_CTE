@@ -3,17 +3,21 @@ elements_subdir(SHE_CTE_Pipeline)
 
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
-elements_depends_on_subdirs(SHE_PPT)
-elements_depends_on_subdirs(SHE_GST_IceBRGpy)
+elements_depends_on_subdirs(SHE_CTE)
+elements_depends_on_subdirs(SHE_CTE_BiasMeasurement)
 elements_depends_on_subdirs(SHE_CTE_ImageSimulation)
 elements_depends_on_subdirs(SHE_CTE_ShearEstimation)
-elements_depends_on_subdirs(SHE_CTE_BiasMeasurement)
+elements_depends_on_subdirs(SHE_CTE_ShearValidation)
+elements_depends_on_subdirs(SHE_CTE_PSFFitting)
+elements_depends_on_subdirs(SHE_GST_IceBRGpy)
+elements_depends_on_subdirs(SHE_PPT)
 
 # Instruction for Python module installation
 elements_install_python_modules()
 
 # Instruction for creating a Python executable
 elements_add_python_program(SHE_CTE_PrepareConfigs SHE_CTE_Pipeline.PrepareConfigs)
+elements_add_python_program(SHE_CTE_MakeMockAnalysisData SHE_CTE_Pipeline.MakeMockAnalysisData)
 
 # Install the configuration files
 # elements_install_conf_files()
