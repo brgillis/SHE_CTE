@@ -75,7 +75,7 @@ def fit_psfs(args):
 
     sci_hdus = []
     noisemap_hdus = []
-    segmentation_hdus = []
+    mask_hdus = []
     
     she_images = []
     
