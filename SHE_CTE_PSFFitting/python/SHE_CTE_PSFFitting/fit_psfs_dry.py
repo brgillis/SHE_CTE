@@ -124,10 +124,10 @@ def fit_psfs(args):
     
     logger.info("Generating mock dry detection tables...")
     
-    detection_table_filenames = read_listfile(args.detections_tables)
-    detection_tables = []
+    detections_table_filenames = read_listfile(args.detections_tables)
+    detections_tables = []
     
-    for i, filename in enumerate(detection_table_filenames):
+    for i, filename in enumerate(detections_table_filenames):
         
         detections_tables_hdulist = fits.open(filename, mode="readonly", memmap=True)
         num_detectors = len(detections_tables_hdulist)-1
