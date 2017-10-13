@@ -73,17 +73,17 @@ def make_mock_analysis_data(args):
             
             # Science image
             im_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
-                                   header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.sci_tag)))
+                                   header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.sci_tag),)))
             append_hdu( filename, im_hdu)
             
             # Noise map
             rms_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
-                                    header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.noisemap_tag)))
+                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.noisemap_tag),)))
             append_hdu( filename, rms_hdu)
             
             # Mask map
             flg_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>i4')),
-                                    header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.mask_tag)))
+                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
             append_hdu( filename, flg_hdu)
         
     write_listfile(args.data_images,data_images)
