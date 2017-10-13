@@ -42,6 +42,7 @@ from SHE_PPT.psf_calibration_product import create_psf_calibration_product
 from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
 
 from SHE_PPT import aocs_time_series_product
+from astropy.io.fits.convenience import table_to_hdu
 aocs_time_series_product.init()
 
 from SHE_PPT import astrometry_product
@@ -76,22 +77,26 @@ def make_mock_analysis_data(args):
         filename = get_allowed_filename("OBS_DRY",str(i))
         data_images.append(filename)
         
+        hdulist = fits.HDUList()
+        
         for j in range(num_detectors):
             
             # Science image
             im_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.sci_tag),)))
-            append_hdu( filename, im_hdu)
+            hdulist.append(im_hdu)
             
             # Noise map
             rms_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.noisemap_tag),)))
-            append_hdu( filename, rms_hdu)
+            hdulist.append(rms_hdu)
             
             # Mask map
             flg_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>i4')),
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
-            append_hdu( filename, flg_hdu)
+            hdulist.append(flg_hdu)
+            
+        hdulist.writeto(filename,clobber=True)
     
         logger.info("Finished generating exposure " + str(i) + ".")
         
@@ -160,8 +165,14 @@ def make_mock_analysis_data(args):
         
         filename = get_allowed_filename("DTC_DRY",str(i))
         
-        detections_table = initialise_detections_table(detector=i)
-        detections_table.write(filename,format="fits")
+        hdulist = fits.HDUList()
+        
+        for j in range(num_detectors):
+        
+            dtc_hdu = table_to_hdu(initialise_detections_table(detector=i))
+            hdulist.append(dtc_hdu)
+            
+        hdulist.writeto(filename,clobber=True)
         
         detections_tables_filenames.append(filename)
     
