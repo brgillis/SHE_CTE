@@ -156,7 +156,7 @@ def make_mock_analysis_data(args):
         for j in range(num_detectors):
         
             seg_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
+                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
             hdulist.append(seg_hdu)
             
         hdulist.writeto(filename,clobber=True)
@@ -200,7 +200,7 @@ def make_mock_analysis_data(args):
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("ASTROMETRY_DRY",str(i))
+        filename = get_allowed_filename("ASTROMETRY_DRY",str(i),extension=".bin")
         
         astrometry_product = create_astrometry_product()
         
@@ -218,7 +218,7 @@ def make_mock_analysis_data(args):
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("ASTROMETRY_DRY",str(i))
+        filename = get_allowed_filename("AOCS_TIME_SERIES_DRY",str(i),extension=".bin")
         
         aocs_time_series_product = create_aocs_time_series_product()
         
@@ -236,7 +236,7 @@ def make_mock_analysis_data(args):
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("ASTROMETRY_DRY",str(i))
+        filename = get_allowed_filename("MISSON_TIME_DRY",str(i),extension=".bin")
         
         mission_time_product = create_mission_time_product()
         
