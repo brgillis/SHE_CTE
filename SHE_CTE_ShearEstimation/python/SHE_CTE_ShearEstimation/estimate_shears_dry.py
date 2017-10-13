@@ -26,6 +26,7 @@ from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
 
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
 
 from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
@@ -34,15 +35,18 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, append_hdu)
 from SHE_PPT.galaxy_population_table_format import tf as gptf
-from SHE_PPT.psf_table_format import tf as psft
+from SHE_PPT.psf_table_format import tf as pstf
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT import shear_estimates_product as sep
-from SHE_PPT.shear_estimates_table_format import tf as setf 
-from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 
 sep.init()
+
+from SHE_PPT import calibration_parameters_product
+calibration_parameters_product.init()
 
 def estimate_shears_from_args(args):
     """
@@ -58,6 +62,7 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry data images...")
     
+    data_images = read_listfile(args.data_images)
 #     she_stack = SHEStack.read(data_images,
 #                               data_ext = ppt_mv.sci_tag,
 #                               mask_ext = ppt_mv.mask_tag,
@@ -113,24 +118,22 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry detections tables...")
     
-    detection_table_filenames = read_listfile(args.detections_tables)
-    detection_tables = []
+    detections_table_filenames = read_listfile(args.detections_tables)
+    detections_tables = []
     
-    for i, filename in enumerate(detection_table_filenames):
+    for i, filename in enumerate(detections_table_filenames):
         
         detections_tables_hdulist = fits.open(filename, mode="readonly", memmap=True)
         num_detectors = len(detections_tables_hdulist)-1
         
         detections_tables.append([])
         
-        hdulist = fits.open(args.detections_tables,mode="readonly",memmap=True)
-        
         for j in range(num_detectors):
             
             extname = str(j)+"."+ppt_mv.detections_tag
-            table_index = find_extension(hdulist,extname)
+            table_index = find_extension(detections_tables_hdulist,extname)
             
-            detections_tables[i].append( Table.read(hdulist(table_index)) )
+            detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
             
             if not is_in_format(detections_tables[i][j],detf):
                 raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
@@ -183,13 +186,13 @@ def estimate_shears_from_args(args):
     for i, filename in enumerate(segmentation_filenames):
         
         segmentation_hdulist = fits.open(filename, mode="readonly", memmap=True)
-        num_detectors = len(psf_images_and_table_hdulist)-1
+        num_detectors = len(segmentation_hdulist)
         
         segmentation_hdus.append([])
         
         for j in range(num_detectors):
             
-            segmentation_extname = str(j) + "." + ppt_mv.segmentation_psf_tag
+            segmentation_extname = str(j) + "." + ppt_mv.segmentation_tag
             segmentation_index = find_extension(segmentation_hdulist, segmentation_extname)
             
             segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])
@@ -208,7 +211,7 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry calibration parameters...")
     
-    calibration_parameters_product = read_pickled_product(args.calibration_parameters_products,
+    calibration_parameters_product = read_pickled_product(args.calibration_parameters_product,
                                                           args.calibration_parameters_listfile)
     if not isinstance(calibration_parameters_product, DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + args.calibration_parameters_product + " is invalid type.")
@@ -225,12 +228,15 @@ def estimate_shears_from_args(args):
     
     
     for filename in shear_estimates_product.get_all_filenames():
-        shear_estimates_table = initialise
+        
+        hdulist = fits.HDUList()
         
         for j in range(num_detectors):
             
             shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
-            append_hdu( filename, shm_hdu)
+            hdulist.append(shm_hdu)
+            
+        hdulist.writeto(filename,clobber=True)
     
     write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
     
