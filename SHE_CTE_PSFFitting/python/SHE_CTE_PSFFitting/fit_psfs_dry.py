@@ -24,7 +24,11 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
+from ElementsKernel.Logging import getLogger
+
+from SHE_CTE_Pipeline import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
+
 from SHE_PPT.aocs_time_series_product import DpdSheAocsTimeSeriesProduct
 from SHE_PPT.astrometry_product import DpdSheAstrometryProduct
 from SHE_PPT.detections_table_format import tf as detf
@@ -52,10 +56,14 @@ def fit_psfs(args):
         Dry-run of PSF Fitting, creating only dummy files and not expecting anything of input
         aside from the correct format.
     """
+
+    logger = getLogger(mv.logger_name)
     
     # Load in the files in turn to make sure there aren't any issues with them.
     
     # Data images - Read in as SHEStack object
+    
+    logger.info("Reading mock dry data images...")
     
     data_images = read_listfile(args.data_images)
     she_stack = SHEStack.read(data_images,
@@ -64,6 +72,8 @@ def fit_psfs(args):
                               noisemap_ext = ppt_mv.noisemap_tag)
     
     # Detections tables
+    
+    logger.info("Generating mock dry detection tables...")
     
     detection_table_filenames = read_listfile(args.detections_tables)
     detection_tables = []
@@ -84,6 +94,8 @@ def fit_psfs(args):
         
     # Astrometry products
     
+    logger.info("Generating mock dry astrometry products...")
+    
     astrometry_product_filenames = read_listfile(args.astrometry_products)
     astrometry_products = []
     
@@ -93,6 +105,8 @@ def fit_psfs(args):
             raise ValueError("Astrometry product from " + filename + " is invalid type.")
         
     # AocsTimeSeries products
+    
+    logger.info("Generating mock dry aocs time series products...")
     
     aocs_time_series_product_filenames = read_listfile(args.aocs_time_series_products)
     aocs_time_series_products = []
@@ -104,6 +118,8 @@ def fit_psfs(args):
         
     # MissionTime products
     
+    logger.info("Generating mock dry mission time products...")
+    
     mission_time_product_filenames = read_listfile(args.mission_time_products)
     mission_time_products = []
     
@@ -113,6 +129,8 @@ def fit_psfs(args):
             raise ValueError("MissionTime product from " + filename + " is invalid type.")
         
     # PSFCalibration products
+    
+    logger.info("Generating mock dry PSF calibration products...")
     
     all_psf_calibration_product_filenames = read_listfile(args.psf_calibration_products)
     psf_calibration_product_filenames = all_psf_calibration_product_filenames[0]
@@ -128,25 +146,34 @@ def fit_psfs(args):
     
     # Set up mock output in the correct format
     
+    logger.info("Outputting mock dry PSF images and tables...")
+    
     num_exposures = len(data_images)
     psf_image_and_table_filenames = []
     
     for i in range(num_exposures):
         
         filename = get_allowed_filename("PSF_DRY",str(i))
+        psf_image_and_table_filenames.append(filename)
+        
+        hdulist = fits.HDUList()
         
         for j in range(num_detectors):
             
             bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
                                      header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.bulge_psf_tag)))
-            append_hdu( filename, bpsf_hdu)
+            hdulist.append(bpsf_hdu)
             
             dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
                                      header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.disk_psf_tag)))
-            append_hdu( filename, dpsf_hdu)
+            hdulist.append(dpsf_hdu)
             
             psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
-            append_hdu( filename, psfc_hdu)
+            hdulist.append(psfc_hdu)
+            
+        hdulist.writeto(filename,clobber=True)
+    
+        logger.info("Finished outputting mock dry PSF images and tables for exposure " + str(i) + ".")
         
     write_listfile( args.psf_images_and_tables, psf_image_and_table_filenames )
         
