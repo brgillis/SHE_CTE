@@ -205,7 +205,7 @@ def make_mock_analysis_data(args):
         
         astrometry_product_filenames.append(filename)
         
-    write_listfile(args.astrometry_products,astrometry_products)
+    write_listfile(args.astrometry_products,astrometry_product_filenames)
     
     # AOCS time series products
     
@@ -221,7 +221,7 @@ def make_mock_analysis_data(args):
         
         aocs_time_series_product_filenames.append(filename)
         
-    write_listfile(args.aocs_time_series_products,aocs_time_series_products)
+    write_listfile(args.aocs_time_series_products,aocs_time_series_product_filenames)
     
     # Mission time products
     
@@ -237,7 +237,7 @@ def make_mock_analysis_data(args):
         
         mission_time_product_filenames.append(filename)
         
-    write_listfile(args.mission_time_products,mission_time_products)
+    write_listfile(args.mission_time_products,mission_time_product_filenames)
     
     # Galaxy population priors table
     
@@ -275,7 +275,7 @@ def make_mock_analysis_data(args):
                           args.calibration_parameters_product,
                           args.calibration_parameters_listfile)
     
-    # Detections tables
+    # Shear validation statistics tables
     
     shear_validation_statistics_table = initialise_shear_estimates_table()
     shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits")
