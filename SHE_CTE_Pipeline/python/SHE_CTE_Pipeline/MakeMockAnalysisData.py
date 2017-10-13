@@ -90,7 +90,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--calibration_parameters_listfile', type=str, default="mock_calibration_parameters_listfile.json",
                         help="Desired name of listfile containing files associated with the mock calibration parameters product.")
     
-    parser.add_argument('--shear_validation_statistics_table', type=str, default="shear_validation_statistics_table.fits",
+    parser.add_argument('--shear_validation_statistics_table', type=str, default="mock_shear_validation_statistics_table.fits",
                         help="Desired name of fits file containing mock shear validation statistics.")
     
 
