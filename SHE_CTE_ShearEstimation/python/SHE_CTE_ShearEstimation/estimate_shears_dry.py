@@ -37,6 +37,7 @@ from SHE_PPT.she_image import she_image
 from SHE_PPT import shear_estimates_product as sep
 from SHE_PPT.shear_estimates_table_format import tf as setf 
 from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.utility import find_extension
 
 sep.init()
 
@@ -68,20 +69,19 @@ def estimate_shears_from_args(args):
         
         detections_tables.append([])
         
+        hdulist = fits.open(args.detections_tables,mode="readonly",memmap=True)
+        
         for j in range(num_detectors):
             
-            detections_tables[i].append( Table.read( args.detections_tables, format='fits', hdu=j+1 ) )
+            extname = str(j)+"."+ppt_mv.detections_tag
+            table_index = find_extension(hdulist,extname)
+            
+            detections_tables[i].append( Table.read(hdulist(table_index)) )
             
             if not is_in_format(detections_tables[i][j],detf):
-                raise ValueError("Detections table from " + filename + " is in invalid format.")
+                raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
     
     # PSF images and tables
-    
-    def find_extension(hdulist,extname):
-        for i, hdu in enumerate(hdulist):
-            if hdu.header["EXTNAME"]==extname:
-                return i
-        return None
     
     psf_images_and_table_filenames = read_listfile(args.psf_images_and_tables)
     psf_tables = []
@@ -102,7 +102,7 @@ def estimate_shears_from_args(args):
             table_extname = str(j) + "." + ppt_mv.psf_cat_tag
             table_index = find_extension(psf_images_and_table_hdulist, table_extname)
             
-            psf_tables[i].append( Table.read( filename, format='fits', hdu=table_index ) )
+            psf_tables[i].append( Table.read( psf_images_and_table_hdulist[table_index] ) )
             
             if not is_in_format(psf_tables[i][j],pstf):
                 raise ValueError("PSF table from " + filename + " is in invalid format.")

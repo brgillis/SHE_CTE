@@ -38,6 +38,7 @@ from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.utility import find_extension
 
 from SHE_PPT import aocs_time_series_product
 aocs_time_series_product.init()
@@ -85,9 +86,14 @@ def fit_psfs(args):
         
         detections_tables.append([])
         
+        hdulist = fits.open(args.detections_tables,mode="readonly",memmap=True)
+        
         for j in range(num_detectors):
             
-            detections_tables[i].append( Table.read( args.detections_tables, format='fits', hdu=j+1 ) )
+            extname = str(j)+"."+ppt_mv.detections_tag
+            table_index = find_extension(hdulist,extname)
+            
+            detections_tables[i].append( Table.read(hdulist[table_index]) )
             
             if not is_in_format(detections_tables[i][j],detf):
                 raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
