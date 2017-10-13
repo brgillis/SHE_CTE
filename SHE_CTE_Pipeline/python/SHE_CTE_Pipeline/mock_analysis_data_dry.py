@@ -160,7 +160,7 @@ def make_mock_analysis_data(args):
         
         segmentation_images_filenames.append(filename)
     
-        logger.info("Finished generating detections for exposure " + str(i) + ".")
+        logger.info("Finished generating segmentation images for exposure " + str(i) + ".")
     
     write_listfile(args.segmentation_images,segmentation_images_filenames)
     
