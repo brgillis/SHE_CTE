@@ -40,6 +40,8 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
+    logger = getLogger(mv.logger_name)
+
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_EstimateShear defineSpecificProgramOptions()')
     logger.debug('#')

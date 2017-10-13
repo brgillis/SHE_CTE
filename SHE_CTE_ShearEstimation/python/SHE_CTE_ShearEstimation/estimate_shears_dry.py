@@ -24,6 +24,8 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
+from ElementsKernel.Logging import getLogger
+
 from SHE_PPT import magic_values as ppt_mv
 
 from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
@@ -51,6 +53,9 @@ def estimate_shears_from_args(args):
     # Load in the files in turn to make sure there aren't any issues with them.
     
     # Data images - Read in as SHEStack object
+    
+    logger.info("Reading mock dry data images...")
+    
 #     she_stack = SHEStack.read(data_images,
 #                               data_ext = ppt_mv.sci_tag,
 #                               mask_ext = ppt_mv.mask_tag,
