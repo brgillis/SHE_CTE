@@ -49,6 +49,8 @@ def estimate_shears_from_args(args):
         Dry-run of shear estimation, creating only dummy files and not expecting anything of input
         aside from the correct format.
     """
+
+    logger = getLogger(mv.logger_name)
     
     # Load in the files in turn to make sure there aren't any issues with them.
     
@@ -109,6 +111,8 @@ def estimate_shears_from_args(args):
     
     # Detections tables
     
+    logger.info("Reading mock dry detections tables...")
+    
     detection_table_filenames = read_listfile(args.detections_tables)
     detection_tables = []
     
@@ -132,6 +136,8 @@ def estimate_shears_from_args(args):
                 raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
     
     # PSF images and tables
+    
+    logger.info("Reading mock dry PSF images and tables...")
     
     psf_images_and_table_filenames = read_listfile(args.psf_images_and_tables)
     psf_tables = []
@@ -169,6 +175,8 @@ def estimate_shears_from_args(args):
     
     # Segmentation images
     
+    logger.info("Reading mock dry segmentation images...")
+    
     segmentation_filenames = read_listfile(args.segmentation_images)
     segmentation_hdus = []
     
@@ -187,6 +195,9 @@ def estimate_shears_from_args(args):
             segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])
             
     # Galaxy population priors
+    
+    logger.info("Reading mock dry galaxy population priors...")
+    
     galaxy_population_priors_table = Table.read(args.galaxy_population_priors_table)
             
     if not is_in_format(galaxy_population_priors_table,gptf):
@@ -195,12 +206,17 @@ def estimate_shears_from_args(args):
         
     # Calibration parameters product
     
+    logger.info("Reading mock dry calibration parameters...")
+    
     calibration_parameters_product = read_pickled_product(args.calibration_parameters_products,
                                                           args.calibration_parameters_listfile)
     if not isinstance(calibration_parameters_product, DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + args.calibration_parameters_product + " is invalid type.")
     
     # Set up mock output in the correct format
+    
+    logger.info("Generating mock dry shear estimes...")
+    
     shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("DRY_BFD_SHM","0"),
                                                                  KSB_filename = get_allowed_filename("DRY_KSB_SHM","0"),
                                                                  LensMC_filename = get_allowed_filename("DRY_LensMC_SHM","0"),
