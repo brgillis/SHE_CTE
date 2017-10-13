@@ -122,11 +122,12 @@ def make_mock_analysis_data(args):
         
         # Set up PSF Calibration object
         filename = get_allowed_filename("PSFCAL_DRY",str(i))
+        listfile_filename = get_allowed_filename("PSFCAL_DRY_LF",str(i),extension=".json")
         
         psf_calibration_product = create_psf_calibration_product(zernike_mode_filename,
                                                                  surface_error_filename)
         
-        write_pickled_product(psf_calibration_product,filename)
+        write_pickled_product(psf_calibration_product,filename,)
         
         psf_calibration_product_filenames.append(filename)
         
