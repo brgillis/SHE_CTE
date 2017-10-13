@@ -25,6 +25,8 @@ from astropy.io import fits
 from astropy.table import Table
 
 from SHE_PPT import magic_values as ppt_mv
+
+from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.file_io import read_listfile, write_listfile, read_pickled_product, write_pickled_product, get_allowed_filename
 from SHE_PPT.galaxy_population_table_format import tf as gptf
