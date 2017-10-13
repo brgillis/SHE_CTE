@@ -40,9 +40,9 @@ from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_
 from SHE_PPT.mission_time_product import create_mission_time_product
 from SHE_PPT.psf_calibration_product import create_psf_calibration_product
 from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
+from SHE_PPT.table_utility import table_to_hdu
 
 from SHE_PPT import aocs_time_series_product
-from astropy.io.fits.convenience import table_to_hdu
 aocs_time_series_product.init()
 
 from SHE_PPT import astrometry_product
