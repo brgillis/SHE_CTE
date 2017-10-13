@@ -48,6 +48,9 @@ aocs_time_series_product.init()
 from SHE_PPT import astrometry_product
 astrometry_product.init()
 
+from SHE_PPT import calibration_parameters_product
+calibration_parameters_product.init()
+
 from SHE_PPT import mission_time_product
 mission_time_product.init()
 
@@ -209,6 +212,8 @@ def make_mock_analysis_data(args):
     
     # AOCS time series products
     
+    logger.info("Generating mock dry AOCS time series products...")
+    
     aocs_time_series_product_filenames = []
     
     for i in range(num_exposures):
@@ -224,6 +229,8 @@ def make_mock_analysis_data(args):
     write_listfile(args.aocs_time_series_products,aocs_time_series_product_filenames)
     
     # Mission time products
+    
+    logger.info("Generating mock dry mission time products...")
     
     mission_time_product_filenames = []
     
@@ -241,10 +248,14 @@ def make_mock_analysis_data(args):
     
     # Galaxy population priors table
     
+    logger.info("Generating mock dry galaxy population priors table...")
+    
     galaxy_population_priors_table = initialise_galaxy_population_table()
     galaxy_population_priors_table.write(args.galaxy_population_priors_table,format="fits")
     
     # Calibration parameters product
+    
+    logger.info("Generating mock dry calibration parameters products...")
     
     ksb_calibration_parameters_filename = get_allowed_filename("KSB_CAL_PARAM_DRY","0")
         
@@ -276,6 +287,8 @@ def make_mock_analysis_data(args):
                           args.calibration_parameters_listfile)
     
     # Shear validation statistics tables
+    
+    logger.info("Generating mock dry shear validation statistics tables...")
     
     shear_validation_statistics_table = initialise_shear_estimates_table()
     shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits")
