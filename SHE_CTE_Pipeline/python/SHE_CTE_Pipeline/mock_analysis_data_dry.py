@@ -139,7 +139,9 @@ def make_mock_analysis_data(args):
         
         psf_calibration_product_filenames.append(filename)
         
-    write_listfile(args.psf_calibration_products,psf_calibration_product_filenames)
+    all_psf_calibration_product_filenames = [psf_calibration_product_filenames,psf_calibration_product_sub_filenames]
+        
+    write_listfile(args.psf_calibration_products,all_psf_calibration_product_filenames)
     
     # Segmentation images
     
