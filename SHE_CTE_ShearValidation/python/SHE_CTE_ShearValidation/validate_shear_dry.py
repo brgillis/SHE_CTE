@@ -49,6 +49,8 @@ def validate_shear(args):
         Dry-run of shear validation, creating only dummy files and not expecting anything of input
         aside from the correct format.
     """
+
+    logger = getLogger(mv.logger_name)
     
     # Load in the files in turn to make sure there aren't any issues with them.
     
