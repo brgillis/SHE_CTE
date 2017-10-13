@@ -24,6 +24,9 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
+from ElementsKernel.Logging import getLogger
+
+from SHE_CTE_Pipeline import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
 
 from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
@@ -54,6 +57,8 @@ def make_mock_analysis_data(args):
     """
         Dry-run of generating mock analysis data, creating only dummy files.
     """
+
+    logger = getLogger(mv.logger_name)
     
     # Set up mock output in the correct format
     
@@ -61,6 +66,8 @@ def make_mock_analysis_data(args):
     num_detectors = args.num_detectors
     
     # Data images
+    
+    logger.info("Generating mock dry data images...")
     
     data_images = []
     
@@ -89,6 +96,8 @@ def make_mock_analysis_data(args):
     write_listfile(args.data_images,data_images)
     
     # PSF Calibration products
+    
+    logger.info("Generating mock dry psf calibration products...")
     
     psf_calibration_product_filenames = []
     psf_calibration_product_sub_filenames = []
@@ -123,6 +132,8 @@ def make_mock_analysis_data(args):
     
     # Segmentation images
     
+    logger.info("Generating mock dry segmentation images...")
+    
     segmentation_images_filenames = []
     
     for i in range(num_exposures):
@@ -138,6 +149,8 @@ def make_mock_analysis_data(args):
     
     # Detections tables
     
+    logger.info("Generating mock dry detection tables...")
+    
     detections_tables_filenames = []
     
     for i in range(num_exposures):
@@ -152,6 +165,8 @@ def make_mock_analysis_data(args):
     write_listfile(args.detections_tables,detections_tables_filenames)
     
     # Astrometry products
+    
+    logger.info("Generating mock dry astrometry products...")
     
     astrometry_product_filenames = []
     
