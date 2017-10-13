@@ -293,6 +293,8 @@ def make_mock_analysis_data(args):
     shear_validation_statistics_table = initialise_shear_estimates_table()
     shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits",overwrite=True)
     
+    logger.info("Finished generating mock dry data.")
+    
     return
     
     
