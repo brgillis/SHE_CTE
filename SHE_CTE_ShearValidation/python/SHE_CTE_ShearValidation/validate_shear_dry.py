@@ -24,15 +24,25 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
+from ElementsKernel.Logging import getLogger
+
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
+
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, append_hdu)
-from SHE_PPT import shear_estimates_product as sep
-from SHE_PPT.shear_estimates_table_format import tf as setf
-from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.shear_estimates_product import DpdShearEstimatesProduct
+from SHE_PPT.shear_estimates_table_format import tf as setf, initialise_shear_estimates_table
+from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from SHE_PPT.utility import find_extension
 
-sep.init()
+from SHE_PPT import shear_estimates_product
+shear_estimates_product.init()
+
+from SHE_PPT import calibration_parameters_product
+calibration_parameters_product.init()
 
 def validate_shear(args):
     """
@@ -45,15 +55,9 @@ def validate_shear(args):
     # Shear estimates product
     
     shear_estimates_product = read_pickled_product(args.shear_estimates_product, args.shear_estimates_listfile)
-    
-    if not isinstance(shear_estimates_product, DpdSheCalibrationParametersProduct):
+
+    if not isinstance(shear_estimates_product, DpdShearEstimatesProduct):
         raise ValueError("Shear estimates product from " + args.shear_estimates_product + " is invalid type.")
-    
-    def find_extension(hdulist,extname):
-        for i, hdu in enumerate(hdulist):
-            if hdu.header["EXTNAME"]==extname:
-                return i
-        return None
     
     for filename in shear_estimates_product.get_all_filenames():
     
