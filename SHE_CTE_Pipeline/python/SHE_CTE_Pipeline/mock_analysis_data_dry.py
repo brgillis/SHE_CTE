@@ -146,14 +146,14 @@ def make_mock_analysis_data(args):
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("SEG_DRY",str(i),
-                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
+        filename = get_allowed_filename("SEG_DRY",str(i))
         
         hdulist = fits.HDUList()
         
         for j in range(num_detectors):
         
-            seg_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+            seg_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
             hdulist.append(seg_hdu)
             
         hdulist.writeto(filename,clobber=True)
