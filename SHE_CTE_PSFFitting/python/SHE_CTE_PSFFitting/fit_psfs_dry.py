@@ -37,6 +37,7 @@ from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
 from SHE_PPT.she_image import SHEImage
+from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import find_extension
 
@@ -110,6 +111,13 @@ def fit_psfs(args):
                                           mask=mask_hdus[i].data,
                                           header=sci_hdus[i].header))
             
+    num_exposures = len(she_images[0])
+    she_stacks = []
+    for j in range(num_detectors):
+        detector_images = []
+        for i in range(num_exposures):
+            detector_images.append(she_images[i][j])
+        she_stacks.append(detector_images[j])
         
     
     # Detections tables
