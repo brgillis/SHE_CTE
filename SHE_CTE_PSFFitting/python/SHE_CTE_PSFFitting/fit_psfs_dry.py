@@ -215,11 +215,11 @@ def fit_psfs(args):
         for j in range(num_detectors):
             
             bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.bulge_psf_tag)))
+                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.bulge_psf_tag),)))
             hdulist.append(bpsf_hdu)
             
             dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=fits.header.Header(("EXTNAME",str(j)+"."+ppt_mv.disk_psf_tag)))
+                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.disk_psf_tag),)))
             hdulist.append(dpsf_hdu)
             
             psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
