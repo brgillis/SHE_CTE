@@ -122,7 +122,7 @@ def fit_psfs(args):
     
     # Detections tables
     
-    logger.info("Generating mock dry detection tables...")
+    logger.info("Reading mock dry detection tables...")
     
     detections_table_filenames = read_listfile(args.detections_tables)
     detections_tables = []
@@ -134,21 +134,19 @@ def fit_psfs(args):
         
         detections_tables.append([])
         
-        hdulist = fits.open(args.detections_tables,mode="readonly",memmap=True)
-        
         for j in range(num_detectors):
             
             extname = str(j)+"."+ppt_mv.detections_tag
-            table_index = find_extension(hdulist,extname)
+            table_index = find_extension(detections_tables_hdulist,extname)
             
-            detections_tables[i].append( Table.read(hdulist[table_index]) )
+            detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
             
             if not is_in_format(detections_tables[i][j],detf):
                 raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
         
     # Astrometry products
     
-    logger.info("Generating mock dry astrometry products...")
+    logger.info("Reading mock dry astrometry products...")
     
     astrometry_product_filenames = read_listfile(args.astrometry_products)
     astrometry_products = []
@@ -160,7 +158,7 @@ def fit_psfs(args):
         
     # AocsTimeSeries products
     
-    logger.info("Generating mock dry aocs time series products...")
+    logger.info("Reading mock dry aocs time series products...")
     
     aocs_time_series_product_filenames = read_listfile(args.aocs_time_series_products)
     aocs_time_series_products = []
@@ -172,7 +170,7 @@ def fit_psfs(args):
         
     # MissionTime products
     
-    logger.info("Generating mock dry mission time products...")
+    logger.info("Reading mock dry mission time products...")
     
     mission_time_product_filenames = read_listfile(args.mission_time_products)
     mission_time_products = []
@@ -184,7 +182,7 @@ def fit_psfs(args):
         
     # PSFCalibration products
     
-    logger.info("Generating mock dry PSF calibration products...")
+    logger.info("Reading mock dry PSF calibration products...")
     
     all_psf_calibration_product_filenames = read_listfile(args.psf_calibration_products)
     psf_calibration_product_filenames = all_psf_calibration_product_filenames[0]
