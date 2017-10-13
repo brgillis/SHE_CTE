@@ -106,10 +106,10 @@ def fit_psfs(args):
             
             mask_hdus[i].append( data_image_hdulist[mask_index] )
             
-            she_images[i].append(SHEImage(data=sci_hdus[i].data,
-                                          noisemap=noisemap_hdus[i].data,
-                                          mask=mask_hdus[i].data,
-                                          header=sci_hdus[i].header))
+            she_images[i].append(SHEImage(data=sci_hdus[i][j].data,
+                                          noisemap=noisemap_hdus[i][j].data,
+                                          mask=mask_hdus[i][j].data,
+                                          header=sci_hdus[i][j].header))
             
     num_exposures = len(she_images[0])
     she_stacks = []
