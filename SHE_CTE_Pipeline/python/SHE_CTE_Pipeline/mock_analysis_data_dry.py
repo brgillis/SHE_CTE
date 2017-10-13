@@ -251,7 +251,7 @@ def make_mock_analysis_data(args):
     logger.info("Generating mock dry galaxy population priors table...")
     
     galaxy_population_priors_table = initialise_galaxy_population_table()
-    galaxy_population_priors_table.write(args.galaxy_population_priors_table,format="fits",clobber=True)
+    galaxy_population_priors_table.write(args.galaxy_population_priors_table,format="fits",overwrite=True)
     
     # Calibration parameters product
     
@@ -291,7 +291,7 @@ def make_mock_analysis_data(args):
     logger.info("Generating mock dry shear validation statistics tables...")
     
     shear_validation_statistics_table = initialise_shear_estimates_table()
-    shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits",clobber=True)
+    shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits",overwrite=True)
     
     return
     
