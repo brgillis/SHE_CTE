@@ -211,25 +211,25 @@ def make_mock_analysis_data(args):
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( ksb_calibration_parameters_filename, null_hdu)
         
-    megalut_calibration_parameters_filename = get_allowed_filename("MEGALUT_CAL_PARAM_DRY","0")
-        
-    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( megalut_calibration_parameters_filename, null_hdu)
-        
     lensmc_calibration_parameters_filename = get_allowed_filename("LENSMC_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( lensmc_calibration_parameters_filename, null_hdu)
+        
+    megalut_calibration_parameters_filename = get_allowed_filename("MEGALUT_CAL_PARAM_DRY","0")
+        
+    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+    append_hdu( megalut_calibration_parameters_filename, null_hdu)
         
     regauss_calibration_parameters_filename = get_allowed_filename("REGAUSS_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( regauss_calibration_parameters_filename, null_hdu)
         
-    calibration_parameters_product = create_calibration_parameters_product(ksb_calibration_parameters_filename=ksb_calibration_parameters_filename,
-                                                                           megalut_calibration_parameters_filename=megalut_calibration_parameters_filename,
-                                                                           lensmc_calibration_parameters_filename=lensmc_calibration_parameters_filename,
-                                                                           regauss_calibration_parameters_filename=regauss_calibration_parameters_filename)
+    calibration_parameters_product = create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
+                                                                           LensMC_filename=lensmc_calibration_parameters_filename,
+                                                                           MegaLUT_filename=megalut_calibration_parameters_filename,
+                                                                           REGAUSS_filename=regauss_calibration_parameters_filename)
     
     write_pickled_product(calibration_parameters_product,
                           args.calibration_parameters_product,
