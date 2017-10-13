@@ -36,7 +36,7 @@ from SHE_PPT.file_io import read_listfile, read_pickled_product, write_pickled_p
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import tf as psft
-from SHE_PPT.she_stack import SHEStack
+from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import find_extension
 
@@ -62,15 +62,55 @@ def fit_psfs(args):
     
     # Load in the files in turn to make sure there aren't any issues with them.
     
-    # Data images - Read in as SHEStack object
+    # Data images
     
     logger.info("Reading mock dry data images...")
     
     data_images = read_listfile(args.data_images)
-    she_stack = SHEStack.read(data_images,
-                              data_ext = ppt_mv.sci_tag,
-                              mask_ext = ppt_mv.mask_tag,
-                              noisemap_ext = ppt_mv.noisemap_tag)
+#     she_stack = SHEStack.read(data_images,
+#                               data_ext = ppt_mv.sci_tag,
+#                               mask_ext = ppt_mv.mask_tag,
+#                               noisemap_ext = ppt_mv.noisemap_tag)
+
+    sci_hdus = []
+    noisemap_hdus = []
+    segmentation_hdus = []
+    
+    she_images = []
+    
+    for i, filename in enumerate(data_images):
+        
+        data_image_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        num_detectors = len(data_image_hdulist) // 3
+        
+        sci_hdus.append([])
+        noisemap_hdus.append([])
+        mask_hdus.append([])
+        she_images.append([])
+        
+        for j in range(num_detectors):
+            
+            sci_extname = str(j) + "." + ppt_mv.sci_tag
+            sci_index = find_extension(data_image_hdulist, sci_extname)
+            
+            sci_hdus[i].append( data_image_hdulist[sci_index] )
+            
+            noisemap_extname = str(j) + "." + ppt_mv.noisemap_tag
+            noisemap_index = find_extension(data_image_hdulist, noisemap_extname)
+            
+            noisemap_hdus[i].append( data_image_hdulist[noisemap_index] )
+            
+            mask_extname = str(j) + "." + ppt_mv.mask_tag
+            mask_index = find_extension(data_image_hdulist, mask_extname)
+            
+            mask_hdus[i].append( data_image_hdulist[mask_index] )
+            
+            she_images[i].append(SHEImage(data=sci_hdus[i].data,
+                                          noisemap=noisemap_hdus[i].data,
+                                          mask=mask_hdus[i].data,
+                                          header=sci_hdus[i].header))
+            
+        
     
     # Detections tables
     
