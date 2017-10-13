@@ -113,7 +113,7 @@ def mainMethod(args):
                         {"estimate_shears_from_args":estimate_shears_from_args,
                          "args":args},filename="measure_shapes.prof")
     else:
-        estimate_shears_from_args(vars(args))
+        estimate_shears_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_EstimateShear mainMethod()')
 
