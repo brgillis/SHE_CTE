@@ -132,7 +132,7 @@ def make_mock_analysis_data(args):
         psf_calibration_product = create_psf_calibration_product(zernike_mode_filename,
                                                                  surface_error_filename)
         
-        write_pickled_product(psf_calibration_product,filename,)
+        write_pickled_product(psf_calibration_product,filename,listfile_filename)
         
         psf_calibration_product_filenames.append(filename)
         
