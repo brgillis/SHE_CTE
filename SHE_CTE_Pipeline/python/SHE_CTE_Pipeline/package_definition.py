@@ -77,7 +77,7 @@ she_measure_bias = Executable(command=ERun_CTE+"SHE_CTE_MeasureBias",
                                  inputs=[Input("estimation_statistics_product_list", content_type="listfile")],
                                  outputs=[Output("bias_measurements_product")])
 
-she_compile_statistics = Executatble(command=ERun_CTE+"SHE_CTE_CompileStatistics",
+she_compile_statistics = Executable(command=ERun_CTE+"SHE_CTE_CompileStatistics",
                                      inputs=[Input("shear_measurements_product"),
                                              Input("bias_measurements_product")],
                                      outputs=[Output("validation_statistics_product")])
