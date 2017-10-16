@@ -53,7 +53,7 @@ def shear_analysis_pipeline( data_images,
     
     validated_shear_estimates_table = she_validate_shear( shear_estimates_product = shear_estimates_product,
                                                           shear_estimates_listfile = shear_estimates_listfile,
-                                                          validation_statistics_product = validation_statistics_product )
+                                                          shear_validation_statistics_table = shear_validation_statistics_table )
     
     return validated_shear_estimates_table
 
