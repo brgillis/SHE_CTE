@@ -20,25 +20,39 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
-from SHE_CTE_Pipeline.package_definition import she_estimate_shear, she_validate_shear
+from euclidwf.framework.workflow_dsl import pipeline
+from SHE_CTE_Pipeline.package_definition import she_fit_psf, she_estimate_shear, she_validate_shear
 
 @pipeline(outputs=('validated_shear_estimates_table'))
-def shear_measurement_pipeline( data_images,
-                                psf_images_and_tables,
-                                segmentation_images,
-                                detections_tables,
-                                galaxy_population_priors_table,
-                                calibration_parameters_product,
-                                shear_validation_statistics_table ):
+def shear_analysis_pipeline( data_images,
+                             psf_calibration_products,
+                             segmentation_images,
+                             detections_tables,
+                             astrometry_products,
+                             aocs_time_series_products,
+                             mission_time_products,
+                             galaxy_population_priors_table,
+                             calibration_parameters_product,
+                             calibration_parameters_listfile,
+                             shear_validation_statistics_table ):
     
-    shear_estimates_product = she_estimate_shear( data_images = data_images,
-                                                  psf_images_and_tables = psf_images_and_tables,
-                                                  segmentation_images = segmentation_images,
-                                                  detections_tables = detections_tables,
-                                                  galaxy_population_priors_table = galaxy_population_priors_table,
-                                                  calibration_parameters_product = calibration_parameters_product )
+    psf_images_and_tables = she_fit_psf( data_images = data_images, 
+                                         detections_tables = detections_tables,
+                                         astrometry_products = astrometry_products,
+                                         aocs_time_series_products = aocs_time_series_products,
+                                         mission_time_products = mission_time_products,
+                                         psf_calibration_products = psf_calibration_products, )
+    
+    shear_estimates_product, shear_estimates_listfile = she_estimate_shear( data_images = data_images,
+                                                              psf_images_and_tables = psf_images_and_tables,
+                                                              segmentation_images = segmentation_images,
+                                                              detections_tables = detections_tables,
+                                                              galaxy_population_priors_table = galaxy_population_priors_table,
+                                                              calibration_parameters_product = calibration_parameters_product,
+                                                              calibration_parameters_listfile = calibration_parameters_listfile )
     
     validated_shear_estimates_table = she_validate_shear( shear_estimates_product = shear_estimates_product,
+                                                          shear_estimates_listfile = shear_estimates_listfile,
                                                           shear_validation_statistics_table = shear_validation_statistics_table )
     
     return validated_shear_estimates_table
@@ -46,5 +60,5 @@ def shear_measurement_pipeline( data_images,
 if __name__ == '__main__':
     from euclidwf.framework.graph_builder import build_graph
     from euclidwf.utilities import visualizer
-    pydron_graph=build_graph(shear_measurement_pipeline)
+    pydron_graph=build_graph(shear_analysis_pipeline)
     visualizer.visualize_graph(pydron_graph)
