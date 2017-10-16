@@ -20,6 +20,7 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
+from euclidwf.framework.workflow_dsl import pipeline
 from SHE_CTE_Pipeline.package_definition import she_fit_psf, she_estimate_shear, she_validate_shear
 
 @pipeline(outputs=('validated_shear_estimates_table'))
