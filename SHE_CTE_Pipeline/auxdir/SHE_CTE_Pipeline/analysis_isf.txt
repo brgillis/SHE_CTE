@@ -1,4 +1,4 @@
-pkgRepository=/home/euclid/data/pipelines/pkgs/
+pkgRepository=/home/user/git/SHE_CTE/SHE_CTE_Pipeline/python
 
 pipelineDir=/home/user/git/SHE_CTE/SHE_CTE_Pipeline/python/SHE_CTE_Pipeline
 
