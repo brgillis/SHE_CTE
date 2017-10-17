@@ -58,14 +58,16 @@ def validate_shear(args):
     
     logger.info("Reading mock dry shear estimates product...")
     
-    shear_estimates_product = read_pickled_product(args.shear_estimates_product, args.shear_estimates_listfile)
+    shear_estimates_product = read_pickled_product(join(args.workdir,args.shear_estimates_product),
+                                                        join(args.workdir,args.shear_estimates_listfile))
 
     if not isinstance(shear_estimates_product, DpdShearEstimatesProduct):
-        raise ValueError("Shear estimates product from " + args.shear_estimates_product + " is invalid type.")
+        raise ValueError("Shear estimates product from " + join(args.workdir,args.shear_estimates_product)
+                          + " is invalid type.")
     
     for filename in shear_estimates_product.get_all_filenames():
     
-        shear_estimates_hdulist = fits.open(filename,mode='readonly',memmap=True)
+        shear_estimates_hdulist = fits.open(join(args.workdir,filename),mode='readonly',memmap=True)
         
         num_detectors = len(shear_estimates_hdulist)-1
         
@@ -74,19 +76,19 @@ def validate_shear(args):
             table_extname = str(j) + "." + ppt_mv.shear_estimates_tag
             table_index = find_extension(shear_estimates_hdulist, table_extname)
             
-            shear_estimates_table = Table.read(filename,format='fits',hdu=table_index)
+            shear_estimates_table = Table.read(join(args.workdir,filename),format='fits',hdu=table_index)
             
             if not is_in_format(shear_estimates_table,setf):
-                raise ValueError("Shear estimates table from " + filename + " is in invalid format.")
+                raise ValueError("Shear estimates table from " + join(args.workdir,filename) + " is in invalid format.")
             
     # Shear validation statistics
     
     logger.info("Reading mock dry shear validation statistics...")
     
-    shear_validation_statistics_table = Table.read(args.shear_validation_statistics_table)
+    shear_validation_statistics_table = Table.read(join(args.workdir,args.shear_validation_statistics_table))
             
     if not is_in_format(shear_validation_statistics_table,setf):
-        raise ValueError("Shear validation statistics table from " + filename + " is in invalid format.")
+        raise ValueError("Shear validation statistics table from " + join(args.workdir,filename) + " is in invalid format.")
     
     
     # Set up mock output in the correct format
@@ -96,7 +98,7 @@ def validate_shear(args):
     for j in range(num_detectors):
         
         shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
-        append_hdu( args.validated_shear_estimates_table, shm_hdu)
+        append_hdu( join(args.workdir,args.validated_shear_estimates_table), shm_hdu)
     
     logger.info("Finished mock dry shear validation.")
         
