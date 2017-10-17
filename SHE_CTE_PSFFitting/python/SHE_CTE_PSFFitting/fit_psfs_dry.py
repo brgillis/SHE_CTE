@@ -21,6 +21,7 @@
 """
 
 import numpy as np
+from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
@@ -69,11 +70,7 @@ def fit_psfs(args):
     
     logger.info("Reading mock dry data images...")
     
-    data_images = read_listfile(args.data_images)
-#     she_stack = SHEStack.read(data_images,
-#                               data_ext = ppt_mv.sci_tag,
-#                               mask_ext = ppt_mv.mask_tag,
-#                               noisemap_ext = ppt_mv.noisemap_tag)
+    data_images = read_listfile(join(args.workdir,args.data_images))
 
     sci_hdus = []
     noisemap_hdus = []
@@ -83,7 +80,9 @@ def fit_psfs(args):
     
     for i, filename in enumerate(data_images):
         
-        data_image_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        qualified_filename = join(args.workdir,filename)
+        
+        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
         
         sci_hdus.append([])
@@ -126,12 +125,12 @@ def fit_psfs(args):
     
     logger.info("Reading mock dry detection tables...")
     
-    detections_table_filenames = read_listfile(args.detections_tables)
+    detections_table_filenames = read_listfile(join(args.workdir,args.detections_tables))
     detections_tables = []
     
     for i, filename in enumerate(detections_table_filenames):
         
-        detections_tables_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        detections_tables_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = len(detections_tables_hdulist)-1
         
         detections_tables.append([])
@@ -150,23 +149,23 @@ def fit_psfs(args):
     
     logger.info("Reading mock dry astrometry products...")
     
-    astrometry_product_filenames = read_listfile(args.astrometry_products)
+    astrometry_product_filenames = read_listfile(join(args.workdir,args.astrometry_products))
     astrometry_products = []
     
     for i, filename in enumerate(astrometry_product_filenames):
-        astrometry_products.append(read_pickled_product(filename))
+        astrometry_products.append(read_pickled_product(join(args.workdir,filename)))
         if not isinstance(astrometry_products[i], DpdSheAstrometryProduct):
-            raise ValueError("Astrometry product from " + filename + " is invalid type.")
+            raise ValueError("Astrometry product from " + join(args.workdir,filename) + " is invalid type.")
         
     # AocsTimeSeries products
     
     logger.info("Reading mock dry aocs time series products...")
     
-    aocs_time_series_product_filenames = read_listfile(args.aocs_time_series_products)
+    aocs_time_series_product_filenames = read_listfile(join(args.workdir,args.aocs_time_series_products))
     aocs_time_series_products = []
     
     for i, filename in enumerate(aocs_time_series_product_filenames):
-        aocs_time_series_products.append(read_pickled_product(filename))
+        aocs_time_series_products.append(read_pickled_product(join(args.workdir,filename)))
         if not isinstance(aocs_time_series_products[i], DpdSheAocsTimeSeriesProduct):
             raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
         
@@ -174,11 +173,11 @@ def fit_psfs(args):
     
     logger.info("Reading mock dry mission time products...")
     
-    mission_time_product_filenames = read_listfile(args.mission_time_products)
+    mission_time_product_filenames = read_listfile(join(args.workdir,args.mission_time_products))
     mission_time_products = []
     
     for i, filename in enumerate(mission_time_product_filenames):
-        mission_time_products.append(read_pickled_product(filename))
+        mission_time_products.append(read_pickled_product(join(args.workdir,filename)))
         if not isinstance(mission_time_products[i], DpdSheMissionTimeProduct):
             raise ValueError("MissionTime product from " + filename + " is invalid type.")
         
@@ -186,14 +185,15 @@ def fit_psfs(args):
     
     logger.info("Reading mock dry PSF calibration products...")
     
-    all_psf_calibration_product_filenames = read_listfile(args.psf_calibration_products)
+    all_psf_calibration_product_filenames = read_listfile(join(args.workdir,args.psf_calibration_products))
     psf_calibration_product_filenames = all_psf_calibration_product_filenames[0]
     psf_calibration_product_sub_filenames = all_psf_calibration_product_filenames[1]
     psf_calibration_products = []
     
     for i, filename in enumerate(psf_calibration_product_filenames):
         
-        psf_calibration_products.append(read_pickled_product(filename, psf_calibration_product_sub_filenames[i]))
+        psf_calibration_products.append(read_pickled_product(join(args.workdir,filename),
+                                                             join(args.workdir,psf_calibration_product_sub_filenames[i])))
         
         if not isinstance(psf_calibration_products[i], DpdShePSFCalibrationProduct):
             raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
@@ -225,11 +225,11 @@ def fit_psfs(args):
             psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
             hdulist.append(psfc_hdu)
             
-        hdulist.writeto(filename,clobber=True)
+        hdulist.writeto(join(args.workdir,filename),clobber=True)
     
         logger.info("Finished outputting mock dry PSF images and tables for exposure " + str(i) + ".")
         
-    write_listfile( args.psf_images_and_tables, psf_image_and_table_filenames )
+    write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
     
     logger.info("Finished mock dry psf fitting.")
         
