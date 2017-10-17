@@ -71,6 +71,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--psf_images_and_tables',type=str,
                         help='Desired filename for output list of PSF images and tables (.json listfile).')
     
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
+    
 
     logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')
 

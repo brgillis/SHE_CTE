@@ -85,6 +85,10 @@ def defineSpecificProgramOptions():
                         help='XML data product to contain file links to the shear estimates tables.')
     parser.add_argument('--shear_estimates_listfile',type=str,
                         help='.json listfile to contain filenames of shear estimates tables.')
+    
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
 

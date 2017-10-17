@@ -65,6 +65,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--validated_shear_estimates_table',type=str,
                         help='Desired filename for output shear estimates table (multi-HDU fits file).')
     
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
+    
 
     logger.debug('Exiting SHE_CTE_ValidateShear defineSpecificProgramOptions()')
 
