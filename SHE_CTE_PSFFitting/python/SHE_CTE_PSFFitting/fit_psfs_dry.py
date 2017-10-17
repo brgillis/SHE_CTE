@@ -190,10 +190,16 @@ def fit_psfs(args):
     psf_calibration_product_sub_filenames = all_psf_calibration_product_filenames[1]
     psf_calibration_products = []
     
+    
+    
     for i, filename in enumerate(psf_calibration_product_filenames):
         
+        qualified_sub_filenames = []
+        for fn in psf_calibration_product_sub_filenames[i]:
+            qualified_sub_filenames.append(join(args.workdir,fn))
+        
         psf_calibration_products.append(read_pickled_product(join(args.workdir,filename),
-                                                             join(args.workdir,psf_calibration_product_sub_filenames[i])))
+                                                             qualified_sub_filenames))
         
         if not isinstance(psf_calibration_products[i], DpdShePSFCalibrationProduct):
             raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
