@@ -21,6 +21,7 @@
 """
 
 import numpy as np
+from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
@@ -62,11 +63,7 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry data images...")
     
-    data_images = read_listfile(args.data_images)
-#     she_stack = SHEStack.read(data_images,
-#                               data_ext = ppt_mv.sci_tag,
-#                               mask_ext = ppt_mv.mask_tag,
-#                               noisemap_ext = ppt_mv.noisemap_tag)
+    data_images = read_listfile(join(args.workdir,args.data_images))
 
     sci_hdus = []
     noisemap_hdus = []
@@ -76,7 +73,7 @@ def estimate_shears_from_args(args):
     
     for i, filename in enumerate(data_images):
         
-        data_image_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        data_image_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
         
         sci_hdus.append([])
@@ -118,12 +115,12 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry detections tables...")
     
-    detections_table_filenames = read_listfile(args.detections_tables)
+    detections_table_filenames = read_listfile(join(args.workdir,args.detections_tables))
     detections_tables = []
     
     for i, filename in enumerate(detections_table_filenames):
         
-        detections_tables_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        detections_tables_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = len(detections_tables_hdulist)-1
         
         detections_tables.append([])
@@ -142,14 +139,14 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry PSF images and tables...")
     
-    psf_images_and_table_filenames = read_listfile(args.psf_images_and_tables)
+    psf_images_and_table_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
     psf_tables = []
     bulge_psf_hdus = []
     disk_psf_hdus = []
     
     for i, filename in enumerate(psf_images_and_table_filenames):
         
-        psf_images_and_table_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        psf_images_and_table_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = (len(psf_images_and_table_hdulist)-1) // 3
         
         psf_tables.append([])
@@ -180,12 +177,12 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry segmentation images...")
     
-    segmentation_filenames = read_listfile(args.segmentation_images)
+    segmentation_filenames = read_listfile(join(args.workdir,args.segmentation_images))
     segmentation_hdus = []
     
     for i, filename in enumerate(segmentation_filenames):
         
-        segmentation_hdulist = fits.open(filename, mode="readonly", memmap=True)
+        segmentation_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = len(segmentation_hdulist)
         
         segmentation_hdus.append([])
@@ -201,20 +198,21 @@ def estimate_shears_from_args(args):
     
     logger.info("Reading mock dry galaxy population priors...")
     
-    galaxy_population_priors_table = Table.read(args.galaxy_population_priors_table)
+    galaxy_population_priors_table = Table.read(join(args.workdir,args.galaxy_population_priors_table))
             
     if not is_in_format(galaxy_population_priors_table,gptf):
-        raise ValueError("Galaxy population priors table from " + args.galaxy_population_priors_table +
+        raise ValueError("Galaxy population priors table from " + join(args.workdir,args.galaxy_population_priors_table) +
                          " is in invalid format.")
         
     # Calibration parameters product
     
     logger.info("Reading mock dry calibration parameters...")
     
-    calibration_parameters_product = read_pickled_product(args.calibration_parameters_product,
-                                                          args.calibration_parameters_listfile)
+    calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product),
+                                                          join(args.workdir,args.calibration_parameters_listfile))
     if not isinstance(calibration_parameters_product, DpdSheCalibrationParametersProduct):
-        raise ValueError("CalibrationParameters product from " + args.calibration_parameters_product + " is invalid type.")
+        raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
+                         + " is invalid type.")
     
     # Set up mock output in the correct format
     
@@ -236,9 +234,11 @@ def estimate_shears_from_args(args):
             shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
             hdulist.append(shm_hdu)
             
-        hdulist.writeto(filename,clobber=True)
+        hdulist.writeto(join(args.workdir,filename),clobber=True)
     
-    write_pickled_product(shear_estimates_product, args.shear_estimates_product, args.shear_estimates_listfile)
+    write_pickled_product(shear_estimates_product,
+                          join(args.workdir,args.shear_estimates_product),
+                          join(args.workdir,args.shear_estimates_listfile))
     
     logger.info("Finished mock dry shear estimation.")
    
