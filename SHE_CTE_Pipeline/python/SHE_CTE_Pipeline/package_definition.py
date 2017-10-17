@@ -40,7 +40,7 @@ she_simulate_images = Executable(command=ERun_CTE+"SHE_CTE_SimulateImages",
                                           Output("detections_table_list", mime_type="json", content_type="listfile"),
                                           Output("details_table")])
 
-she_fit_psf = Executable(command=ERun_CTE+"SHE_CTE_FitPSF",
+she_fit_psf = Executable(command=ERun_CTE+"SHE_CTE_FitPSFs",
                          inputs=[Input("data_images", content_type="listfile"),
                                  Input("detections_tables", content_type="listfile"),
                                  Input("astrometry_products", content_type="listfile"),
