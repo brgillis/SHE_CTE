@@ -21,6 +21,7 @@
 """
 
 import numpy as np
+from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
