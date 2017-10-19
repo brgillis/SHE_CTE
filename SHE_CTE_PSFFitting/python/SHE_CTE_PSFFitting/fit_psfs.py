@@ -69,7 +69,12 @@ def fit_psfs(args, dry_run=False):
     
     # Data images
     
-    logger.info("Reading mock dry data images...")
+    if dry_run:
+        dry_label = " dry"
+    else:
+        dry_label = ""
+    
+    logger.info("Reading mock"+dry_label+" data images...")
     
     data_images = read_listfile(join(args.workdir,args.data_images))
 
@@ -124,7 +129,7 @@ def fit_psfs(args, dry_run=False):
     
     # Detections tables
     
-    logger.info("Reading mock dry detection tables...")
+    logger.info("Reading mock"+dry_label+" detection tables...")
     
     detections_table_filenames = read_listfile(join(args.workdir,args.detections_tables))
     detections_tables = []
@@ -148,7 +153,7 @@ def fit_psfs(args, dry_run=False):
         
     # Astrometry products
     
-    logger.info("Reading mock dry astrometry products...")
+    logger.info("Reading mock"+dry_label+" astrometry products...")
     
     astrometry_product_filenames = read_listfile(join(args.workdir,args.astrometry_products))
     astrometry_products = []
@@ -160,7 +165,7 @@ def fit_psfs(args, dry_run=False):
         
     # AocsTimeSeries products
     
-    logger.info("Reading mock dry aocs time series products...")
+    logger.info("Reading mock"+dry_label+" aocs time series products...")
     
     aocs_time_series_product_filenames = read_listfile(join(args.workdir,args.aocs_time_series_products))
     aocs_time_series_products = []
@@ -172,7 +177,7 @@ def fit_psfs(args, dry_run=False):
         
     # MissionTime products
     
-    logger.info("Reading mock dry mission time products...")
+    logger.info("Reading mock"+dry_label+" mission time products...")
     
     mission_time_product_filenames = read_listfile(join(args.workdir,args.mission_time_products))
     mission_time_products = []
@@ -184,7 +189,7 @@ def fit_psfs(args, dry_run=False):
         
     # PSFCalibration products
     
-    logger.info("Reading mock dry PSF calibration products...")
+    logger.info("Reading mock"+dry_label+" PSF calibration products...")
     
     all_psf_calibration_product_filenames = read_listfile(join(args.workdir,args.psf_calibration_products))
     psf_calibration_product_filenames = all_psf_calibration_product_filenames[0]
@@ -201,7 +206,7 @@ def fit_psfs(args, dry_run=False):
     
     # Set up mock output in the correct format
     
-    logger.info("Outputting mock dry PSF images and tables...")
+    logger.info("Outputting mock"+dry_label+" PSF images and tables...")
     
     num_exposures = len(data_images)
     psf_image_and_table_filenames = []
@@ -256,11 +261,11 @@ def fit_psfs(args, dry_run=False):
             
         hdulist.writeto(join(args.workdir,filename),clobber=True)
     
-        logger.info("Finished outputting mock dry PSF images and tables for exposure " + str(i) + ".")
+        logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(i) + ".")
         
     write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
     
-    logger.info("Finished mock dry psf fitting.")
+    logger.info("Finished mock"+dry_label+" psf fitting.")
         
     return
     
