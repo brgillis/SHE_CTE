@@ -214,14 +214,14 @@ def fit_psfs(args, dry_run=False):
     
     if not dry_run:
                 
-        logger.info("Searching for mock psf in " + os.environ['ELEMENTS_AUX_PATH'] + ".")
+        logger.debug("Searching for mock psf in " + os.environ['ELEMENTS_AUX_PATH'] + ".")
         
         psf_path = find_file_in_path("SHE_CTE_PSFFitting/sample_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
         
         if psf_path is None:
             raise Exception("Cannot find mock psf.")
                 
-        logger.info("Found mock psf: " + psf_path)
+        logger.debug("Found mock psf: " + psf_path)
     
     for i in range(num_exposures):
         
@@ -240,7 +240,7 @@ def fit_psfs(args, dry_run=False):
                 bpsf_array = sample_psf
                 dpsf_array = sample_psf
                 
-                for ID in detections_tables[j][detf.ID]:
+                for ID in detections_tables[i][j][detf.ID]:
                     psfc.add_row({pstf.ID: ID,
                                   pstf.template: 0,
                                   pstf.stamp_x: np.shape(sample_psf)[1]//2,
