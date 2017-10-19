@@ -220,6 +220,8 @@ def fit_psfs(args, dry_run=False):
         
         if psf_path is None:
             raise Exception("Cannot find mock psf.")
+                
+        logger.info("Found mock psf: " + psf_path)
     
     for i in range(num_exposures):
         
@@ -233,8 +235,6 @@ def fit_psfs(args, dry_run=False):
             psfc = initialise_psf_table(detector=j)
     
             if not dry_run:
-                
-                logger.info("Found mock psf: " + psf_path)
                 
                 sample_psf = fits.open(psf_path)[0].data
                 bpsf_array = sample_psf
