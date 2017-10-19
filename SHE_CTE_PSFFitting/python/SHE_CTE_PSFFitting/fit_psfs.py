@@ -1,4 +1,4 @@
-""" @file fit_psfs_dry.py
+""" @file fit_psf.py
 
     Created 12 Oct 2017
 
@@ -20,22 +20,26 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
-import numpy as np
 from os.path import join
+
 from astropy.io import fits
 from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
-
 from SHE_CTE_Pipeline import magic_values as mv
+from SHE_PPT import aocs_time_series_product
+from SHE_PPT import astrometry_product
 from SHE_PPT import magic_values as ppt_mv
-
+from SHE_PPT import mission_time_product
+from SHE_PPT import psf_calibration_product
 from SHE_PPT.aocs_time_series_product import DpdSheAocsTimeSeriesProduct
 from SHE_PPT.astrometry_product import DpdSheAstrometryProduct
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
-                             append_hdu, get_allowed_filename)
+                             append_hdu, get_allowed_filename,
+                             find_file_in_path)
+from SHE_PPT.magic_values import extname_label, scale_label, stamp_size_label
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
 from SHE_PPT.psf_table_format import initialise_psf_table
@@ -43,23 +47,20 @@ from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
+import numpy as np
 
-from SHE_PPT import aocs_time_series_product
+
 aocs_time_series_product.init()
 
-from SHE_PPT import astrometry_product
 astrometry_product.init()
 
-from SHE_PPT import mission_time_product
 mission_time_product.init()
 
-from SHE_PPT import psf_calibration_product
 psf_calibration_product.init()
 
-def fit_psfs(args):
+def fit_psfs(args, dry_run=False):
     """
-        Dry-run of PSF Fitting, creating only dummy files and not expecting anything of input
-        aside from the correct format.
+        Mock run of PSF Fitting.
     """
 
     logger = getLogger(mv.logger_name)
@@ -190,8 +191,6 @@ def fit_psfs(args):
     psf_calibration_product_sub_filenames = all_psf_calibration_product_filenames[1]
     psf_calibration_products = []
     
-    
-    
     for i, filename in enumerate(psf_calibration_product_filenames):
         
         psf_calibration_products.append(read_pickled_product(join(args.workdir,filename),
@@ -216,12 +215,40 @@ def fit_psfs(args):
         
         for j in range(num_detectors):
             
+            psfc = initialise_psf_table(detector=j)
+    
+            if not dry_run:
+                
+                psf_path = find_file_in_path("mock_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
+                sample_psf = fits.read(psf_path)[0].data
+                bpsf_array = sample_psf
+                dpsf_array = sample_psf
+                
+                for ID in detections_tables[j][detf.ID]:
+                    psfc.add_row({pstf.ID: ID,
+                                  pstf.template: 0,
+                                  pstf.stamp_x: np.shape(sample_psf)[1]//2,
+                                  pstf.stamp_y: np.shape(sample_psf)[0]//2,
+                                  pstf.psf_x: np.shape(sample_psf)[1]//2,
+                                  pstf.psf_y: np.shape(sample_psf)[0]//2,
+                                  pstf.cal_time: "",
+                                  pstf.field_time: ""})
+                
+            else:
+                
+                bpsf_array = np.zeros((1,1))
+                dpsf_array = np.zeros((1,1))
+                
+            psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.bulge_psf_tag),
+                                             (stamp_size_label,np.min(np.shape(bpsf_array))),
+                                             (scale_label,0.02)))
+            
             bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.bulge_psf_tag),)))
+                                     header=psf_header)
             hdulist.append(bpsf_hdu)
             
             dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.disk_psf_tag),)))
+                                     header=psf_header)
             hdulist.append(dpsf_hdu)
             
             psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
