@@ -226,7 +226,7 @@ def fit_psfs(args, dry_run=False):
             if not dry_run:
                 
                 psf_path = find_file_in_path("mock_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
-                sample_psf = fits.read(psf_path)[0].data
+                sample_psf = fits.open(psf_path)[0].data
                 bpsf_array = sample_psf
                 dpsf_array = sample_psf
                 
