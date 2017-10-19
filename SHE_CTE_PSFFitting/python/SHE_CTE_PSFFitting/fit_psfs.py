@@ -216,7 +216,7 @@ def fit_psfs(args, dry_run=False):
                 
         logger.info("Searching for mock psf in " + os.environ['ELEMENTS_AUX_PATH'] + ".")
         
-        psf_path = find_file_in_path("sample_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
+        psf_path = find_file_in_path("SHE_CTE_PSFFitting/sample_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
         
         if psf_path is None:
             raise Exception("Cannot find mock psf.")
