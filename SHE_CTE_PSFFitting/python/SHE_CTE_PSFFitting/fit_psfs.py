@@ -212,6 +212,15 @@ def fit_psfs(args, dry_run=False):
     num_exposures = len(data_images)
     psf_image_and_table_filenames = []
     
+    if not dry_run:
+                
+        logger.info("Searching for mock psf in " + os.environ['ELEMENTS_AUX_PATH'] + ".")
+        
+        psf_path = find_file_in_path("sample_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
+        
+        if psf_path is None:
+            raise Exception("Cannot find mock psf.")
+    
     for i in range(num_exposures):
         
         filename = get_allowed_filename("PSF_DRY",str(i))
@@ -225,7 +234,8 @@ def fit_psfs(args, dry_run=False):
     
             if not dry_run:
                 
-                psf_path = find_file_in_path("mock_psf.fits",os.environ['ELEMENTS_AUX_PATH'])
+                logger.info("Found mock psf: " + psf_path)
+                
                 sample_psf = fits.open(psf_path)[0].data
                 bpsf_array = sample_psf
                 dpsf_array = sample_psf
