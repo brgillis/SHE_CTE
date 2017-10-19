@@ -16,5 +16,5 @@ elements_add_python_program(SHE_CTE_FitPSFs SHE_CTE_PSFFitting.FitPSFs)
 # elements_install_conf_files()
 
 # Install the auxiliary files
-# elements_install_aux_files()
+elements_install_aux_files()
                 
