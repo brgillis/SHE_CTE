@@ -259,7 +259,7 @@ def fit_psfs(args, dry_run=False):
                                              (stamp_size_label,np.min(np.shape(bpsf_array))),
                                              (scale_label,0.02)))
             
-            bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+            bpsf_hdu = fits.ImageHDU(data=bpsf_array,
                                      header=bulge_psf_header)
             hdulist.append(bpsf_hdu)
                 
@@ -267,7 +267,7 @@ def fit_psfs(args, dry_run=False):
                                              (stamp_size_label,np.min(np.shape(bpsf_array))),
                                              (scale_label,0.02)))
             
-            dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+            dpsf_hdu = fits.ImageHDU(data=bpsf_array,
                                      header=disk_psf_header)
             hdulist.append(dpsf_hdu)
             

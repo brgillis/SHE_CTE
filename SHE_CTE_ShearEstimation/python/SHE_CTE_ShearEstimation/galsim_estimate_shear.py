@@ -223,19 +223,21 @@ def GS_estimate_shear( data_stack, method ):
                 
                 # Get the rows for this ID
                 g_row = detection_tables[table_index].loc[ID]
-                import pdb; pdb.set_trace()
                 p_row = psf_tables[table_index].loc[ID]
             
                 # Get galaxy and PSF stamps
                 gal_stamp = data_images[table_index].extract_stamp(g_row[detf.gal_x],
                                                                    g_row[detf.gal_y],
-                                                                   data_images[table_index].header[stamp_size_label])
+                                                                   data_images[table_index].header[stamp_size_label],
+                                                                   keep_header=True)
                 bulge_psf_stamp = bulge_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
                                                                               p_row[pstf.psf_y],
-                                                                              bulge_psf_images[table_index].header[stamp_size_label])
+                                                                              bulge_psf_images[table_index].header[stamp_size_label],
+                                                                              keep_header=True)
                 disk_psf_stamp = disk_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
                                                                               p_row[pstf.psf_y],
-                                                                              disk_psf_images[table_index].header[stamp_size_label])
+                                                                              disk_psf_images[table_index].header[stamp_size_label],
+                                                                              keep_header=True)
         
                 shear_estimate = get_shear_estimate(gal_stamp, bulge_psf_stamp, sky_vars[table_index], method)
                 
