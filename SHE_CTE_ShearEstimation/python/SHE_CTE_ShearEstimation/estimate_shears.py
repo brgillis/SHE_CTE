@@ -298,8 +298,6 @@ def estimate_shears_from_args(args, dry_run=False):
                     
             except Exception as e:
                 
-                raise
-                
                 logger.warning(str(e))
             
                 hdulist = fits.HDUList()
