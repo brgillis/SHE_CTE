@@ -139,7 +139,6 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
             raise
-        raise
         logger.debug(str(e))
         shear_estimate = ShearEstimate(np.NaN, np.NaN, 1e99)
         
