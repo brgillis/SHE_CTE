@@ -190,7 +190,7 @@ def estimate_shears_from_args(args, dry_run=False):
             disk_psf_image = SHEImage(data=psf_images_and_table_hdulist[disk_index].data,
                                       header=psf_images_and_table_hdulist[disk_index].header)
             
-            she_image_datas.append(SHEImageData(science_image=she_images[i][j],
+            she_image_datas[i].append(SHEImageData(science_image=she_images[i][j],
                                                 detections_table=detections_tables[i][j],
                                                 bpsf_image=bulge_psf_image,
                                                 dpsf_image=disk_psf_image,
