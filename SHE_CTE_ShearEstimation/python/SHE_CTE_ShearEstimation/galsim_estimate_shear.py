@@ -270,5 +270,5 @@ def GS_estimate_shear( data_stack, method ):
     
     logger.debug("Exiting GS_estimate_shear")
     
-    return shear_estimates_table, None # No MCMC chains for this method
+    return shear_estimates_table
     
