@@ -271,7 +271,7 @@ def fit_psfs(args, dry_run=False):
                                      header=disk_psf_header)
             hdulist.append(dpsf_hdu)
             
-            psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))
+            psfc_hdu = table_to_hdu(psfc)
             hdulist.append(psfc_hdu)
             
         hdulist.writeto(join(args.workdir,filename),clobber=True)
