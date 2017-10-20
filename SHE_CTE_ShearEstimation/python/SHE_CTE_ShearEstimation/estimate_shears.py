@@ -128,14 +128,6 @@ def estimate_shears_from_args(args, dry_run=False):
                                           noisemap=noisemap_hdus[i][j].data,
                                           mask=mask_hdus[i][j].data,
                                           header=sci_hdus[i][j].header))
-            
-    num_exposures = len(data_images)
-    data_stacks = []
-    for j in range(num_detectors):
-        detector_images = []
-        for i in range(num_exposures):
-            detector_images.append(she_images[i][j])
-        data_stacks.append(SHEStack(detector_images))
     
     # Detections tables
     
@@ -166,49 +158,52 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Reading "+dry_label+"PSF images and tables...")
     
     psf_images_and_table_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
-    psf_tables = []
-    bulge_psf_hdus = []
-    disk_psf_hdus = []
+
+    she_image_datas = []
     
     for i, filename in enumerate(psf_images_and_table_filenames):
         
         psf_images_and_table_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = (len(psf_images_and_table_hdulist)-1) // 3
         
-        psf_tables.append([])
-        bulge_psf_hdus.append([])
-        disk_psf_hdus.append([])
+        she_image_datas.append([])
         
         for j in range(num_detectors):
             
             table_extname = str(j) + "." + ppt_mv.psf_cat_tag
             table_index = find_extension(psf_images_and_table_hdulist, table_extname)
             
-            psf_tables[i].append( Table.read( psf_images_and_table_hdulist[table_index] ) )
+            psf_table = Table.read( psf_images_and_table_hdulist[table_index] )
             
-            if not is_in_format(psf_tables[i][j],pstf):
+            if not is_in_format(psf_table,pstf):
                 raise ValueError("PSF table from " + filename + " is in invalid format.")
             
             bulge_extname = str(j) + "." + ppt_mv.bulge_psf_tag
             bulge_index = find_extension(psf_images_and_table_hdulist, bulge_extname)
             
-            bulge_psf_hdus[i].append(psf_images_and_table_hdulist[bulge_index])
+            bulge_psf_image = SHEImage(data=psf_images_and_table_hdulist[bulge_index].data,
+                                       header=psf_images_and_table_hdulist[bulge_index].header)
             
             disk_extname = str(j) + "." + ppt_mv.disk_psf_tag
             disk_index = find_extension(psf_images_and_table_hdulist, disk_extname)
             
-            disk_psf_hdus[i].append(psf_images_and_table_hdulist[disk_index])
+            disk_psf_image = SHEImage(data=psf_images_and_table_hdulist[disk_index].data,
+                                      header=psf_images_and_table_hdulist[disk_index].header)
             
-    bulge_psf_stacks = []
-    disk_psf_stacks = []
+            she_image_datas.append(SHEImageData(science_image=she_images[i][j],
+                                                detections_table=detections_tables[i][j],
+                                                bpsf_image=bulge_psf_image,
+                                                dpsf_image=disk_psf_image,
+                                                psf_table=psf_table))
+            
+    num_exposures = len(she_image_datas)
+    data_stacks = []
     for j in range(num_detectors):
-        bulge_detector_images = []
-        disk_detector_images = []
+        detector_image_datas = []
         for i in range(num_exposures):
-            bulge_detector_images.append(bulge_psf_hdus[i][j].data)
-            disk_detector_images.append(disk_psf_hdus[i][j].data)
-        bulge_psf_stacks.append(SHEStack(bulge_detector_images))
-        disk_psf_stacks.append(SHEStack(disk_detector_images))
+            detector_image_datas.append(she_image_datas[i][j])
+        data_stacks.append(SHEStack(detector_image_datas))
+
     
     # Segmentation images
     
