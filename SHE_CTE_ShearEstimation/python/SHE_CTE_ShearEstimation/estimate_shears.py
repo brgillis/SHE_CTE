@@ -139,7 +139,6 @@ def estimate_shears_from_args(args, dry_run=False):
     for i, filename in enumerate(detections_table_filenames):
         
         detections_tables_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
-        num_detectors = len(detections_tables_hdulist)-1
         
         detections_tables.append([])
         
@@ -164,7 +163,6 @@ def estimate_shears_from_args(args, dry_run=False):
     for i, filename in enumerate(psf_images_and_table_filenames):
         
         psf_images_and_table_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
-        num_detectors = (len(psf_images_and_table_hdulist)-1) // 3
         
         she_image_datas.append([])
         
@@ -215,7 +213,6 @@ def estimate_shears_from_args(args, dry_run=False):
     for i, filename in enumerate(segmentation_filenames):
         
         segmentation_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
-        num_detectors = len(segmentation_hdulist)
         
         segmentation_hdus.append([])
         
