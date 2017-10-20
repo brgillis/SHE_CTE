@@ -247,11 +247,11 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Generating shear estimates product...")
     
-    shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("DRY_BFD_SHM","0"),
-                                                                 KSB_filename = get_allowed_filename("DRY_KSB_SHM","0"),
-                                                                 LensMC_filename = get_allowed_filename("DRY_LensMC_SHM","0"),
-                                                                 MegaLUT_filename = get_allowed_filename("DRY_MegaLUT_SHM","0"),
-                                                                 REGAUSS_filename = get_allowed_filename("DRY_MegaLUT_SHM","0"))
+    shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("BFD_SHM","0"),
+                                                                 KSB_filename = get_allowed_filename("KSB_SHM","0"),
+                                                                 LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
+                                                                 MegaLUT_filename = get_allowed_filename("MegaLUT_SHM","0"),
+                                                                 REGAUSS_filename = get_allowed_filename("MegaLUT_SHM","0"))
         
     if not dry_run:
         
