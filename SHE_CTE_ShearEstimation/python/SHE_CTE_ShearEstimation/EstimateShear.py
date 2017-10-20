@@ -116,7 +116,7 @@ def mainMethod(args):
         cProfile.runctx("estimate_shears_from_args(args)",{},
                         {"estimate_shears_from_args":estimate_shears_from_args,
                          "args":args,
-                         dry_run:dry_run},
+                         "dry_run":dry_run},
                         filename="measure_shapes.prof")
     else:
         estimate_shears_from_args(args,dry_run)

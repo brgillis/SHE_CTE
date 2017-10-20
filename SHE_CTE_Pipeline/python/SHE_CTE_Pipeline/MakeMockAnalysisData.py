@@ -112,6 +112,8 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MakeMockAnalysisData mainMethod()')
     logger.debug('#')
+    
+    dry_run = args.dry_run or force_dry_run
         
     if args.profile:
         import cProfile
