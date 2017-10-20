@@ -20,15 +20,17 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
-import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
-
 from SHE_CTE_Pipeline import magic_values as mv
+from SHE_PPT import aocs_time_series_product
+from SHE_PPT import astrometry_product
+from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
-
+from SHE_PPT import mission_time_product
+from SHE_PPT import psf_calibration_product
 from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
 from SHE_PPT.astrometry_product import create_astrometry_product
 from SHE_PPT.calibration_parameters_product import create_calibration_parameters_product
@@ -41,23 +43,20 @@ from SHE_PPT.mission_time_product import create_mission_time_product
 from SHE_PPT.psf_calibration_product import create_psf_calibration_product
 from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
 from SHE_PPT.table_utility import table_to_hdu
+import numpy as np
 
-from SHE_PPT import aocs_time_series_product
+
 aocs_time_series_product.init()
 
-from SHE_PPT import astrometry_product
 astrometry_product.init()
 
-from SHE_PPT import calibration_parameters_product
 calibration_parameters_product.init()
 
-from SHE_PPT import mission_time_product
 mission_time_product.init()
 
-from SHE_PPT import psf_calibration_product
 psf_calibration_product.init()
 
-def make_mock_analysis_data(args):
+def make_mock_analysis_data(args, dry_run=False):
     """
         Dry-run of generating mock analysis data, creating only dummy files.
     """

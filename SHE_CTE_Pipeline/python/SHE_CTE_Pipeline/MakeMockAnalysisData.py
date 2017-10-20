@@ -23,14 +23,10 @@
 import argparse
 
 from ElementsKernel.Logging import getLogger
-
-from SHE_CTE_Pipeline import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
+from SHE_CTE_Pipeline import magic_values as mv
+from SHE_CTE_Pipeline.mock_analysis_data import make_mock_analysis_data
 
-if force_dry_run:
-    from SHE_CTE_Pipeline.mock_analysis_data_dry import make_mock_analysis_data
-else:
-    from SHE_CTE_Pipeline.mock_analysis_data import make_mock_analysis_data
 
 def defineSpecificProgramOptions():
     """
@@ -52,6 +48,8 @@ def defineSpecificProgramOptions():
     # Option for profiling
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
+    parser.add_argument('--dry_run',action='store_true',
+                        help='Dry run (no data processed).')
     
     # Setup options (Cannot be used in pipeline)
     parser.add_argument('--num_exposures', type=int, default=4,
@@ -117,12 +115,13 @@ def mainMethod(args):
         
     if args.profile:
         import cProfile
-        cProfile.runctx("make_mock_analysis_data(args)",{},
+        cProfile.runctx("make_mock_analysis_data(args,dry_run)",{},
                         {"make_mock_analysis_data":make_mock_analysis_data,
-                         "args":args,},
+                         "args":args,
+                         "dry_run":dry_run,},
                         filename="make_mock_analysis_data.prof")
     else:
-        make_mock_analysis_data(args)
+        make_mock_analysis_data(args,dry_run)
 
     logger.debug('Exiting SHE_CTE_MakeMockAnalysisData mainMethod()')
 
