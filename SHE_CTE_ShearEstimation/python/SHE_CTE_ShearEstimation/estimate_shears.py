@@ -291,15 +291,8 @@ def estimate_shears_from_args(args, dry_run=False):
                 for j in range(num_detectors):
                     
                     data_stack = data_stacks[j]
-                    bulge_psf_stack = bulge_psf_stacks[j]
-                    disk_psf_stack = disk_psf_stacks[j]
-                    
-                    for i in range(num_exposures):
-                        data_stack.exposures[i].detections_table = detections_tables[i][j]
-                        bulge_psf_stack.exposures[i].detections_table = psf_tables[i][j]
-                        disk_psf_stack.exposures[i].detections_table = psf_tables[i][j]
                 
-                    shear_estimates_table = method( data_stack, bulge_psf_stack, disk_psf_stack, method_data )
+                    shear_estimates_table = estimation_methods[method]( data_stack, method_data )
                     
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
@@ -307,6 +300,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     hdulist.append(table_to_hdu(shear_estimates_table))
                     
             except Exception as e:
+                
+                raise
                 
                 logger.warning(str(e))
             
