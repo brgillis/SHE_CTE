@@ -187,27 +187,28 @@ def GS_estimate_shear( data_stack, method ):
     
     # Calculate the sky variances
     sky_vars = []
-    for detections_table in detection_tables:
+    for table_index in range(num_exposures):
+        detections_table = detection_tables[table_index]
         sky_vars.append(get_var_ADU_per_pixel(pixel_value_ADU=0.,
-                                                sky_level_ADU_per_sq_arcsec=detections_table[detf.m.subtracted_sky_level],
-                                                read_noise_count=detections_table[detf.m.read_noise],
-                                                pixel_scale=data_image.scale,
-                                                gain=detections_table[detf.m.gain]))
+                                                sky_level_ADU_per_sq_arcsec=detections_table.meta[detf.m.subtracted_sky_level],
+                                                read_noise_count=detections_table.meta[detf.m.read_noise],
+                                                pixel_scale=data_images[table_index].header[scale_label],
+                                                gain=detections_table.meta[detf.m.gain]))
     
     # Get all unique IDs
     IDs = None
     for table_index in range(num_exposures):
         if IDs is None:
-            IDs = set(detections_tables[table_index][detf.ID])
+            IDs = set(detection_tables[table_index][detf.ID])
         else:
-            IDs = set.union(IDs,detections_tables[table_index][detf.ID])
+            IDs = set.union(IDs,detection_tables[table_index][detf.ID])
             
     # Set the ID as an index for each table
     for table_index in range(num_exposures):
         detection_tables[table_index].add_index(detf.ID)
         psf_tables[table_index].add_index(pstf.ID)
     
-    shear_estimates_table = initialise_shear_estimates_table(detections_tables[0],
+    shear_estimates_table = initialise_shear_estimates_table(detection_tables[0],
                                                              optional_columns=[setf.e1_err,setf.e2_err])
     
     for ID in IDs:
@@ -221,7 +222,8 @@ def GS_estimate_shear( data_stack, method ):
             try:
                 
                 # Get the rows for this ID
-                g_row = detections_tables[table_index].loc[ID]
+                g_row = detection_tables[table_index].loc[ID]
+                import pdb; pdb.set_trace()
                 p_row = psf_tables[table_index].loc[ID]
             
                 # Get galaxy and PSF stamps
@@ -257,7 +259,7 @@ def GS_estimate_shear( data_stack, method ):
         assert np.isclose(gerr1,gerr2)
             
         # Add this row to the estimates table
-        shear_estimates_table.add_row({ setf.ID : detections_tables[table_index][detf.ID][i],
+        shear_estimates_table.add_row({ setf.ID : detection_tables[table_index][detf.ID][i],
                                         setf.g1 : g1,
                                         setf.g2 : g2,
                                         setf.e1_err : gerr1,
