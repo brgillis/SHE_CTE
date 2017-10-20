@@ -170,7 +170,7 @@ def GS_estimate_shear( data_stack, method ):
     logger.debug("Entering estimate_shear_gs")
     
     # Get lists of exposures, PSF images, and detection tables
-    disk_psf_imagesdata_images = []
+    data_images = []
     detection_tables = []
     bulge_psf_images = []
     disk_psf_images = []
@@ -187,7 +187,7 @@ def GS_estimate_shear( data_stack, method ):
     
     # Calculate the sky variances
     sky_vars = []
-    for detection_table in detection_tables:
+    for detections_table in detection_tables:
         sky_vars.append(get_var_ADU_per_pixel(pixel_value_ADU=0.,
                                                 sky_level_ADU_per_sq_arcsec=detections_table[detf.m.subtracted_sky_level],
                                                 read_noise_count=detections_table[detf.m.read_noise],
@@ -257,7 +257,7 @@ def GS_estimate_shear( data_stack, method ):
         assert np.isclose(gerr1,gerr2)
             
         # Add this row to the estimates table
-        shear_estimates_table.add_row({ setf.ID : detections_table[detf.ID][i],
+        shear_estimates_table.add_row({ setf.ID : detections_tables[table_index][detf.ID][i],
                                         setf.g1 : g1,
                                         setf.g2 : g2,
                                         setf.e1_err : gerr1,
