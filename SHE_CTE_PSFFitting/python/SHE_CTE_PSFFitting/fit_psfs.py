@@ -255,16 +255,20 @@ def fit_psfs(args, dry_run=False):
                 bpsf_array = np.zeros((1,1))
                 dpsf_array = np.zeros((1,1))
                 
-            psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.bulge_psf_tag),
+            bulge_psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.bulge_psf_tag),
                                              (stamp_size_label,np.min(np.shape(bpsf_array))),
                                              (scale_label,0.02)))
             
             bpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=psf_header)
+                                     header=bulge_psf_header)
             hdulist.append(bpsf_hdu)
+                
+            disk_psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.disk_psf_tag),
+                                             (stamp_size_label,np.min(np.shape(bpsf_array))),
+                                             (scale_label,0.02)))
             
             dpsf_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                     header=psf_header)
+                                     header=disk_psf_header)
             hdulist.append(dpsf_hdu)
             
             psfc_hdu = table_to_hdu(initialise_psf_table(detector=j))

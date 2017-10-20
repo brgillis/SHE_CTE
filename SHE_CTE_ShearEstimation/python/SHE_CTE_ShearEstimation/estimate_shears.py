@@ -20,22 +20,36 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
+from os.path import join
+
 from astropy.io import fits
-from astropy.io.fits.convenience import table_to_hdu
 from astropy.table import Table
 import astropy.table
 import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_GST_IceBRGpy.logging import getLogger
-from SHE_PPT.detections_table import tf as detf
+from SHE_PPT import calibration_parameters_product as cpp, shear_estimates_product as sep
+from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT.file_io import (read_listfile, read_pickled_product,
+                             write_pickled_product, write_listfile,
+                             get_allowed_filename)
+from SHE_PPT.galaxy_population_table_format import tf as gptf
+from SHE_PPT.psf_table_format import tf as pstf
+from SHE_PPT.she_image import SHEImage
+from SHE_PPT.she_image_data import SHEImageData
 from SHE_PPT.she_stack import SHEStack
-from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
-from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from SHE_PPT.utility import find_extension
 import numpy as np
+
+
+cpp.init()
+sep.init()
 
 
 loading_methods = {"KSB":None,
@@ -49,19 +63,6 @@ estimation_methods = {"KSB":KSB_estimate_shear,
                       "MegaLUT":None,
                       "LensMC":None,
                       "BFD":None}
-
-def find_value(args_value, name, label, detections_table, galaxies_hdulist):
-    if args_value is not None:
-        value = args_value
-    else:
-        try:
-            value = galaxies_hdulist[0].header[label]
-        except KeyError as _e1:
-            try:
-                value = detections_table.meta[label]
-            except KeyError as _e2:
-                raise KeyError("No " + name + " value available.")
-    return value
 
 def estimate_shears_from_args(args, dry_run=False):
     """
@@ -246,7 +247,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product),
                                                           join(args.workdir,args.calibration_parameters_listfile))
-    if not isinstance(calibration_parameters_product, DpdSheCalibrationParametersProduct):
+    if not isinstance(calibration_parameters_product, cpp.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
                          + " is invalid type.")
     
@@ -313,26 +314,32 @@ def estimate_shears_from_args(args, dry_run=False):
             except Exception as e:
                 
                 logger.warning(str(e))
-                
-                # Create an empty estimates table
-                tab = initialise_shear_estimates_table(detections_table)
-                
-                # Fill it with NaN measurements and 1e99 errors
-                tab[setf.ID] = detections_table[detf.ID]
-                
-                for col in (setf.gal_g1, setf.gal_g2,
-                            setf.gal_e1_err, setf.gal_e2_err,):
-                    tab[col] = np.NaN*np.ones_like(tab[setf.ID])
-                
-                for col in (setf.gal_g1_err, setf.gal_g2_err):
-                    tab[col] = 1e99*np.ones_like(tab[setf.ID])
+            
+                hdulist = fits.HDUList()
                     
-                hdulist.append(table_to_hdu(tab))
+                for j in range(num_detectors):
+                
+                    # Create an empty estimates table
+                    shear_estimates_table = initialise_shear_estimates_table(detections_tables[i][j])
+                    
+                    for r in range(len(detections_tables[i][j][detf.ID])):
+                        
+                        # Fill it with NaN measurements and 1e99 errors
+                        
+                        shear_estimates_table.add_row({setf.ID:detections_tables[i][j][detf.ID][r],
+                                     setf.g1:np.NaN,
+                                     setf.g2:np.NaN,
+                                     setf.e1_err:np.NaN,
+                                     setf.e2_err:np.NaN,
+                                     setf.e1_err:1e99,
+                                     setf.e2_err:1e99,})
+                        
+                    hdulist.append(table_to_hdu(shear_estimates_table))
                 
             method_shear_estimates[method] = shear_estimates_table
             
-        # Output the shear estimates
-        hdulist.writeto(join(args.workdir,shear_estimates_filename),clobber=True)
+            # Output the shear estimates
+            hdulist.writeto(join(args.workdir,shear_estimates_filename),clobber=True)
         
     else:
     
