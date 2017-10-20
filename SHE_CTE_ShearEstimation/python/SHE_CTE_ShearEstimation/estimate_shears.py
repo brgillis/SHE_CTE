@@ -21,25 +21,22 @@
 """
 
 from astropy.io import fits
+from astropy.io.fits.convenience import table_to_hdu
 from astropy.table import Table
 import astropy.table
-
-import numpy as np
 import galsim
 
-from SHE_GST_IceBRGpy.logging import getLogger
-
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
-
-from SHE_PPT.she_stack import SHEStack
-from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.detections_table import tf as detf
-from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
-
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.output_shear_estimates import output_shear_estimates
-from astropy.io.fits.convenience import table_to_hdu
+from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
+from SHE_GST_IceBRGpy.logging import getLogger
+from SHE_PPT.detections_table import tf as detf
+from SHE_PPT.she_stack import SHEStack
+from SHE_PPT.shear_estimates_table import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_utility import is_in_format
+import numpy as np
+
 
 loading_methods = {"KSB":None,
                    "REGAUSS":None,
@@ -84,7 +81,12 @@ def estimate_shears_from_args(args, dry_run=False):
     
     # Data images - Read in as SHEStack object
     
-    logger.info("Reading mock dry data images...")
+    if dry_run:
+        dry_label = " mock dry"
+    else:
+        dry_label = ""
+    
+    logger.info("Reading "+dry_label+"data images...")
     
     data_images = read_listfile(join(args.workdir,args.data_images))
 
@@ -136,7 +138,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     # Detections tables
     
-    logger.info("Reading mock dry detections tables...")
+    logger.info("Reading "+dry_label+"detections tables...")
     
     detections_table_filenames = read_listfile(join(args.workdir,args.detections_tables))
     detections_tables = []
@@ -160,7 +162,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     # PSF images and tables
     
-    logger.info("Reading mock dry PSF images and tables...")
+    logger.info("Reading "+dry_label+"PSF images and tables...")
     
     psf_images_and_table_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
     psf_tables = []
@@ -209,7 +211,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     # Segmentation images
     
-    logger.info("Reading mock dry segmentation images...")
+    logger.info("Reading "+dry_label+"segmentation images...")
     
     segmentation_filenames = read_listfile(join(args.workdir,args.segmentation_images))
     segmentation_hdus = []
@@ -230,7 +232,7 @@ def estimate_shears_from_args(args, dry_run=False):
             
     # Galaxy population priors
     
-    logger.info("Reading mock dry galaxy population priors...")
+    logger.info("Reading "+dry_label+"galaxy population priors...")
     
     galaxy_population_priors_table = Table.read(join(args.workdir,args.galaxy_population_priors_table))
             
@@ -240,7 +242,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
     # Calibration parameters product
     
-    logger.info("Reading mock dry calibration parameters...")
+    logger.info("Reading "+dry_label+"calibration parameters...")
     
     calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product),
                                                           join(args.workdir,args.calibration_parameters_listfile))
