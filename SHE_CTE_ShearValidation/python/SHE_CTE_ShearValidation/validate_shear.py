@@ -1,8 +1,8 @@
-""" @file validate_shear_dry.py
+""" @file validate_shear.py
 
     Created 12 Oct 2017
 
-    Function for performing a dry run of shear validation.
+    Function for performing shear validation.
 
     ---------------------------------------------------------------------
 
@@ -20,29 +20,29 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
-import numpy as np
 from os.path import join
+
 from astropy.io import fits
 from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
-
 from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
-
+from SHE_PPT import shear_estimates_product
+from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, append_hdu)
 from SHE_PPT.shear_estimates_product import DpdShearEstimatesProduct
 from SHE_PPT.shear_estimates_table_format import tf as setf, initialise_shear_estimates_table
-from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
+import numpy as np
 
-from SHE_PPT import shear_estimates_product
+
 shear_estimates_product.init()
 
-from SHE_PPT import calibration_parameters_product
 calibration_parameters_product.init()
 
 def validate_shear(args):
