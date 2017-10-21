@@ -202,8 +202,7 @@ def GS_estimate_shear( data_stack, method ):
         else:
             IDs = set.union(IDs,detection_tables[table_index][detf.ID])
             
-    # Set the ID as an index for each table
-    for table_index in range(num_exposures):
+        # Set the ID as an index for each table
         detection_tables[table_index].add_index(detf.ID)
         psf_tables[table_index].add_index(pstf.ID)
     
