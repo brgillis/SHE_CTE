@@ -3,6 +3,7 @@
 DATA_IM="sim_data_images.json"
 PSF_CAL="mock_psf_calibration_products.json"
 SEG_IM="mock_segmentation_images.json"
+DAL_TAB="mock_details_tables.json"
 DTC_TAB="mock_detections_tables.json"
 AST_PROD="mock_astrometry_products.json"
 AOCS_PROD="mock_aocs_time_series_products.json"
@@ -19,7 +20,16 @@ VSE_TAB="mock_validated_shear_estimates.fits"
 CMD="E-Run SHE_CTE 0.2 SHE_CTE_MakeMockAnalysisData --data_images $DATA_IM --psf_calibration_products $PSF_CAL --segmentation_images $SEG_IM --detections_tables $DTC_TAB --astrometry_products $AST_PROD --aocs_time_series_products $AOCS_PROD --mission_time_products $MT_PROD --galaxy_population_priors_table $GP_TAB --calibration_parameters_product $CAL_PROD --calibration_parameters_listfile $CAL_LF --shear_validation_statistics_table $SV_TAB"
 
 echo $CMD
-# `$CMD`
+`$CMD`
+
+if [ $? -ne 0 ]; then
+    exit
+fi
+
+CMD="E-Run SHE_GST 1.2 GenGalaxyImages --config-file /home/user/Work/Projects/SHE_GST/SHE_GST_GalaxyImageGeneration/conf/SHE_GST_GalaxyImageGeneration/SampleStamps.conf --data_images $DATA_IM --segmentation_images $SEG_IM --detections_tables $DTC_TAB --details_tables $DAL_TAB  --psf_images_and_tables $PSF_IMTAB"
+
+echo $CMD
+`$CMD`
 
 if [ $? -ne 0 ]; then
     exit
@@ -29,8 +39,6 @@ CMD="E-Run SHE_CTE 0.2 SHE_CTE_FitPSFs --data_images $DATA_IM --detections_table
 
 echo $CMD
 `$CMD`
-
-exit
 
 if [ $? -ne 0 ]; then
     exit
