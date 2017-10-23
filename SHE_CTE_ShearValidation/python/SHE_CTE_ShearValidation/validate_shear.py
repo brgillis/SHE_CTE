@@ -28,7 +28,6 @@ from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
 from SHE_CTE_ShearValidation import magic_values as mv
-from SHE_CTE_ShearValidation.shear_combination import combine_shear_estimates
 from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import shear_estimates_product
@@ -89,10 +88,19 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         else:
             if detector != get_detector(detector_estimates[method]):
                 raise ValueError("Not all estimates tables are for the same detector.")
+    
+    # Use only methods which pass validation
+    validated_methods = []
+        
+    for method in detector_estimates:
+        
+        # Skip if the table doesn't pass validation
+        if detector_estimates[method].meta[setf.m.validated] > 0:
+            validated_methods.append(method)
             
     # Get a set of all object IDs
     IDs = None
-    for method in detector_estimates:
+    for method in validated_methods:
         if IDs is None:
             IDs = set(detector_estimates[method][detf.ID])
         else:
@@ -115,6 +123,10 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         for method in detector_estimates:
             
             tab = detector_estimates[method]
+            
+            # Skip if the table doesn't pass validation
+            if not tab.meta[setf.m.validated] > 0:
+                continue
             
             try:
                 row = tab.loc[ID]
@@ -164,7 +176,13 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
                                               })
         
         else:
-            continue
+            
+            combined_shear_estimates.add_row({setf.ID: ID,
+                                              setf.g1: np.nan,
+                                              setf.g1_err: 1e99,
+                                              setf.g2: np.nan,
+                                              setf.g2_err: 1e99,
+                                              })
         
     return combined_shear_estimates
 
