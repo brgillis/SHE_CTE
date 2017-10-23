@@ -251,7 +251,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                                  KSB_filename = get_allowed_filename("KSB_SHM","0"),
                                                                  LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
                                                                  MegaLUT_filename = get_allowed_filename("MegaLUT_SHM","0"),
-                                                                 REGAUSS_filename = get_allowed_filename("MegaLUT_SHM","0"))
+                                                                 REGAUSS_filename = get_allowed_filename("REGAUSS_SHM","0"))
         
     if not dry_run:
         
