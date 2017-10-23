@@ -1,12 +1,12 @@
-pkgRepository=/home/user/git/SHE_CTE/SHE_CTE_Pipeline/python
+pkgRepository=/home/user/Work/Projects/SHE_CTE/SHE_CTE_Pipeline/python
 
-pipelineDir=/home/user/git/SHE_CTE/SHE_CTE_Pipeline/python/SHE_CTE_Pipeline
+pipelineDir=/home/user/Work/Projects/SHE_CTE/SHE_CTE_Pipeline/python/SHE_CTE_Pipeline
 
 workdir=tests/she_analysis_dry
 
 logdir=logdir
 
-data_images=mock_data_images.json
+data_images=sim_data_images.json
 psf_calibration_products=mock_psf_calibration_products.json
 segmentation_images=mock_segmentation_images.json
 detections_tables=mock_detections_tables.json
