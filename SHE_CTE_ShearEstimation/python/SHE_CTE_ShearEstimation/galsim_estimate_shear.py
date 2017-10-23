@@ -259,7 +259,7 @@ def GS_estimate_shear( data_stack, method ):
         assert np.isclose(gerr1,gerr2)
             
         # Add this row to the estimates table
-        shear_estimates_table.add_row({ setf.ID : detection_tables[table_index][detf.ID][i],
+        shear_estimates_table.add_row({ setf.ID : ID,
                                         setf.g1 : g1,
                                         setf.g2 : g2,
                                         setf.e1_err : gerr1,
