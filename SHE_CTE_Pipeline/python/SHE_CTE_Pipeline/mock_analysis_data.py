@@ -30,6 +30,7 @@ from SHE_PPT import astrometry_product
 from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mission_time_product
+from SHE_PPT import mosaic_product
 from SHE_PPT import psf_calibration_product
 from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
 from SHE_PPT.astrometry_product import create_astrometry_product
@@ -40,6 +41,7 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              append_hdu, get_allowed_filename)
 from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table
 from SHE_PPT.mission_time_product import create_mission_time_product
+from SHE_PPT.mosaic_product import create_mosaic_product
 from SHE_PPT.psf_calibration_product import create_psf_calibration_product
 from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
 from SHE_PPT.table_utility import table_to_hdu
@@ -47,13 +49,10 @@ import numpy as np
 
 
 aocs_time_series_product.init()
-
 astrometry_product.init()
-
 calibration_parameters_product.init()
-
 mission_time_product.init()
-
+mosaic_product.init()
 psf_calibration_product.init()
 
 def make_mock_analysis_data(args, dry_run=False):
@@ -147,11 +146,26 @@ def make_mock_analysis_data(args, dry_run=False):
     
     logger.info("Generating mock dry segmentation images...")
     
-    segmentation_images_filenames = []
+    mosaic_product_filenames = []
+    mosaic_product_sub_filenames = []
     
     for i in range(num_exposures):
         
-        filename = get_allowed_filename("SEG_DRY",str(i))
+        # Create the data product
+        
+        product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
+        listfile_filename = get_allowed_filename("SEG_DRY_LF",str(i),extension=".json")
+        data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
+        
+        mosaic_product =  create_mosaic_product(instrument_name="VIS",
+                                                filter="VIS",
+                                                wcs_params=None,
+                                                zeropoint=0,
+                                                data_filename=data_filename,)
+        
+        mosaic_product_sub_filenames.append([data_filename])
+        
+        # Create its associated fits file
         
         hdulist = fits.HDUList()
         
@@ -161,13 +175,15 @@ def make_mock_analysis_data(args, dry_run=False):
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
             hdulist.append(seg_hdu)
             
-        hdulist.writeto(filename,clobber=True)
+        hdulist.writeto(data_filename,clobber=True)
         
-        segmentation_images_filenames.append(filename)
+        mosaic_product_filenames.append([product_filename])
     
         logger.info("Finished generating segmentation images for exposure " + str(i) + ".")
+        
+    all_mosaic_product_filenames = [mosaic_product_filenames,mosaic_product_sub_filenames]
     
-    write_listfile(args.segmentation_images,segmentation_images_filenames)
+    write_listfile(args.segmentation_images,all_mosaic_product_filenames)
     
     # Detections tables
     
