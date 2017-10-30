@@ -37,6 +37,7 @@ from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.file_io import (read_listfile, read_pickled_product,
                              write_pickled_product, write_listfile,
                              get_allowed_filename)
+from SHE_PPT import mosaic_product as mp
 from SHE_PPT.galaxy_population_table_format import tf as gptf
 from SHE_PPT.psf_table_format import tf as pstf
 from SHE_PPT.she_image import SHEImage
@@ -50,6 +51,7 @@ import numpy as np
 
 cpp.init()
 sep.init()
+mp.init()
 
 
 loading_methods = {"KSB":None,
@@ -207,12 +209,23 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"segmentation images...")
     
-    segmentation_filenames = read_listfile(join(args.workdir,args.segmentation_images))
+    all_segmentation_filenames = read_listfile(join(args.workdir,args.segmentation_images))
+    segmentation_product_filenames = all_segmentation_filenames[0]
+    segmentation_product_sub_filenames = all_segmentation_filenames[1]
+    
     segmentation_hdus = []
     
     for i, filename in enumerate(segmentation_filenames):
         
-        segmentation_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
+        mosaic_product = read_pickled_product(join(args.workdir,filename),
+                                              segmentation_product_sub_filenames[i])
+        
+        if not isinstance(mosaic_product, mp.DpdMerMosaicProduct):
+            raise ValueError("Mosaic product from " + filename + " is invalid type.")
+        
+        mosaic_data_filename = mosaic_product.get_data_filename()
+        
+        segmentation_hdulist = fits.open(join(args.workdir,mosaic_data_filename), mode="readonly", memmap=True)
         
         segmentation_hdus.append([])
         
