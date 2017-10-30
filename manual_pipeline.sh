@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
     exit
 fi
 
-CMD="E-Run SHE_GST 1.2 GenGalaxyImages --config-file /home/user/Work/Projects/SHE_GST/SHE_GST_GalaxyImageGeneration/conf/SHE_GST_GalaxyImageGeneration/SampleStamps.conf --data_images $DATA_IM --segmentation_images $SEG_IM --detections_tables $DTC_TAB --details_tables $DAL_TAB  --psf_images_and_tables $PSF_IMTAB --workdir /home/user/euclid-ial/workspace/tests/she_analysis --logdir /home/user/euclid-ial/workspace/tests/she_analysis/logdir"
+CMD="E-Run SHE_GST 1.2 GenGalaxyImages --config-file /home/user/Work/Projects/SHE_GST/SHE_GST_GalaxyImageGeneration/conf/SHE_GST_GalaxyImageGeneration/SampleStamps.conf --dithering_scheme 2x2 --data_images $DATA_IM --segmentation_images $SEG_IM --detections_tables $DTC_TAB --details_tables $DAL_TAB  --psf_images_and_tables $PSF_IMTAB --workdir /home/user/euclid-ial/workspace/tests/she_analysis --logdir /home/user/euclid-ial/workspace/tests/she_analysis/logdir"
 
 echo $CMD
 `$CMD`
