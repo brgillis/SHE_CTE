@@ -52,7 +52,7 @@ def validate_shear_estimates(shear_estimates_table, shear_validation_statistics_
         sets everything to "pass".
     """
 
-    shear_estimates_table[setf.m.validated] = 1
+    shear_estimates_table.meta[setf.m.validated] = 1
     
     return
 
@@ -234,7 +234,7 @@ def validate_shear(args, dry_run=False):
             
             if not is_in_format(shear_estimates_table,setf):
                 raise ValueError("Shear estimates table from " + join(args.workdir,filename) + " is in invalid format.")
-            
+
             shear_estimates_tables[method].append(shear_estimates_table)
             
     # Shear validation statistics
