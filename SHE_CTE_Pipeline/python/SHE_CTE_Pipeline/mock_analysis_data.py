@@ -20,6 +20,8 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
+from os.path import join
+
 from astropy.io import fits
 from astropy.table import Table
 
@@ -97,11 +99,11 @@ def make_mock_analysis_data(args, dry_run=False):
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
             hdulist.append(flg_hdu)
             
-        hdulist.writeto(filename,clobber=True)
+        hdulist.writeto(join(args.workdir,filename),clobber=True)
     
         logger.info("Finished generating exposure " + str(i) + ".")
         
-    write_listfile(args.data_images,data_images)
+    write_listfile(join(args.workdir,args.data_images),data_images)
     
     # PSF Calibration products
     
@@ -116,13 +118,13 @@ def make_mock_analysis_data(args, dry_run=False):
         zernike_mode_filename = get_allowed_filename("PSFCAL_ZM_DRY",str(i))
         
         null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-        append_hdu( zernike_mode_filename, null_hdu)
+        append_hdu( join(args.workdir,zernike_mode_filename), null_hdu)
         
         # Set up SE object
         surface_error_filename = get_allowed_filename("PSFCAL_SE_DRY",str(i))
         
         null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-        append_hdu( surface_error_filename, null_hdu)
+        append_hdu( join(args.workdir,surface_error_filename), null_hdu)
         
         psf_calibration_product_sub_filenames.append([zernike_mode_filename,surface_error_filename])
         
@@ -134,13 +136,16 @@ def make_mock_analysis_data(args, dry_run=False):
                                                                  zernike_mode_filename=zernike_mode_filename,
                                                                  surface_error_filename=surface_error_filename)
         
-        write_pickled_product(psf_calibration_product,filename,listfile_filename)
+        write_pickled_product(psf_calibration_product,
+                              join(args.workdir,filename),
+                              join(args.workdir,listfile_filename))
         
         psf_calibration_product_filenames.append(filename)
         
     all_psf_calibration_product_filenames = [psf_calibration_product_filenames,psf_calibration_product_sub_filenames]
         
-    write_listfile(args.psf_calibration_products,all_psf_calibration_product_filenames)
+    write_listfile(join(args.workdir,args.psf_calibration_products),
+                   all_psf_calibration_product_filenames)
     
     # Segmentation images
     
@@ -175,7 +180,7 @@ def make_mock_analysis_data(args, dry_run=False):
                                     header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
             hdulist.append(seg_hdu)
             
-        hdulist.writeto(data_filename,clobber=True)
+        hdulist.writeto(join(args.workdir,data_filename),clobber=True)
         
         mosaic_product_filenames.append([product_filename])
     
@@ -183,7 +188,7 @@ def make_mock_analysis_data(args, dry_run=False):
         
     all_mosaic_product_filenames = [mosaic_product_filenames,mosaic_product_sub_filenames]
     
-    write_listfile(args.segmentation_images,all_mosaic_product_filenames)
+    write_listfile(join(args.workdir,args.segmentation_images),all_mosaic_product_filenames)
     
     # Detections tables
     
@@ -202,13 +207,13 @@ def make_mock_analysis_data(args, dry_run=False):
             dtc_hdu = table_to_hdu(initialise_detections_table(detector=j))
             hdulist.append(dtc_hdu)
             
-        hdulist.writeto(filename,clobber=True)
+        hdulist.writeto(join(args.workdir,filename),clobber=True)
         
         detections_tables_filenames.append(filename)
     
         logger.info("Finished generating detections for exposure " + str(i) + ".")
     
-    write_listfile(args.detections_tables,detections_tables_filenames)
+    write_listfile(join(args.workdir,args.detections_tables),detections_tables_filenames)
     
     # Astrometry products
     
@@ -222,11 +227,11 @@ def make_mock_analysis_data(args, dry_run=False):
         
         astrometry_product = create_astrometry_product()
         
-        write_pickled_product(astrometry_product,filename)
+        write_pickled_product(astrometry_product,join(args.workdir,filename))
         
         astrometry_product_filenames.append(filename)
         
-    write_listfile(args.astrometry_products,astrometry_product_filenames)
+    write_listfile(join(args.workdir,args.astrometry_products),astrometry_product_filenames)
     
     # AOCS time series products
     
@@ -240,11 +245,11 @@ def make_mock_analysis_data(args, dry_run=False):
         
         aocs_time_series_product = create_aocs_time_series_product()
         
-        write_pickled_product(aocs_time_series_product,filename)
+        write_pickled_product(aocs_time_series_product,join(args.workdir,filename))
         
         aocs_time_series_product_filenames.append(filename)
         
-    write_listfile(args.aocs_time_series_products,aocs_time_series_product_filenames)
+    write_listfile(join(args.workdir,args.aocs_time_series_products),aocs_time_series_product_filenames)
     
     # Mission time products
     
@@ -258,18 +263,19 @@ def make_mock_analysis_data(args, dry_run=False):
         
         mission_time_product = create_mission_time_product()
         
-        write_pickled_product(mission_time_product,filename)
+        write_pickled_product(mission_time_product,join(args.workdir,filename))
         
         mission_time_product_filenames.append(filename)
         
-    write_listfile(args.mission_time_products,mission_time_product_filenames)
+    write_listfile(join(args.workdir,args.mission_time_products),mission_time_product_filenames)
     
     # Galaxy population priors table
     
     logger.info("Generating mock dry galaxy population priors table...")
     
     galaxy_population_priors_table = initialise_galaxy_population_table()
-    galaxy_population_priors_table.write(args.galaxy_population_priors_table,format="fits",overwrite=True)
+    galaxy_population_priors_table.write(join(args.workdir,args.galaxy_population_priors_table),
+                                         format="fits",overwrite=True)
     
     # Calibration parameters product
     
@@ -278,22 +284,22 @@ def make_mock_analysis_data(args, dry_run=False):
     ksb_calibration_parameters_filename = get_allowed_filename("KSB_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( ksb_calibration_parameters_filename, null_hdu)
+    append_hdu( join(args.workdir,ksb_calibration_parameters_filename), null_hdu)
         
     lensmc_calibration_parameters_filename = get_allowed_filename("LENSMC_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( lensmc_calibration_parameters_filename, null_hdu)
+    append_hdu( join(args.workdir,lensmc_calibration_parameters_filename), null_hdu)
         
     megalut_calibration_parameters_filename = get_allowed_filename("MEGALUT_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( megalut_calibration_parameters_filename, null_hdu)
+    append_hdu( join(args.workdir,megalut_calibration_parameters_filename), null_hdu)
         
     regauss_calibration_parameters_filename = get_allowed_filename("REGAUSS_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( regauss_calibration_parameters_filename, null_hdu)
+    append_hdu( join(args.workdir,regauss_calibration_parameters_filename), null_hdu)
         
     calibration_parameters_product = create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
                                                                            LensMC_filename=lensmc_calibration_parameters_filename,
@@ -301,15 +307,16 @@ def make_mock_analysis_data(args, dry_run=False):
                                                                            REGAUSS_filename=regauss_calibration_parameters_filename)
     
     write_pickled_product(calibration_parameters_product,
-                          args.calibration_parameters_product,
-                          args.calibration_parameters_listfile)
+                          join(args.workdir,args.calibration_parameters_product),
+                          join(args.workdir,args.calibration_parameters_listfile))
     
     # Shear validation statistics tables
     
     logger.info("Generating mock dry shear validation statistics tables...")
     
     shear_validation_statistics_table = initialise_shear_estimates_table()
-    shear_validation_statistics_table.write(args.shear_validation_statistics_table,format="fits",overwrite=True)
+    shear_validation_statistics_table.write(join(args.workdir,args.shear_validation_statistics_table)
+                                            ,format="fits",overwrite=True)
     
     logger.info("Finished generating mock dry data.")
     

@@ -91,6 +91,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_validation_statistics_table', type=str, default="mock_shear_validation_statistics_table.fits",
                         help="Desired name of fits file containing mock shear validation statistics.")
     
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
+    
 
     logger.debug('Exiting SHE_CTE_MakeMockAnalysisData defineSpecificProgramOptions()')
 
