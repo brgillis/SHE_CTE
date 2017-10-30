@@ -215,7 +215,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     segmentation_hdus = []
     
-    for i, filename in enumerate(segmentation_filenames):
+    for i, filename in enumerate(segmentation_product_filenames):
         
         mosaic_product = read_pickled_product(join(args.workdir,filename),
                                               segmentation_product_sub_filenames[i])
