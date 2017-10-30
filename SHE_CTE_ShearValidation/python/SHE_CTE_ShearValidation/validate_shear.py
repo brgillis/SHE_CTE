@@ -52,7 +52,7 @@ def validate_shear_estimates(shear_estimates_table, shear_validation_statistics_
         sets everything to "pass".
     """
 
-    shear_estimates_table[setf.m.validated] = 1
+    shear_estimates_table.meta[setf.m.validated] = 1
     
     return
 
@@ -67,7 +67,7 @@ def inv_var_stack( a, a_err ):
     
     a_m = (a*a_inv_var).sum()*inv_a_inv_var_sum
     
-    a_m_err = sqrt(inv_a_inv_var_sum)
+    a_m_err = math.sqrt(inv_a_inv_var_sum)
     
     return a_m, a_m_err
         
@@ -104,7 +104,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         IDs = set.union(IDs,detector_estimates[method][detf.ID])
             
         # Set up ID column as index
-        detector_estimates[method].add_index(detf.ID)
+        detector_estimates[method].add_index(setf.ID)
         
     # Initialise combined table
     combined_shear_estimates = initialise_shear_estimates_table(detector=detector,
@@ -148,7 +148,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
                 g1s.append(m_g1)
                 e1_errs.append(m_e1_err)
                 
-            if m_g2_err < 1e99 and not math.isnan(m_g2):
+            if m_e2_err < 1e99 and not math.isnan(m_g2):
                 g2s.append(m_g2)
                 e2_errs.append(m_e2_err)
                 
@@ -231,7 +231,7 @@ def validate_shear(args, dry_run=False):
             
             if not is_in_format(shear_estimates_table,setf):
                 raise ValueError("Shear estimates table from " + join(args.workdir,filename) + " is in invalid format.")
-            
+
             shear_estimates_tables[method].append(shear_estimates_table)
             
     # Shear validation statistics
