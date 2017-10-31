@@ -101,7 +101,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
     # Get a set of all object IDs
     IDs = set([])
     for method in validated_methods:
-        IDs = set.union(IDs,detector_estimates[method][detf.ID])
+        IDs = set.union(IDs,detector_estimates[method][setf.ID])
             
         # Set up ID column as index
         detector_estimates[method].add_index(setf.ID)
