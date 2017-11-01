@@ -107,7 +107,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     
     return shear_estimate
 
-def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
+def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, ID):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
@@ -115,11 +115,14 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method):
     # Get a resampled PSF stamp
     resampled_psf_stamp = get_resampled_image(psf_stamp, gal_stamp.header[scale_label])
     
+    gal_mask = gal_stamp.get_object_mask(ID)
+    
     try:
         
         galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_stamp.header[scale_label]), 
                                                          PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(), 
                                                                                 scale=gal_stamp.header[scale_label]), 
+                                                         badpix=gal_mask,
                                                          sky_var=sky_var, 
                                                          guess_sig_gal=0.5 / gal_stamp.header[scale_label], 
                                                          guess_sig_PSF=0.2 / resampled_psf_stamp.header[scale_label], 
@@ -166,7 +169,7 @@ def inv_var_stack( a, a_err ):
 def GS_estimate_shear( data_stack, method ):
 
     logger = getLogger(mv.logger_name)
-    logger.debug("Entering estimate_shear_gs")
+    logger.debug("Entering GS_estimate_shear")
     
     # Get lists of exposures, PSF images, and detection tables
     data_images = []
@@ -237,7 +240,7 @@ def GS_estimate_shear( data_stack, method ):
                                                                               disk_psf_images[table_index].header[stamp_size_label],
                                                                               keep_header=True)
         
-                shear_estimate = get_shear_estimate(gal_stamp, bulge_psf_stamp, sky_vars[table_index], method)
+                shear_estimate = get_shear_estimate(gal_stamp, bulge_psf_stamp, sky_vars[table_index], method, ID=ID)
                 
                 g1s.append(shear_estimate.g1)
                 g2s.append(shear_estimate.g2)
