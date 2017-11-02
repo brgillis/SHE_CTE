@@ -24,8 +24,8 @@ import argparse
 
 from ElementsKernel.Logging import getLogger
 from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_Pipeline import magic_values as mv
-from SHE_CTE_Pipeline.mock_analysis_data import make_mock_analysis_data
+from SHE_CTE_PipelineUtility import magic_values as mv
+from SHE_CTE_PipelineUtility.mock_analysis_data import make_mock_analysis_data
 
 
 def defineSpecificProgramOptions():
