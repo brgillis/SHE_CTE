@@ -269,11 +269,14 @@ def validate_shear(args, dry_run=False):
     # Set up mock output in the correct format
     
     logger.info("Generating"+dry_label+" validated shear estimates...")
+            
+    hdulist = fits.HDUList()
         
     for j in range(num_detectors):
         
-        shm_hdu = table_to_hdu(combined_shear_estimates[j])
-        append_hdu( join(args.workdir,args.validated_shear_estimates_table), shm_hdu)
+        hdulist.append(table_to_hdu(combined_shear_estimates[j]))
+    
+    hdulist.writeto(join(args.workdir,args.validated_shear_estimates_table), clobber=True)
     
     logger.info("Finished"+dry_label+" shear validation.")
         
