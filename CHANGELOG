@@ -7,15 +7,15 @@ Changes from v0.1 to v0.2
 
 API Changes
 -----------
-- Added executable SHE_CTE_SimulateImages
+
 - Added executable SHE_CTE_MeasureStatistics
 - Added executable SHE_CTE_PrepareConfigs
-- Added package definitinos for the pipeline runner
-- Added core_pipeline.py pipeline script
-
+- Added executable SHE_CTE_PSFFitting (temporary mock PSF fitting)
+- Allow specification of workdir and logdir for all executables
 
 Dependency Changes
 ------------------
+
 - Now depends on SHE_PPT as well
 
 Deprecated Features
@@ -28,7 +28,9 @@ Bug Fixes
 
 New Features
 ------------
+
 - Control methods now interface properly with expected format for estimate_shear
+- Control methods now use mask and segmentation map information as well
 
 New config features
 -------------------
@@ -36,4 +38,5 @@ New config features
 
 Miscellaneous
 -------------
+
 - Relicensed all code to Euclid Science Ground Segment under LGPL

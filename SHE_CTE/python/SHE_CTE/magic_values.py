@@ -21,4 +21,4 @@
 """
 
 # Force dry run, where no analysis is performed, just dummy files being generated
-force_dry_run = True
+force_dry_run = False

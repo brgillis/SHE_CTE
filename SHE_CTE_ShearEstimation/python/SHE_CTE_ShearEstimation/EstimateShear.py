@@ -23,11 +23,7 @@
 import argparse
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation import magic_values as mv
-
-if force_dry_run:
-    from SHE_CTE_ShearEstimation.estimate_shears_dry import estimate_shears_from_args
-else:
-    from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 
 from SHE_GST_IceBRGpy.logging import getLogger
 
@@ -50,6 +46,8 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
+    parser.add_argument('--dry_run',action='store_true',
+                        help='Dry run (no data processed).')
     
     # Required input arguments
     
@@ -85,6 +83,10 @@ def defineSpecificProgramOptions():
                         help='XML data product to contain file links to the shear estimates tables.')
     parser.add_argument('--shear_estimates_listfile',type=str,
                         help='.json listfile to contain filenames of shear estimates tables.')
+    
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
 
     logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
 
@@ -106,14 +108,18 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_EstimateShear mainMethod()')
     logger.debug('#')
+    
+    dry_run = args.dry_run or force_dry_run
         
     if args.profile:
         import cProfile
-        cProfile.runctx("estimate_shears_from_args(vars(args))",{},
+        cProfile.runctx("estimate_shears_from_args(args)",{},
                         {"estimate_shears_from_args":estimate_shears_from_args,
-                         "args":args},filename="measure_shapes.prof")
+                         "args":args,
+                         "dry_run":dry_run},
+                        filename="measure_shapes.prof")
     else:
-        estimate_shears_from_args(args)
+        estimate_shears_from_args(args,dry_run)
 
     logger.debug('# Exiting SHE_CTE_EstimateShear mainMethod()')
 

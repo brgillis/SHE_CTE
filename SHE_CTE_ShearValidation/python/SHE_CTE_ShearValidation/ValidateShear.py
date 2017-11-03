@@ -23,14 +23,10 @@
 import argparse
 
 from ElementsKernel.Logging import getLogger
-
-from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
+from SHE_CTE_ShearValidation import magic_values as mv
+from SHE_CTE_ShearValidation.validate_shear import validate_shear
 
-if force_dry_run:
-    from SHE_CTE_ShearValidation.validate_shear_dry import validate_shear
-else:
-    from SHE_CTE_ShearValidation.validate_shear import validate_shear
 
 def defineSpecificProgramOptions():
     """
@@ -52,6 +48,8 @@ def defineSpecificProgramOptions():
     # Option for profiling
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
+    parser.add_argument('--dry_run',action='store_true',
+                        help='Dry run (no data processed).')
     
     # Input filenames
     parser.add_argument('--shear_estimates_product',type=str,
@@ -64,6 +62,10 @@ def defineSpecificProgramOptions():
     # Output filenames
     parser.add_argument('--validated_shear_estimates_table',type=str,
                         help='Desired filename for output shear estimates table (multi-HDU fits file).')
+    
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
     
 
     logger.debug('Exiting SHE_CTE_ValidateShear defineSpecificProgramOptions()')
@@ -86,12 +88,15 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_ValidateShear mainMethod()')
     logger.debug('#')
+    
+    dry_run = args.dry_run or force_dry_run
         
     if args.profile:
         import cProfile
-        cProfile.runctx("validate_shear(args)",{},
+        cProfile.runctx("validate_shear(args,dry_run=dry_run)",{},
                         {"validate_shear":validate_shear,
-                         "args":args,},
+                         "args":args,
+                         "dry_run":dry_run,},
                         filename="validate_shear.prof")
     else:
         validate_shear(args)

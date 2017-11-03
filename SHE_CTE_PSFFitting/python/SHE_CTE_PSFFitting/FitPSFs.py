@@ -23,14 +23,10 @@
 import argparse
 
 from ElementsKernel.Logging import getLogger
-
-from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_CTE.magic_values import force_dry_run
+from SHE_CTE_PSFFitting import magic_values as mv
+from SHE_CTE_PSFFitting.fit_psfs import fit_psfs
 
-if force_dry_run:
-    from SHE_CTE_PSFFitting.fit_psfs_dry import fit_psfs
-else:
-    from SHE_PSM import fit_psfs
 
 def defineSpecificProgramOptions():
     """
@@ -52,6 +48,8 @@ def defineSpecificProgramOptions():
     # Option for profiling
     parser.add_argument('--profile',action='store_true',
                         help='Store profiling data for execution.')
+    parser.add_argument('--dry_run',action='store_true',
+                        help='Dry run (no data processed).')
     
     # Input filenames
     parser.add_argument('--data_images',type=str,
@@ -70,6 +68,10 @@ def defineSpecificProgramOptions():
     # Output filenames
     parser.add_argument('--psf_images_and_tables',type=str,
                         help='Desired filename for output list of PSF images and tables (.json listfile).')
+    
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir',type=str,default=".")
+    parser.add_argument('--logdir',type=str,default=".")
     
 
     logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')
@@ -92,15 +94,18 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_FitPSFs mainMethod()')
     logger.debug('#')
+    
+    dry_run = args.dry_run or force_dry_run
         
     if args.profile:
         import cProfile
-        cProfile.runctx("fit_psfs(args)",{},
+        cProfile.runctx("fit_psfs(args,dry_run=dry_run)",{},
                         {"fit_psfs":fit_psfs,
-                         "args":args,},
+                         "args":args,
+                         "dry_run":dry_run,},
                         filename="fit_psfs.prof")
     else:
-        fit_psfs(args)
+        fit_psfs(args,dry_run=dry_run)
 
     logger.debug('Exiting SHE_CTE_FitPSFs mainMethod()')
 

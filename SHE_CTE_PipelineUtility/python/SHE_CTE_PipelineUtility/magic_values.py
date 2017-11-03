@@ -1,8 +1,8 @@
 """ @file magic_values.py
 
-    Created 21 Aug 2017
+    Created 12 Oct 2017
 
-    Magic values for simulating galaxy images.
+    Magic values related to SHE_CTE_PipelineUtility
 
     ---------------------------------------------------------------------
 
@@ -20,4 +20,4 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
 
-logger_name = "SHE_CTE_SimulateImages"
+logger_name = "SHE_CTE_PipelineUtility"
