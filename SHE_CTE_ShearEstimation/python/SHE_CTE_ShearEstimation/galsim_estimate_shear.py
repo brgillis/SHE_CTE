@@ -115,14 +115,14 @@ def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, ID):
     # Get a resampled PSF stamp
     resampled_psf_stamp = get_resampled_image(psf_stamp, gal_stamp.header[scale_label])
     
-    gal_mask = gal_stamp.get_object_mask(ID)
+    gal_mask = gal_stamp.get_object_mask(ID).astype(np.uint16) # Galsim requires int array
     
     try:
         
         galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_stamp.header[scale_label]), 
                                                          PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(), 
                                                                                 scale=gal_stamp.header[scale_label]), 
-                                                         badpix=gal_mask,
+                                                         badpix=galsim.Image(gal_mask.transpose(), scale=gal_stamp.header[scale_label]),
                                                          sky_var=sky_var, 
                                                          guess_sig_gal=0.5 / gal_stamp.header[scale_label], 
                                                          guess_sig_PSF=0.2 / resampled_psf_stamp.header[scale_label], 
