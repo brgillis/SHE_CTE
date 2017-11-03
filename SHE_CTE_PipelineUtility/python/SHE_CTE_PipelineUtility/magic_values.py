@@ -2,7 +2,7 @@
 
     Created 12 Oct 2017
 
-    Magic values related to SHE_CTE_Pipeline
+    Magic values related to SHE_CTE_PipelineUtility
 
     ---------------------------------------------------------------------
 

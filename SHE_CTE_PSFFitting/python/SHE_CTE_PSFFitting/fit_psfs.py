@@ -27,7 +27,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from ElementsKernel.Logging import getLogger
-from SHE_CTE_Pipeline import magic_values as mv
+from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import aocs_time_series_product
 from SHE_PPT import astrometry_product
 from SHE_PPT import magic_values as ppt_mv
