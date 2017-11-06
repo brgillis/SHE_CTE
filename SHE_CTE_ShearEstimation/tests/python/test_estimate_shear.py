@@ -28,8 +28,8 @@ import galsim
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label
 
-from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,inv_var_stack,
-                                                    get_shear_estimate)
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image,inv_var_stack,
+                                                           get_shear_estimate)
 
 class TestCase:
     """
@@ -131,7 +131,7 @@ class TestCase:
                 gal_stamp.header[scale_label] = observed_gal_image.scale
                 
                 # Get the shear estimate
-                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_var, method)
+                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, 0)
                 est_g1, est_g2 = shear_estimate.g1, shear_estimate.g2
                 
                 assert np.isclose( est_g1, g1, rtol=0.2, atol=0.01 )
