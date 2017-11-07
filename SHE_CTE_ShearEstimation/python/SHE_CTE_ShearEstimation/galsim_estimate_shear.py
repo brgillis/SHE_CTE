@@ -211,7 +211,7 @@ def GS_estimate_shear( data_stack, method ):
     
     shear_estimates_table = initialise_shear_estimates_table(detection_tables[0],
                                                              optional_columns=[setf.e1_err,setf.e2_err])
-    
+
     for ID in IDs:
         
         g1s = []

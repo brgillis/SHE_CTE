@@ -48,7 +48,6 @@ from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_tabl
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
-import pdb
 
 cpp.init()
 sep.init()
@@ -313,11 +312,11 @@ def estimate_shears_from_args(args, dry_run=False):
                     data_stack = data_stacks[j]
 
                     shear_estimates_table = estimation_methods[method]( data_stack, method_data )
-                    pdb.set_trace()
+
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
-                    
-                    hdulist.append(table_to_hdu(shear_estimates_table))
+ 
+                   hdulist.append(table_to_hdu(shear_estimates_table))
                     
             except Exception as e:
                 

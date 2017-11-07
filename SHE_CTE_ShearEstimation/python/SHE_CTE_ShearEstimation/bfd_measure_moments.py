@@ -253,6 +253,6 @@ def bfd_measure_moments( data_stack, method_data ):
             bfd_moments_table.meta['NLOST'] = nlost
 
     logger.debug("Exiting BFD_measure_moments")
-    
-    return bfd_moments_table, None # No MCMC chains for this method
+
+    return bfd_moments_table # No MCMC chains for this method
     
