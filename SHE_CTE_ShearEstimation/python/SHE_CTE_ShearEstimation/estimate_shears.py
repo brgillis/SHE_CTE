@@ -28,6 +28,8 @@ import galsim
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_MomentsML.estimate_shear import estimate_shear as MomentsML_estimate_shear
+
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_PPT import calibration_parameters_product as cpp, shear_estimates_product as sep
@@ -60,7 +62,7 @@ loading_methods = {"KSB":None,
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
-                      "MegaLUT":None,
+                      "MegaLUT":MomentsML_estimate_shear,
                       "LensMC":None,
                       "BFD":bfd_measure_moments}
 
