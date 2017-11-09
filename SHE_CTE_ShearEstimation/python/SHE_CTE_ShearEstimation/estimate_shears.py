@@ -29,7 +29,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_PPT import calibration_parameters_product as cpp, shear_estimates_product as sep
@@ -58,7 +58,7 @@ loading_methods = {"KSB":None,
                    "REGAUSS":None,
                    "MegaLUT":None,
                    "LensMC":None,
-                   "BFD":'yes'}
+                   "BFD":None}
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
@@ -286,6 +286,7 @@ def estimate_shears_from_args(args, dry_run=False):
             load_method_data = loading_methods[method]
             
             method_data_filename = calibration_parameters_product.get_method_filename(method)
+
             shear_estimates_filename = shear_estimates_product.get_method_filename(method)
             
             estimate_shear = estimation_methods[method]
@@ -293,16 +294,9 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist = fits.HDUList()
             
             try:
-                
+
                 if load_method_data is not None:
-                    if method == "BFD":
-                        method_data={'isTarget': True,
-                                    'WEIGHT':{'N':4,
-                                              'SIGMA':3.5}
-                                    }
-                                    
-                    else:
-                        method_data = load_method_data(method_data_filename)
+                    method_data = load_method_data(method_data_filename)
                     
                 else:
                     method_data = None
@@ -316,7 +310,7 @@ def estimate_shears_from_args(args, dry_run=False):
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
  
-                   hdulist.append(table_to_hdu(shear_estimates_table))
+                    hdulist.append(table_to_hdu(shear_estimates_table))
                     
             except Exception as e:
                 

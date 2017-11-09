@@ -22,7 +22,6 @@
 
 from math import sqrt
 import numpy as np
-import pdb
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
@@ -67,7 +66,11 @@ def bfd_measure_moments( data_stack, method_data ):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
 
+    # check to see if method_data has been given, if None go get 
+    # standard file in SHE_BFD auxdir
 
+    if method_data is None:
+        method_data = bfd_load_method_data('/home/user/Work/Projects/SHE_BFD/SHE_BFD_CalculateMoments/auxdir/bfd.config')
     
     # Get lists of exposures, PSF images, and detection tables
     data_images = []
@@ -255,4 +258,36 @@ def bfd_measure_moments( data_stack, method_data ):
     logger.debug("Exiting BFD_measure_moments")
 
     return bfd_moments_table # No MCMC chains for this method
+
+def bfd_load_method_data(method_data_filename):
     
+    # set up dictionary structure with defaults
+    method_data={'isTarget': True,
+                 'WEIGHT':{'N':4,
+                           'SIGMA':3.5},
+                 'TEMPLATE':{}
+             }
+
+    # read in configuration file
+    lines = [line.rstrip('\n') for line in open(method_data_filename)]
+
+    # loop through configuration file to add parameters
+    for l in lines:
+        param, val = l.split(" ")
+
+        if param.find('isTarget') != -1:
+            if val=='True':
+                method_data['isTarget']==True
+            elif val=='False':
+                method_data['isTarget']==False
+            else:
+                raise Exception("isTarget must be True or False")
+
+        if param.find('WT') != -1:
+            method_data['WEIGHT'][param.split("_")[1]]=np.float(val)
+        
+        if param.find('TMPL') != -1:
+            raise Exception("Need to setup template info")
+
+
+    return method_data
