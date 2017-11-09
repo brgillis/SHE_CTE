@@ -303,7 +303,7 @@ def estimate_shears_from_args(args, dry_run=False):
                     
                     data_stack = data_stacks[j]
 
-                    shear_estimates_table = estimation_methods[method]( data_stack, method_data )
+                    shear_estimates_table = estimation_methods[method]( data_stack, method_data=method_data )
 
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")

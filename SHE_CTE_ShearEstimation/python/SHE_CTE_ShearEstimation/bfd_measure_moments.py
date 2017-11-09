@@ -22,7 +22,7 @@
 
 from math import sqrt
 import numpy as np
-
+import pdb
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
 from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
@@ -61,7 +61,7 @@ def get_bfd_moment_calculator(gal_stamp, psf_stamp, sky_var, method_data):
 
 
 
-def bfd_measure_moments( data_stack, method_data ):
+def bfd_measure_moments( data_stack, method_data=None ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
