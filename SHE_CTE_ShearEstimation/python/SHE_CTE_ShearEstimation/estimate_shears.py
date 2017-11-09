@@ -27,6 +27,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
 from SHE_MomentsML.estimate_shear import estimate_shear as MomentsML_estimate_shear
 
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
@@ -48,7 +49,6 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
-
 cpp.init()
 sep.init()
 mp.init()
@@ -64,7 +64,7 @@ estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
                       "MegaLUT":MomentsML_estimate_shear,
                       "LensMC":None,
-                      "BFD":None}
+                      "BFD":bfd_measure_moments}
 
 def estimate_shears_from_args(args, dry_run=False):
     """
@@ -98,12 +98,12 @@ def estimate_shears_from_args(args, dry_run=False):
     mask_hdus = []
     
     she_images = []
-    
+
     for i, filename in enumerate(data_images):
         
         data_image_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
-        
+
         sci_hdus.append([])
         noisemap_hdus.append([])
         mask_hdus.append([])
@@ -124,13 +124,14 @@ def estimate_shears_from_args(args, dry_run=False):
             mask_extname = str(j) + "." + ppt_mv.mask_tag
             mask_index = find_extension(data_image_hdulist, mask_extname)
             
+
             mask_hdus[i].append( data_image_hdulist[mask_index] )
             
             she_images[i].append(SHEImage(data=sci_hdus[i][j].data,
                                           noisemap=noisemap_hdus[i][j].data,
                                           mask=mask_hdus[i][j].data,
                                           header=sci_hdus[i][j].header))
-    
+
     # Detections tables
     
     logger.info("Reading "+dry_label+"detections tables...")
@@ -195,7 +196,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                 bpsf_image=bulge_psf_image,
                                                 dpsf_image=disk_psf_image,
                                                 psf_table=psf_table))
-            
+
     num_exposures = len(she_image_datas)
     data_stacks = []
     for j in range(num_detectors):
@@ -204,7 +205,7 @@ def estimate_shears_from_args(args, dry_run=False):
             detector_image_datas.append(she_image_datas[i][j])
         data_stacks.append(SHEStack(detector_image_datas))
 
-    
+
     # Segmentation images
     
     logger.info("Reading "+dry_label+"segmentation images...")
@@ -279,12 +280,13 @@ def estimate_shears_from_args(args, dry_run=False):
             methods = estimation_methods.keys()
         else:
             methods = args.methods
-        
+
         for method in methods:
-            
+
             load_method_data = loading_methods[method]
             
             method_data_filename = calibration_parameters_product.get_method_filename(method)
+
             shear_estimates_filename = shear_estimates_product.get_method_filename(method)
             
             estimate_shear = estimation_methods[method]
@@ -292,21 +294,22 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist = fits.HDUList()
             
             try:
-                
+
                 if load_method_data is not None:
                     method_data = load_method_data(method_data_filename)
+                    
                 else:
                     method_data = None
                     
                 for j in range(num_detectors):
                     
                     data_stack = data_stacks[j]
-                
-                    shear_estimates_table = estimation_methods[method]( data_stack, method_data )
-                    
+
+                    shear_estimates_table = estimation_methods[method]( data_stack, method_data=method_data )
+
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
-                    
+ 
                     hdulist.append(table_to_hdu(shear_estimates_table))
                     
             except Exception as e:
