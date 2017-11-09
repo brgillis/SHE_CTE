@@ -1,24 +1,22 @@
-""" @file test_estimate_shear.py
+""" @file estimate_shear_test.py
 
     Created 1 Sep 2017
 
     Unit tests for the control shear estimation methods.
-
-    ---------------------------------------------------------------------
-
-    Copyright (C) 2012-2020 Euclid Science Ground Segment      
-       
-    This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General    
-    Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)    
-    any later version.    
-       
-    This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied    
-    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more    
-    details.    
-       
-    You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
-    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment      
+#        
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General    
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)    
+# any later version.    
+#        
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied    
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more    
+# details.    
+#        
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import pytest
 import numpy as np
@@ -28,8 +26,8 @@ import galsim
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.magic_values import scale_label
 
-from SHE_CTE_ShearEstimation.estimate_shear import (get_resampled_image,inv_var_stack,
-                                                    get_shear_estimate)
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image,inv_var_stack,
+                                                           get_shear_estimate)
 
 class TestCase:
     """
@@ -131,7 +129,7 @@ class TestCase:
                 gal_stamp.header[scale_label] = observed_gal_image.scale
                 
                 # Get the shear estimate
-                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_var, method)
+                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, 0)
                 est_g1, est_g2 = shear_estimate.g1, shear_estimate.g2
                 
                 assert np.isclose( est_g1, g1, rtol=0.2, atol=0.01 )
