@@ -345,7 +345,8 @@ def estimate_shears_from_args(args, dry_run=False):
             
             for j in range(num_detectors):
                 
-                shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
+                shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector_x=j%6,
+                                                                        detector_y=j//6))
                 hdulist.append(shm_hdu)
                 
             hdulist.writeto(join(args.workdir,filename),clobber=True)

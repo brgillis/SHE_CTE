@@ -30,6 +30,7 @@ from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import shear_estimates_product
 from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
+from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, append_hdu)
@@ -77,14 +78,15 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         weighting.
     """
     
-    detector = None
+    detector_x = None
+    detector_y = None
     
     # Check that all estimates are for the same detector
     for method in detector_estimates:
         if detector is None:
-            detector = get_detector(detector_estimates[method])
+            detector_x, detector_y = get_detector(detector_estimates[method])
         else:
-            if detector != get_detector(detector_estimates[method]):
+            if (detector_x, detector_y) != get_detector(detector_estimates[method]):
                 raise ValueError("Not all estimates tables are for the same detector.")
     
     # Use only methods which pass validation
@@ -105,7 +107,8 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         detector_estimates[method].add_index(setf.ID)
         
     # Initialise combined table
-    combined_shear_estimates = initialise_shear_estimates_table(detector=detector,
+    combined_shear_estimates = initialise_shear_estimates_table(detector_x=detector_x,
+                                                                detector_y=detector_y,
                                                                 optional_columns=[setf.g1_err,setf.g2_err])
     
     for ID in IDs:
@@ -222,7 +225,7 @@ def validate_shear(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            table_extname = str(j) + "." + ppt_mv.shear_estimates_tag
+            table_extname = dtc.get_id_string(j%6,j//6) + "." + ppt_mv.shear_estimates_tag
             table_index = find_extension(shear_estimates_hdulist, table_extname)
             
             shear_estimates_table = Table.read(join(args.workdir,filename),format='fits',hdu=table_index)
@@ -261,7 +264,8 @@ def validate_shear(args, dry_run=False):
         
         for j in range(num_detectors):
         
-            combined_shear_estimates.append(initialise_shear_estimates_table(detector=j))
+            combined_shear_estimates.append(initialise_shear_estimates_table(detector_x=j%6,
+                                                                             detector_y=j//6))
             
     
     # Set up mock output in the correct format
