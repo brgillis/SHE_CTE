@@ -111,17 +111,19 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            sci_extname = str(j) + "." + ppt_mv.sci_tag
+            id_string = dtc.get_id_string(j%6,j//6)
+            
+            sci_extname = id_string + "." + ppt_mv.sci_tag
             sci_index = find_extension(data_image_hdulist, sci_extname)
             
             sci_hdus[i].append( data_image_hdulist[sci_index] )
             
-            noisemap_extname = str(j) + "." + ppt_mv.noisemap_tag
+            noisemap_extname = id_string + "." + ppt_mv.noisemap_tag
             noisemap_index = find_extension(data_image_hdulist, noisemap_extname)
             
             noisemap_hdus[i].append( data_image_hdulist[noisemap_index] )
             
-            mask_extname = str(j) + "." + ppt_mv.mask_tag
+            mask_extname = id_string + "." + ppt_mv.mask_tag
             mask_index = find_extension(data_image_hdulist, mask_extname)
             
 
@@ -147,7 +149,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            extname = str(j)+"."+ppt_mv.detections_tag
+            extname = dtc.get_id_string(j%6,j//6)+"."+ppt_mv.detections_tag
             table_index = find_extension(detections_tables_hdulist,extname)
             
             detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
@@ -171,7 +173,9 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            table_extname = str(j) + "." + ppt_mv.psf_cat_tag
+            id_string = dtc.get_id_string(j%6,j//6)
+            
+            table_extname = id_string + "." + ppt_mv.psf_cat_tag
             table_index = find_extension(psf_images_and_table_hdulist, table_extname)
             
             psf_table = Table.read( psf_images_and_table_hdulist[table_index] )
@@ -179,13 +183,13 @@ def estimate_shears_from_args(args, dry_run=False):
             if not is_in_format(psf_table,pstf):
                 raise ValueError("PSF table from " + filename + " is in invalid format.")
             
-            bulge_extname = str(j) + "." + ppt_mv.bulge_psf_tag
+            bulge_extname = id_string + "." + ppt_mv.bulge_psf_tag
             bulge_index = find_extension(psf_images_and_table_hdulist, bulge_extname)
             
             bulge_psf_image = SHEImage(data=psf_images_and_table_hdulist[bulge_index].data,
                                        header=psf_images_and_table_hdulist[bulge_index].header)
             
-            disk_extname = str(j) + "." + ppt_mv.disk_psf_tag
+            disk_extname = id_string + "." + ppt_mv.disk_psf_tag
             disk_index = find_extension(psf_images_and_table_hdulist, disk_extname)
             
             disk_psf_image = SHEImage(data=psf_images_and_table_hdulist[disk_index].data,
@@ -232,7 +236,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            segmentation_extname = str(j) + "." + ppt_mv.segmentation_tag
+            segmentation_extname = dtc.get_id_string(j%6,j//6) + "." + ppt_mv.segmentation_tag
             segmentation_index = find_extension(segmentation_hdulist, segmentation_extname)
             
             segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])

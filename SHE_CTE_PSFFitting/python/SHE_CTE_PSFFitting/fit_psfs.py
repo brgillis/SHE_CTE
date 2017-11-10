@@ -34,6 +34,7 @@ from SHE_PPT import psf_calibration_product
 from SHE_PPT.aocs_time_series_product import DpdSheAocsTimeSeriesProduct
 from SHE_PPT.astrometry_product import DpdSheAstrometryProduct
 from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              append_hdu, get_allowed_filename,
@@ -97,17 +98,19 @@ def fit_psfs(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            sci_extname = str(j) + "." + ppt_mv.sci_tag
+            id_string = dtc.get_id_string(j%6,j//6)
+            
+            sci_extname = id_string + "." + ppt_mv.sci_tag
             sci_index = find_extension(data_image_hdulist, sci_extname)
             
             sci_hdus[i].append( data_image_hdulist[sci_index] )
             
-            noisemap_extname = str(j) + "." + ppt_mv.noisemap_tag
+            noisemap_extname = id_string + "." + ppt_mv.noisemap_tag
             noisemap_index = find_extension(data_image_hdulist, noisemap_extname)
             
             noisemap_hdus[i].append( data_image_hdulist[noisemap_index] )
             
-            mask_extname = str(j) + "." + ppt_mv.mask_tag
+            mask_extname = id_string + "." + ppt_mv.mask_tag
             mask_index = find_extension(data_image_hdulist, mask_extname)
             
             mask_hdus[i].append( data_image_hdulist[mask_index] )
@@ -142,7 +145,7 @@ def fit_psfs(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            extname = str(j)+"."+ppt_mv.detections_tag
+            extname = dtc.get_id_string(j%6,j//6)+"."+ppt_mv.detections_tag
             table_index = find_extension(detections_tables_hdulist,extname)
             
             detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
@@ -254,7 +257,7 @@ def fit_psfs(args, dry_run=False):
                 bpsf_array = np.zeros((1,1))
                 dpsf_array = np.zeros((1,1))
                 
-            bulge_psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.bulge_psf_tag),
+            bulge_psf_header = fits.header.Header(((extname_label,dtc.get_id_string(j%6,j//6)+"."+ppt_mv.bulge_psf_tag),
                                              (stamp_size_label,np.min(np.shape(bpsf_array))),
                                              (scale_label,0.02)))
             
@@ -262,7 +265,7 @@ def fit_psfs(args, dry_run=False):
                                      header=bulge_psf_header)
             hdulist.append(bpsf_hdu)
                 
-            disk_psf_header = fits.header.Header(((extname_label,str(j)+"."+ppt_mv.disk_psf_tag),
+            disk_psf_header = fits.header.Header(((extname_label,dtc.get_id_string(j%6,j//6)+"."+ppt_mv.disk_psf_tag),
                                              (stamp_size_label,np.min(np.shape(bpsf_array))),
                                              (scale_label,0.02)))
             
