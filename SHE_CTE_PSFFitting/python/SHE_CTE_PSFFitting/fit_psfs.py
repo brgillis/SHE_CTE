@@ -233,8 +233,8 @@ def fit_psfs(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            psfc = initialise_psf_table(detector_x=j%6,
-                                        detector_y=j//6)
+            psfc = initialise_psf_table(detector_x = j%6 + 1,
+                                        detector_y = j//6 + 1)
     
             if not dry_run:
                 

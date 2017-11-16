@@ -264,8 +264,8 @@ def validate_shear(args, dry_run=False):
         
         for j in range(num_detectors):
         
-            combined_shear_estimates.append(initialise_shear_estimates_table(detector_x=j%6,
-                                                                             detector_y=j//6))
+            combined_shear_estimates.append(initialise_shear_estimates_table(detector_x=j%6 + 1,
+                                                                             detector_y=j//6 + 1))
             
     
     # Set up mock output in the correct format
