@@ -111,7 +111,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            id_string = dtc.get_id_string(j%6,j//6)
+            id_string = dtc.get_id_string(j%6+1,j//6+1)
             
             sci_extname = id_string + "." + ppt_mv.sci_tag
             sci_index = find_extension(data_image_hdulist, sci_extname)
@@ -149,7 +149,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            extname = dtc.get_id_string(j%6,j//6)+"."+ppt_mv.detections_tag
+            extname = dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.detections_tag
             table_index = find_extension(detections_tables_hdulist,extname)
             
             detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
@@ -173,7 +173,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            id_string = dtc.get_id_string(j%6,j//6)
+            id_string = dtc.get_id_string(j%6+1,j//6+1)
             
             table_extname = id_string + "." + ppt_mv.psf_cat_tag
             table_index = find_extension(psf_images_and_table_hdulist, table_extname)
@@ -236,7 +236,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            segmentation_extname = dtc.get_id_string(j%6,j//6) + "." + ppt_mv.segmentation_tag
+            segmentation_extname = dtc.get_id_string(j%6+1,j//6+1) + "." + ppt_mv.segmentation_tag
             segmentation_index = find_extension(segmentation_hdulist, segmentation_extname)
             
             segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])

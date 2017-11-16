@@ -225,7 +225,7 @@ def validate_shear(args, dry_run=False):
         
         for j in range(num_detectors):
             
-            table_extname = dtc.get_id_string(j%6,j//6) + "." + ppt_mv.shear_estimates_tag
+            table_extname = dtc.get_id_string(j%6+1,j//6+1) + "." + ppt_mv.shear_estimates_tag
             table_index = find_extension(shear_estimates_hdulist, table_extname)
             
             shear_estimates_table = Table.read(join(args.workdir,filename),format='fits',hdu=table_index)
