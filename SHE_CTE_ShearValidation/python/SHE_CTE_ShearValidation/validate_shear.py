@@ -137,13 +137,15 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
             if setf.e1_err in tab.columns:
                 m_e1_err = row[setf.e1_err]
                 m_e2_err = row[setf.e2_err]
-            else:
+            elif setf.g1_err in tab.columns:
                 m_e1_var = row[setf.g1_err]**2 - shape_noise_var
                 m_e2_var = row[setf.g2_err]**2 - shape_noise_var
                 
                 if m_e1_var < 0 or m_e2_var < 0:
                     # Bad error estimates
                     continue
+            else:
+                continue # BFD presumably, so skip it
                 
             if m_e1_err < 1e99 and not math.isnan(m_g1):
                 g1s.append(m_g1)
