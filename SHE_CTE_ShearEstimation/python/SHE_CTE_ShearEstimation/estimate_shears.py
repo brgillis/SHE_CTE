@@ -35,6 +35,7 @@ from SHE_GST_IceBRGpy.logging import getLogger
 from SHE_PPT import calibration_parameters_product as cpp, shear_estimates_product as sep
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, read_pickled_product,
                              write_pickled_product, write_listfile,
                              get_allowed_filename)
