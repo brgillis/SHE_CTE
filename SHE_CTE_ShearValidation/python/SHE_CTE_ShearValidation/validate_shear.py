@@ -83,7 +83,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
     
     # Check that all estimates are for the same detector
     for method in detector_estimates:
-        if detector is None:
+        if detector_x is None or detector_y is None:
             detector_x, detector_y = get_detector(detector_estimates[method])
         else:
             if (detector_x, detector_y) != get_detector(detector_estimates[method]):
