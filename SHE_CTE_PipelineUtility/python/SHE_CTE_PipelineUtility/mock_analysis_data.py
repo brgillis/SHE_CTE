@@ -290,7 +290,7 @@ def make_mock_analysis_data(args, dry_run=False):
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( join(args.workdir,lensmc_calibration_parameters_filename), null_hdu)
         
-    megalut_calibration_parameters_filename = get_allowed_filename("MEGALUT_CAL_PARAM_DRY","0")
+    momentsml_calibration_parameters_filename = get_allowed_filename("MOMENTSML_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( join(args.workdir,megalut_calibration_parameters_filename), null_hdu)
@@ -302,7 +302,7 @@ def make_mock_analysis_data(args, dry_run=False):
         
     calibration_parameters_product = create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
                                                                            LensMC_filename=lensmc_calibration_parameters_filename,
-                                                                           MegaLUT_filename=megalut_calibration_parameters_filename,
+                                                                           MomentsML_filename=momentsml_calibration_parameters_filename,
                                                                            REGAUSS_filename=regauss_calibration_parameters_filename)
     
     write_pickled_product(calibration_parameters_product,

@@ -57,13 +57,13 @@ mp.init()
 
 loading_methods = {"KSB":None,
                    "REGAUSS":None,
-                   "MegaLUT":None,
+                   "MomentsML":None,
                    "LensMC":None,
                    "BFD":None}
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
-                      "MegaLUT":MomentsML_estimate_shear,
+                      "MomentsML":MomentsML_estimate_shear,
                       "LensMC":None,
                       "BFD":bfd_measure_moments}
 
@@ -269,7 +269,7 @@ def estimate_shears_from_args(args, dry_run=False):
     shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("BFD_SHM","0"),
                                                                  KSB_filename = get_allowed_filename("KSB_SHM","0"),
                                                                  LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
-                                                                 MegaLUT_filename = get_allowed_filename("MegaLUT_SHM","0"),
+                                                                 MomentsML_filename = get_allowed_filename("MomentsML_SHM","0"),
                                                                  REGAUSS_filename = get_allowed_filename("REGAUSS_SHM","0"))
         
     if not dry_run:
@@ -355,8 +355,7 @@ def estimate_shears_from_args(args, dry_run=False):
             
             for j in range(num_detectors):
                 
-                shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector_x=j%6 + 1,
-                                                                        detector_y=j//6 + 1))
+                shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
                 hdulist.append(shm_hdu)
                 
             hdulist.writeto(join(args.workdir,filename),clobber=True)

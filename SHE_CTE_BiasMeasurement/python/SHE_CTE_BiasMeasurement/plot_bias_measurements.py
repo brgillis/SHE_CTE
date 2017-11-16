@@ -68,13 +68,13 @@ method_colors = {"KSB": "k",
                  "REGAUSS": "r",
                  "REGAUSS_big": (1.0,0.5,0.5),
                  "LensMC": "b",
-                 "MegaLUT": "m",}
+                 "MomentsML": "m",}
 method_offsets = {"KSB": 0,
                   "KSB_big": 0.005,
                   "REGAUSS": 0.01,
                   "REGAUSS_big": 0.015,
                   "LensMC": -0.01,
-                  "MegaLUT": -0.02,}
+                  "MomentsML": -0.02,}
 
 target_labels = {"base": r"$0.05\times$",
                  "high": r"$1.00\times$",}

@@ -213,7 +213,7 @@ def validate_shear(args, dry_run=False):
         
     shear_estimates_tables = {"KSB":[],
                               "REGAUSS":[],
-                              "MegaLUT":[],
+                              "MomentsML":[],
                               "LensMC":[],
                               "BFD":[]}
     
