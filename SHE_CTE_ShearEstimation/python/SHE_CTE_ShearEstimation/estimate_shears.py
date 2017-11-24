@@ -281,7 +281,7 @@ def estimate_shears_from_args(args, dry_run=False):
     if not isinstance(galaxy_population_priors_prod, galaxy_population_product.DpdSheGalaxyPopulationProduct):
         raise ValueError("Galaxy population product from " + filename + " is invalid type.")
     
-    qualified_galpop_filename = galaxy_population_priors_prod.get_filename()
+    qualified_galpop_filename = join(args.workdir,galaxy_population_priors_prod.get_filename())
     
     galaxy_population_priors_table = Table.read(qualified_galpop_filename)
             
