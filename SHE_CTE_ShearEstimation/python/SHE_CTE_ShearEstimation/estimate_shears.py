@@ -253,12 +253,12 @@ def estimate_shears_from_args(args, dry_run=False):
     
     for i, filename in enumerate(segmentation_product_filenames):
         
-        mosaic_product = read_pickled_product(join(args.workdir,filename))
+        mosaic_prod = read_pickled_product(join(args.workdir,filename))
         
-        if not isinstance(mosaic_product, mosaic_product.DpdMerMosaicProduct):
+        if not isinstance(mosaic_prod, mosaic_product.DpdMerMosaicProduct):
             raise ValueError("Mosaic product from " + filename + " is invalid type.")
         
-        mosaic_data_filename = mosaic_product.get_data_filename()
+        mosaic_data_filename = mosaic_prod.get_data_filename()
         
         segmentation_hdulist = fits.open(join(args.workdir,mosaic_data_filename), mode="readonly", memmap=True)
         
