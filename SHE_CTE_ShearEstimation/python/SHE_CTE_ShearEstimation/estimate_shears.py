@@ -50,8 +50,8 @@ from SHE_PPT.psf_table_format import tf as pstf
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_image_data import SHEImageData
 from SHE_PPT.she_stack import SHEStack
-from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
 from SHE_PPT import shear_estimates_product
+from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
@@ -302,7 +302,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Generating shear estimates product...")
     
-    shear_estimates_product = shear_estimates_product.create_shear_estimates_product(
+    shear_estimates_prod = shear_estimates_product.create_shear_estimates_product(
                                 BFD_filename = get_allowed_filename("BFD_SHM","0"),
                                 KSB_filename = get_allowed_filename("KSB_SHM","0"),
                                 LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
@@ -329,7 +329,7 @@ def estimate_shears_from_args(args, dry_run=False):
             
             method_data_filename = calibration_parameters_prod.get_method_filename(method)
 
-            shear_estimates_filename = shear_estimates_product.get_method_filename(method)
+            shear_estimates_filename = shear_estimates_prod.get_method_filename(method)
             
             estimate_shear = estimation_methods[method]
             
@@ -386,7 +386,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
     else:
     
-        for filename in shear_estimates_product.get_all_filenames():
+        for filename in shear_estimates_prod.get_all_filenames():
             
             hdulist = fits.HDUList()
             
@@ -397,7 +397,7 @@ def estimate_shears_from_args(args, dry_run=False):
                 
             hdulist.writeto(join(args.workdir,filename),clobber=True)
     
-    write_pickled_product(shear_estimates_product,
+    write_pickled_product(shear_estimates_prod,
                           join(args.workdir,args.shear_estimates_product))
     
     logger.info("Finished shear estimation.")
