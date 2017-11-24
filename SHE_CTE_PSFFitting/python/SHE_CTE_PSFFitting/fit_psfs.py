@@ -108,6 +108,9 @@ def fit_psfs(args, dry_run=False):
             sci_extname = id_string + "." + ppt_mv.sci_tag
             sci_index = find_extension(data_image_hdulist, sci_extname)
             
+            if sci_index is None:
+                raise RuntimeError("Cannot find science HDU in " + qualified_filename + ".")
+            
             sci_hdus[i].append( data_image_hdulist[sci_index] )
             
             noisemap_extname = id_string + "." + ppt_mv.noisemap_tag
