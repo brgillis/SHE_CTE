@@ -241,7 +241,7 @@ def fit_psfs(args, dry_run=False):
         psf_image_and_table_filenames.append(prod_filename)
         
         psf_image_prod = psf_image_product.create_psf_image_product(filename=filename)
-        write_pickled_product(psf_image_prod, prod_filename)
+        write_pickled_product(psf_image_prod, join(args.workdir,prod_filename))
         
         hdulist = fits.HDUList()
         
