@@ -108,7 +108,6 @@ def make_mock_analysis_data(args, dry_run=False):
     logger.info("Generating mock dry psf calibration products...")
     
     psf_calibration_product_filenames = []
-    psf_calibration_product_sub_filenames = []
     
     for i in range(num_exposures):
         
@@ -124,11 +123,8 @@ def make_mock_analysis_data(args, dry_run=False):
         null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
         append_hdu( join(args.workdir,surface_error_filename), null_hdu)
         
-        psf_calibration_product_sub_filenames.append([zernike_mode_filename,surface_error_filename])
-        
         # Set up PSF Calibration object
         filename = get_allowed_filename("PSFCAL_DRY",str(i),extension=".bin")
-        listfile_filename = get_allowed_filename("PSFCAL_DRY_LF",str(i),extension=".json")
         
         psf_calibration_product = create_psf_calibration_product(timestamp="0",
                                                                  zernike_mode_filename=zernike_mode_filename,
@@ -139,10 +135,8 @@ def make_mock_analysis_data(args, dry_run=False):
         
         psf_calibration_product_filenames.append(filename)
         
-    all_psf_calibration_product_filenames = [psf_calibration_product_filenames,psf_calibration_product_sub_filenames]
-        
     write_listfile(join(args.workdir,args.psf_calibration_products),
-                   all_psf_calibration_product_filenames)
+                   psf_calibration_product_filenames)
     
     # Segmentation images
     
@@ -156,7 +150,6 @@ def make_mock_analysis_data(args, dry_run=False):
         # Create the data product
         
         product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
-        listfile_filename = get_allowed_filename("SEG_DRY_LF",str(i),extension=".json")
         data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
         
         mosaic_product =  create_mosaic_product(instrument_name="VIS",
