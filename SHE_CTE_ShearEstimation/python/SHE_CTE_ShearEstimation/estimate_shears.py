@@ -58,6 +58,7 @@ import numpy as np
 
 calibration_parameters_product.init()
 calibrated_frame_product.init()
+detections_product.init()
 galaxy_population_product.init()
 shear_estimates_product.init()
 mosaic_product.init()
