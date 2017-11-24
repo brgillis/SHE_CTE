@@ -293,8 +293,8 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"calibration parameters...")
     
-    calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product))
-    if not isinstance(calibration_parameters_product, calibration_parameters_product.DpdSheCalibrationParametersProduct):
+    calibration_parameters_prod = read_pickled_product(join(args.workdir,args.calibration_parameters_product))
+    if not isinstance(calibration_parameters_prod, calibration_parameters_product.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
                          + " is invalid type.")
     
@@ -327,7 +327,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
             load_method_data = loading_methods[method]
             
-            method_data_filename = calibration_parameters_product.get_method_filename(method)
+            method_data_filename = calibration_parameters_prod.get_method_filename(method)
 
             shear_estimates_filename = shear_estimates_product.get_method_filename(method)
             
