@@ -270,7 +270,7 @@ def make_mock_analysis_data(args, dry_run=False):
     filename = get_allowed_filename("GALPOP", "0", extension=".fits")
     galaxy_population_prod = galaxy_population_product.create_galaxy_population_product(filename=filename)
     
-    write_pickled_product(galaxy_population_prod, args.galaxy_population_priors_table)
+    write_pickled_product(galaxy_population_prod, join(args.workdir,args.galaxy_population_priors_table))
     
     galaxy_population_priors_table = initialise_galaxy_population_table()
     galaxy_population_priors_table.write(join(args.workdir,filename),
