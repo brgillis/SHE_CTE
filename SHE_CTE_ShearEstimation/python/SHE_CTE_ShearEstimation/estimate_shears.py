@@ -190,7 +190,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
     she_image_datas = []
     
-    for i, filename in enumerate(psf_images_and_table_product_filenames):
+    for i, prod_filename in enumerate(psf_images_and_table_product_filenames):
         
         qualified_prod_filename = join(args.workdir,prod_filename)
         
@@ -214,7 +214,7 @@ def estimate_shears_from_args(args, dry_run=False):
             psf_table = Table.read( psf_images_and_table_hdulist[table_index] )
             
             if not is_in_format(psf_table,pstf):
-                raise ValueError("PSF table from " + filename + " is in invalid format.")
+                raise ValueError("PSF table from " + qualified_filename + " is in invalid format.")
             
             bulge_extname = id_string + "." + ppt_mv.bulge_psf_tag
             bulge_index = find_extension(psf_images_and_table_hdulist, bulge_extname)
