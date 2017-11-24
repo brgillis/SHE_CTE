@@ -39,7 +39,9 @@ from SHE_PPT.detections_table_format import initialise_detections_table
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              append_hdu, get_allowed_filename)
-from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table
+from SHE_PPT import galaxy_population_product
+from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table,\
+    galaxy_population_table_format
 from SHE_PPT.mission_time_product import create_mission_time_product
 from SHE_PPT.mosaic_product import create_mosaic_product
 from SHE_PPT.psf_calibration_product import create_psf_calibration_product
@@ -51,6 +53,7 @@ import numpy as np
 aocs_time_series_product.init()
 astrometry_product.init()
 calibration_parameters_product.init()
+galaxy_population_product.init()
 mission_time_product.init()
 mosaic_product.init()
 psf_calibration_product.init()
@@ -264,8 +267,13 @@ def make_mock_analysis_data(args, dry_run=False):
     
     logger.info("Generating mock dry galaxy population priors table...")
     
+    filename = get_allowed_filename("GALPOP", "0", extension=".bin")
+    galaxy_population_prod = galaxy_population_product.create_galaxy_population_product(filename=filename)
+    
+    write_pickled_product(galaxy_population_prod, args.galaxy_population_priors_table)
+    
     galaxy_population_priors_table = initialise_galaxy_population_table()
-    galaxy_population_priors_table.write(join(args.workdir,args.galaxy_population_priors_table),
+    galaxy_population_priors_table.write(join(args.workdir,filename),
                                          format="fits",overwrite=True)
     
     # Calibration parameters product
