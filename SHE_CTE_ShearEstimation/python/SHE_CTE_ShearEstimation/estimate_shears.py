@@ -223,8 +223,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     for i, filename in enumerate(segmentation_product_filenames):
         
-        mosaic_product = read_pickled_product(join(args.workdir,filename),
-                                              segmentation_product_sub_filenames[i])
+        mosaic_product = read_pickled_product(join(args.workdir,filename))
         
         if not isinstance(mosaic_product, mp.DpdMerMosaicProduct):
             raise ValueError("Mosaic product from " + filename + " is invalid type.")
@@ -256,8 +255,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"calibration parameters...")
     
-    calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product),
-                                                          join(args.workdir,args.calibration_parameters_listfile))
+    calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product))
     if not isinstance(calibration_parameters_product, cpp.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
                          + " is invalid type.")
@@ -361,8 +359,7 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist.writeto(join(args.workdir,filename),clobber=True)
     
     write_pickled_product(shear_estimates_product,
-                          join(args.workdir,args.shear_estimates_product),
-                          join(args.workdir,args.shear_estimates_listfile))
+                          join(args.workdir,args.shear_estimates_product))
     
     logger.info("Finished shear estimation.")
     

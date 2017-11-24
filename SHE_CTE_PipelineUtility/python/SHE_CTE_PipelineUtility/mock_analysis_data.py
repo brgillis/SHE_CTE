@@ -135,8 +135,7 @@ def make_mock_analysis_data(args, dry_run=False):
                                                                  surface_error_filename=surface_error_filename)
         
         write_pickled_product(psf_calibration_product,
-                              join(args.workdir,filename),
-                              join(args.workdir,listfile_filename))
+                              join(args.workdir,filename))
         
         psf_calibration_product_filenames.append(filename)
         
@@ -306,8 +305,7 @@ def make_mock_analysis_data(args, dry_run=False):
                                                                            REGAUSS_filename=regauss_calibration_parameters_filename)
     
     write_pickled_product(calibration_parameters_product,
-                          join(args.workdir,args.calibration_parameters_product),
-                          join(args.workdir,args.calibration_parameters_listfile))
+                          join(args.workdir,args.calibration_parameters_product))
     
     # Shear validation statistics tables
     

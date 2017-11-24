@@ -204,8 +204,7 @@ def validate_shear(args, dry_run=False):
     
     logger.info("Reading"+dry_label+" shear estimates product...")
     
-    shear_estimates_product = read_pickled_product(join(args.workdir,args.shear_estimates_product),
-                                                   join(args.workdir,args.shear_estimates_listfile))
+    shear_estimates_product = read_pickled_product(join(args.workdir,args.shear_estimates_product))
 
     if not isinstance(shear_estimates_product, DpdShearEstimatesProduct):
         raise ValueError("Shear estimates product from " + join(args.workdir,args.shear_estimates_product)
