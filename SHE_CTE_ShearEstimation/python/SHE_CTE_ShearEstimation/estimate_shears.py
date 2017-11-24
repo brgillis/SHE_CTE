@@ -32,27 +32,36 @@ from SHE_MomentsML.estimate_shear import estimate_shear as MomentsML_estimate_sh
 
 from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_GST_IceBRGpy.logging import getLogger
-from SHE_PPT import calibration_parameters_product as cpp, shear_estimates_product as sep
+from SHE_PPT import calibrated_frame_product
+from SHE_PPT import calibration_parameters_product
+from SHE_PPT import detections_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, read_pickled_product,
                              write_pickled_product, write_listfile,
                              get_allowed_filename)
-from SHE_PPT import mosaic_product as mp
-from SHE_PPT.galaxy_population_table_format import tf as gptf
+from SHE_PPT import galaxy_population_product
+from SHE_PPT import mosaic_product
+from SHE_PPT.galaxy_population_table_format import tf as gptf,\
+    galaxy_population_table_format
+from SHE_PPT import psf_image_product
 from SHE_PPT.psf_table_format import tf as pstf
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_image_data import SHEImageData
 from SHE_PPT.she_stack import SHEStack
 from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
+from SHE_PPT import shear_estimates_product
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
-cpp.init()
-sep.init()
-mp.init()
+calibration_parameters_product.init()
+calibrated_frame_product.init()
+galaxy_population_product.init()
+shear_estimates_product.init()
+mosaic_product.init()
+psf_image_product.init()
 
 
 loading_methods = {"KSB":None,
@@ -92,7 +101,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"data images...")
     
-    data_images = read_listfile(join(args.workdir,args.data_images))
+    data_image_products = read_listfile(join(args.workdir,args.data_images))
 
     sci_hdus = []
     noisemap_hdus = []
@@ -100,9 +109,17 @@ def estimate_shears_from_args(args, dry_run=False):
     
     she_images = []
 
-    for i, filename in enumerate(data_images):
+    for i, prod_filename in enumerate(data_image_products):
         
-        data_image_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
+        qualified_prod_filename = join(args.workdir,prod_filename)
+        
+        data_image_prod = read_pickled_product(qualified_prod_filename)
+        if not isinstance(data_image_prod, calibrated_frame_product.DpdSheCalibratedFrameProduct):
+            raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
+        
+        qualified_filename = join(args.workdir,data_image_prod.get_filename())
+        
+        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
 
         sci_hdus.append([])
@@ -139,12 +156,18 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"detections tables...")
     
-    detections_table_filenames = read_listfile(join(args.workdir,args.detections_tables))
+    detections_table_prod_filenames = read_listfile(join(args.workdir,args.detections_tables))
     detections_tables = []
     
-    for i, filename in enumerate(detections_table_filenames):
+    for i, prod_filename in enumerate(detections_table_prod_filenames):
         
-        detections_tables_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
+        detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
+        if not isinstance(detections_table_prod, detections_product.DpdSheDetectionsProduct):
+            raise ValueError("Detections product from " + prod_filename + " is invalid type.")
+        
+        qualified_filename = join(args.workdir,detections_table_prod.get_filename())
+        
+        detections_tables_hdulist = fits.open(join(args.workdir,qualified_filename), mode="readonly", memmap=True)
         
         detections_tables.append([])
         
@@ -162,13 +185,21 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"PSF images and tables...")
     
-    psf_images_and_table_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
+    psf_images_and_table_product_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
 
     she_image_datas = []
     
-    for i, filename in enumerate(psf_images_and_table_filenames):
+    for i, filename in enumerate(psf_images_and_table_product_filenames):
         
-        psf_images_and_table_hdulist = fits.open(join(args.workdir,filename), mode="readonly", memmap=True)
+        qualified_prod_filename = join(args.workdir,prod_filename)
+        
+        psf_image_prod = read_pickled_product(qualified_prod_filename)
+        if not isinstance(psf_image_prod, psf_image_product.DpdShePSFImageProduct):
+            raise ValueError("PSF image product from " + qualified_prod_filename + " is invalid type.")
+        
+        qualified_filename = join(args.workdir,psf_image_prod.get_filename())
+        
+        psf_images_and_table_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
         
         she_image_datas.append([])
         
@@ -215,9 +246,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"segmentation images...")
     
-    all_segmentation_filenames = read_listfile(join(args.workdir,args.segmentation_images))
-    segmentation_product_filenames = all_segmentation_filenames[0]
-    segmentation_product_sub_filenames = all_segmentation_filenames[1]
+    segmentation_product_filenames = read_listfile(join(args.workdir,args.segmentation_images))
     
     segmentation_hdus = []
     
@@ -225,7 +254,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         mosaic_product = read_pickled_product(join(args.workdir,filename))
         
-        if not isinstance(mosaic_product, mp.DpdMerMosaicProduct):
+        if not isinstance(mosaic_product, mosaic_product.DpdMerMosaicProduct):
             raise ValueError("Mosaic product from " + filename + " is invalid type.")
         
         mosaic_data_filename = mosaic_product.get_data_filename()
@@ -245,7 +274,15 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"galaxy population priors...")
     
-    galaxy_population_priors_table = Table.read(join(args.workdir,args.galaxy_population_priors_table))
+    filename = join(args.workdir,args.galaxy_population_priors_table)
+    galaxy_population_priors_prod = read_pickled_product(filename)
+        
+    if not isinstance(galaxy_population_priors_prod, galaxy_population_product.DpdGalaxyPopulationProduct):
+        raise ValueError("Galaxy population product from " + filename + " is invalid type.")
+    
+    qualified_galpop_filename = galaxy_population_priors_prod.get_filename()
+    
+    galaxy_population_priors_table = Table.read(qualified_galpop_filename)
             
     if not is_in_format(galaxy_population_priors_table,gptf):
         raise ValueError("Galaxy population priors table from " + join(args.workdir,args.galaxy_population_priors_table) +
@@ -256,7 +293,7 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Reading "+dry_label+"calibration parameters...")
     
     calibration_parameters_product = read_pickled_product(join(args.workdir,args.calibration_parameters_product))
-    if not isinstance(calibration_parameters_product, cpp.DpdSheCalibrationParametersProduct):
+    if not isinstance(calibration_parameters_product, calibration_parameters_product.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
                          + " is invalid type.")
     
@@ -264,11 +301,12 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Generating shear estimates product...")
     
-    shear_estimates_product = sep.create_shear_estimates_product(BFD_filename = get_allowed_filename("BFD_SHM","0"),
-                                                                 KSB_filename = get_allowed_filename("KSB_SHM","0"),
-                                                                 LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
-                                                                 MomentsML_filename = get_allowed_filename("MomentsML_SHM","0"),
-                                                                 REGAUSS_filename = get_allowed_filename("REGAUSS_SHM","0"))
+    shear_estimates_product = shear_estimates_product.create_shear_estimates_product(
+                                BFD_filename = get_allowed_filename("BFD_SHM","0"),
+                                KSB_filename = get_allowed_filename("KSB_SHM","0"),
+                                LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
+                                MomentsML_filename = get_allowed_filename("MomentsML_SHM","0"),
+                                REGAUSS_filename = get_allowed_filename("REGAUSS_SHM","0"))
         
     if not dry_run:
         

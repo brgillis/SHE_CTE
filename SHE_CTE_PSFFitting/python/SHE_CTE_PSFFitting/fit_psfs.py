@@ -33,6 +33,7 @@ from SHE_PPT import detections_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mission_time_product
 from SHE_PPT import psf_calibration_product
+from SHE_PPT import psf_image_product
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
@@ -53,6 +54,7 @@ calibrated_frame_product.init()
 detections_product.init()
 mission_time_product.init()
 psf_calibration_product.init()
+psf_image_product.init()
 
 def fit_psfs(args, dry_run=False):
     """
@@ -86,7 +88,7 @@ def fit_psfs(args, dry_run=False):
         
         data_image_prod = read_pickled_product(qualified_prod_filename)
         if not isinstance(data_image_prod, calibrated_frame_product.DpdSheCalibratedFrameProduct):
-            raise ValueError("Astrometry product from " + qualified_prod_filename + " is invalid type.")
+            raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,data_image_prod.get_filename())
         
@@ -234,8 +236,12 @@ def fit_psfs(args, dry_run=False):
     
     for i in range(num_exposures):
         
+        prod_filename = get_allowed_filename("PSF_DRY_P",str(i))
         filename = get_allowed_filename("PSF_DRY",str(i))
-        psf_image_and_table_filenames.append(filename)
+        psf_image_and_table_filenames.append(prod_filename)
+        
+        psf_image_prod = psf_image_product.create_psf_image_product(filename=filename)
+        write_pickled_product(psf_image_prod, prod_filename)
         
         hdulist = fits.HDUList()
         
