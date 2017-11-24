@@ -28,17 +28,19 @@ from ElementsKernel.Logging import getLogger
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import aocs_time_series_product
 from SHE_PPT import astrometry_product
+from SHE_PPT import calibrated_frame_product
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mission_time_product
 from SHE_PPT import psf_calibration_product
 from SHE_PPT.aocs_time_series_product import DpdSheAocsTimeSeriesProduct
 from SHE_PPT.astrometry_product import DpdSheAstrometryProduct
+from SHE_PPT.calibrated_frame_product import DpdSheCalibratedFrameProduct
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              append_hdu, get_allowed_filename,
-                             find_file_in_path)
+                             find_file_in_path, read_xml_product)
 from SHE_PPT.magic_values import extname_label, scale_label, stamp_size_label
 from SHE_PPT.mission_time_product import DpdSheMissionTimeProduct
 from SHE_PPT.psf_calibration_product import DpdShePSFCalibrationProduct
@@ -49,13 +51,10 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
-
 aocs_time_series_product.init()
-
 astrometry_product.init()
-
+calibrated_frame_product.init()
 mission_time_product.init()
-
 psf_calibration_product.init()
 
 def fit_psfs(args, dry_run=False):
@@ -76,7 +75,7 @@ def fit_psfs(args, dry_run=False):
     
     logger.info("Reading mock"+dry_label+" data images...")
     
-    data_images = read_listfile(join(args.workdir,args.data_images))
+    data_image_products = read_listfile(join(args.workdir,args.data_images))
 
     sci_hdus = []
     noisemap_hdus = []
@@ -84,11 +83,15 @@ def fit_psfs(args, dry_run=False):
     
     she_images = []
     
-    for i, filename in enumerate(data_images):
+    for i, prod_filename in enumerate(data_image_products):
         
-        qualified_filename = join(args.workdir,filename)
+        qualified_prod_filename = join(args.workdir,prod_filename)
         
-        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
+        data_image_prod = read_pickled_product(qualified_prod_filename)
+        if not isinstance(data_image_prod, DpdSheCalibratedFrameProduct):
+            raise ValueError("Astrometry product from " + qualified_prod_filename + " is invalid type.")
+        
+        data_image_hdulist = fits.open(data_image_prod.get_filename(), mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
         
         sci_hdus.append([])
@@ -120,7 +123,7 @@ def fit_psfs(args, dry_run=False):
                                           mask=mask_hdus[i][j].data,
                                           header=sci_hdus[i][j].header))
             
-    num_exposures = len(data_images)
+    num_exposures = len(data_image_products)
     she_stacks = []
     for j in range(num_detectors):
         detector_images = []
@@ -209,7 +212,7 @@ def fit_psfs(args, dry_run=False):
     
     logger.info("Outputting mock"+dry_label+" PSF images and tables...")
     
-    num_exposures = len(data_images)
+    num_exposures = len(data_image_products)
     psf_image_and_table_filenames = []
     
     if not dry_run:
