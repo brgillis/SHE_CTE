@@ -91,7 +91,9 @@ def fit_psfs(args, dry_run=False):
         if not isinstance(data_image_prod, DpdSheCalibratedFrameProduct):
             raise ValueError("Astrometry product from " + qualified_prod_filename + " is invalid type.")
         
-        data_image_hdulist = fits.open(data_image_prod.get_filename(), mode="readonly", memmap=True)
+        qualified_filename = join(args.workdir,data_image_prod.get_filename())
+        
+        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
         num_detectors = len(data_image_hdulist) // 3
         
         sci_hdus.append([])
