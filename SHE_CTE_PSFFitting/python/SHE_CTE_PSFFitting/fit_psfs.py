@@ -143,7 +143,7 @@ def fit_psfs(args, dry_run=False):
     
     for i, prod_filename in enumerate(detections_table_prod_filenames):
         
-        detections_table_prod = read_pickled_product(prod_filename)
+        detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
         if not isinstance(detections_table_prod, detections_product.DpdSheDetectionsProduct):
             raise ValueError("Detections product from " + prod_filename + " is invalid type.")
         
