@@ -28,22 +28,23 @@ from ElementsKernel.Logging import getLogger
 from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import shear_estimates_product
 from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, append_hdu)
-from SHE_PPT.shear_estimates_product import DpdShearEstimatesProduct
+from SHE_PPT import shear_estimates_product
+from SHE_PPT import shear_validation_stats_product
 from SHE_PPT.shear_estimates_table_format import tf as setf, initialise_shear_estimates_table
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension, get_detector
+from SHE_PPT import validated_shear_estimates_product
 import numpy as np
 
-
-shear_estimates_product.init()
-
 calibration_parameters_product.init()
+shear_estimates_product.init()
+shear_validation_stats_product.init()
+validated_shear_estimates_product.init()
 
 def validate_shear_estimates(shear_estimates_table, shear_validation_statistics_table):
     """
@@ -204,9 +205,9 @@ def validate_shear(args, dry_run=False):
     
     logger.info("Reading"+dry_label+" shear estimates product...")
     
-    shear_estimates_product = read_pickled_product(join(args.workdir,args.shear_estimates_product))
+    shear_estimates_prod = read_pickled_product(join(args.workdir,args.shear_estimates_product))
 
-    if not isinstance(shear_estimates_product, DpdShearEstimatesProduct):
+    if not isinstance(shear_estimates_prod, shear_estimates_product.DpdShearEstimatesProduct):
         raise ValueError("Shear estimates product from " + join(args.workdir,args.shear_estimates_product)
                           + " is invalid type.")
         
@@ -218,7 +219,7 @@ def validate_shear(args, dry_run=False):
     
     for method in shear_estimates_tables:
         
-        filename = shear_estimates_product.get_method_filename(method)
+        filename = shear_estimates_prod.get_method_filename(method)
     
         shear_estimates_hdulist = fits.open(join(args.workdir,filename),mode='readonly',memmap=True)
         
@@ -240,7 +241,14 @@ def validate_shear(args, dry_run=False):
     
     logger.info("Reading"+dry_label+" shear validation statistics...")
     
-    shear_validation_statistics_table = Table.read(join(args.workdir,args.shear_validation_statistics_table))
+    shear_validation_stats_prod = read_pickled_product(join(args.workdir,args.shear_validation_stats_product))
+    if not isinstance(shear_validation_stats_prod, shear_validation_stats_product.DpdSheShearValidationStatsProduct):
+        raise ValueError("Shear validation statistics product from " + join(args.workdir,args.shear_validation_stats_product)
+                          + " is invalid type.")
+    
+    shear_validation_stats_filename = shear_validation_stats_prod.get_filename()
+    
+    shear_validation_statistics_table = Table.read(join(args.workdir,shear_validation_stats_filename))
             
     if not is_in_format(shear_validation_statistics_table,setf):
         raise ValueError("Shear validation statistics table from " + join(args.workdir,filename) + " is in invalid format.")
@@ -272,6 +280,14 @@ def validate_shear(args, dry_run=False):
     # Set up mock output in the correct format
     
     logger.info("Generating"+dry_label+" validated shear estimates...")
+    
+    validated_shear_estimates_filename = get_allowed_filename("VAL_SHM", "0", ".fits")
+    
+    validated_shear_estimates_prod = validated_shear_estimates_product.create_validated_shear_estimates_product(
+                                        validated_shear_estimates_filename)
+    
+    write_pickled_product(validated_shear_estimates_prod,
+                          join(args.workdir,args.validated_shear_estimates_table))
             
     hdulist = fits.HDUList()
         
@@ -279,7 +295,7 @@ def validate_shear(args, dry_run=False):
         
         hdulist.append(table_to_hdu(combined_shear_estimates[j]))
     
-    hdulist.writeto(join(args.workdir,args.validated_shear_estimates_table), clobber=True)
+    hdulist.writeto(join(args.workdir,validated_shear_estimates_filename), clobber=True)
     
     logger.info("Finished"+dry_label+" shear validation.")
         
