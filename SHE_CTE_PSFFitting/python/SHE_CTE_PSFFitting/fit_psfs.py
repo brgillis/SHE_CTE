@@ -24,37 +24,27 @@ from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
-from ElementsKernel.Logging import getLogger
 from SHE_CTE_PSFFitting import magic_values as mv
-from SHE_PPT import aocs_time_series_product
-from SHE_PPT import astrometry_product
-from SHE_PPT import calibrated_frame_product
-from SHE_PPT import detections_product
-from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import mission_time_product
-from SHE_PPT import psf_calibration_product
-from SHE_PPT import psf_image_product
-from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT.logging import getLogger
+from SHE_PPT import products
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
-                             append_hdu, get_allowed_filename,
-                             find_file_in_path, read_xml_product)
-from SHE_PPT.magic_values import extname_label, scale_label, stamp_size_label
-from SHE_PPT.psf_table_format import initialise_psf_table, tf as pstf
+                             get_allowed_filename, find_file_in_path)
+from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.she_image import SHEImage
-from SHE_PPT.she_stack import SHEStack
+from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
+from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
-aocs_time_series_product.init()
-astrometry_product.init()
-calibrated_frame_product.init()
-detections_product.init()
-mission_time_product.init()
-psf_calibration_product.init()
-psf_image_product.init()
+products.aocs_time_series.init()
+products.calibrated_frame.init()
+products.detections.init()
+products.mission_time.init()
+products.psf_calibration.init()
+products.psf_image.init()
 
 def fit_psfs(args, dry_run=False):
     """
@@ -87,7 +77,7 @@ def fit_psfs(args, dry_run=False):
         qualified_prod_filename = join(args.workdir,prod_filename)
         
         data_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(data_image_prod, calibrated_frame_product.DpdSheCalibratedFrameProduct):
+        if not isinstance(data_image_prod, products.calibrated_frame.DpdSheCalibratedFrameProduct):
             raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,data_image_prod.get_filename())
@@ -146,7 +136,7 @@ def fit_psfs(args, dry_run=False):
     for i, prod_filename in enumerate(detections_table_prod_filenames):
         
         detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
-        if not isinstance(detections_table_prod, detections_product.DpdSheDetectionsProduct):
+        if not isinstance(detections_table_prod, products.detections.DpdSheDetectionsProduct):
             raise ValueError("Detections product from " + prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,detections_table_prod.get_filename())
@@ -166,18 +156,6 @@ def fit_psfs(args, dry_run=False):
             if not is_in_format(detections_tables[i][j],detf):
                 raise ValueError("Detections table from " + qualified_filename + " is in invalid format.")
         
-    # Astrometry products
-    
-    logger.info("Reading mock"+dry_label+" astrometry products...")
-    
-    astrometry_product_filenames = read_listfile(join(args.workdir,args.astrometry_products))
-    astrometry_products = []
-    
-    for i, filename in enumerate(astrometry_product_filenames):
-        astrometry_products.append(read_pickled_product(join(args.workdir,filename)))
-        if not isinstance(astrometry_products[i], astrometry_product.DpdSheAstrometryProduct):
-            raise ValueError("Astrometry product from " + join(args.workdir,filename) + " is invalid type.")
-        
     # AocsTimeSeries products
     
     logger.info("Reading mock"+dry_label+" aocs time series products...")
@@ -187,7 +165,7 @@ def fit_psfs(args, dry_run=False):
     
     for i, filename in enumerate(aocs_time_series_product_filenames):
         aocs_time_series_products.append(read_pickled_product(join(args.workdir,filename)))
-        if not isinstance(aocs_time_series_products[i], aocs_time_series_product.DpdSheAocsTimeSeriesProduct):
+        if not isinstance(aocs_time_series_products[i], products.aocs_time_series.DpdSheAocsTimeSeriesProduct):
             raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
         
     # MissionTime products
@@ -199,7 +177,7 @@ def fit_psfs(args, dry_run=False):
     
     for i, filename in enumerate(mission_time_product_filenames):
         mission_time_products.append(read_pickled_product(join(args.workdir,filename)))
-        if not isinstance(mission_time_products[i], mission_time_product.DpdSheMissionTimeProduct):
+        if not isinstance(mission_time_products[i], products.mission_time.DpdSheMissionTimeProduct):
             raise ValueError("MissionTime product from " + filename + " is invalid type.")
         
     # PSFCalibration products
@@ -213,7 +191,7 @@ def fit_psfs(args, dry_run=False):
         
         psf_calibration_products.append(read_pickled_product(join(args.workdir,filename)))
         
-        if not isinstance(psf_calibration_products[i], psf_calibration_product.DpdShePSFCalibrationProduct):
+        if not isinstance(psf_calibration_products[i], products.psf_calibration.DpdShePSFCalibrationProduct):
             raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
     
     # Set up mock output in the correct format
@@ -240,7 +218,7 @@ def fit_psfs(args, dry_run=False):
         filename = get_allowed_filename("PSF_DRY",str(i))
         psf_image_and_table_filenames.append(prod_filename)
         
-        psf_image_prod = psf_image_product.create_psf_image_product(filename=filename)
+        psf_image_prod = products.psf_image.create_psf_image_product(filename=filename)
         write_pickled_product(psf_image_prod, join(args.workdir,prod_filename))
         
         hdulist = fits.HDUList()
@@ -271,17 +249,17 @@ def fit_psfs(args, dry_run=False):
                 bpsf_array = np.zeros((1,1))
                 dpsf_array = np.zeros((1,1))
                 
-            bulge_psf_header = fits.header.Header(((extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.bulge_psf_tag),
-                                             (stamp_size_label,np.min(np.shape(bpsf_array))),
-                                             (scale_label,0.02)))
+            bulge_psf_header = fits.header.Header(((ppt_mv.extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.bulge_psf_tag),
+                                             (ppt_mv.stamp_size_label,np.min(np.shape(bpsf_array))),
+                                             (ppt_mv.scale_label,0.02)))
             
             bpsf_hdu = fits.ImageHDU(data=bpsf_array,
                                      header=bulge_psf_header)
             hdulist.append(bpsf_hdu)
                 
-            disk_psf_header = fits.header.Header(((extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.disk_psf_tag),
-                                             (stamp_size_label,np.min(np.shape(dpsf_array))),
-                                             (scale_label,0.02)))
+            disk_psf_header = fits.header.Header(((ppt_mv.extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.disk_psf_tag),
+                                             (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
+                                             (ppt_mv.scale_label,0.02)))
             
             dpsf_hdu = fits.ImageHDU(data=dpsf_array,
                                      header=disk_psf_header)
