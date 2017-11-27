@@ -32,6 +32,7 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mission_time_product
 from SHE_PPT import mosaic_product
 from SHE_PPT import psf_calibration_product
+from SHE_PPT import shear_validation_stats_product
 from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
 from SHE_PPT.astrometry_product import create_astrometry_product
 from SHE_PPT.calibration_parameters_product import create_calibration_parameters_product
@@ -57,6 +58,7 @@ galaxy_population_product.init()
 mission_time_product.init()
 mosaic_product.init()
 psf_calibration_product.init()
+shear_validation_stats_product.init()
 
 def make_mock_analysis_data(args, dry_run=False):
     """
@@ -312,8 +314,16 @@ def make_mock_analysis_data(args, dry_run=False):
     
     logger.info("Generating mock dry shear validation statistics tables...")
     
+    shear_validation_stats_filename = get_allowed_filename("VAL_STATS", "0")
+    
+    shear_validation_stats_prod = shear_validation_stats_product.create_shear_validation_stats_product(
+                                    shear_validation_stats_filename)
+    
+    write_pickled_product(shear_validation_stats_prod,
+                          join(args.workdir,args.shear_validation_statistics_table))
+    
     shear_validation_statistics_table = initialise_shear_estimates_table()
-    shear_validation_statistics_table.write(join(args.workdir,args.shear_validation_statistics_table)
+    shear_validation_statistics_table.write(join(args.workdir,shear_validation_stats_filename)
                                             ,format="fits",overwrite=True)
     
     logger.info("Finished generating mock dry data.")
