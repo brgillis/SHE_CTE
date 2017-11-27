@@ -20,6 +20,7 @@
 
 import math
 from os.path import join
+import numpy as np
 
 from astropy.io import fits
 from astropy.table import Table
@@ -30,11 +31,10 @@ from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_pickled_product, write_pickled_product,
                              get_allowed_filename)
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import products
 from SHE_PPT.table_formats.shear_estimates import tf as setf, initialise_shear_estimates_table
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension, get_detector
-import numpy as np
+from SHE_PPT import products
 
 products.calibration_parameters.init()
 products.shear_estimates.init()
@@ -136,12 +136,12 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
             elif setf.g1_err in tab.columns:
                 m_e1_var = row[setf.g1_err]**2 - shape_noise_var
                 m_e2_var = row[setf.g2_err]**2 - shape_noise_var
+                
+                if m_e1_var < 0 or m_e2_var < 0:
+                    # Bad error estimates
+                    continue
             else:
                 # No error supplied; skip combining it
-                continue
-                
-            if m_e1_var < 0 or m_e2_var < 0:
-                # Bad error estimates
                 continue
                 
             if m_e1_err < 1e99 and not math.isnan(m_g1):
