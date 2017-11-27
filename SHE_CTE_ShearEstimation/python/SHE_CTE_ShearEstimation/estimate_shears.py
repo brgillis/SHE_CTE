@@ -30,46 +30,37 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, RE
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
 from SHE_MomentsML.estimate_shear import estimate_shear as MomentsML_estimate_shear
 
-from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
-from SHE_GST_IceBRGpy.logging import getLogger
-from SHE_PPT import calibrated_frame_product
-from SHE_PPT import calibration_parameters_product
-from SHE_PPT import detections_product
+from SHE_PPT.logging import getLogger
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, read_pickled_product,
-                             write_pickled_product, write_listfile,
-                             get_allowed_filename)
-from SHE_PPT import galaxy_population_product
-from SHE_PPT import mosaic_product
-from SHE_PPT.galaxy_population_table_format import tf as gptf,\
-    galaxy_population_table_format
-from SHE_PPT import psf_image_product
-from SHE_PPT.psf_table_format import tf as pstf
+                             write_pickled_product, get_allowed_filename)
+from SHE_PPT.table_formats.galaxy_population import tf as gptf
+from SHE_PPT import products
+from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_image_data import SHEImageData
 from SHE_PPT.she_stack import SHEStack
-from SHE_PPT import shear_estimates_product
-from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
-calibration_parameters_product.init()
-calibrated_frame_product.init()
-detections_product.init()
-galaxy_population_product.init()
-shear_estimates_product.init()
-mosaic_product.init()
-psf_image_product.init()
+products.calibration_parameters.init()
+products.calibrated_frame.init()
+products.detections.init()
+products.galaxy_population.init()
+products.shear_estimates.init()
+products.mosaic.init()
+products.psf_image.init()
 
 
 loading_methods = {"KSB":None,
                    "REGAUSS":None,
                    "MomentsML":None,
                    "LensMC":None,
-                   "BFD":None}
+                   "BFD":bfd_load_method_data}
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
@@ -115,7 +106,7 @@ def estimate_shears_from_args(args, dry_run=False):
         qualified_prod_filename = join(args.workdir,prod_filename)
         
         data_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(data_image_prod, calibrated_frame_product.DpdSheCalibratedFrameProduct):
+        if not isinstance(data_image_prod, products.calibrated_frame.DpdSheCalibratedFrameProduct):
             raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,data_image_prod.get_filename())
@@ -163,7 +154,7 @@ def estimate_shears_from_args(args, dry_run=False):
     for i, prod_filename in enumerate(detections_table_prod_filenames):
         
         detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
-        if not isinstance(detections_table_prod, detections_product.DpdSheDetectionsProduct):
+        if not isinstance(detections_table_prod, products.detections.DpdSheDetectionsProduct):
             raise ValueError("Detections product from " + prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,detections_table_prod.get_filename())
@@ -195,7 +186,7 @@ def estimate_shears_from_args(args, dry_run=False):
         qualified_prod_filename = join(args.workdir,prod_filename)
         
         psf_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(psf_image_prod, psf_image_product.DpdShePSFImageProduct):
+        if not isinstance(psf_image_prod, products.psf_image.DpdShePSFImageProduct):
             raise ValueError("PSF image product from " + qualified_prod_filename + " is invalid type.")
         
         qualified_filename = join(args.workdir,psf_image_prod.get_filename())
@@ -255,7 +246,7 @@ def estimate_shears_from_args(args, dry_run=False):
         
         mosaic_prod = read_pickled_product(join(args.workdir,filename))
         
-        if not isinstance(mosaic_prod, mosaic_product.DpdMerMosaicProduct):
+        if not isinstance(mosaic_prod, products.mosaic.DpdMerMosaicProduct):
             raise ValueError("Mosaic product from " + filename + " is invalid type.")
         
         mosaic_data_filename = mosaic_prod.get_data_filename()
@@ -278,7 +269,7 @@ def estimate_shears_from_args(args, dry_run=False):
     filename = join(args.workdir,args.galaxy_population_priors_table)
     galaxy_population_priors_prod = read_pickled_product(filename)
         
-    if not isinstance(galaxy_population_priors_prod, galaxy_population_product.DpdSheGalaxyPopulationProduct):
+    if not isinstance(galaxy_population_priors_prod, products.galaxy_population.DpdSheGalaxyPopulationProduct):
         raise ValueError("Galaxy population product from " + filename + " is invalid type.")
     
     qualified_galpop_filename = join(args.workdir,galaxy_population_priors_prod.get_filename())
@@ -294,7 +285,7 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Reading "+dry_label+"calibration parameters...")
     
     calibration_parameters_prod = read_pickled_product(join(args.workdir,args.calibration_parameters_product))
-    if not isinstance(calibration_parameters_prod, calibration_parameters_product.DpdSheCalibrationParametersProduct):
+    if not isinstance(calibration_parameters_prod, products.calibration_parameters.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + join(args.workdir,args.calibration_parameters_product)
                          + " is invalid type.")
     
@@ -302,7 +293,7 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Generating shear estimates product...")
     
-    shear_estimates_prod = shear_estimates_product.create_shear_estimates_product(
+    shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
                                 BFD_filename = get_allowed_filename("BFD_SHM","0"),
                                 KSB_filename = get_allowed_filename("KSB_SHM","0"),
                                 LensMC_filename = get_allowed_filename("LensMC_SHM","0"),
@@ -347,7 +338,7 @@ def estimate_shears_from_args(args, dry_run=False):
                     
                     data_stack = data_stacks[j]
 
-                    shear_estimates_table = estimation_methods[method]( data_stack, method_data=method_data )
+                    shear_estimates_table = estimate_shear( data_stack, method_data=method_data )
 
                     if not is_in_format(shear_estimates_table,setf):
                         raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
