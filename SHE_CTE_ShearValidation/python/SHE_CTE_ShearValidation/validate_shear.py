@@ -24,27 +24,22 @@ from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
-from ElementsKernel.Logging import getLogger
+from SHE_PPT.logging import getLogger
 from SHE_CTE_ShearValidation import magic_values as mv
-from SHE_PPT import calibration_parameters_product
-from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT.calibration_parameters_product import DpdSheCalibrationParametersProduct
 from SHE_PPT import detector as dtc
-from SHE_PPT.file_io import (read_listfile, write_listfile,
-                             read_pickled_product, write_pickled_product,
-                             get_allowed_filename, append_hdu)
-from SHE_PPT import shear_estimates_product
-from SHE_PPT import shear_validation_stats_product
-from SHE_PPT.shear_estimates_table_format import tf as setf, initialise_shear_estimates_table
+from SHE_PPT.file_io import (read_pickled_product, write_pickled_product,
+                             get_allowed_filename)
+from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT import products
+from SHE_PPT.table_formats.shear_estimates import tf as setf, initialise_shear_estimates_table
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension, get_detector
-from SHE_PPT import validated_shear_estimates_product
 import numpy as np
 
-calibration_parameters_product.init()
-shear_estimates_product.init()
-shear_validation_stats_product.init()
-validated_shear_estimates_product.init()
+products.calibration_parameters.init()
+products.shear_estimates.init()
+products.shear_validation_stats.init()
+products.validated_shear_estimates.init()
 
 def validate_shear_estimates(shear_estimates_table, shear_validation_statistics_table):
     """
@@ -145,11 +140,9 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
                 # No error supplied; skip combining it
                 continue
                 
-                if m_e1_var < 0 or m_e2_var < 0:
-                    # Bad error estimates
-                    continue
-            else:
-                continue # BFD presumably, so skip it
+            if m_e1_var < 0 or m_e2_var < 0:
+                # Bad error estimates
+                continue
                 
             if m_e1_err < 1e99 and not math.isnan(m_g1):
                 g1s.append(m_g1)
@@ -210,7 +203,7 @@ def validate_shear(args, dry_run=False):
     
     shear_estimates_prod = read_pickled_product(join(args.workdir,args.shear_estimates_product))
 
-    if not isinstance(shear_estimates_prod, shear_estimates_product.DpdShearEstimatesProduct):
+    if not isinstance(shear_estimates_prod, products.shear_estimates.DpdShearEstimatesProduct):
         raise ValueError("Shear estimates product from " + join(args.workdir,args.shear_estimates_product)
                           + " is invalid type.")
         
@@ -245,7 +238,7 @@ def validate_shear(args, dry_run=False):
     logger.info("Reading"+dry_label+" shear validation statistics...")
     
     shear_validation_stats_prod = read_pickled_product(join(args.workdir,args.shear_validation_statistics_table))
-    if not isinstance(shear_validation_stats_prod, shear_validation_stats_product.DpdSheShearValidationStatsProduct):
+    if not isinstance(shear_validation_stats_prod, products.shear_validation_stats.DpdSheShearValidationStatsProduct):
         raise ValueError("Shear validation statistics product from " + join(args.workdir,args.shear_validation_stats_product)
                           + " is invalid type.")
     
@@ -286,7 +279,7 @@ def validate_shear(args, dry_run=False):
     
     validated_shear_estimates_filename = get_allowed_filename("VAL_SHM", "0", ".fits")
     
-    validated_shear_estimates_prod = validated_shear_estimates_product.create_validated_shear_estimates_product(
+    validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
                                         validated_shear_estimates_filename)
     
     write_pickled_product(validated_shear_estimates_prod,
