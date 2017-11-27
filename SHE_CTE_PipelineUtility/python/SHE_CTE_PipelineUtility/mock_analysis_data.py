@@ -23,42 +23,26 @@ from os.path import join
 from astropy.io import fits
 from astropy.table import Table
 
-from ElementsKernel.Logging import getLogger
+from SHE_PPT.logging import getLogger
 from SHE_CTE_PipelineUtility import magic_values as mv
-from SHE_PPT import aocs_time_series_product
-from SHE_PPT import astrometry_product
-from SHE_PPT import calibration_parameters_product
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import mission_time_product
-from SHE_PPT import mosaic_product
-from SHE_PPT import psf_calibration_product
-from SHE_PPT import shear_validation_stats_product
-from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
-from SHE_PPT.astrometry_product import create_astrometry_product
-from SHE_PPT.calibration_parameters_product import create_calibration_parameters_product
-from SHE_PPT.detections_table_format import initialise_detections_table
+from SHE_PPT.table_formats.detections import initialise_detections_table
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              append_hdu, get_allowed_filename)
-from SHE_PPT import galaxy_population_product
-from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table,\
-    galaxy_population_table_format
-from SHE_PPT.mission_time_product import create_mission_time_product
-from SHE_PPT.mosaic_product import create_mosaic_product
-from SHE_PPT.psf_calibration_product import create_psf_calibration_product
-from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table
+from SHE_PPT.table_formats.galaxy_population import initialise_galaxy_population_table
+from SHE_PPT import products
+from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table
 from SHE_PPT.table_utility import table_to_hdu
 import numpy as np
 
-
-aocs_time_series_product.init()
-astrometry_product.init()
-calibration_parameters_product.init()
-galaxy_population_product.init()
-mission_time_product.init()
-mosaic_product.init()
-psf_calibration_product.init()
-shear_validation_stats_product.init()
+products.aocs_time_series.init()
+products.calibration_parameters.init()
+products.galaxy_population.init()
+products.mission_time.init()
+products.mosaic.init()
+products.psf_calibration.init()
+products.shear_validation_stats.init()
 
 def make_mock_analysis_data(args, dry_run=False):
     """
@@ -131,7 +115,7 @@ def make_mock_analysis_data(args, dry_run=False):
         # Set up PSF Calibration object
         filename = get_allowed_filename("PSFCAL_DRY",str(i),extension=".bin")
         
-        psf_calibration_product = create_psf_calibration_product(timestamp="0",
+        psf_calibration_product = products.psf_calibration.create_psf_calibration_product(timestamp="0",
                                                                  zernike_mode_filename=zernike_mode_filename,
                                                                  surface_error_filename=surface_error_filename)
         
@@ -157,13 +141,16 @@ def make_mock_analysis_data(args, dry_run=False):
         product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
         data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
         
-        mosaic_product =  create_mosaic_product(instrument_name="VIS",
+        mosaic_product_filenames.append([product_filename])
+        mosaic_product_sub_filenames.append([data_filename])
+        
+        mosaic_product =  products.mosaic.create_mosaic_product(instrument_name="VIS",
                                                 filter="VIS",
                                                 wcs_params=None,
                                                 zeropoint=0,
                                                 data_filename=data_filename,)
         
-        mosaic_product_sub_filenames.append([data_filename])
+        write_pickled_product(mosaic_product, product_filename)
         
         # Create its associated fits file
         
@@ -176,14 +163,10 @@ def make_mock_analysis_data(args, dry_run=False):
             hdulist.append(seg_hdu)
             
         hdulist.writeto(join(args.workdir,data_filename),clobber=True)
-        
-        mosaic_product_filenames.append([product_filename])
     
         logger.info("Finished generating segmentation images for exposure " + str(i) + ".")
-        
-    all_mosaic_product_filenames = [mosaic_product_filenames,mosaic_product_sub_filenames]
     
-    write_listfile(join(args.workdir,args.segmentation_images),all_mosaic_product_filenames)
+    write_listfile(join(args.workdir,args.segmentation_images),mosaic_product_filenames)
     
     # Detections tables
     
@@ -211,24 +194,6 @@ def make_mock_analysis_data(args, dry_run=False):
     
     write_listfile(join(args.workdir,args.detections_tables),detections_tables_filenames)
     
-    # Astrometry products
-    
-    logger.info("Generating mock dry astrometry products...")
-    
-    astrometry_product_filenames = []
-    
-    for i in range(num_exposures):
-        
-        filename = get_allowed_filename("ASTROMETRY_DRY",str(i),extension=".bin")
-        
-        astrometry_product = create_astrometry_product()
-        
-        write_pickled_product(astrometry_product,join(args.workdir,filename))
-        
-        astrometry_product_filenames.append(filename)
-        
-    write_listfile(join(args.workdir,args.astrometry_products),astrometry_product_filenames)
-    
     # AOCS time series products
     
     logger.info("Generating mock dry AOCS time series products...")
@@ -239,7 +204,7 @@ def make_mock_analysis_data(args, dry_run=False):
         
         filename = get_allowed_filename("AOCS_TIME_SERIES_DRY",str(i),extension=".bin")
         
-        aocs_time_series_product = create_aocs_time_series_product()
+        aocs_time_series_product = products.aocs_time_series.create_aocs_time_series_product()
         
         write_pickled_product(aocs_time_series_product,join(args.workdir,filename))
         
@@ -257,7 +222,7 @@ def make_mock_analysis_data(args, dry_run=False):
         
         filename = get_allowed_filename("MISSON_TIME_DRY",str(i),extension=".bin")
         
-        mission_time_product = create_mission_time_product()
+        mission_time_product = products.mission_time.create_mission_time_product()
         
         write_pickled_product(mission_time_product,join(args.workdir,filename))
         
@@ -270,7 +235,7 @@ def make_mock_analysis_data(args, dry_run=False):
     logger.info("Generating mock dry galaxy population priors table...")
     
     filename = get_allowed_filename("GALPOP", "0", extension=".fits")
-    galaxy_population_prod = galaxy_population_product.create_galaxy_population_product(filename=filename)
+    galaxy_population_prod = products.galaxy_population.create_galaxy_population_product(filename=filename)
     
     write_pickled_product(galaxy_population_prod, join(args.workdir,args.galaxy_population_priors_table))
     
@@ -302,7 +267,7 @@ def make_mock_analysis_data(args, dry_run=False):
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( join(args.workdir,regauss_calibration_parameters_filename), null_hdu)
         
-    calibration_parameters_product = create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
+    calibration_parameters_product = products.calibration_parameters.create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
                                                                            LensMC_filename=lensmc_calibration_parameters_filename,
                                                                            MomentsML_filename=momentsml_calibration_parameters_filename,
                                                                            REGAUSS_filename=regauss_calibration_parameters_filename)
@@ -316,7 +281,7 @@ def make_mock_analysis_data(args, dry_run=False):
     
     shear_validation_stats_filename = get_allowed_filename("VAL_STATS", "0")
     
-    shear_validation_stats_prod = shear_validation_stats_product.create_shear_validation_stats_product(
+    shear_validation_stats_prod = products.shear_validation_stats.create_shear_validation_stats_product(
                                     shear_validation_stats_filename)
     
     write_pickled_product(shear_validation_stats_prod,
