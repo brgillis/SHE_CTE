@@ -241,7 +241,7 @@ def validate_shear(args, dry_run=False):
     
     logger.info("Reading"+dry_label+" shear validation statistics...")
     
-    shear_validation_stats_prod = read_pickled_product(join(args.workdir,args.shear_validation_stats_product))
+    shear_validation_stats_prod = read_pickled_product(join(args.workdir,args.shear_validation_statistics_table))
     if not isinstance(shear_validation_stats_prod, shear_validation_stats_product.DpdSheShearValidationStatsProduct):
         raise ValueError("Shear validation statistics product from " + join(args.workdir,args.shear_validation_stats_product)
                           + " is invalid type.")
