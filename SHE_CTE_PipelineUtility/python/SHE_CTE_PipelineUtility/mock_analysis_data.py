@@ -32,6 +32,7 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mission_time_product
 from SHE_PPT import mosaic_product
 from SHE_PPT import psf_calibration_product
+from SHE_PPT import shear_validation_stats_product
 from SHE_PPT.aocs_time_series_product import create_aocs_time_series_product
 from SHE_PPT.astrometry_product import create_astrometry_product
 from SHE_PPT.calibration_parameters_product import create_calibration_parameters_product
@@ -39,7 +40,9 @@ from SHE_PPT.detections_table_format import initialise_detections_table
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              append_hdu, get_allowed_filename)
-from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table
+from SHE_PPT import galaxy_population_product
+from SHE_PPT.galaxy_population_table_format import initialise_galaxy_population_table,\
+    galaxy_population_table_format
 from SHE_PPT.mission_time_product import create_mission_time_product
 from SHE_PPT.mosaic_product import create_mosaic_product
 from SHE_PPT.psf_calibration_product import create_psf_calibration_product
@@ -51,9 +54,11 @@ import numpy as np
 aocs_time_series_product.init()
 astrometry_product.init()
 calibration_parameters_product.init()
+galaxy_population_product.init()
 mission_time_product.init()
 mosaic_product.init()
 psf_calibration_product.init()
+shear_validation_stats_product.init()
 
 def make_mock_analysis_data(args, dry_run=False):
     """
@@ -108,7 +113,6 @@ def make_mock_analysis_data(args, dry_run=False):
     logger.info("Generating mock dry psf calibration products...")
     
     psf_calibration_product_filenames = []
-    psf_calibration_product_sub_filenames = []
     
     for i in range(num_exposures):
         
@@ -124,26 +128,20 @@ def make_mock_analysis_data(args, dry_run=False):
         null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
         append_hdu( join(args.workdir,surface_error_filename), null_hdu)
         
-        psf_calibration_product_sub_filenames.append([zernike_mode_filename,surface_error_filename])
-        
         # Set up PSF Calibration object
         filename = get_allowed_filename("PSFCAL_DRY",str(i),extension=".bin")
-        listfile_filename = get_allowed_filename("PSFCAL_DRY_LF",str(i),extension=".json")
         
         psf_calibration_product = create_psf_calibration_product(timestamp="0",
                                                                  zernike_mode_filename=zernike_mode_filename,
                                                                  surface_error_filename=surface_error_filename)
         
         write_pickled_product(psf_calibration_product,
-                              join(args.workdir,filename),
-                              join(args.workdir,listfile_filename))
+                              join(args.workdir,filename))
         
         psf_calibration_product_filenames.append(filename)
         
-    all_psf_calibration_product_filenames = [psf_calibration_product_filenames,psf_calibration_product_sub_filenames]
-        
     write_listfile(join(args.workdir,args.psf_calibration_products),
-                   all_psf_calibration_product_filenames)
+                   psf_calibration_product_filenames)
     
     # Segmentation images
     
@@ -157,7 +155,6 @@ def make_mock_analysis_data(args, dry_run=False):
         # Create the data product
         
         product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
-        listfile_filename = get_allowed_filename("SEG_DRY_LF",str(i),extension=".json")
         data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
         
         mosaic_product =  create_mosaic_product(instrument_name="VIS",
@@ -202,7 +199,8 @@ def make_mock_analysis_data(args, dry_run=False):
         
         for j in range(num_detectors):
         
-            dtc_hdu = table_to_hdu(initialise_detections_table(detector=j))
+            dtc_hdu = table_to_hdu(initialise_detections_table(detector_x= j%6 + 1,
+                                                               detector_y= j//6 + 1))
             hdulist.append(dtc_hdu)
             
         hdulist.writeto(join(args.workdir,filename),clobber=True)
@@ -271,8 +269,13 @@ def make_mock_analysis_data(args, dry_run=False):
     
     logger.info("Generating mock dry galaxy population priors table...")
     
+    filename = get_allowed_filename("GALPOP", "0", extension=".fits")
+    galaxy_population_prod = galaxy_population_product.create_galaxy_population_product(filename=filename)
+    
+    write_pickled_product(galaxy_population_prod, join(args.workdir,args.galaxy_population_priors_table))
+    
     galaxy_population_priors_table = initialise_galaxy_population_table()
-    galaxy_population_priors_table.write(join(args.workdir,args.galaxy_population_priors_table),
+    galaxy_population_priors_table.write(join(args.workdir,filename),
                                          format="fits",overwrite=True)
     
     # Calibration parameters product
@@ -289,10 +292,10 @@ def make_mock_analysis_data(args, dry_run=False):
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
     append_hdu( join(args.workdir,lensmc_calibration_parameters_filename), null_hdu)
         
-    megalut_calibration_parameters_filename = get_allowed_filename("MEGALUT_CAL_PARAM_DRY","0")
+    momentsml_calibration_parameters_filename = get_allowed_filename("MOMENTSML_CAL_PARAM_DRY","0")
         
     null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( join(args.workdir,megalut_calibration_parameters_filename), null_hdu)
+    append_hdu( join(args.workdir,momentsml_calibration_parameters_filename), null_hdu)
         
     regauss_calibration_parameters_filename = get_allowed_filename("REGAUSS_CAL_PARAM_DRY","0")
         
@@ -301,19 +304,26 @@ def make_mock_analysis_data(args, dry_run=False):
         
     calibration_parameters_product = create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
                                                                            LensMC_filename=lensmc_calibration_parameters_filename,
-                                                                           MegaLUT_filename=megalut_calibration_parameters_filename,
+                                                                           MomentsML_filename=momentsml_calibration_parameters_filename,
                                                                            REGAUSS_filename=regauss_calibration_parameters_filename)
     
     write_pickled_product(calibration_parameters_product,
-                          join(args.workdir,args.calibration_parameters_product),
-                          join(args.workdir,args.calibration_parameters_listfile))
+                          join(args.workdir,args.calibration_parameters_product))
     
     # Shear validation statistics tables
     
     logger.info("Generating mock dry shear validation statistics tables...")
     
+    shear_validation_stats_filename = get_allowed_filename("VAL_STATS", "0")
+    
+    shear_validation_stats_prod = shear_validation_stats_product.create_shear_validation_stats_product(
+                                    shear_validation_stats_filename)
+    
+    write_pickled_product(shear_validation_stats_prod,
+                          join(args.workdir,args.shear_validation_statistics_table))
+    
     shear_validation_statistics_table = initialise_shear_estimates_table()
-    shear_validation_statistics_table.write(join(args.workdir,args.shear_validation_statistics_table)
+    shear_validation_statistics_table.write(join(args.workdir,shear_validation_stats_filename)
                                             ,format="fits",overwrite=True)
     
     logger.info("Finished generating mock dry data.")
