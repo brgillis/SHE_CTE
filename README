@@ -1,0 +1,27 @@
+SHE_CTE (Shear Common Testing Environment)
+==========================================
+
+1) Description
+
+This project contains various tools for running tests of shear estimation methods, including executables for
+running shear estimation.
+
+2) Installation
+
+This is an Elements project, and can be built, tested, and installed in a supported environment through running:
+
+make
+make test
+make install
+
+If this is planned to be used with the pipeline runner on a LODEEN instance, it is recommended this be built and
+installed in the directory /home/user/Work/Projects/SHE_CTE.
+
+3) Dependencies
+
+- Elements build system
+- SHE_PPT
+- SHE_GST
+- SHE_MomentsML
+- SHE_BFD
+- Euclid data model bindings (in a future version)
