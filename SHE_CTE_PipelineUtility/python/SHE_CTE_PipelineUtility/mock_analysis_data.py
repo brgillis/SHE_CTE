@@ -293,7 +293,7 @@ def make_mock_analysis_data(args, dry_run=False):
     
     # Shear validation statistics tables
     
-    if args.shear_validation_stats_filename is not None:
+    if args.shear_validation_statistics_table is not None:
     
         logger.info("Generating mock dry shear validation statistics tables...")
         
