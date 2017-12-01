@@ -58,238 +58,256 @@ def make_mock_analysis_data(args, dry_run=False):
     
     # Data images
     
-    logger.info("Generating mock dry data images...")
+    if args.data_images is not None:
     
-    data_images = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry data images...")
         
-        filename = get_allowed_filename("OBS_DRY",str(i))
-        data_images.append(filename)
+        data_images = []
         
-        hdulist = fits.HDUList()
+        for i in range(num_exposures):
+            
+            filename = get_allowed_filename("OBS_DRY",str(i))
+            data_images.append(filename)
+            
+            hdulist = fits.HDUList()
+            
+            for j in range(num_detectors):
+                
+                # Science image
+                im_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
+                                       header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.sci_tag),)))
+                hdulist.append(im_hdu)
+                
+                # Noise map
+                rms_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
+                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.noisemap_tag),)))
+                hdulist.append(rms_hdu)
+                
+                # Mask map
+                flg_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>i4')),
+                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
+                hdulist.append(flg_hdu)
+                
+            hdulist.writeto(join(args.workdir,filename),clobber=True)
         
-        for j in range(num_detectors):
+            logger.info("Finished generating exposure " + str(i) + ".")
             
-            # Science image
-            im_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
-                                   header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.sci_tag),)))
-            hdulist.append(im_hdu)
-            
-            # Noise map
-            rms_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>f4')),
-                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.noisemap_tag),)))
-            hdulist.append(rms_hdu)
-            
-            # Mask map
-            flg_hdu = fits.ImageHDU(data=np.zeros((1,1),dtype=np.dtype('>i4')),
-                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.mask_tag),)))
-            hdulist.append(flg_hdu)
-            
-        hdulist.writeto(join(args.workdir,filename),clobber=True)
-    
-        logger.info("Finished generating exposure " + str(i) + ".")
-        
-    write_listfile(join(args.workdir,args.data_images),data_images)
+        write_listfile(join(args.workdir,args.data_images),data_images)
     
     # PSF Calibration products
     
-    logger.info("Generating mock dry psf calibration products...")
+    if args.psf_calibration_products is not None:
     
-    psf_calibration_product_filenames = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry psf calibration products...")
         
-        # Set up ZM object
-        zernike_mode_filename = get_allowed_filename("PSFCAL_ZM_DRY",str(i))
+        psf_calibration_product_filenames = []
         
-        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-        append_hdu( join(args.workdir,zernike_mode_filename), null_hdu)
-        
-        # Set up SE object
-        surface_error_filename = get_allowed_filename("PSFCAL_SE_DRY",str(i))
-        
-        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-        append_hdu( join(args.workdir,surface_error_filename), null_hdu)
-        
-        # Set up PSF Calibration object
-        filename = get_allowed_filename("PSFCAL_DRY",str(i),extension=".bin")
-        
-        psf_calibration_product = products.psf_calibration.create_psf_calibration_product(timestamp="0",
-                                                                 zernike_mode_filename=zernike_mode_filename,
-                                                                 surface_error_filename=surface_error_filename)
-        
-        write_pickled_product(psf_calibration_product,
-                              join(args.workdir,filename))
-        
-        psf_calibration_product_filenames.append(filename)
-        
-    write_listfile(join(args.workdir,args.psf_calibration_products),
-                   psf_calibration_product_filenames)
+        for i in range(num_exposures):
+            
+            # Set up ZM object
+            zernike_mode_filename = get_allowed_filename("PSFCAL_ZM_DRY",str(i))
+            
+            null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+            append_hdu( join(args.workdir,zernike_mode_filename), null_hdu)
+            
+            # Set up SE object
+            surface_error_filename = get_allowed_filename("PSFCAL_SE_DRY",str(i))
+            
+            null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+            append_hdu( join(args.workdir,surface_error_filename), null_hdu)
+            
+            # Set up PSF Calibration object
+            filename = get_allowed_filename("PSFCAL_DRY",str(i),extension=".bin")
+            
+            psf_calibration_product = products.psf_calibration.create_psf_calibration_product(timestamp="0",
+                                                                     zernike_mode_filename=zernike_mode_filename,
+                                                                     surface_error_filename=surface_error_filename)
+            
+            write_pickled_product(psf_calibration_product,
+                                  join(args.workdir,filename))
+            
+            psf_calibration_product_filenames.append(filename)
+            
+        write_listfile(join(args.workdir,args.psf_calibration_products),
+                       psf_calibration_product_filenames)
     
     # Segmentation images
     
-    logger.info("Generating mock dry segmentation images...")
+    if args.segmentation_images is not None:
     
-    mosaic_product_filenames = []
-    mosaic_product_sub_filenames = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry segmentation images...")
         
-        # Create the data product
+        mosaic_product_filenames = []
+        mosaic_product_sub_filenames = []
         
-        product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
-        data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
-        
-        mosaic_product_filenames.append([product_filename])
-        mosaic_product_sub_filenames.append([data_filename])
-        
-        mosaic_product =  products.mosaic.create_mosaic_product(instrument_name="VIS",
-                                                filter="VIS",
-                                                wcs_params=None,
-                                                zeropoint=0,
-                                                data_filename=data_filename,)
-        
-        write_pickled_product(mosaic_product, product_filename)
-        
-        # Create its associated fits file
-        
-        hdulist = fits.HDUList()
-        
-        for j in range(num_detectors):
-        
-            seg_hdu = fits.ImageHDU(data=np.zeros((1,1)),
-                                    header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
-            hdulist.append(seg_hdu)
+        for i in range(num_exposures):
             
-        hdulist.writeto(join(args.workdir,data_filename),clobber=True)
-    
-        logger.info("Finished generating segmentation images for exposure " + str(i) + ".")
-    
-    write_listfile(join(args.workdir,args.segmentation_images),mosaic_product_filenames)
+            # Create the data product
+            
+            product_filename = get_allowed_filename("SEG_DRY",str(i),extension=".bin")
+            data_filename = get_allowed_filename("SEG_DRY_DATA",str(i))
+            
+            mosaic_product_filenames.append([product_filename])
+            mosaic_product_sub_filenames.append([data_filename])
+            
+            mosaic_product =  products.mosaic.create_mosaic_product(instrument_name="VIS",
+                                                    filter="VIS",
+                                                    wcs_params=None,
+                                                    zeropoint=0,
+                                                    data_filename=data_filename,)
+            
+            write_pickled_product(mosaic_product, product_filename)
+            
+            # Create its associated fits file
+            
+            hdulist = fits.HDUList()
+            
+            for j in range(num_detectors):
+            
+                seg_hdu = fits.ImageHDU(data=np.zeros((1,1)),
+                                        header=fits.header.Header((("EXTNAME",str(j)+"."+ppt_mv.segmentation_tag),)))
+                hdulist.append(seg_hdu)
+                
+            hdulist.writeto(join(args.workdir,data_filename),clobber=True)
+        
+            logger.info("Finished generating segmentation images for exposure " + str(i) + ".")
+        
+        write_listfile(join(args.workdir,args.segmentation_images),mosaic_product_filenames)
     
     # Detections tables
     
-    logger.info("Generating mock dry detection tables...")
+    if args.detections_tables is not None:
     
-    detections_tables_filenames = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry detection tables...")
         
-        filename = get_allowed_filename("DTC_DRY",str(i))
+        detections_tables_filenames = []
         
-        hdulist = fits.HDUList()
-        
-        for j in range(num_detectors):
-        
-            dtc_hdu = table_to_hdu(initialise_detections_table(detector_x= j%6 + 1,
-                                                               detector_y= j//6 + 1))
-            hdulist.append(dtc_hdu)
+        for i in range(num_exposures):
             
-        hdulist.writeto(join(args.workdir,filename),clobber=True)
+            filename = get_allowed_filename("DTC_DRY",str(i))
+            
+            hdulist = fits.HDUList()
+            
+            for j in range(num_detectors):
+            
+                dtc_hdu = table_to_hdu(initialise_detections_table(detector_x= j%6 + 1,
+                                                                   detector_y= j//6 + 1))
+                hdulist.append(dtc_hdu)
+                
+            hdulist.writeto(join(args.workdir,filename),clobber=True)
+            
+            detections_tables_filenames.append(filename)
         
-        detections_tables_filenames.append(filename)
-    
-        logger.info("Finished generating detections for exposure " + str(i) + ".")
-    
-    write_listfile(join(args.workdir,args.detections_tables),detections_tables_filenames)
+            logger.info("Finished generating detections for exposure " + str(i) + ".")
+        
+        write_listfile(join(args.workdir,args.detections_tables),detections_tables_filenames)
     
     # AOCS time series products
     
-    logger.info("Generating mock dry AOCS time series products...")
+    if args.aocs_time_series_products is not None:
     
-    aocs_time_series_product_filenames = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry AOCS time series products...")
         
-        filename = get_allowed_filename("AOCS_TIME_SERIES_DRY",str(i),extension=".bin")
+        aocs_time_series_product_filenames = []
         
-        aocs_time_series_product = products.aocs_time_series.create_aocs_time_series_product()
-        
-        write_pickled_product(aocs_time_series_product,join(args.workdir,filename))
-        
-        aocs_time_series_product_filenames.append(filename)
-        
-    write_listfile(join(args.workdir,args.aocs_time_series_products),aocs_time_series_product_filenames)
+        for i in range(num_exposures):
+            
+            filename = get_allowed_filename("AOCS_TIME_SERIES_DRY",str(i),extension=".bin")
+            
+            aocs_time_series_product = products.aocs_time_series.create_aocs_time_series_product()
+            
+            write_pickled_product(aocs_time_series_product,join(args.workdir,filename))
+            
+            aocs_time_series_product_filenames.append(filename)
+            
+        write_listfile(join(args.workdir,args.aocs_time_series_products),aocs_time_series_product_filenames)
     
     # Mission time products
     
-    logger.info("Generating mock dry mission time products...")
+    if args.mission_time_products is not None:
     
-    mission_time_product_filenames = []
-    
-    for i in range(num_exposures):
+        logger.info("Generating mock dry mission time products...")
         
-        filename = get_allowed_filename("MISSON_TIME_DRY",str(i),extension=".bin")
+        mission_time_product_filenames = []
         
-        mission_time_product = products.mission_time.create_mission_time_product()
-        
-        write_pickled_product(mission_time_product,join(args.workdir,filename))
-        
-        mission_time_product_filenames.append(filename)
-        
-    write_listfile(join(args.workdir,args.mission_time_products),mission_time_product_filenames)
+        for i in range(num_exposures):
+            
+            filename = get_allowed_filename("MISSON_TIME_DRY",str(i),extension=".bin")
+            
+            mission_time_product = products.mission_time.create_mission_time_product()
+            
+            write_pickled_product(mission_time_product,join(args.workdir,filename))
+            
+            mission_time_product_filenames.append(filename)
+            
+        write_listfile(join(args.workdir,args.mission_time_products),mission_time_product_filenames)
     
     # Galaxy population priors table
     
-    logger.info("Generating mock dry galaxy population priors table...")
+    if args.galaxy_population_priors_table is not None:
     
-    filename = get_allowed_filename("GALPOP", "0", extension=".fits")
-    galaxy_population_prod = products.galaxy_population.create_galaxy_population_product(filename=filename)
-    
-    write_pickled_product(galaxy_population_prod, join(args.workdir,args.galaxy_population_priors_table))
-    
-    galaxy_population_priors_table = initialise_galaxy_population_table()
-    galaxy_population_priors_table.write(join(args.workdir,filename),
-                                         format="fits",overwrite=True)
+        logger.info("Generating mock dry galaxy population priors table...")
+        
+        filename = get_allowed_filename("GALPOP", "0", extension=".fits")
+        galaxy_population_prod = products.galaxy_population.create_galaxy_population_product(filename=filename)
+        
+        write_pickled_product(galaxy_population_prod, join(args.workdir,args.galaxy_population_priors_table))
+        
+        galaxy_population_priors_table = initialise_galaxy_population_table()
+        galaxy_population_priors_table.write(join(args.workdir,filename),
+                                             format="fits",overwrite=True)
     
     # Calibration parameters product
     
-    logger.info("Generating mock dry calibration parameters products...")
+    if args.calibration_parameters_product is not None:
     
-    ksb_calibration_parameters_filename = get_allowed_filename("KSB_CAL_PARAM_DRY","0")
+        logger.info("Generating mock dry calibration parameters products...")
         
-    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( join(args.workdir,ksb_calibration_parameters_filename), null_hdu)
+        ksb_calibration_parameters_filename = get_allowed_filename("KSB_CAL_PARAM_DRY","0")
+            
+        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+        append_hdu( join(args.workdir,ksb_calibration_parameters_filename), null_hdu)
+            
+        lensmc_calibration_parameters_filename = get_allowed_filename("LENSMC_CAL_PARAM_DRY","0")
+            
+        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+        append_hdu( join(args.workdir,lensmc_calibration_parameters_filename), null_hdu)
+            
+        momentsml_calibration_parameters_filename = get_allowed_filename("MOMENTSML_CAL_PARAM_DRY","0")
+            
+        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+        append_hdu( join(args.workdir,momentsml_calibration_parameters_filename), null_hdu)
+            
+        regauss_calibration_parameters_filename = get_allowed_filename("REGAUSS_CAL_PARAM_DRY","0")
+            
+        null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
+        append_hdu( join(args.workdir,regauss_calibration_parameters_filename), null_hdu)
+            
+        calibration_parameters_product = products.calibration_parameters.create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
+                                                                               LensMC_filename=lensmc_calibration_parameters_filename,
+                                                                               MomentsML_filename=momentsml_calibration_parameters_filename,
+                                                                               REGAUSS_filename=regauss_calibration_parameters_filename)
         
-    lensmc_calibration_parameters_filename = get_allowed_filename("LENSMC_CAL_PARAM_DRY","0")
-        
-    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( join(args.workdir,lensmc_calibration_parameters_filename), null_hdu)
-        
-    momentsml_calibration_parameters_filename = get_allowed_filename("MOMENTSML_CAL_PARAM_DRY","0")
-        
-    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( join(args.workdir,momentsml_calibration_parameters_filename), null_hdu)
-        
-    regauss_calibration_parameters_filename = get_allowed_filename("REGAUSS_CAL_PARAM_DRY","0")
-        
-    null_hdu = fits.ImageHDU(data=np.zeros((1,1)))
-    append_hdu( join(args.workdir,regauss_calibration_parameters_filename), null_hdu)
-        
-    calibration_parameters_product = products.calibration_parameters.create_calibration_parameters_product(KSB_filename=ksb_calibration_parameters_filename,
-                                                                           LensMC_filename=lensmc_calibration_parameters_filename,
-                                                                           MomentsML_filename=momentsml_calibration_parameters_filename,
-                                                                           REGAUSS_filename=regauss_calibration_parameters_filename)
-    
-    write_pickled_product(calibration_parameters_product,
-                          join(args.workdir,args.calibration_parameters_product))
+        write_pickled_product(calibration_parameters_product,
+                              join(args.workdir,args.calibration_parameters_product))
     
     # Shear validation statistics tables
     
-    logger.info("Generating mock dry shear validation statistics tables...")
+    if args.shear_validation_stats_filename is not None:
     
-    shear_validation_stats_filename = get_allowed_filename("VAL_STATS", "0")
-    
-    shear_validation_stats_prod = products.shear_validation_stats.create_shear_validation_stats_product(
-                                    shear_validation_stats_filename)
-    
-    write_pickled_product(shear_validation_stats_prod,
-                          join(args.workdir,args.shear_validation_statistics_table))
-    
-    shear_validation_statistics_table = initialise_shear_estimates_table()
-    shear_validation_statistics_table.write(join(args.workdir,shear_validation_stats_filename)
-                                            ,format="fits",overwrite=True)
+        logger.info("Generating mock dry shear validation statistics tables...")
+        
+        shear_validation_stats_filename = get_allowed_filename("VAL_STATS", "0")
+        
+        shear_validation_stats_prod = products.shear_validation_stats.create_shear_validation_stats_product(
+                                        shear_validation_stats_filename)
+        
+        write_pickled_product(shear_validation_stats_prod,
+                              join(args.workdir,args.shear_validation_statistics_table))
+        
+        shear_validation_statistics_table = initialise_shear_estimates_table()
+        shear_validation_statistics_table.write(join(args.workdir,shear_validation_stats_filename)
+                                                ,format="fits",overwrite=True)
     
     logger.info("Finished generating mock dry data.")
     
