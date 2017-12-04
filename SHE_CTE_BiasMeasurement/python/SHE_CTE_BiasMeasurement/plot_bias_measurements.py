@@ -328,10 +328,10 @@ def main():
                             
                         fractional_limits[limit_label] = ((intersections["high"]-intersections["low"])/(2.*x_vals[2]))[0]
                     
-                    print("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
+                    print(("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
                           method + " for " + measurement_key +": " + 
                             str(fractional_limits[limit_label_base+"_base"]) + ",\t" +
-                            str(fractional_limits[limit_label_base+"_high"]))
+                            str(fractional_limits[limit_label_base+"_high"])))
                     
                 
             theta_vals = np.linspace(0,2*np.pi,360)
@@ -377,7 +377,7 @@ def main():
         ax.set_yscale("log",nonposy="clip")
         ax.set_ylim(1e-4,1e0)
         
-        xticks = range(len(args.methods))
+        xticks = list(range(len(args.methods)))
         ax.set_xticks(xticks)
         xticklabels = []
         for method in args.methods:

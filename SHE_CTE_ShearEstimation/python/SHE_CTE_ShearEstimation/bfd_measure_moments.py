@@ -229,7 +229,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
                 galcov = bfd_mc.get_covariance()
                 moments=np.append(galmoment.even,galmoment.odd)
                 cov_even=[]
-                for i in xrange(5):
+                for i in range(5):
                     cov_even=np.append(cov_even,galcov[0][i,i:5])
 
                 cov_odd=np.append(galcov[1][0,0:2],galcov[1][1,1:2])
