@@ -10,7 +10,7 @@ Dependency Changes
 ------------------
 
 - Now depends on SHE_PPT version 0.2
-- Now depends on SHE_GST version 1.3
+- No longer depends on SHE_GST
 - Now depends on SHE_MomentsML version 1.0
 - Now depends on SHE_BFD version 0.1
 
