@@ -21,8 +21,8 @@
 from astropy.table import Table, join, vstack
 import numpy as np
 
-from SHE_PPT.details_table_format import tf as datf
-from SHE_PPT.shear_estimates_table_format import tf as setf
+from SHE_PPT.table_formats.details import tf as datf
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 
 from SHE_CTE_BiasMeasurement import magic_values as mv

@@ -26,11 +26,11 @@ from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
 from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
 from SHE_PPT.logging import getLogger
-from SHE_PPT.detections_table_format import tf as detf
+from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.magic_values import scale_label, stamp_size_label
-from SHE_PPT.psf_table_format import tf as pstf
+from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.she_image import SHEImage
-from SHE_PPT.shear_estimates_table_format import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 import numpy as np
 
 
