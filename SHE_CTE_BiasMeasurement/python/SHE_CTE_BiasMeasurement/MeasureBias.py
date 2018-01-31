@@ -19,7 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
-from SHE_GST_IceBRGpy.logging import getLogger
+from SHE_PPT.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args

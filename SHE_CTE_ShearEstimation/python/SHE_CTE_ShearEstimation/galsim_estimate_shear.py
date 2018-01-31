@@ -25,7 +25,7 @@ import galsim
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
 from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
-from SHE_GST_IceBRGpy.logging import getLogger
+from SHE_PPT.logging import getLogger
 from SHE_PPT.detections_table_format import tf as detf
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.psf_table_format import tf as pstf

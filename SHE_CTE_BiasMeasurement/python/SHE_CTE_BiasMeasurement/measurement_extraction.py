@@ -21,7 +21,6 @@
 from astropy.table import Table, join, vstack
 import numpy as np
 
-from SHE_GST_GalaxyImageGeneration import magic_values as sim_mv
 from SHE_PPT.details_table_format import tf as datf
 from SHE_PPT.shear_estimates_table_format import tf as setf
 from SHE_PPT.table_utility import is_in_format
