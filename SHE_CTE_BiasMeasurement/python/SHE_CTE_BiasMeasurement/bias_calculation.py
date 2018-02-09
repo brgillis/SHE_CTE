@@ -20,7 +20,7 @@
 
 import numpy as np
 
-from SHE_PPT.shear_estimates_table_format import tf as setf
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 

@@ -310,7 +310,7 @@ def estimate_shears_from_args(args, dry_run=False):
         method_shear_estimates = {}
         
         if len(args.methods)==0:
-            methods = estimation_methods.keys()
+            methods = list(estimation_methods.keys())
         else:
             methods = args.methods
 

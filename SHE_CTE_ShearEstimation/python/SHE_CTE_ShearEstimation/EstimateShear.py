@@ -23,7 +23,7 @@ from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 
-from SHE_GST_IceBRGpy.logging import getLogger
+from SHE_PPT.logging import getLogger
 
 def defineSpecificProgramOptions():
     """
