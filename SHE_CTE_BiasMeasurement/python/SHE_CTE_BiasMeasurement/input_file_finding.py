@@ -20,7 +20,7 @@
 
 import os
 
-from SHE_GST_IceBRGpy.logging import getLogger
+from SHE_PPT.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_ShearEstimation import magic_values as est_mv
