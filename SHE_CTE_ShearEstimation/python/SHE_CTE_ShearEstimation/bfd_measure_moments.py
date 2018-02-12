@@ -24,8 +24,8 @@ from math import sqrt
 import numpy as np
 import pdb
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
-from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
+from SHE_PPT.noise import get_var_ADU_per_pixel
+from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.she_image import SHEImage
