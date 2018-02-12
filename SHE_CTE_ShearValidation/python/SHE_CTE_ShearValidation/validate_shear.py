@@ -53,9 +53,9 @@ def validate_shear_estimates(shear_estimates_table,
     """
     
     # Perform CTI ellipticity residual validation
-    validate_cti_ellipticity_residuals(shear_estimates_table, stacked_frame_wcs)
+    cti_e_passed = validate_cti_ellipticity_residuals(shear_estimates_table, stacked_frame_wcs)
 
-    shear_estimates_table.meta[setf.m.validated] = 1
+    shear_estimates_table.meta[setf.m.validated] = int(cti_e_passed)
     
     return
 

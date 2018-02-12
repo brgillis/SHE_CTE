@@ -98,6 +98,8 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
                                                                            1, # "1" since we have 1-based coordinates
                                                                            ra_dec_order = True) # Ensure we get ra and dec in expected order
     
+    all_validated = True
+    
     # Loop over different columns we're testing
     for colname, metaname, bins in ((setf.snr,    "CE_SN_VAL", (-1e99, 1e99)), # TODO make these magic values and store somewhere
                                     (setf.sky_bg, "CE_SB_VAL", (-1e99, 1e99)),
@@ -135,6 +137,11 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
             report_val_results(validation_results=validation_results,
                                metaname=metaname,
                                shear_estimates_table=shear_estimates_table)
-    return 
+            
+            # Record if there is any failure
+            if np.sum(validation_results) > 0:
+                all_validated = False
+                
+    return all_validated
             
             
