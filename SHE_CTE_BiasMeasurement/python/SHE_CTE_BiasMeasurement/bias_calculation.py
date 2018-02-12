@@ -20,6 +20,7 @@
 
 import numpy as np
 
+from SHE_PPT.math import linregress_with_errors
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -144,46 +145,6 @@ def compress_measurements(real_values,measurements,measurement_errors):
     return (np.array(compressed_real_values),
             np.array(compressed_measurements),
             np.array(compressed_measurement_errors))
-    
-def linregress_with_errors(x, y, y_err):
-    """
-    @brief
-        Perform a linear regression with errors on the y values
-    @details
-        This uses a direct translation of GSL's gsl_fit_wlinear function, using
-        inverse-variance weighting
-        
-    @param x <np.ndarray>
-    @param y <np.ndarray>
-    @param y_err <np.ndarray>
-    
-    @return slope <float>,
-            intercept <float>,
-            slope_err <float>,
-            intercept_err <float>,
-            slope_intercept_covar <float>
-    """
-    
-    y_weights = y_err**-2
-    total_weight = y_weights.sum()
-    
-    x_weighted_mean = np.average(x,weights=y_weights)
-    y_weighted_mean = np.average(y,weights=y_weights)
-    
-    dx = x-x_weighted_mean
-    dy = y-y_weighted_mean
-    
-    dx2_weighted_mean = np.average(dx**2,weights=y_weights)
-    dxdy_weighted_mean = np.average(dx*dy,weights=y_weights)
-    
-    slope = dxdy_weighted_mean / dx2_weighted_mean
-    intercept = y_weighted_mean - x_weighted_mean*slope
-    
-    slope_err = np.sqrt(1./(total_weight*dx2_weighted_mean))
-    intercept_err = np.sqrt((1.0 + x_weighted_mean**2 / dx2_weighted_mean) / total_weight)
-    slope_intercept_covar = -x_weighted_mean / (total_weight*dx2_weighted_mean)
-
-    return slope, intercept, slope_err, intercept_err, slope_intercept_covar
         
 def regress_shear_measurements(real_values, measurements, measurement_errors):
     """
