@@ -71,6 +71,12 @@ def validate_cti_ellipticity_residual_bin(r, g, g_err):
     
     return result_flag
 
+def report_val_results(validation_results,
+                       metaname,
+                       shear_estimates_table):
+    
+    shear_estimates_table.meta[metaname] = repr(tuple(validation_results))
+
 def validate_cti_ellipticity_residuals(shear_estimates_table,
                                        stacked_frame_wcs):
     
@@ -92,23 +98,20 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
                                                                            1, # "1" since we have 1-based coordinates
                                                                            ra_dec_order = True) # Ensure we get ra and dec in expected order
     
-    # Set up a dictionary of the results of our tests
-    validation_results = {}
-    
     # Loop over different columns we're testing
-    for colname, bins in ((setf.snr,    (-1e99, 1e99)),
-                          (setf.sky_bg, (-1e99, 1e99)),
-                          (setf.re,     (-1e99, 1e99)),
-                          (setf.color,  (-1e99, 1e99)),
-                          (setf.epoch,  (-1e99, 1e99)),
-                          ):
+    for colname, metaname, bins in ((setf.snr,    "CE_SN_VAL", (-1e99, 1e99)), # TODO make these magic values and store somewhere
+                                    (setf.sky_bg, "CE_SB_VAL", (-1e99, 1e99)),
+                                    (setf.re,     "CE_RE_VAL", (-1e99, 1e99)),
+                                    (setf.color,  "CE_CO_VAL", (-1e99, 1e99)),
+                                    (setf.epoch,  "CE_EP_VAL", (-1e99, 1e99)),
+                                    ):
         
         num_bins = len(bins)-1
         
         col = test_table[colname]
         
         # Set up the results array for this column
-        validation_results[colname] = np.zeros(num_bins,dtype=int)
+        validation_results = np.zeros(num_bins,dtype=int)
         
         # Loop over the bins for this column
         for bin_i in range(num_bins):
@@ -128,7 +131,10 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
                                                    validate_cti_ellipticity_residual_bin(r = r,
                                                                                          g = test_table[setf.g2][good_rows],
                                                                                          g_err = test_table[setf.g2_err][good_rows]))
-            
-    return validation_results
+            # Report results in the header of the original table
+            report_val_results(validation_results=validation_results,
+                               metaname=metaname,
+                               shear_estimates_table=shear_estimates_table)
+    return 
             
             

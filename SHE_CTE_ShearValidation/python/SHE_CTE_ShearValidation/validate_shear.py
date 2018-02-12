@@ -25,8 +25,11 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from SHE_PPT.logging import getLogger
+
 from SHE_CTE_ShearValidation import magic_values as mv
+from SHE_CTE_ShearValidation.cti_residual_validation import validate_cti_ellipticity_residuals
+
+from SHE_PPT.logging import getLogger
 from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_pickled_product, write_pickled_product,
                              get_allowed_filename)
@@ -41,11 +44,16 @@ products.shear_estimates.init()
 products.shear_validation_stats.init()
 products.validated_shear_estimates.init()
 
-def validate_shear_estimates(shear_estimates_table, shear_validation_statistics_table):
+def validate_shear_estimates(shear_estimates_table,
+                             shear_validation_statistics_table,
+                             stacked_frame_wcs):
     """
         Stub for validating shear estimates against validation statistics. Presently
         sets everything to "pass".
     """
+    
+    # Perform CTI ellipticity residual validation
+    validate_cti_ellipticity_residuals(shear_estimates_table, stacked_frame_wcs)
 
     shear_estimates_table.meta[setf.m.validated] = 1
     
