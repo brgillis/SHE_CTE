@@ -56,30 +56,30 @@ class TestCTIResidualValidation:
         
         # Mock measurements with a correlation with readout distance in both halves
         cls.badbad_g1_vals = np.where(low_vals,
-                                      cls.good_g1_vals + 0.01/4000.*cls.r_vals,
-                                      cls.good_g1_vals + 0.01/4000.*(8272-cls.r_vals),)
+                                      cls.good_g1_vals + 0.5/4000.*cls.r_vals,
+                                      cls.good_g1_vals + 0.5/4000.*(8272-cls.r_vals),)
         
         cls.badbad_g2_vals = np.where(low_vals,
-                                      cls.good_g2_vals + -0.02/4000.*cls.r_vals,
-                                      cls.good_g2_vals + -0.02/4000.*(8272-cls.r_vals),)
+                                      cls.good_g2_vals + -1.0/4000.*cls.r_vals,
+                                      cls.good_g2_vals + -1.0/4000.*(8272-cls.r_vals),)
         
         # Mock measurements with a correlation with readout distance in bottom half only
-        cls.goodbad_g1_vals = np.where(low_vals,
-                                       cls.good_g1_vals + 0.01/4000.*cls.r_vals,
+        cls.badgood_g1_vals = np.where(low_vals,
+                                       cls.good_g1_vals + 0.5/4000.*cls.r_vals,
                                        cls.good_g1_vals,)
         
-        cls.goodbad_g2_vals = np.where(low_vals,
-                                       cls.good_g2_vals + -0.02/4000.*cls.r_vals,
+        cls.badgood_g2_vals = np.where(low_vals,
+                                       cls.good_g2_vals + -1.0/4000.*cls.r_vals,
                                        cls.good_g2_vals,)
         
         # Mock measurements with a correlation with readout distance in top half only
-        cls.badgood_g1_vals = np.where(low_vals,
+        cls.goodbad_g1_vals = np.where(low_vals,
                                        cls.good_g1_vals,
-                                       cls.good_g1_vals + 0.01/4000.*(8272-cls.r_vals),)
+                                       cls.good_g1_vals + 0.5/4000.*(8272-cls.r_vals),)
         
-        cls.badgood_g2_vals = np.where(low_vals,
+        cls.goodbad_g2_vals = np.where(low_vals,
                                        cls.good_g2_vals,
-                                       cls.good_g2_vals + -0.02/4000.*(8272-cls.r_vals),)
+                                       cls.good_g2_vals + -1.0/4000.*(8272-cls.r_vals),)
         
         return
         
@@ -94,25 +94,25 @@ class TestCTIResidualValidation:
     def test_validate_cti_ellipticity_residual_bin(self):
         
         # Check it gives flag of 0 for good data
-        assert validate_cti_ellipticity_residual_bin(self.r_vals, self.good_g1_vals, self.g1_err) == 0
-        assert validate_cti_ellipticity_residual_bin(self.r_vals, self.good_g2_vals, self.g2_err) == 0
+        assert validate_cti_ellipticity_residual_bin(self.r_vals, self.good_g1_vals) == 0
+        assert validate_cti_ellipticity_residual_bin(self.r_vals, self.good_g2_vals) == 0
         
         # Check it gives proper flag for fully bad data 
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badbad_g1_vals, self.g1_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badbad_g1_vals) ==
                 lower_fail_flag_offset + upper_fail_flag_offset)
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badbad_g2_vals, self.g2_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badbad_g2_vals) ==
                 lower_fail_flag_offset + upper_fail_flag_offset)
         
         # Check it gives proper flag for bad data in the bottom half only
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g1_vals, self.g1_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g1_vals) ==
                 lower_fail_flag_offset)
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g2_vals, self.g2_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g2_vals) ==
                 lower_fail_flag_offset)
         
         # Check it gives proper flag for bad data in the top half only
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g1_vals, self.g1_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.goodbad_g1_vals) ==
                 upper_fail_flag_offset)
-        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.badgood_g2_vals, self.g2_err) ==
+        assert (validate_cti_ellipticity_residual_bin(self.r_vals, self.goodbad_g2_vals) ==
                 upper_fail_flag_offset)
         
         return

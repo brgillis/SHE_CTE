@@ -65,8 +65,6 @@ def validate_cti_ellipticity_residual_bin(r, g):
         # Check if we fall outside acceptable sigma for slope not being 0
         if abs(slope/slope_err) > slope_fail_sigma:
             result_flag += flag # Add flag for this half if it's bad
-
-        import pdb; pdb.set_trace()
     
     return result_flag
 
