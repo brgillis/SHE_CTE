@@ -46,7 +46,7 @@ class TestCTIResidualValidation:
         
         # Errors on shear measurements
         cls.g1_err = 0.2 + np.random.random(cls.nvals)*0.1
-        cls.g1_err = 0.2 + np.random.random(cls.nvals)*0.1
+        cls.g2_err = 0.2 + np.random.random(cls.nvals)*0.1
         
         # Mock measurements with no correlation
         cls.good_g1_vals = np.random.randn(cls.nvals)*cls.g1_err
@@ -86,7 +86,8 @@ class TestCTIResidualValidation:
     @classmethod
     def teardown_class(cls):
         
-        del cls.r_vals, cls.g1_err, cls.g2_err, cls.good_g1_vals, cls.good_g2_vals, cls.bad_g1_vals, cls.bad_g2_vals
+        del (cls.r_vals, cls.g1_err, cls.g2_err, cls.good_g1_vals, cls.good_g2_vals, cls.badbad_g1_vals, cls.badbad_g2_vals,
+             cls.badgood_g1_vals, cls.badgood_g2_vals, cls.goodbad_g1_vals, cls.goodbad_g2_vals,)
         
         return
     

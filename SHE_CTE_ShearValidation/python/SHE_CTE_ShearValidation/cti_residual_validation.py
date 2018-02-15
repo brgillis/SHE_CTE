@@ -22,7 +22,6 @@ from copy import deepcopy
 
 import astropy.table
 import astropy.wcs
-import math
 import numpy as np
 
 from SHE_PPT.math import linregress_with_errors
@@ -66,8 +65,10 @@ def validate_cti_ellipticity_residual_bin(r, g, g_err):
                                                                                                       g_err_binned)
         
         # Check if we fall outside acceptable sigma for slope not being 0
-        if math.abs(slope/slope_err) > slope_fail_sigma:
+        if abs(slope/slope_err) > slope_fail_sigma:
             result_flag += flag # Add flag for this half if it's bad
+
+        import pdb; pdb.set_trace()
     
     return result_flag
 
