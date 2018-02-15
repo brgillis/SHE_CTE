@@ -34,7 +34,7 @@ y_pix = "Y_PIX"
 
 reg_pix = y_pix # Readout register - believed to be y, but might have to fix later
 
-readout_split = 4096.5 # Maximum pixel position for which values are read out downward (in stacked frame)
+readout_split = 4134.5 # Maximum pixel position for which values are read out downward (in stacked frame)
 
 g1_fail_flag_offset = 1
 g2_fail_flag_offset = 4
