@@ -24,8 +24,8 @@ import astropy.table
 import astropy.wcs
 import math
 import numpy as np
+from scipy.stats import linregress
 
-from SHE_PPT.math import linregress_with_errors
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 
@@ -45,7 +45,7 @@ upper_fail_flag_offset = 2
 slope_fail_sigma = 5
 intercept_fail_sigma = 5
 
-def validate_cti_ellipticity_residual_bin(r, g, g_err):
+def validate_cti_ellipticity_residual_bin(r, g):
     
     result_flag = 0
     
@@ -58,12 +58,10 @@ def validate_cti_ellipticity_residual_bin(r, g, g_err):
         good_rows = np.logical_and(r>=limits[0],r<limits[1])
         r_binned = r[good_rows]
         g_binned = g[good_rows]
-        g_err_binned = g_err[good_rows]
     
         # Perform a linear regression with errors
-        slope, _intercept, slope_err, _intercept_err, _slope_intercept_covar = linregress_with_errors(r_binned,
-                                                                                                      g_binned,
-                                                                                                      g_err_binned)
+        slope, _intercept, _r, _p, slope_err = linregress(r_binned,
+                                                          g_binned)
         
         # Check if we fall outside acceptable sigma for slope not being 0
         if math.abs(slope/slope_err) > slope_fail_sigma:
