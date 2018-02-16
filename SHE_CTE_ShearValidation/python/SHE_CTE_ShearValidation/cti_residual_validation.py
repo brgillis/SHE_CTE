@@ -28,8 +28,8 @@ from scipy.stats import linregress
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 
-x_pix = "X_PIX"
-y_pix = "Y_PIX"
+x_pix = setf.x_pix_stacked
+y_pix = setf.y_pix_stacked
 
 reg_pix = y_pix # Readout register - believed to be y, but might have to fix later
 
@@ -86,15 +86,6 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
     if not isinstance(stacked_frame_wcs, astropy.wcs.WCS):
         raise TypeError("shear_estimates_table must be an astropy.table.Table object")
     
-    # Create a new table to work with that we can safely modify
-    test_table = deepcopy(shear_estimates_table)
-    
-    # Add columns for pixel coordinates
-    test_table[x_pix], test_table[y_pix] = stacked_frame_wcs.all_world2pix(test_table[setf.x_world],
-                                                                           test_table[setf.y_world],
-                                                                           1, # "1" since we have 1-based coordinates
-                                                                           ra_dec_order = True) # Ensure we get ra and dec in expected order
-    
     all_validated = True
     
     # Loop over different columns we're testing
@@ -107,7 +98,7 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
         
         num_bins = len(bins)-1
         
-        col = test_table[colname]
+        col = shear_estimates_table[colname]
         
         # Set up the results array for this column
         validation_results = np.zeros(num_bins,dtype=int)
@@ -118,18 +109,16 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
             bin_max = bins[bin_i+1]
             
             good_rows = np.logical_and(col>=bin_min,col<bin_max)
-            r = test_table[reg_pix][good_rows]
+            r = shear_estimates_table[reg_pix][good_rows]
             
             # Test g1 and g2 for residuals, and flag appropriately
             
             validation_results[colname][bin_i] += (g1_fail_flag_offset *
                                                    validate_cti_ellipticity_residual_bin(r = r,
-                                                                                         g = test_table[setf.g1][good_rows],
-                                                                                         g_err = test_table[setf.g1_err][good_rows]))
+                                                                                         g = shear_estimates_table[setf.g1][good_rows]))
             validation_results[colname][bin_i] += (g2_fail_flag_offset *
                                                    validate_cti_ellipticity_residual_bin(r = r,
-                                                                                         g = test_table[setf.g2][good_rows],
-                                                                                         g_err = test_table[setf.g2_err][good_rows]))
+                                                                                         g = shear_estimates_table[setf.g2][good_rows]))
             # Report results in the header of the original table
             report_val_results(validation_results=validation_results,
                                metaname=metaname,
