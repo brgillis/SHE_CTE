@@ -318,11 +318,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
             load_method_data = loading_methods[method]
             
+            estimate_shear = estimation_methods[method]
+            
+            # Check we've supplied a method for it
+            if estimate_shear is None:
+                raise NotImplementedError("No sheare measurement method supplied for method " + method + ".")
+            
             method_data_filename = calibration_parameters_prod.get_method_filename(method)
 
             shear_estimates_filename = shear_estimates_prod.get_method_filename(method)
-            
-            estimate_shear = estimation_methods[method]
             
             hdulist = fits.HDUList()
             
