@@ -369,8 +369,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                      setf.g1_err:1e99,
                                      setf.g2_err:1e99,
                                      setf.g1g2_covar:1e99,
-                                     setf.x_world:detections_tables[i][j][detf.gal_x_world],
-                                     setf.y_world:detections_tables[i][j][detf.gal_y_world],})
+                                     setf.x_world:detections_tables[i][j][detf.gal_x_world][r],
+                                     setf.y_world:detections_tables[i][j][detf.gal_y_world][r],})
                         
                     hdulist.append(table_to_hdu(shear_estimates_table))
                 
