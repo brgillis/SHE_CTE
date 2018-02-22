@@ -28,7 +28,6 @@ import galsim
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
-from SHE_MomentsML.estimate_shear import estimate_shear as MomentsML_estimate_shear
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT import magic_values as ppt_mv
@@ -60,13 +59,13 @@ loading_methods = {"KSB":None,
                    "REGAUSS":None,
                    "MomentsML":None,
                    "LensMC":None,
-                   "BFD":bfd_load_method_data}
+                   "BFD":None}
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
-                      "MomentsML":MomentsML_estimate_shear,
+                      "MomentsML":None,
                       "LensMC":None,
-                      "BFD":bfd_measure_moments}
+                      "BFD":None}
 
 def estimate_shears_from_args(args, dry_run=False):
     """
@@ -367,10 +366,11 @@ def estimate_shears_from_args(args, dry_run=False):
                         shear_estimates_table.add_row({setf.ID:detections_tables[i][j][detf.ID][r],
                                      setf.g1:np.NaN,
                                      setf.g2:np.NaN,
-                                     setf.e1_err:np.NaN,
-                                     setf.e2_err:np.NaN,
-                                     setf.e1_err:1e99,
-                                     setf.e2_err:1e99,})
+                                     setf.g1_err:1e99,
+                                     setf.g2_err:1e99,
+                                     setf.g1g2_covar:1e99,
+                                     setf.x_world:detections_tables[i][j][detf.gal_x_world],
+                                     setf.y_world:detections_tables[i][j][detf.gal_y_world],})
                         
                     hdulist.append(table_to_hdu(shear_estimates_table))
                 
