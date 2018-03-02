@@ -84,7 +84,7 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
         raise TypeError("shear_estimates_table is not in correct format.")
     
     if not isinstance(stacked_frame_wcs, astropy.wcs.WCS):
-        raise TypeError("shear_estimates_table must be an astropy.table.Table object")
+        raise TypeError("stacked_frame_wcs must be an astropy.wcs.WCS object")
     
     all_validated = True
     
@@ -129,5 +129,3 @@ def validate_cti_ellipticity_residuals(shear_estimates_table,
                 all_validated = False
                 
     return all_validated
-            
-            

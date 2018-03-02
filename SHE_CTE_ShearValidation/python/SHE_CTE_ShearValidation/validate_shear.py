@@ -51,11 +51,20 @@ def validate_shear_estimates(shear_estimates_table,
         Stub for validating shear estimates against validation statistics. Presently
         sets everything to "pass".
     """
+
+    logger = getLogger(mv.logger_name)
+    logger.debug("Entering validate_shear_estimates")
     
     # Perform CTI ellipticity residual validation
-    cti_e_passed = validate_cti_ellipticity_residuals(shear_estimates_table, stacked_frame_wcs)
+    try: # Catch exceptions here, since it's not working yet FIXME
+        cti_e_passed = validate_cti_ellipticity_residuals(shear_estimates_table, stacked_frame_wcs)
+    except Exception as e:
+        logger.warn(str(e))
+        cti_e_passed = False
 
     shear_estimates_table.meta[setf.m.validated] = int(cti_e_passed)
+        
+    logger.debug("Exiting validate_shear_estimates")
     
     return
 
@@ -92,19 +101,10 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         else:
             if (detector_x, detector_y) != get_detector(detector_estimates[method]):
                 raise ValueError("Not all estimates tables are for the same detector.")
-    
-    # Use only methods which pass validation
-    validated_methods = []
-        
-    for method in detector_estimates:
-        
-        # Skip if the table doesn't pass validation
-        if detector_estimates[method].meta[setf.m.validated] > 0:
-            validated_methods.append(method)
             
     # Get a set of all object IDs
     IDs = set([])
-    for method in validated_methods:
+    for method in detector_estimates:
         IDs = set.union(IDs,detector_estimates[method][setf.ID])
             
         # Set up ID column as index
@@ -125,10 +125,6 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
         for method in detector_estimates:
             
             tab = detector_estimates[method]
-            
-            # Skip if the table doesn't pass validation
-            if not tab.meta[setf.m.validated] > 0:
-                continue
             
             try:
                 row = tab.loc[ID]
@@ -178,6 +174,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
                                               setf.g1_err: g1_err,
                                               setf.g2: g2,
                                               setf.g2_err: g2_err,
+                                              setf.g1g2_covar: np.nan,
                                               })
         
         else:
@@ -187,6 +184,7 @@ def combine_shear_estimates(detector_estimates, shape_noise_var=0.06):
                                               setf.g1_err: 1e99,
                                               setf.g2: np.nan,
                                               setf.g2_err: 1e99,
+                                              setf.g1g2_covar: np.nan,
                                               })
         
     return combined_shear_estimates
@@ -267,7 +265,7 @@ def validate_shear(args, dry_run=False):
             
             for method in shear_estimates_tables:
                 
-                validate_shear_estimates(shear_estimates_tables[method][j], shear_validation_statistics_table)
+                validate_shear_estimates(shear_estimates_tables[method][j], shear_validation_statistics_table, None)
                 
                 detector_estimates[method] = shear_estimates_tables[method][j]
 
