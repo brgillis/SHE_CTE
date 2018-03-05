@@ -31,7 +31,7 @@ from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 
 from SHE_BFD_CalculateMoments import bfd
 
@@ -113,7 +113,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
         psf_tables[table_index].add_index(pstf.ID)
 
     if method_data['isTarget'] == True:
-        bfd_moments_table = initialise_shear_estimates_table(detection_tables[0],
+        bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                               optional_columns= \
                                                               [setf.x,
                                                                setf.y,
@@ -127,7 +127,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
         nlost=0
 
     else:
-        bfd_moments_table = initialise_shear_estimates_table(detection_tables[0],
+        bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                          optional_columns= \
                                                          [setf.x,
                                                           setf.y,

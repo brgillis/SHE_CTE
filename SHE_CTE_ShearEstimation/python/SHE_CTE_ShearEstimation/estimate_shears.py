@@ -65,7 +65,7 @@ estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
                       "MomentsML":None,
                       "LensMC":None,
-                      "BFD":None}
+                      "BFD":bfd_measure_moments}
 
 def estimate_shears_from_args(args, dry_run=False):
     """
