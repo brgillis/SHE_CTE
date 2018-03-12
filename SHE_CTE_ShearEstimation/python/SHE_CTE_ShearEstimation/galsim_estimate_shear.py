@@ -33,12 +33,20 @@ from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 import numpy as np
 
+stamp_size = 256
+x_buffer = -5
+y_buffer = -5
+shape_noise = 0.25
 
 class ShearEstimate(object):
-    def __init__(self, g1, g2, gerr=None):
+    def __init__(self, g1, g2, gerr=None, re=None, snr=None, x=None, y=None):
         self.g1 = g1
         self.g2 = g2
         self.gerr = gerr
+        self.re = re
+        self.snr = snr
+        self.x = x
+        self.y = y
         
 def get_resampled_image(subsampled_image, resampled_scale):
     
@@ -57,11 +65,11 @@ def get_resampled_image(subsampled_image, resampled_scale):
     
     return resampled_image
     
-def KSB_estimate_shear(data_stack,method_data):
-    return GS_estimate_shear(data_stack,method="KSB")
+def KSB_estimate_shear(data_stack,method_data,workdir):
+    return GS_estimate_shear(data_stack,method="KSB",workdir)
     
-def REGAUSS_estimate_shear(data_stack,method_data):
-    return GS_estimate_shear(data_stack,method="REGAUSS")
+def REGAUSS_estimate_shear(data_stack,method_data,workdir):
+    return GS_estimate_shear(data_stack,method="REGAUSS",workdir)
 
 def get_KSB_shear_estimate(galsim_shear_estimate):
 
@@ -77,7 +85,11 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
         
     shear_estimate = ShearEstimate(galsim_shear_estimate.corrected_g1, 
         galsim_shear_estimate.corrected_g2, 
-        galsim_shear_estimate.corrected_shape_err)
+        galsim_shear_estimate.corrected_shape_err,
+        galsim_shear_estimate.moments_sigma,
+        galsim_shear_estimate.moments_amp,
+        galsim_shear_estimate.moments_centroid.x,
+        galsim_shear_estimate.moments_centroid.y)
         
     logger.debug("Exiting get_KSB_shear_estimate")
     
@@ -99,31 +111,36 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     g1, g2 = get_g_from_e(e1, e2)
     gerr = galsim_shear_estimate.corrected_shape_err * np.sqrt((g1 ** 2 + g2 ** 2) / (e1 ** 2 + e2 ** 2))
         
-    shear_estimate = ShearEstimate(g1, g2, gerr)
+    shear_estimate = ShearEstimate(g1, g2, gerr,
+        galsim_shear_estimate.moments_sigma,
+        galsim_shear_estimate.moments_amp,
+        galsim_shear_estimate.moments_centroid.x,
+        galsim_shear_estimate.moments_centroid.y)
         
     logger.debug("Exiting get_REGAUSS_shear_estimate")
     
     return shear_estimate
 
-def get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, ID):
+def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
     
     # Get a resampled PSF stamp
-    resampled_psf_stamp = get_resampled_image(psf_stamp, gal_stamp.header[scale_label])
+    resampled_psf_stamp = get_resampled_image(psf_stamp, gal_scale)
     
     gal_mask = gal_stamp.get_object_mask(ID).astype(np.uint16) # Galsim requires int array
+    sky_var = np.square(gal_stamp.noisemap.transpose())
     
     try:
         
-        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_stamp.header[scale_label]), 
+        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_scale), 
                                                          PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(), 
-                                                                                scale=gal_stamp.header[scale_label]), 
-                                                         badpix=galsim.Image(gal_mask.transpose(), scale=gal_stamp.header[scale_label]),
+                                                                                scale=gal_scale), 
+                                                         badpix=galsim.Image(gal_mask.transpose(), scale=gal_scale),
                                                          sky_var=sky_var, 
-                                                         guess_sig_gal=0.5 / gal_stamp.header[scale_label], 
-                                                         guess_sig_PSF=0.2 / resampled_psf_stamp.header[scale_label], 
+                                                         guess_sig_gal=0.5 / gal_scale, 
+                                                         guess_sig_PSF=0.2 / gal_scale, 
                                                          shear_est=method)
         
         if method == "KSB":
@@ -156,7 +173,7 @@ def inv_var_stack( a, a_err ):
     
     inv_a_inv_var_sum = 1./a_inv_var.sum()
     
-    a_m = (a*a_inv_var).sum()*inv_a_inv_var_sum
+    a_m = (a*a_inv_var).nansum()*inv_a_inv_var_sum
     
     a_m_err = sqrt(inv_a_inv_var_sum)
     
@@ -164,107 +181,93 @@ def inv_var_stack( a, a_err ):
         
     logger.debug("Exiting inv_var_stack")
 
-def GS_estimate_shear( data_stack, method ):
+def GS_estimate_shear( data_stack, method, workdir ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering GS_estimate_shear")
     
-    # Get lists of exposures, PSF images, and detection tables
-    data_images = []
-    detection_tables = []
-    bulge_psf_images = []
-    disk_psf_images = []
-    psf_tables = []
-    
-    num_exposures = len(data_stack.exposures)
-    
-    for i in range(num_exposures):
-        data_images.append(data_stack.exposures[i].science_image)
-        detection_tables.append(data_stack.exposures[i].detections_table)
-        bulge_psf_images.append(data_stack.exposures[i].bpsf_image)
-        disk_psf_images.append(data_stack.exposures[i].dpsf_image)
-        psf_tables.append(data_stack.exposures[i].psf_table)
-    
-    # Calculate the sky variances
-    sky_vars = []
-    for table_index in range(num_exposures):
-        detections_table = detection_tables[table_index]
-        sky_vars.append(get_var_ADU_per_pixel(pixel_value_ADU=0.,
-                                                sky_level_ADU_per_sq_arcsec=detections_table.meta[detf.m.subtracted_sky_level],
-                                                read_noise_count=detections_table.meta[detf.m.read_noise],
-                                                pixel_scale=data_images[table_index].header[scale_label],
-                                                gain=detections_table.meta[detf.m.gain]))
-    
-    # Get all unique IDs
-    IDs = None
-    for table_index in range(num_exposures):
-        if IDs is None:
-            IDs = set(detection_tables[table_index][detf.ID])
-        else:
-            IDs = set.union(IDs,detection_tables[table_index][detf.ID])
-            
-        # Set the ID as an index for each table
-        detection_tables[table_index].add_index(detf.ID)
-        psf_tables[table_index].add_index(pstf.ID)
-    
-    shear_estimates_table = initialise_shear_estimates_table(detection_tables[0],
+    shear_estimates_table = initialise_shear_estimates_table(data_stack.detections_catalogue,
                                                              optional_columns=[setf.e1_err,setf.e2_err])
 
-    for ID in IDs:
+    gal_scale = data_stack.exposures[0].detectors[0,0].header[scale_label]
+    psf_scale = data_stack.exposures[0].bulge_psf_image.header[scale_label]
+    
+    # Loop over galaxies and get an estimate for each one
+    for row in data_stack.detections_catalogue:
+        
+        gal_id = row[detf.ID]
+        gal_x_world = row[detf.gal_x_world]
+        gal_y_world = row[detf.gal_y_world]
+        
+        gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
+                                                         y_world=gal_y_world,
+                                                         width=stamp_size,
+                                                         x_buffer=x_buffer,
+                                                         y_buffer=y_buffer,)
         
         g1s = []
         g2s = []
         gerrs = []
+        res = []
+        snrs = []
+        x_worlds = []
+        y_worlds = []
         
-        for table_index in range(num_exposures):
+        for ex_i in range(len(data_stack.exposures)):
             
-            try:
-                
-                # Get the rows for this ID
-                g_row = detection_tables[table_index].loc[ID]
-                p_row = psf_tables[table_index].loc[ID]
+            gal_stamp = gal_stamp_stack.exposures[ex_i]
             
-                # Get galaxy and PSF stamps
-                gal_stamp = data_images[table_index].extract_stamp(g_row[detf.gal_x],
-                                                                   g_row[detf.gal_y],
-                                                                   data_images[table_index].header[stamp_size_label],
-                                                                   keep_header=True)
-                bulge_psf_stamp = bulge_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                              p_row[pstf.psf_y],
-                                                                              bulge_psf_images[table_index].header[stamp_size_label],
-                                                                              keep_header=True)
-                disk_psf_stamp = disk_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                              p_row[pstf.psf_y],
-                                                                              disk_psf_images[table_index].header[stamp_size_label],
-                                                                              keep_header=True)
-        
-                shear_estimate = get_shear_estimate(gal_stamp, bulge_psf_stamp, sky_vars[table_index], method, ID=ID)
-                
-                g1s.append(shear_estimate.g1)
-                g2s.append(shear_estimate.g2)
-                gerrs.append(shear_estimate.gerr)
-                
-            except KeyError as e:
-                if "No matches found for key" in e:
-                    pass # ID isn't present in this table, so just skip it
-                else:
-                    raise
+            if gal_stamp is None:
+                g1s.append(np.NaN)
+                g2s.append(np.NaN)
+                gerrs.append(1e99)
+                continue
+            
+            bulge_psf_stamp, disk_psf_stamp = data_stack.exposures[ex_i].extract_psf(gal_id)
+    
+            shear_estimate = get_shear_estimate(gal_stamp,
+                                                bulge_psf_stamp,
+                                                gal_scale=gal_scale,
+                                                psf_scale=psf_scale,
+                                                ID=gal_id,
+                                                method=method)
+            
+            g1s.append(shear_estimate.g1)
+            g2s.append(shear_estimate.g2)
+            gerrs.append(shear_estimate.gerr)
+            res.append(shear_estimate.re)
+            snrs.append(shear_estimate.snr)
+            
+            x_world, y_world = data_stack.exposures[ex_i].pix2world(shear_estimate.x,shear_estimate.y)
+            
+            x_worlds.append(x_world)
+            y_worlds.append(y_world)
                 
         g1s = np.array(g1s)
         g2s = np.array(g2s)
         gerrs = np.array(gerrs)
+        res = np.array(res)
+        snrs = np.array(snrs)
+        x_worlds = np.array(x_worlds)
+        y_worlds = np.array(y_worlds)
         
-        g1, gerr1 = inv_var_stack(g1s,gerrs)
-        g2, gerr2 = inv_var_stack(g2s,gerrs)
-        
-        assert np.isclose(gerr1,gerr2)
+        g1, gerr = inv_var_stack(g1s,gerrs)
+        g2, _ = inv_var_stack(g2s,gerrs)
+        re, _ = inv_var_stack(res,gerrs)
+        snr, _ = inv_var_stack(snrs,gerrs)
+        x_world, _ = inv_var_stack(x_worlds,gerrs)
+        y_world, _ = inv_var_stack(y_worlds,gerrs)
             
         # Add this row to the estimates table
-        shear_estimates_table.add_row({ setf.ID : ID,
+        shear_estimates_table.add_row({ setf.ID : gal_id,
                                         setf.g1 : g1,
                                         setf.g2 : g2,
-                                        setf.e1_err : gerr1,
-                                        setf.e2_err : gerr2,
+                                        setf.g1_err : np.sqrt(gerr**2+shape_noise**2),
+                                        setf.g2_err : np.sqrt(gerr**2+shape_noise**2),
+                                        setf.re : re,
+                                        setf.snr : snr,
+                                        setf.x_world : x_world,
+                                        setf.y_world : y_world,
                                        })
         
     
