@@ -39,8 +39,7 @@ from SHE_PPT.table_formats.galaxy_population import tf as gptf
 from SHE_PPT import products
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.she_image import SHEImage
-from SHE_PPT.she_image_data import SHEImageData
-from SHE_PPT.she_stack import SHEStack
+from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
@@ -92,174 +91,13 @@ def estimate_shears_from_args(args, dry_run=False):
     
     logger.info("Reading "+dry_label+"data images...")
     
-    data_image_products = read_listfile(join(args.workdir,args.data_images))
-
-    sci_hdus = []
-    noisemap_hdus = []
-    mask_hdus = []
-    
-    she_images = []
-
-    for i, prod_filename in enumerate(data_image_products):
-        
-        qualified_prod_filename = join(args.workdir,prod_filename)
-        
-        data_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(data_image_prod, products.calibrated_frame.DpdSheCalibratedFrameProduct):
-            raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
-        
-        qualified_filename = join(args.workdir,data_image_prod.get_filename())
-        
-        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
-        num_detectors = len(data_image_hdulist) // 3
-
-        sci_hdus.append([])
-        noisemap_hdus.append([])
-        mask_hdus.append([])
-        she_images.append([])
-        
-        for j in range(num_detectors):
-            
-            id_string = dtc.get_id_string(j%6+1,j//6+1)
-            
-            sci_extname = id_string + "." + ppt_mv.sci_tag
-            sci_index = find_extension(data_image_hdulist, sci_extname)
-            
-            sci_hdus[i].append( data_image_hdulist[sci_index] )
-            
-            noisemap_extname = id_string + "." + ppt_mv.noisemap_tag
-            noisemap_index = find_extension(data_image_hdulist, noisemap_extname)
-            
-            noisemap_hdus[i].append( data_image_hdulist[noisemap_index] )
-            
-            mask_extname = id_string + "." + ppt_mv.mask_tag
-            mask_index = find_extension(data_image_hdulist, mask_extname)
-            
-
-            mask_hdus[i].append( data_image_hdulist[mask_index] )
-            
-            she_images[i].append(SHEImage(data=sci_hdus[i][j].data,
-                                          noisemap=noisemap_hdus[i][j].data,
-                                          mask=mask_hdus[i][j].data,
-                                          header=sci_hdus[i][j].header))
-
-    # Detections tables
-    
-    logger.info("Reading "+dry_label+"detections tables...")
-    
-    detections_table_prod_filenames = read_listfile(join(args.workdir,args.detections_tables))
-    detections_tables = []
-    
-    for i, prod_filename in enumerate(detections_table_prod_filenames):
-        
-        detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
-        if not isinstance(detections_table_prod, products.detections.DpdSheDetectionsProduct):
-            raise ValueError("Detections product from " + prod_filename + " is invalid type.")
-        
-        qualified_filename = join(args.workdir,detections_table_prod.get_filename())
-        
-        detections_tables_hdulist = fits.open(join(args.workdir,qualified_filename), mode="readonly", memmap=True)
-        
-        detections_tables.append([])
-        
-        for j in range(num_detectors):
-            
-            extname = dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.detections_tag
-            table_index = find_extension(detections_tables_hdulist,extname)
-            
-            detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
-            
-            if not is_in_format(detections_tables[i][j],detf):
-                raise ValueError("Detections table from " + args.detections_tables + " is in invalid format.")
-    
-    # PSF images and tables
-    
-    logger.info("Reading "+dry_label+"PSF images and tables...")
-    
-    psf_images_and_table_product_filenames = read_listfile(join(args.workdir,args.psf_images_and_tables))
-
-    she_image_datas = []
-    
-    for i, prod_filename in enumerate(psf_images_and_table_product_filenames):
-        
-        qualified_prod_filename = join(args.workdir,prod_filename)
-        
-        psf_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(psf_image_prod, products.psf_image.DpdShePSFImageProduct):
-            raise ValueError("PSF image product from " + qualified_prod_filename + " is invalid type.")
-        
-        qualified_filename = join(args.workdir,psf_image_prod.get_filename())
-        
-        psf_images_and_table_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
-        
-        she_image_datas.append([])
-        
-        for j in range(num_detectors):
-            
-            id_string = dtc.get_id_string(j%6+1,j//6+1)
-            
-            table_extname = id_string + "." + ppt_mv.psf_cat_tag
-            table_index = find_extension(psf_images_and_table_hdulist, table_extname)
-            
-            psf_table = Table.read( psf_images_and_table_hdulist[table_index] )
-            
-            if not is_in_format(psf_table,pstf):
-                raise ValueError("PSF table from " + qualified_filename + " is in invalid format.")
-            
-            bulge_extname = id_string + "." + ppt_mv.bulge_psf_tag
-            bulge_index = find_extension(psf_images_and_table_hdulist, bulge_extname)
-            
-            bulge_psf_image = SHEImage(data=psf_images_and_table_hdulist[bulge_index].data,
-                                       header=psf_images_and_table_hdulist[bulge_index].header)
-            
-            disk_extname = id_string + "." + ppt_mv.disk_psf_tag
-            disk_index = find_extension(psf_images_and_table_hdulist, disk_extname)
-            
-            disk_psf_image = SHEImage(data=psf_images_and_table_hdulist[disk_index].data,
-                                      header=psf_images_and_table_hdulist[disk_index].header)
-            
-            she_image_datas[i].append(SHEImageData(science_image=she_images[i][j],
-                                                detections_table=detections_tables[i][j],
-                                                bpsf_image=bulge_psf_image,
-                                                dpsf_image=disk_psf_image,
-                                                psf_table=psf_table))
-
-    num_exposures = len(she_image_datas)
-    data_stacks = []
-    for j in range(num_detectors):
-        detector_image_datas = []
-        for i in range(num_exposures):
-            detector_image_datas.append(she_image_datas[i][j])
-        data_stacks.append(SHEStack(detector_image_datas))
-
-
-    # Segmentation images
-    
-    logger.info("Reading "+dry_label+"segmentation images...")
-    
-    segmentation_product_filenames = read_listfile(join(args.workdir,args.segmentation_images))
-    
-    segmentation_hdus = []
-    
-    for i, filename in enumerate(segmentation_product_filenames):
-        
-        mosaic_prod = read_pickled_product(join(args.workdir,filename))
-        
-        if not isinstance(mosaic_prod, products.mosaic.DpdMerMosaicProduct):
-            raise ValueError("Mosaic product from " + filename + " is invalid type.")
-        
-        mosaic_data_filename = mosaic_prod.get_data_filename()
-        
-        segmentation_hdulist = fits.open(join(args.workdir,mosaic_data_filename), mode="readonly", memmap=True)
-        
-        segmentation_hdus.append([])
-        
-        for j in range(num_detectors):
-            
-            segmentation_extname = dtc.get_id_string(j%6+1,j//6+1) + "." + ppt_mv.segmentation_tag
-            segmentation_index = find_extension(segmentation_hdulist, segmentation_extname)
-            
-            segmentation_hdus[i].append(segmentation_hdulist[segmentation_index])
+    data_stack = SHEFrameStack.read(exposure_listfile_filename = args.data_images,
+                                    seg_listfile_filename = args.segmentation_images,
+                                    stacked_image_product_filename = args.stacked_image,
+                                    stacked_seg_product_filename = args.stacked_segmentation_image,
+                                    psf_listfile_filename = args.psf_images_and_tables,
+                                    detections_product_filename = args.detections_tables,
+                                    workdir = args.workdir,)
             
     # Galaxy population priors
     
@@ -336,10 +174,6 @@ def estimate_shears_from_args(args, dry_run=False):
                     
                 else:
                     method_data = None
-                    
-                for j in range(num_detectors):
-                    
-                    data_stack = data_stacks[j]
 
                     shear_estimates_table = estimate_shear( data_stack, method_data=method_data )
 
@@ -353,42 +187,38 @@ def estimate_shears_from_args(args, dry_run=False):
                 logger.warning(str(e))
             
                 hdulist = fits.HDUList()
-                    
-                for j in range(num_detectors):
                 
-                    # Create an empty estimates table
-                    shear_estimates_table = initialise_shear_estimates_table(detections_tables[i][j])
+                # Create an empty estimates table
+                shear_estimates_table = initialise_shear_estimates_table(data_stack.detections_catalogue)
+                
+                for r in range(len(data_stack.detections_catalogue[detf.ID])):
                     
-                    for r in range(len(detections_tables[i][j][detf.ID])):
-                        
-                        # Fill it with NaN measurements and 1e99 errors
-                        
-                        shear_estimates_table.add_row({setf.ID:detections_tables[i][j][detf.ID][r],
-                                     setf.g1:np.NaN,
-                                     setf.g2:np.NaN,
-                                     setf.g1_err:1e99,
-                                     setf.g2_err:1e99,
-                                     setf.g1g2_covar:1e99,
-                                     setf.x_world:detections_tables[i][j][detf.gal_x_world][r],
-                                     setf.y_world:detections_tables[i][j][detf.gal_y_world][r],})
-                        
-                    hdulist.append(table_to_hdu(shear_estimates_table))
+                    # Fill it with NaN measurements and 1e99 errors
+                    
+                    shear_estimates_table.add_row({setf.ID:data_stack.detections_catalogue[detf.ID][r],
+                                 setf.g1:np.NaN,
+                                 setf.g2:np.NaN,
+                                 setf.g1_err:1e99,
+                                 setf.g2_err:1e99,
+                                 setf.g1g2_covar:1e99,
+                                 setf.x_world:data_stack.detections_catalogue[detf.gal_x_world][r],
+                                 setf.y_world:data_stack.detections_catalogue[detf.gal_y_world][r],})
+                    
+                hdulist.append(table_to_hdu(shear_estimates_table))
                 
             method_shear_estimates[method] = shear_estimates_table
             
             # Output the shear estimates
             hdulist.writeto(join(args.workdir,shear_estimates_filename),clobber=True)
         
-    else:
+    else: # Dry run
     
         for filename in shear_estimates_prod.get_all_filenames():
             
             hdulist = fits.HDUList()
-            
-            for j in range(num_detectors):
                 
-                shm_hdu = table_to_hdu(initialise_shear_estimates_table(detector=j))
-                hdulist.append(shm_hdu)
+            shm_hdu = table_to_hdu(initialise_shear_estimates_table())
+            hdulist.append(shm_hdu)
                 
             hdulist.writeto(join(args.workdir,filename),clobber=True)
     

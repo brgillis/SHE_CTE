@@ -50,13 +50,19 @@ def defineSpecificProgramOptions():
     # Required input arguments
     
     parser.add_argument('--data_images',type=str,
-                        help='.json listfile containing filenames of data images.')
+                        help='.json listfile containing filenames of data image products.')
+    
+    parser.add_argument('--stacked_image',type=str,
+                        help='Filename of the stacked image product')
     
     parser.add_argument('--psf_images_and_tables',type=str,
-                        help='.json listfile containing filenames of psf images.')
+                        help='.json listfile containing filenames of psf image products.')
     
     parser.add_argument('--segmentation_images',type=str,
-                        help='.json listfile containing filenames of segmentation map images.')
+                        help='.json listfile containing filenames of segmentation map image products.')
+    
+    parser.add_argument('--stacked_segmentation_image',type=str,
+                        help='Filename of the stacked segmentation map image product.')
     
     parser.add_argument('--detections_tables',type=str,
                         help='.json listfile containing filenames of detections tables.')
