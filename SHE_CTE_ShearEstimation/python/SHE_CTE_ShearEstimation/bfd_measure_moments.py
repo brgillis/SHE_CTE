@@ -34,30 +34,7 @@ from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 
 from SHE_BFD_CalculateMoments import bfd
-
-
-
-def get_bfd_moment_calculator(gal_stamp, psf_stamp, sky_var, method_data):
-
-    logger = getLogger(mv.logger_name)
-    logger.debug("Entering get_bfd_moment_calculator")
-    
-    # create wt function - eventually get from method_data
-    wt = bfd.KSigmaWeight(**method_data['WEIGHT'])
-    center = np.array(gal_stamp.data.shape)/2.
-    kdata = bfd.simpleImageTEST(gal_stamp.data,center,psf_stamp.data,\
-                                pixel_scale=gal_stamp.header[scale_label],\
-                                psf_pixel_scale=psf_stamp.header[scale_label],\
-                                convolve_psf_with_pixel=True,\
-                                pixel_noise=np.sqrt(sky_var))
-
-    mc = bfd.MomentCalculator(kdata,wt)
-
-
-
-    logger.debug("Exiting get_bfd_moment_calculator")
-    
-    return mc
+from SHE_BFD_CalculateMoments.measure_moments import get_BFD_info
 
 
 
@@ -156,22 +133,23 @@ def bfd_measure_moments( data_stack, method_data=None ):
 
     for ID in IDs:
         
-        x = 0
-        y = 0
-        moments = 0
-
+        x         = 0
+        y         = 0
+        moments   = 0
+        cov_even  = 0
+        cov_odd   = 0
         if method_data['isTarget'] == False:
-            dm_dg1=0
-            dm_dg2=0
-            dm_dmu=0
-            d2m_dg1dg1=0
-            d2m_dg1dg2=0
-            d2m_dg2dg2=0
-            d2m_dg1dmu=0
-            d2m_dg2dmu=0
-            d2m_dmudmu=0
-            jsuppress=0
-            weight=0
+            dm_dg1     = 0
+            dm_dg2     = 0
+            dm_dmu     = 0
+            d2m_dg1dg1 = 0
+            d2m_dg1dg2 = 0
+            d2m_dg2dg2 = 0
+            d2m_dg1dmu = 0
+            d2m_dg2dmu = 0
+            d2m_dmudmu = 0
+            jsuppress  = 0
+            weight     = 0
 
         for table_index in range(num_exposures):
             
@@ -214,44 +192,44 @@ def bfd_measure_moments( data_stack, method_data=None ):
         # will try to stack stamps eventually ,for now use 1st
         #stacked_stamp = make_stacked_stamp(gal_stamps,psf_stamps,sky_var_list)
 
-        bfd_mc = get_bfd_moment_calculator(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], method_data)
-
-        if method_data['isTarget'] == True:
-            xyshift,error,msg=bfd_mc.recenter()
-
-            if error:
+        bfd_info = get_bfd_info(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], method_data)
+        if method_data['isTarget']==True:
+            if bfd_info.lost:
                 nlost+=1
             else:
-
-                x=xyshift[0]
-                y=xyshift[1]
-                galmoment=bfd_mc.get_moment(0,0)
-                galcov = bfd_mc.get_covariance()
-                moments=np.append(galmoment.even,galmoment.odd)
                 cov_even=[]
-                for i in range(5):
-                    cov_even=np.append(cov_even,galcov[0][i,i:5])
+                for i in xrange(5):
+                    cov_even=np.append(cov_even,bfd_info.cov_even[i,i:5])
 
-                cov_odd=np.append(galcov[1][0,0:2],galcov[1][1,1:2])
-
+                cov_odd=np.append(bfd_info.cov_odd[0,0:2],bfd_info.cov_odd[1,1:2])
 
                 # Add this row to the estimates table
                 bfd_moments_table.add_row({ setf.ID : ID,
-                                            setf.bfd_moments : moments,
-                                            setf.x : x,
-                                            setf.y : y,
+                                            setf.bfd_moments :bfd_info.m,
+                                            setf.x : bfd_info.x,
+                                            setf.y : bfd_info.y,
                                             setf.bfd_cov_even : cov_even,
-                                            setf.bfd_cov_odd : cov_odd}
-                                      )
+                                            setf.bfd_cov_odd : cov_odd})
 
         else:
-            print("TEMPLATES TO DO")
-            t=mc.make_template(**method_data['TEMPLATES'])
-            for tmpl in t:
-                moments.append(np.append(bfd_moments.even,bfd_moments.odd))
-                dm_dg1.append(np.append(bfd))
-                #etc
-                
+            if bfd_info.template_lost==False:
+                for i, tmpl in enumerate(bfd_info.templates):
+                    bfd_info.get_template(i)
+                    bfd_moments_table.add_row({setf.ID:ID,
+                                               setf.x:bfd_info.x,
+                                               setf.y:bfd_info.y,
+                                               setf.bfd_moments:bfd_info.m,
+                                               setf.bfd_dm_dg1:bfd_info.dm_dg1,
+                                               setf.bfd_dm_dg2:bfd_info.dm_dg2,
+                                               setf.bfd_dm_dmu:bfd_info.dm_dmu,
+                                               setf.bfd_d2m_dg1_dg1:bfd_info.d2m_dg1dg1,
+                                               setf.bfd_d2m_dg1_dg2:bfd_info.d2m_dg1dg2,
+                                               setf.bfd_d2m_dg2_dg2:bfd_info.d2m_dg2dg2,
+                                               setf.bfd_d2m_dg1_dmu:bfd_info.d2m_dg1dmu,
+                                               setf.bfd_d2m_dg2_dmu:bfd_info.d2m_dg2dmu,
+                                               setf.bfd_d2m_dmu_dmu:bfd_info.d2m_dmudmu,
+                                               setf.bfd_jsuppression:bfd_info.jsuppression,
+                                               setf.bfd_weight:bfd_info.weight})
         if method_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
 
