@@ -136,8 +136,8 @@ def fit_psfs(args, dry_run=False):
         psfc_hdu = table_to_hdu(psfc)
         hdulist.append(psfc_hdu)
         
+        psfc.add_index(detf.ID) # Allow it to be indexed by galaxy ID
         psf_tables.append(psfc) # Keep a copy of the table
-        psf_tables.set_index(detf.ID) # Allow it to be indexed by galaxy ID
         
         # Write out the table
         hdulist.writeto(join(args.workdir,filename),clobber=True)
@@ -203,7 +203,7 @@ def fit_psfs(args, dry_run=False):
             bulge_hdu += 2
         else:
             counter += 1
-            if counter > 10000:
+            if counter > 1000:
                 break
         
     # Go back and update the tables with proper values
