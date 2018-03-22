@@ -65,10 +65,12 @@ def get_resampled_image(subsampled_image, resampled_scale):
     
     return resampled_image
     
-def KSB_estimate_shear(data_stack,method_data,workdir):
+def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir):
+    # Not using training or calibration data at this stage
     return GS_estimate_shear(data_stack,method="KSB",workdir)
     
-def REGAUSS_estimate_shear(data_stack,method_data,workdir):
+def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir):
+    # Not using training or calibration data at this stage
     return GS_estimate_shear(data_stack,method="REGAUSS",workdir)
 
 def get_KSB_shear_estimate(galsim_shear_estimate):
@@ -186,9 +188,9 @@ def GS_estimate_shear( data_stack, method, workdir ):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering GS_estimate_shear")
     
-    shear_estimates_table = initialise_shear_estimates_table(data_stack.detections_catalogue,
-                                                             optional_columns=[setf.e1_err,setf.e2_err])
+    shear_estimates_table = initialise_shear_estimates_table()
 
+    stacked_gal_scale = data_stack.stacked_image.header[scale_label]
     gal_scale = data_stack.exposures[0].detectors[0,0].header[scale_label]
     psf_scale = data_stack.exposures[0].bulge_psf_image.header[scale_label]
     
@@ -199,11 +201,19 @@ def GS_estimate_shear( data_stack, method, workdir ):
         gal_x_world = row[detf.gal_x_world]
         gal_y_world = row[detf.gal_y_world]
         
+        # Get a stack of the galaxy images
         gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
                                                          y_world=gal_y_world,
                                                          width=stamp_size,
                                                          x_buffer=x_buffer,
                                                          y_buffer=y_buffer,)
+        
+        # If there's no data for this galaxy, don't add it to the catalogue at all
+        if gal_stamp_stack.is_empty():
+            continue
+        
+        # Get stacks of the psf images
+        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id)
         
         g1s = []
         g2s = []
@@ -215,19 +225,13 @@ def GS_estimate_shear( data_stack, method, workdir ):
         
         for ex_i in range(len(data_stack.exposures)):
             
-            gal_stamp = gal_stamp_stack.exposures[ex_i]
-            
-            if gal_stamp is None:
-                g1s.append(np.NaN)
-                g2s.append(np.NaN)
-                gerrs.append(1e99)
-                continue
-            
-            bulge_psf_stamp, disk_psf_stamp = data_stack.exposures[ex_i].extract_psf(gal_id)
+            stacked_gal_stamp = gal_stamp_stack.stacked_image
+            stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+            stacked_disk_psf_stamp = disk_psf_stack.stacked_image
     
-            shear_estimate = get_shear_estimate(gal_stamp,
-                                                bulge_psf_stamp,
-                                                gal_scale=gal_scale,
+            shear_estimate = get_shear_estimate(stacked_gal_stamp,
+                                                stacked_bulge_psf_stamp, # FIXME Handle colour gradients
+                                                gal_scale=stacked_gal_scale,
                                                 psf_scale=psf_scale,
                                                 ID=gal_id,
                                                 method=method)
