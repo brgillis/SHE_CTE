@@ -56,8 +56,8 @@ def defineSpecificProgramOptions():
                         help='Filename for list of detections tables (.json listfile)')
     parser.add_argument('--aocs_time_series_products',type=str,default=None, # Allowing to use without for SC4
                         help='Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('--psf_calibration_products',type=str,default=None, # Allowing to use without for SC4
-                        help='Filename for list of PSF calibration data products (.json listfile)')
+    parser.add_argument('--psf_calibration_product',type=str,default=None, # Allowing to use without for SC4
+                        help='Filename for PSF calibration data product (.json listfile)')
     
     # Output filenames
     parser.add_argument('--psf_images_and_tables',type=str,
