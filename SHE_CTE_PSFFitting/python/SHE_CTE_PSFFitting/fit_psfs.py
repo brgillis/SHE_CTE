@@ -146,6 +146,7 @@ def fit_psfs(args, dry_run=False):
         
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = 2
+    counter = 0
     first_galaxy = True
     for row in frame_stack.detections_catalogue:
         
@@ -200,6 +201,10 @@ def fit_psfs(args, dry_run=False):
         
         if not test_mode:
             bulge_hdu += 2
+        else:
+            counter += 1
+            if counter > 10000:
+                break
         
     # Go back and update the tables with proper values
     for x in range(num_exposures):
