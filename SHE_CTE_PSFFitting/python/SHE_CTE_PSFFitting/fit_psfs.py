@@ -20,6 +20,7 @@
 
 import os
 from os.path import join
+from copy import deepcopy
 
 from astropy.io import fits
 from astropy.table import Table
@@ -88,7 +89,7 @@ def fit_psfs(args, dry_run=False):
     
         logger.info("Reading mock"+dry_label+" PSF calibration products...")
         
-        psf_calibration_product = read_pickled_product(join(args.workdir,args.psf_calibration_product)))
+        psf_calibration_product = read_pickled_product(join(args.workdir,args.psf_calibration_product))
         
         if not isinstance(psf_calibration_product, products.psf_calibration.DpdShePSFCalibrationProduct):
             raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
@@ -147,7 +148,7 @@ def fit_psfs(args, dry_run=False):
 
         
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
-    bulge_hdu = len(hdulists[0])
+    bulge_hdu = 2
     first_galaxy = True
     for row in frame_stack.detections_catalogue:
         
