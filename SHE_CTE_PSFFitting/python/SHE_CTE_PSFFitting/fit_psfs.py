@@ -28,17 +28,14 @@ from astropy.table import Table
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT import products
-from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, find_file_in_path)
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import find_extension
 import numpy as np
 
 test_mode = True
