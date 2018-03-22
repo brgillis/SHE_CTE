@@ -123,16 +123,12 @@ def fit_psfs(args, dry_run=False):
         
         hdulist = fits.HDUList([fits.PrimaryHDU()]) # Start with an empty primary HDU
             
-        psfc = initialise_psf_table()
-            
-        # Add a line to the table for each galaxy - Will fill in later
-        
+        # Initialize table with null values
         num_rows = len(frame_stack.detections_catalogue)
-        
-        psfc[pstf.ID] = frame_stack.detections_catalogue[detf.ID]
-        psfc[pstf.template] = -1*np.ones(num_rows,dtype=np.int64)
-        psfc[pstf.bulge_index] = -1*np.ones(num_rows,dtype=np.int32)
-        psfc[pstf.disk_index] = -1*np.ones(num_rows,dtype=np.int32)
+        psfc = initialise_psf_table(init_columns={pstf.ID : frame_stack.detections_catalogue[detf.ID],
+                                                  pstf.template : -1*np.ones(num_rows,dtype=np.int64),
+                                                  pstf.bulge_index : -1*np.ones(num_rows,dtype=np.int32),
+                                                  pstf.disk_index : -1*np.ones(num_rows,dtype=np.int32)})
         
         # Add the table to the HDU list
         psfc_hdu = table_to_hdu(psfc)
