@@ -142,7 +142,7 @@ def fit_psfs(args, dry_run=False):
         # Write out the table
         hdulist.writeto(join(args.workdir,filename),clobber=True)
         
-
+    logger.info("Base files for PSF data set up.")
         
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = 2
@@ -205,6 +205,8 @@ def fit_psfs(args, dry_run=False):
             counter += 1
             if counter > 1000:
                 break
+            
+    logger.info("PSF Images output. Filling up table with proper references")
         
     # Go back and update the tables with proper values
     for x in range(num_exposures):
