@@ -6,5 +6,4 @@ find_package(ElementsProject)
 #---------------------------------------------------------------
 
 # Declare project name and version
-elements_project(SHE_CTE 0.4 USE Elements 5.2.2 SHE_PPT 0.3 SHE_MomentsML 1.0 SHE_BFD 0.1 SHE_LensMC 1.2)
-
+elements_project(SHE_CTE 0.4 USE Elements 5.2.2 SHE_PPT 0.3 SHE_BFD 0.1 SHE_LensMC 1.3)
