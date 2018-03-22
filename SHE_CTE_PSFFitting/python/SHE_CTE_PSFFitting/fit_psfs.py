@@ -126,17 +126,22 @@ def fit_psfs(args, dry_run=False):
         psfc = initialise_psf_table()
             
         # Add a line to the table for each galaxy - Will fill in later
+        
+        num_rows = len(frame_stack.detections_catalogue)
+        
+        psfc[pstf.ID] = -1*np.ones(num_rows,dtype=np.int64)
+        psfc[pstf.template] = -1*np.ones(num_rows,dtype=np.int64)
+        psfc[pstf.bulge_index] = -1*np.ones(num_rows,dtype=np.int32)
+        psfc[pstf.disk_index] = -1*np.ones(num_rows,dtype=np.int32)
+        
         for row in frame_stack.detections_catalogue:
-            psfc.add_row({pstf.ID: row[detf.ID],
-                          pstf.template: -1,
-                          pstf.bulge_index: -1,
-                          pstf.disk_index: -1})
+            psfc[pstf.ID] = row[detf.ID]
         
         # Add the table to the HDU list
         psfc_hdu = table_to_hdu(psfc)
         hdulist.append(psfc_hdu)
         
-        psfc.add_index(detf.ID) # Allow it to be indexed by galaxy ID
+        psfc.add_index(pstf.ID) # Allow it to be indexed by galaxy ID
         psf_tables.append(psfc) # Keep a copy of the table
         
         # Write out the table
