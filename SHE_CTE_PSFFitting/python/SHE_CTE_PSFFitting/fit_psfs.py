@@ -129,13 +129,10 @@ def fit_psfs(args, dry_run=False):
         
         num_rows = len(frame_stack.detections_catalogue)
         
-        psfc[pstf.ID] = -1*np.ones(num_rows,dtype=np.int64)
+        psfc[pstf.ID] = frame_stack.detections_catalogue[detf.ID]
         psfc[pstf.template] = -1*np.ones(num_rows,dtype=np.int64)
         psfc[pstf.bulge_index] = -1*np.ones(num_rows,dtype=np.int32)
         psfc[pstf.disk_index] = -1*np.ones(num_rows,dtype=np.int32)
-        
-        for row in frame_stack.detections_catalogue:
-            psfc[pstf.ID] = row[detf.ID]
         
         # Add the table to the HDU list
         psfc_hdu = table_to_hdu(psfc)
