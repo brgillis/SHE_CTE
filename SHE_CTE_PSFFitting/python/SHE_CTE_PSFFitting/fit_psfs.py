@@ -40,6 +40,8 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import find_extension
 import numpy as np
 
+test_mode = True
+
 def fit_psfs(args, dry_run=False):
     """
         Mock run of PSF Fitting.
@@ -146,6 +148,7 @@ def fit_psfs(args, dry_run=False):
         
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = len(hdulists[0])
+    first_galaxy = True
     for row in frame_stack.detections_catalogue:
         
         gal_id = row[detf.ID]
@@ -157,44 +160,48 @@ def fit_psfs(args, dry_run=False):
         
         for x in range(num_exposures):
         
-            # Get mock data for bulge and disk psfs
-            bpsf_array = deepcopy(mock_psf_data)
-            dpsf_array = deepcopy(mock_psf_data)
-            
-            # Add the bulge and disk HDUs
-            bulge_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.bulge_psf_tag),
-                                                   (ppt_mv.stamp_size_label,np.min(np.shape(bpsf_array))),
-                                                   (ppt_mv.scale_label,0.02)))
-            
-            bpsf_hdu = fits.ImageHDU(data=bpsf_array,
-                                     header=bulge_psf_header)
+            if first_galaxy or not test_mode:
+                # Get mock data for bulge and disk psfs
+                bpsf_array = deepcopy(mock_psf_data)
+                dpsf_array = deepcopy(mock_psf_data)
                 
-            disk_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.disk_psf_tag),
-                                             (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
-                                             (ppt_mv.scale_label,0.02)))
+                # Add the bulge and disk HDUs
+                bulge_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.bulge_psf_tag),
+                                                       (ppt_mv.stamp_size_label,np.min(np.shape(bpsf_array))),
+                                                       (ppt_mv.scale_label,0.02)))
+                
+                bpsf_hdu = fits.ImageHDU(data=bpsf_array,
+                                         header=bulge_psf_header)
+                    
+                disk_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.disk_psf_tag),
+                                                 (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
+                                                 (ppt_mv.scale_label,0.02)))
+                
+                dpsf_hdu = fits.ImageHDU(data=dpsf_array,
+                                         header=disk_psf_header)
+                
+                # Append these to the proper file
+                
+                f = fits.open(filenames[x],mode='append')
+                
+                f[x].append(bpsf_hdu)
+                f[x].append(dpsf_hdu)
+                
+                f.flush()
+                f.close()
             
-            dpsf_hdu = fits.ImageHDU(data=dpsf_array,
-                                     header=disk_psf_header)
-            
-            # Append these to the proper file
-            
-            f = fits.open(filenames[x],mode='append')
-            
-            f[x].append(bpsf_hdu)
-            f[x].append(dpsf_hdu)
-            
-            f.flush()
-            f.close()
+                # Cleanup
+                del bpsf_array, dpsf_array, bpsf_hdu, dpsf_hdu, bulge_psf_header, disk_psf_header
+                
+                first_galaxy = False
             
             # Update the table
             output_row = psf_tables[x].loc[gal_id]
             output_row[pstf.bulge_index] = bulge_hdu
             output_row[pstf.disk_index] = bulge_hdu+1
-            
-            # Cleanup
-            del bpsf_array, dpsf_array, bpsf_hdu, dpsf_hdu, bulge_psf_header, disk_psf_header
         
-        bulge_hdu += 2
+        if not test_mode:
+            bulge_hdu += 2
         
     # Go back and update the tables with proper values
     for x in range(num_exposures):
