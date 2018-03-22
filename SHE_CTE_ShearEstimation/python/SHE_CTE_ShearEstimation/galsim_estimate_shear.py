@@ -215,6 +215,30 @@ def GS_estimate_shear( data_stack, method, workdir ):
         # Get stacks of the psf images
         bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id)
         
+        # Get the shear estimate from the stacked image
+           
+        stacked_gal_stamp = gal_stamp_stack.stacked_image
+        stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+        stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+
+        shear_estimate = get_shear_estimate(stacked_gal_stamp,
+                                            stacked_bulge_psf_stamp, # FIXME Handle colour gradients
+                                            gal_scale=stacked_gal_scale,
+                                            psf_scale=psf_scale,
+                                            ID=gal_id,
+                                            method=method)
+        
+        stack_g1 = shear_estimate.g1
+        stack_g2 = shear_estimate.g2
+        stack_gerr = shear_estimate.gerr
+        stack_re = shear_estimate.re
+        stack_snr = shear_estimate.snr
+        
+        stack_x_world, stack_y_world = data_stack.stacked_image.pix2world(shear_estimate.x + stacked_gal_stamp.offset[0],
+                                                                          shear_estimate.y + stacked_gal_stamp.offset[1])
+        
+        # Get estimates for each exposure
+        
         g1s = []
         g2s = []
         gerrs = []
@@ -223,14 +247,14 @@ def GS_estimate_shear( data_stack, method, workdir ):
         x_worlds = []
         y_worlds = []
         
-        for ex_i in range(len(data_stack.exposures)):
+        for x in range(len(data_stack.exposures)):
             
-            stacked_gal_stamp = gal_stamp_stack.stacked_image
-            stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
-            stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+            gal_stamp = gal_stamp_stack.exposures[x]
+            bulge_psf_stamp = bulge_psf_stack.exposures[x]
+            disk_psf_stamp = disk_psf_stack.exposures[x]
     
-            shear_estimate = get_shear_estimate(stacked_gal_stamp,
-                                                stacked_bulge_psf_stamp, # FIXME Handle colour gradients
+            shear_estimate = get_shear_estimate(gal_stamp,
+                                                bulge_psf_stamp, # FIXME Handle colour gradients
                                                 gal_scale=stacked_gal_scale,
                                                 psf_scale=psf_scale,
                                                 ID=gal_id,
@@ -242,7 +266,8 @@ def GS_estimate_shear( data_stack, method, workdir ):
             res.append(shear_estimate.re)
             snrs.append(shear_estimate.snr)
             
-            x_world, y_world = data_stack.exposures[ex_i].pix2world(shear_estimate.x,shear_estimate.y)
+            x_world, y_world = data_stack.exposures[x].pix2world(shear_estimate.x + gal_stamp.offset[0],
+                                                                 shear_estimate.y + gal_stamp.offset[1])
             
             x_worlds.append(x_world)
             y_worlds.append(y_world)
@@ -262,16 +287,16 @@ def GS_estimate_shear( data_stack, method, workdir ):
         x_world, _ = inv_var_stack(x_worlds,gerrs)
         y_world, _ = inv_var_stack(y_worlds,gerrs)
             
-        # Add this row to the estimates table
+        # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({ setf.ID : gal_id,
-                                        setf.g1 : g1,
-                                        setf.g2 : g2,
-                                        setf.g1_err : np.sqrt(gerr**2+shape_noise**2),
-                                        setf.g2_err : np.sqrt(gerr**2+shape_noise**2),
-                                        setf.re : re,
-                                        setf.snr : snr,
-                                        setf.x_world : x_world,
-                                        setf.y_world : y_world,
+                                        setf.g1 : stack_g1,
+                                        setf.g2 : stack_g2,
+                                        setf.g1_err : np.sqrt(stack_gerr**2+shape_noise**2),
+                                        setf.g2_err : np.sqrt(stack_gerr**2+shape_noise**2),
+                                        setf.re : stack_re,
+                                        setf.snr : stack_snr,
+                                        setf.x_world : stack_x_world,
+                                        setf.y_world : stack_y_world,
                                        })
         
     
