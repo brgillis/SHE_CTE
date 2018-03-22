@@ -54,18 +54,14 @@ def defineSpecificProgramOptions():
                         help='Filename for list of data images (.json listfile)')
     parser.add_argument('--detections_tables',type=str,
                         help='Filename for list of detections tables (.json listfile)')
-    parser.add_argument('--astrometry_products',type=str,
-                        help='Filename for list of astrometry data products (.json listfile)')
-    parser.add_argument('--aocs_time_series_products',type=str,
+    parser.add_argument('--aocs_time_series_products',type=str,default=None, # Allowing to use without for SC4
                         help='Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('--mission_time_products',type=str,
-                        help='Filename for list of mission time data products (.json listfile)')
-    parser.add_argument('--psf_calibration_products',type=str,
+    parser.add_argument('--psf_calibration_products',type=str,default=None, # Allowing to use without for SC4
                         help='Filename for list of PSF calibration data products (.json listfile)')
     
     # Output filenames
     parser.add_argument('--psf_images_and_tables',type=str,
-                        help='Desired filename for output list of PSF images and tables (.json listfile).')
+                        help='Desired filename for output PSF images and tables fits file.')
     
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir',type=str,default=".")
