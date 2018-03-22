@@ -165,7 +165,8 @@ def estimate_shears_from_args( args, dry_run = False ):
                     
                     if method_calibration_filename is not None:
                         
-                        
+                        # For now just leave as handle to fits file
+                        calibration_data = fits.open(join(args.workdir,method_calibration_filename))
 
                 shear_estimates_table = estimate_shear( data_stack,
                                                         training_data = training_data,
@@ -176,6 +177,9 @@ def estimate_shears_from_args( args, dry_run = False ):
                     raise ValueError( "Shear estimation table returned in invalid format for method " + method + "." )
 
                 hdulist.append( table_to_hdu( shear_estimates_table ) )
+                
+                # Cleanup loaded data for this method
+                del training_data, calibration_data
 
             except Exception as e:
 
@@ -184,7 +188,7 @@ def estimate_shears_from_args( args, dry_run = False ):
                 hdulist = fits.HDUList()
 
                 # Create an empty estimates table
-                shear_estimates_table = initialise_shear_estimates_table( data_stack.detections_catalogue )
+                shear_estimates_table = initialise_shear_estimates_table( )
 
                 for r in range( len( data_stack.detections_catalogue[detf.ID] ) ):
 
