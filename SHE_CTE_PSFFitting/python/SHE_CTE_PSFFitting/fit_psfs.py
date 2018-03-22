@@ -52,7 +52,7 @@ def fit_psfs(args, dry_run=False):
     # Data images
     
     if dry_run:
-        dry_label = " dry"
+        dry_label = "_dry"
     else:
         dry_label = ""
     
@@ -116,20 +116,33 @@ def fit_psfs(args, dry_run=False):
         mock_psf_data = fits.open(psf_path)[0].data
     
     # Set up for each exposure
-    hdulists = []
+    filenames = []
     psf_tables = []
     for x in range(num_exposures):
+        filenames.append(get_allowed_filename("PSF" + dry_label,str(x)))
         
-        hdulists.append(fits.HDUList([fits.PrimaryHDU()])) # Start with an empty primary HDU
+        hdulist = fits.HDUList([fits.PrimaryHDU()]) # Start with an empty primary HDU
             
         psfc = initialise_psf_table()
+            
+        # Add a line to the table for each galaxy - Will fill in later
+        for row in frame_stack.detections_catalogue:
+            psfc.add_row({pstf.ID: row[detf.ID],
+                          pstf.template: -1,
+                          pstf.bulge_index: -1,
+                          pstf.disk_index: -1})
         
         # Add the table to the HDU list
         psfc_hdu = table_to_hdu(psfc)
-        hdulists[x].append(psfc_hdu)
+        hdulist.append(psfc_hdu)
         
-        # Save a reference to this table
-        psf_tables[x].append(hdulists[x][-1])
+        psf_tables.append(psfc) # Keep a copy of the table
+        psf_tables.set_index(detf.ID) # Allow it to be indexed by galaxy ID
+        
+        # Write out the table
+        hdulist.writeto(join(args.workdir,filename),clobber=True)
+        
+
         
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = len(hdulists[0])
@@ -155,7 +168,6 @@ def fit_psfs(args, dry_run=False):
             
             bpsf_hdu = fits.ImageHDU(data=bpsf_array,
                                      header=bulge_psf_header)
-            hdulists[x].append(bpsf_hdu)
                 
             disk_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.disk_psf_tag),
                                              (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
@@ -163,25 +175,46 @@ def fit_psfs(args, dry_run=False):
             
             dpsf_hdu = fits.ImageHDU(data=dpsf_array,
                                      header=disk_psf_header)
-            hdulists[x].append(dpsf_hdu)
             
-            # Add a line to the table
-            psf_tables[x].add_row({pstf.ID: gal_id,
-                                   pstf.template: 0,
-                                   pstf.bulge_index: bulge_hdu,
-                                   pstf.bulge_index: bulge_hdu+1})
-        
+            # Append these to the proper file
+            
+            f = fits.open(filenames[x],mode='append')
+            
+            f[x].append(bpsf_hdu)
+            f[x].append(dpsf_hdu)
+            
+            f.flush()
+            f.close()
+            
+            # Update the table
+            output_row = psf_tables[x].loc[gal_id]
+            output_row[pstf.bulge_index] = bulge_hdu
+            output_row[pstf.disk_index] = bulge_hdu+1
+            
+            # Cleanup
+            del bpsf_array, dpsf_array, bpsf_hdu, dpsf_hdu, bulge_psf_header, disk_psf_header
         
         bulge_hdu += 2
         
-    # Write out all tables
+    # Go back and update the tables with proper values
     for x in range(num_exposures):
-        filename = get_allowed_filename("PSF" + dry_label,str(x))
-        psf_image_and_table_filenames.append(filename)
-        hdulists[x].writeto(join(args.workdir,filename),clobber=True)
+        
+        psf_table = psf_tables[x]
+        
+        f = fits.open(filenames[x],memmap=True,mode='update')
+        out_table = f[1].data
+        
+        # Update each row
+        for i in range(len(psf_table)):
+            out_table[pstf.bulge_index] = psf_table[i][pstf.bulge_index]
+            out_table[pstf.disk_index] = psf_table[i][pstf.disk_index]
+            
+        f.flush()
+        f.close()
 
     logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(i) + ".")
         
+    # Write listfile of objects
     write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
     
     logger.info("Finished mock"+dry_label+" psf fitting.")
