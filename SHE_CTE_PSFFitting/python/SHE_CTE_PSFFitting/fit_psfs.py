@@ -218,10 +218,8 @@ def fit_psfs(args, dry_run=False):
         f = fits.open(filenames[x],memmap=True,mode='update')
         out_table = f[1].data
         
-        # Update each row
-        for i in range(len(psf_table)):
-            out_table[pstf.bulge_index] = psf_table[i][pstf.bulge_index]
-            out_table[pstf.disk_index] = psf_table[i][pstf.disk_index]
+        out_table[pstf.bulge_index] = psf_table[pstf.bulge_index]
+        out_table[pstf.disk_index] = psf_table[pstf.disk_index]
             
         f.flush()
         f.close()
