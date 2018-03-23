@@ -160,7 +160,7 @@ def fit_psfs(args, dry_run=False):
             if test_mode:
                 discarded += 1
                 if discarded % 10 == 0:
-                    logger.info("Discarded " + str(discarded) + " galaxy/galaxies.")
+                    logger.info("Discarded " + str(discarded) + " galaxies.")
             continue
         
         for x in range(num_exposures):
