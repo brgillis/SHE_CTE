@@ -279,27 +279,17 @@ def GS_estimate_shear( data_stack, method, workdir ):
             gerrs.append(shear_estimate.gerr)
             res.append(shear_estimate.re)
             snrs.append(shear_estimate.snr)
-            
-            x_world, y_world = data_stack.exposures[x].pix2world(shear_estimate.x + gal_stamp.offset[0],
-                                                                 shear_estimate.y + gal_stamp.offset[1])
-            
-            x_worlds.append(x_world)
-            y_worlds.append(y_world)
                 
         g1s = np.array(g1s)
         g2s = np.array(g2s)
         gerrs = np.array(gerrs)
         res = np.array(res)
         snrs = np.array(snrs)
-        x_worlds = np.array(x_worlds)
-        y_worlds = np.array(y_worlds)
         
         g1, gerr = inv_var_stack(g1s,gerrs)
         g2, _ = inv_var_stack(g2s,gerrs)
         re, _ = inv_var_stack(res,gerrs)
         snr, _ = inv_var_stack(snrs,gerrs)
-        x_world, _ = inv_var_stack(x_worlds,gerrs)
-        y_world, _ = inv_var_stack(y_worlds,gerrs)
             
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({ setf.ID : gal_id,
