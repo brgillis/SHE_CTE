@@ -119,7 +119,8 @@ def fit_psfs(args, dry_run=False):
     filenames = []
     psf_tables = []
     for x in range(num_exposures):
-        filenames.append(get_allowed_filename("PSF" + dry_label,str(x)))
+        filename = get_allowed_filename("PSF" + dry_label,str(x))
+        filenames.append(filename)
         
         hdulist = fits.HDUList([fits.PrimaryHDU()]) # Start with an empty primary HDU
             
