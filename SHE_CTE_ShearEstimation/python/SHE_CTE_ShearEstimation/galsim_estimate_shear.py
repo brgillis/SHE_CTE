@@ -201,7 +201,7 @@ def GS_estimate_shear( data_stack, method, workdir ):
         gal_scale = 0.1
         
     if scale_label in data_stack.exposures[0].bulge_psf_image.header:
-        psf_scale = data_stack.exposures[0].bulge_psf_image.header[scale_label]
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
         psf_scale = 0.1
     
