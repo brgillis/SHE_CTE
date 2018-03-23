@@ -135,8 +135,9 @@ def fit_psfs(args, dry_run=False):
         psfc_hdu = table_to_hdu(psfc)
         hdulist.append(psfc_hdu)
         
-        psfc.add_index(pstf.ID) # Allow it to be indexed by galaxy ID
         psf_tables.append(psfc) # Keep a copy of the table
+        psf_tables[x].remove_indices(pstf.ID) # Necessary for bug workaround in astropy
+        psf_tables[x].add_index(pstf.ID) # Allow it to be indexed by galaxy ID
         
         # Write out the table
         hdulist.writeto(join(args.workdir,filename),clobber=True)
@@ -182,9 +183,9 @@ def fit_psfs(args, dry_run=False):
                 # Append these to the proper file
                 
                 f = fits.open(filenames[x],mode='append')
-                
-                f[x].append(bpsf_hdu)
-                f[x].append(dpsf_hdu)
+
+                f.append(bpsf_hdu)
+                f.append(dpsf_hdu)
                 
                 f.flush()
                 f.close()
