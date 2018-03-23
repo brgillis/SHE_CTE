@@ -177,7 +177,7 @@ def inv_var_stack( a, a_err ):
     
     inv_a_inv_var_sum = 1./a_inv_var.sum()
     
-    a_m = (a*a_inv_var).nansum()*inv_a_inv_var_sum
+    a_m = np.nansum(a*a_inv_var)*inv_a_inv_var_sum
     
     a_m_err = sqrt(inv_a_inv_var_sum)
     
