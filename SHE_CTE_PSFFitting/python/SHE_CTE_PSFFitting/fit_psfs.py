@@ -197,20 +197,22 @@ def fit_psfs(args, dry_run=False):
             
                 # Cleanup
                 del bpsf_array, dpsf_array, bpsf_hdu, dpsf_hdu, bulge_psf_header, disk_psf_header
-                
-                first_galaxy = False
             
             # Update the table
             output_row = psf_tables[x].loc[gal_id]
             output_row[pstf.bulge_index] = bulge_hdu
             output_row[pstf.disk_index] = bulge_hdu+1
+            
+        if first_galaxy:
+            first_galaxy = False
         
         if not test_mode:
             bulge_hdu += 2
         else:
             counter += 1
             
-            logger.info("Processed " + str(counter) + " galaxy/galaxies.")
+            if counter % 10 == 0:
+                logger.info("Processed " + str(counter) + " galaxies.")
             
             if counter > 100:
                 break
