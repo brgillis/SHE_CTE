@@ -27,7 +27,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_training_data
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT import magic_values as ppt_mv
