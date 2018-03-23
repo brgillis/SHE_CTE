@@ -187,7 +187,7 @@ def fit_psfs(args, dry_run=False):
                 
                 # Append these to the proper file
                 
-                f = fits.open(filenames[x],mode='append')
+                f = fits.open(join(args.workdir,filenames[x]),mode='append')
 
                 f.append(bpsf_hdu)
                 f.append(dpsf_hdu)
@@ -224,7 +224,7 @@ def fit_psfs(args, dry_run=False):
         
         psf_table = psf_tables[x]
         
-        f = fits.open(filenames[x],memmap=True,mode='update')
+        f = fits.open(join(args.workdir,filenames[x]),memmap=True,mode='update')
         out_table = f[1].data
         
         out_table[pstf.bulge_index] = psf_table[pstf.bulge_index]
