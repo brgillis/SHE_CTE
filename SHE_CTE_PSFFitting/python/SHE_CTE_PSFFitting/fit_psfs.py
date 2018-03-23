@@ -151,7 +151,7 @@ def fit_psfs(args, dry_run=False):
         
         gal_id = row[detf.ID]
         
-        gal_stamp_stack = frame_stack.extract_galaxy_stamp(gal_id)
+        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id)
         
         if gal_stamp_stack.is_empty():
             continue
