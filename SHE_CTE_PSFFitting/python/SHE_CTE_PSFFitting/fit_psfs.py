@@ -151,7 +151,8 @@ def fit_psfs(args, dry_run=False):
         
         gal_id = row[detf.ID]
         
-        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id)
+        # Get a stamp just to check if the galaxy is in frame
+        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width=1)
         
         if gal_stamp_stack.is_empty():
             continue
