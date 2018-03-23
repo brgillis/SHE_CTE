@@ -67,11 +67,11 @@ def get_resampled_image(subsampled_image, resampled_scale):
     
 def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack,method="KSB",workdir)
+    return GS_estimate_shear(data_stack,method="KSB",workdir=workdir)
     
 def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack,method="REGAUSS",workdir)
+    return GS_estimate_shear(data_stack,method="REGAUSS",workdir=workdir)
 
 def get_KSB_shear_estimate(galsim_shear_estimate):
 
