@@ -211,7 +211,7 @@ def fit_psfs(args, dry_run=False):
             
             logger.info("Processed " + str(counter) + " galaxy/galaxies.")
             
-            if counter > 1000:
+            if counter > 100:
                 break
             
     logger.info("PSF Images output. Filling up table with proper references")
