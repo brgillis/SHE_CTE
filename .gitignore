@@ -1,0 +1,46 @@
+# gitignore file for Euclid Elements projects
+# (personal attempt, couldn't find an official one)
+
+# Linux-specific
+.*
+!.gitignore
+*~
+*.sw[a-p]
+
+# KDE
+.directory
+
+
+# Eclipse-specific
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+.cproject
+
+
+# Python-specific
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Elements make
+build.*/
+InstallArea/
+
+
+# PA/QA & Sonar
+PAQA/
+sonar-project.properties

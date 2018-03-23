@@ -20,6 +20,7 @@
 
 import os
 from os.path import join
+from copy import deepcopy
 
 from astropy.io import fits
 from astropy.table import Table
@@ -27,24 +28,17 @@ from astropy.table import Table
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT import products
-from SHE_PPT import detector as dtc
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
                              get_allowed_filename, find_file_in_path)
 from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT.she_image import SHEImage
+from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import find_extension
 import numpy as np
 
-products.aocs_time_series.init()
-products.calibrated_frame.init()
-products.detections.init()
-products.mission_time.init()
-products.psf_calibration.init()
-products.psf_image.init()
+test_mode = True
 
 def fit_psfs(args, dry_run=False):
     """
@@ -58,148 +52,55 @@ def fit_psfs(args, dry_run=False):
     # Data images
     
     if dry_run:
-        dry_label = " dry"
+        dry_label = "_dry"
     else:
         dry_label = ""
     
-    logger.info("Reading mock"+dry_label+" data images...")
+    logger.info("Reading mock"+dry_label+" data images and detections tables...")
     
-    data_image_products = read_listfile(join(args.workdir,args.data_images))
-
-    sci_hdus = []
-    noisemap_hdus = []
-    mask_hdus = []
-    
-    she_images = []
-    
-    for i, prod_filename in enumerate(data_image_products):
-        
-        qualified_prod_filename = join(args.workdir,prod_filename)
-        
-        data_image_prod = read_pickled_product(qualified_prod_filename)
-        if not isinstance(data_image_prod, products.calibrated_frame.DpdSheCalibratedFrameProduct):
-            raise ValueError("Data image product from " + qualified_prod_filename + " is invalid type.")
-        
-        qualified_filename = join(args.workdir,data_image_prod.get_filename())
-        
-        data_image_hdulist = fits.open(qualified_filename, mode="readonly", memmap=True)
-        num_detectors = len(data_image_hdulist) // 3
-        
-        sci_hdus.append([])
-        noisemap_hdus.append([])
-        mask_hdus.append([])
-        she_images.append([])
-        
-        for j in range(num_detectors):
-            
-            id_string = dtc.get_id_string(j%6+1,j//6+1)
-            
-            sci_extname = id_string + "." + ppt_mv.sci_tag
-            sci_index = find_extension(data_image_hdulist, sci_extname)
-            
-            if sci_index is None:
-                raise RuntimeError("Cannot find science HDU in " + qualified_filename + ".")
-            
-            sci_hdus[i].append( data_image_hdulist[sci_index] )
-            
-            noisemap_extname = id_string + "." + ppt_mv.noisemap_tag
-            noisemap_index = find_extension(data_image_hdulist, noisemap_extname)
-            
-            noisemap_hdus[i].append( data_image_hdulist[noisemap_index] )
-            
-            mask_extname = id_string + "." + ppt_mv.mask_tag
-            mask_index = find_extension(data_image_hdulist, mask_extname)
-            
-            mask_hdus[i].append( data_image_hdulist[mask_index] )
-            
-            she_images[i].append(SHEImage(data=sci_hdus[i][j].data,
-                                          noisemap=noisemap_hdus[i][j].data,
-                                          mask=mask_hdus[i][j].data,
-                                          header=sci_hdus[i][j].header))
-            
-    num_exposures = len(data_image_products)
-    she_stacks = []
-    for j in range(num_detectors):
-        detector_images = []
-        for i in range(num_exposures):
-            detector_images.append(she_images[i][j])
-        she_stacks.append(detector_images)
-        
-    
-    # Detections tables
-    
-    logger.info("Reading mock"+dry_label+" detection tables...")
-    
-    detections_table_prod_filenames = read_listfile(join(args.workdir,args.detections_tables))
-    detections_tables = []
-    
-    for i, prod_filename in enumerate(detections_table_prod_filenames):
-        
-        detections_table_prod = read_pickled_product(join(args.workdir,prod_filename))
-        if not isinstance(detections_table_prod, products.detections.DpdSheDetectionsProduct):
-            raise ValueError("Detections product from " + prod_filename + " is invalid type.")
-        
-        qualified_filename = join(args.workdir,detections_table_prod.get_filename())
-        
-        detections_tables_hdulist = fits.open(join(args.workdir,qualified_filename), mode="readonly", memmap=True)
-        num_detectors = len(detections_tables_hdulist)-1
-        
-        detections_tables.append([])
-        
-        for j in range(num_detectors):
-            
-            extname = dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.detections_tag
-            table_index = find_extension(detections_tables_hdulist,extname)
-            
-            detections_tables[i].append( Table.read(detections_tables_hdulist[table_index]) )
-            
-            if not is_in_format(detections_tables[i][j],detf):
-                raise ValueError("Detections table from " + qualified_filename + " is in invalid format.")
+    frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
+                                     detections_listfile_filename=args.detections_tables,
+                                     workdir=args.workdir,
+                                     clean_detections=True)
         
     # AocsTimeSeries products
     
-    logger.info("Reading mock"+dry_label+" aocs time series products...")
+    if args.aocs_time_series_products is not None:
     
-    aocs_time_series_product_filenames = read_listfile(join(args.workdir,args.aocs_time_series_products))
-    aocs_time_series_products = []
-    
-    for i, filename in enumerate(aocs_time_series_product_filenames):
-        aocs_time_series_products.append(read_pickled_product(join(args.workdir,filename)))
-        if not isinstance(aocs_time_series_products[i], products.aocs_time_series.DpdSheAocsTimeSeriesProduct):
-            raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
+        logger.info("Reading mock"+dry_label+" aocs time series products...")
         
-    # MissionTime products
-    
-    logger.info("Reading mock"+dry_label+" mission time products...")
-    
-    mission_time_product_filenames = read_listfile(join(args.workdir,args.mission_time_products))
-    mission_time_products = []
-    
-    for i, filename in enumerate(mission_time_product_filenames):
-        mission_time_products.append(read_pickled_product(join(args.workdir,filename)))
-        if not isinstance(mission_time_products[i], products.mission_time.DpdSheMissionTimeProduct):
-            raise ValueError("MissionTime product from " + filename + " is invalid type.")
+        aocs_time_series_product_filenames = read_listfile(join(args.workdir,args.aocs_time_series_products))
+        aocs_time_series_products = []
+        
+        for i, filename in enumerate(aocs_time_series_product_filenames):
+            aocs_time_series_products.append(read_pickled_product(join(args.workdir,filename)))
+            if not isinstance(aocs_time_series_products[i], products.aocs_time_series.DpdSheAocsTimeSeriesProduct):
+                raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
+            
+    else:
+        
+        aocs_time_series_products = None
         
     # PSFCalibration products
     
-    logger.info("Reading mock"+dry_label+" PSF calibration products...")
+    if args.psf_calibration_product is not None:
     
-    psf_calibration_product_filenames = read_listfile(join(args.workdir,args.psf_calibration_products))
-    psf_calibration_products = []
-    
-    for i, filename in enumerate(psf_calibration_product_filenames):
+        logger.info("Reading mock"+dry_label+" PSF calibration products...")
         
-        psf_calibration_products.append(read_pickled_product(join(args.workdir,filename)))
+        psf_calibration_product = read_pickled_product(join(args.workdir,args.psf_calibration_product))
         
-        if not isinstance(psf_calibration_products[i], products.psf_calibration.DpdShePSFCalibrationProduct):
+        if not isinstance(psf_calibration_product, products.psf_calibration.DpdShePSFCalibrationProduct):
             raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
+        
+    else:
+        
+        psf_calibration_product = None
     
     # Set up mock output in the correct format
     
     logger.info("Outputting mock"+dry_label+" PSF images and tables...")
     
-    num_exposures = len(data_image_products)
-    psf_image_and_table_filenames = []
+    num_exposures = len(frame_stack.exposures)
     
     if not dry_run:
                 
@@ -211,68 +112,128 @@ def fit_psfs(args, dry_run=False):
             raise Exception("Cannot find mock psf.")
                 
         logger.debug("Found mock psf: " + psf_path)
+        
+        mock_psf_data = fits.open(psf_path)[0].data
     
-    for i in range(num_exposures):
+    # Set up for each exposure
+    filenames = []
+    psf_tables = []
+    for x in range(num_exposures):
+        filename = get_allowed_filename("PSF" + dry_label,str(x))
+        filenames.append(filename)
         
-        prod_filename = get_allowed_filename("PSF_DRY_P",str(i))
-        filename = get_allowed_filename("PSF_DRY",str(i))
-        psf_image_and_table_filenames.append(prod_filename)
+        hdulist = fits.HDUList([fits.PrimaryHDU()]) # Start with an empty primary HDU
+            
+        # Initialize table with null values
+        num_rows = len(frame_stack.detections_catalogue)
+        psfc = initialise_psf_table(init_columns={pstf.ID : frame_stack.detections_catalogue[detf.ID],
+                                                  pstf.template : -1*np.ones(num_rows,dtype=np.int64),
+                                                  pstf.bulge_index : -1*np.ones(num_rows,dtype=np.int32),
+                                                  pstf.disk_index : -1*np.ones(num_rows,dtype=np.int32)})
         
-        psf_image_prod = products.psf_image.create_psf_image_product(filename=filename)
-        write_pickled_product(psf_image_prod, join(args.workdir,prod_filename))
+        # Add the table to the HDU list
+        psfc_hdu = table_to_hdu(psfc)
+        hdulist.append(psfc_hdu)
         
-        hdulist = fits.HDUList()
+        psf_tables.append(psfc) # Keep a copy of the table
+        psf_tables[x].remove_indices(pstf.ID) # Necessary for bug workaround in astropy
+        psf_tables[x].add_index(pstf.ID) # Allow it to be indexed by galaxy ID
         
-        for j in range(num_detectors):
-            
-            psfc = initialise_psf_table(detector_x = j%6 + 1,
-                                        detector_y = j//6 + 1)
-    
-            if not dry_run:
-                
-                sample_psf = fits.open(psf_path)[0].data
-                bpsf_array = sample_psf
-                dpsf_array = sample_psf
-                
-                for ID in detections_tables[i][j][detf.ID]:
-                    psfc.add_row({pstf.ID: ID,
-                                  pstf.template: 0,
-                                  pstf.stamp_x: np.shape(sample_psf)[1]//2,
-                                  pstf.stamp_y: np.shape(sample_psf)[0]//2,
-                                  pstf.psf_x: np.shape(sample_psf)[1]//2,
-                                  pstf.psf_y: np.shape(sample_psf)[0]//2,
-                                  pstf.cal_time: "",
-                                  pstf.field_time: ""})
-                
-            else:
-                
-                bpsf_array = np.zeros((1,1))
-                dpsf_array = np.zeros((1,1))
-                
-            bulge_psf_header = fits.header.Header(((ppt_mv.extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.bulge_psf_tag),
-                                             (ppt_mv.stamp_size_label,np.min(np.shape(bpsf_array))),
-                                             (ppt_mv.scale_label,0.02)))
-            
-            bpsf_hdu = fits.ImageHDU(data=bpsf_array,
-                                     header=bulge_psf_header)
-            hdulist.append(bpsf_hdu)
-                
-            disk_psf_header = fits.header.Header(((ppt_mv.extname_label,dtc.get_id_string(j%6+1,j//6+1)+"."+ppt_mv.disk_psf_tag),
-                                             (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
-                                             (ppt_mv.scale_label,0.02)))
-            
-            dpsf_hdu = fits.ImageHDU(data=dpsf_array,
-                                     header=disk_psf_header)
-            hdulist.append(dpsf_hdu)
-            
-            psfc_hdu = table_to_hdu(psfc)
-            hdulist.append(psfc_hdu)
-            
+        # Write out the table
         hdulist.writeto(join(args.workdir,filename),clobber=True)
-    
-        logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(i) + ".")
         
-    write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
+    logger.info("Base files for PSF data set up.")
+        
+    # For each galaxy, add a bulge and disk PSF image if it's in the frame
+    bulge_hdu = 2
+    counter = 0
+    discarded = 0
+    first_galaxy = True
+    for row in frame_stack.detections_catalogue:
+        
+        gal_id = row[detf.ID]
+        
+        # Get a stamp just to check if the galaxy is in frame
+        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width=1)
+        
+        if gal_stamp_stack.is_empty():
+            if test_mode:
+                discarded += 1
+                if discarded % 10 == 0:
+                    logger.info("Discarded " + str(discarded) + " galaxies.")
+            continue
+        
+        for x in range(num_exposures):
+        
+            if first_galaxy or not test_mode:
+                # Get mock data for bulge and disk psfs
+                bpsf_array = deepcopy(mock_psf_data)
+                dpsf_array = deepcopy(mock_psf_data)
+                
+                # Add the bulge and disk HDUs
+                bulge_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.bulge_psf_tag),
+                                                       (ppt_mv.stamp_size_label,np.min(np.shape(bpsf_array))),
+                                                       (ppt_mv.scale_label,0.02)))
+                
+                bpsf_hdu = fits.ImageHDU(data=bpsf_array,
+                                         header=bulge_psf_header)
+                    
+                disk_psf_header = fits.header.Header(((ppt_mv.extname_label,str(gal_id)+"."+ppt_mv.disk_psf_tag),
+                                                 (ppt_mv.stamp_size_label,np.min(np.shape(dpsf_array))),
+                                                 (ppt_mv.scale_label,0.02)))
+                
+                dpsf_hdu = fits.ImageHDU(data=dpsf_array,
+                                         header=disk_psf_header)
+                
+                # Append these to the proper file
+                
+                f = fits.open(join(args.workdir,filenames[x]),mode='append')
+
+                f.append(bpsf_hdu)
+                f.append(dpsf_hdu)
+                
+                f.flush()
+                f.close()
+            
+                # Cleanup
+                del bpsf_array, dpsf_array, bpsf_hdu, dpsf_hdu, bulge_psf_header, disk_psf_header
+            
+            # Update the table
+            output_row = psf_tables[x].loc[gal_id]
+            output_row[pstf.bulge_index] = bulge_hdu
+            output_row[pstf.disk_index] = bulge_hdu+1
+            
+        if first_galaxy:
+            first_galaxy = False
+        
+        if not test_mode:
+            bulge_hdu += 2
+        else:
+            counter += 1
+            
+            if counter % 10 == 0:
+                logger.info("Processed " + str(counter) + " galaxies.")
+            
+    logger.info("PSF Images output. Filling up table with proper references")
+        
+    # Go back and update the tables with proper values
+    for x in range(num_exposures):
+        
+        psf_table = psf_tables[x]
+        
+        f = fits.open(join(args.workdir,filenames[x]),memmap=True,mode='update')
+        out_table = f[1].data
+        
+        out_table[pstf.bulge_index] = psf_table[pstf.bulge_index]
+        out_table[pstf.disk_index] = psf_table[pstf.disk_index]
+            
+        f.flush()
+        f.close()
+
+    logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(x) + ".")
+        
+    # Write listfile of objects
+    write_listfile( join(args.workdir,args.psf_images_and_tables), filenames )
     
     logger.info("Finished mock"+dry_label+" psf fitting.")
         
