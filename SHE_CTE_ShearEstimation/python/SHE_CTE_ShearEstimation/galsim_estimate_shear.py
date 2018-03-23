@@ -190,9 +190,20 @@ def GS_estimate_shear( data_stack, method, workdir ):
     
     shear_estimates_table = initialise_shear_estimates_table()
 
-    stacked_gal_scale = data_stack.stacked_image.header[scale_label]
-    gal_scale = data_stack.exposures[0].detectors[0,0].header[scale_label]
-    psf_scale = data_stack.exposures[0].bulge_psf_image.header[scale_label]
+    if scale_label in data_stack.stacked_image.header:
+        stacked_gal_scale = data_stack.stacked_image.header[scale_label]
+    else:
+        stacked_gal_scale = 0.1
+        
+    if scale_label in data_stack.exposures[0].detectors[1,1].header:
+        gal_scale = data_stack.exposures[0].detectors[1,1].header[scale_label]
+    else:
+        gal_scale = 0.1
+        
+    if scale_label in data_stack.exposures[0].bulge_psf_image.header:
+        psf_scale = data_stack.exposures[0].bulge_psf_image.header[scale_label]
+    else:
+        psf_scale = 0.1
     
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
