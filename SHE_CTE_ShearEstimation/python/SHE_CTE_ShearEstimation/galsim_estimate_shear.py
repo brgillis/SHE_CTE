@@ -132,7 +132,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     resampled_psf_stamp = get_resampled_image(psf_stamp, gal_scale)
     
     gal_mask = gal_stamp.get_object_mask(ID).astype(np.uint16) # Galsim requires int array
-    sky_var = np.square(gal_stamp.noisemap.transpose())
+    sky_var = galsim.Image(np.square(gal_stamp.noisemap.transpose()), scale=gal_scale)
     
     try:
         
