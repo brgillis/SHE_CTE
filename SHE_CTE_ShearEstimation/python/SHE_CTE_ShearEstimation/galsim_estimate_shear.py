@@ -224,7 +224,8 @@ def GS_estimate_shear( data_stack, method, workdir ):
             continue
         
         # Get stacks of the psf images
-        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id)
+        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id,
+                                                                        make_stacked_psf=True,)
         
         # Get the shear estimate from the stacked image
            
