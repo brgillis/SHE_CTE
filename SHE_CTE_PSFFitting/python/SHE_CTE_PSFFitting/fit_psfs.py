@@ -204,6 +204,9 @@ def fit_psfs(args, dry_run=False):
             bulge_hdu += 2
         else:
             counter += 1
+            
+            logger.info("Processed " + str(counter) + " galaxy/galaxies.")
+            
             if counter > 1000:
                 break
             
