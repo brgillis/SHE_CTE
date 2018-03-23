@@ -233,7 +233,7 @@ def fit_psfs(args, dry_run=False):
         f.flush()
         f.close()
 
-    logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(i) + ".")
+    logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(x) + ".")
         
     # Write listfile of objects
     write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
