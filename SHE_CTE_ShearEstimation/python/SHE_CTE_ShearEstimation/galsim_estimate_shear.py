@@ -132,6 +132,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     resampled_psf_stamp = get_resampled_image(psf_stamp, gal_scale)
     
     badpix = (~gal_stamp.get_object_mask(ID)).astype(np.uint16) # Galsim requires int array
+    
+    # FIXME - What units should sky_var be in?
     sky_var = np.square(gal_stamp.noisemap.transpose()).mean() # Galsim doesn't allow an array here
     
     try:
@@ -140,7 +142,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                                          PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(), 
                                                                                 scale=gal_scale), 
                                                          badpix=galsim.Image(badpix.transpose(), scale=gal_scale),
-                                                         sky_var=sky_var, 
+                                                         sky_var=float(sky_var), # Need to match type signature 
                                                          guess_sig_gal=0.5 / gal_scale, 
                                                          guess_sig_PSF=0.2 / gal_scale, 
                                                          shear_est=method)
