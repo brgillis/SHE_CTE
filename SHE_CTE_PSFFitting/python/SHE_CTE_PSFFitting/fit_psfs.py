@@ -101,7 +101,6 @@ def fit_psfs(args, dry_run=False):
     logger.info("Outputting mock"+dry_label+" PSF images and tables...")
     
     num_exposures = len(frame_stack.exposures)
-    psf_image_and_table_filenames = []
     
     if not dry_run:
                 
@@ -236,7 +235,7 @@ def fit_psfs(args, dry_run=False):
     logger.info("Finished outputting mock"+dry_label+" PSF images and tables for exposure " + str(x) + ".")
         
     # Write listfile of objects
-    write_listfile( join(args.workdir,args.psf_images_and_tables), psf_image_and_table_filenames )
+    write_listfile( join(args.workdir,args.psf_images_and_tables), filenames )
     
     logger.info("Finished mock"+dry_label+" psf fitting.")
         
