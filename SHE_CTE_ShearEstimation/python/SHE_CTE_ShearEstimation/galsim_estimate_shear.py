@@ -264,6 +264,8 @@ def GS_estimate_shear( data_stack, method, workdir ):
         for x in range(len(data_stack.exposures)):
             
             gal_stamp = gal_stamp_stack.exposures[x]
+            if gal_stamp is None:
+                continue
             bulge_psf_stamp = bulge_psf_stack.exposures[x]
             disk_psf_stamp = disk_psf_stack.exposures[x]
     
