@@ -147,6 +147,7 @@ def fit_psfs(args, dry_run=False):
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = 2
     counter = 0
+    discarded = 0
     first_galaxy = True
     for row in frame_stack.detections_catalogue:
         
@@ -156,6 +157,8 @@ def fit_psfs(args, dry_run=False):
         gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width=1)
         
         if gal_stamp_stack.is_empty():
+            discarded += 1
+            logger.info("Discarded " + str(counter) + " galaxy/galaxies.")
             continue
         
         for x in range(num_exposures):
