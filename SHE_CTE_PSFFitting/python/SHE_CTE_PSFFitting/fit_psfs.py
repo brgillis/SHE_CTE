@@ -159,7 +159,8 @@ def fit_psfs(args, dry_run=False):
         if gal_stamp_stack.is_empty():
             if test_mode:
                 discarded += 1
-                logger.info("Discarded " + str(discarded) + " galaxy/galaxies.")
+                if discarded % 10 == 0:
+                    logger.info("Discarded " + str(discarded) + " galaxy/galaxies.")
             continue
         
         for x in range(num_exposures):
@@ -212,9 +213,6 @@ def fit_psfs(args, dry_run=False):
             
             if counter % 10 == 0:
                 logger.info("Processed " + str(counter) + " galaxies.")
-            
-            if counter > 100:
-                break
             
     logger.info("PSF Images output. Filling up table with proper references")
         
