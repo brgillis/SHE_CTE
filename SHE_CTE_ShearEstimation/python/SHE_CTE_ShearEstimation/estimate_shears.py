@@ -105,7 +105,7 @@ def estimate_shears_from_args( args, dry_run = False ):
 
     training_data_filenames = {"KSB":args.ksb_training_data,
                                "REGAUSS":args.regauss_training_data,
-                               "MomentsML":args.moments_training_data,
+                               "MomentsML":args.momentsml_training_data,
                                "LensMC":args.lensmc_training_data,
                                "BFD":args.bfd_training_data}
 
