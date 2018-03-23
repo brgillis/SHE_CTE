@@ -84,7 +84,8 @@ def estimate_shears_from_args( args, dry_run = False ):
                                      stacked_seg_filename = args.stacked_segmentation_image,
                                      psf_listfile_filename = args.psf_images_and_tables,
                                      detections_listfile_filename = args.detections_tables,
-                                     workdir = args.workdir, )
+                                     workdir = args.workdir,
+                                     clean_detections=True )
 
     # Calibration parameters product
 
