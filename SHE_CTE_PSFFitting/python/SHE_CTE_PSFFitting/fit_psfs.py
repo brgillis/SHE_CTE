@@ -157,8 +157,9 @@ def fit_psfs(args, dry_run=False):
         gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width=1)
         
         if gal_stamp_stack.is_empty():
-            discarded += 1
-            logger.info("Discarded " + str(discarded) + " galaxy/galaxies.")
+            if test_mode:
+                discarded += 1
+                logger.info("Discarded " + str(discarded) + " galaxy/galaxies.")
             continue
         
         for x in range(num_exposures):
