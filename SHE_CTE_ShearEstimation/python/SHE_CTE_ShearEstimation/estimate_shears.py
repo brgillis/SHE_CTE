@@ -30,19 +30,12 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, RE
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT import detector as dtc
-from SHE_PPT.file_io import ( read_listfile, read_pickled_product,
-                             write_pickled_product, get_allowed_filename )
-from SHE_PPT.table_formats.galaxy_population import tf as gptf
+from SHE_PPT.file_io import ( read_pickled_product, write_pickled_product, get_allowed_filename )
 from SHE_PPT import products
-from SHE_PPT.table_formats.psf import tf as pstf
-from SHE_PPT.she_image import SHEImage
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import find_extension
 import numpy as np
 
 products.shear_estimates.init()
@@ -52,7 +45,7 @@ loading_methods = {"KSB":None,
                    "REGAUSS":None,
                    "MomentsML":None,
                    "LensMC":None,
-                   "BFD":bfd_load_training_data}
+                   "BFD":bfd_load_method_data}
 
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
