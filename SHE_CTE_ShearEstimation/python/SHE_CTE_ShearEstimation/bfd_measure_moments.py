@@ -34,11 +34,13 @@ from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 
 from SHE_BFD_CalculateMoments import bfd
-from SHE_BFD_CalculateMoments.measure_moments import get_BFD_info
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, bfd_load_configuration
 
 
 
 def bfd_measure_moments( data_stack, method_data=None ):
+    
+    # method_data is training data
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
@@ -46,8 +48,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
     # check to see if method_data has been given, if None go get 
     # standard file in SHE_BFD auxdir
 
-    if method_data is None:
-        method_data = bfd_load_method_data('/home/user/Work/Projects/SHE_BFD/SHE_BFD_CalculateMoments/auxdir/bfd.config')
+    # get configuration info
+    config_data = bfd_load_configuration()
     
     # Get lists of exposures, PSF images, and detection tables
     data_images = []
@@ -89,7 +91,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
         detection_tables[table_index].add_index(detf.ID)
         psf_tables[table_index].add_index(pstf.ID)
 
-    if method_data['isTarget'] == True:
+    if config_data['isTarget'] == True:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                               optional_columns= \
                                                               [setf.x,
@@ -99,8 +101,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
                                                                setf.bfd_cov_odd,
                                                                setf.bfd_pqr])
 
-        bfd_moments_table.meta['WT_N'] = method_data['WEIGHT']['N']
-        bfd_moments_table.meta['WT_SIGMA'] = method_data['WEIGHT']['SIGMA']
+        bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
+        bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
         nlost=0
 
     else:
@@ -121,8 +123,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
                                                           setf.bfd_template_weight,
                                                           setf.bfd_jsuppress])
 
-        bfd_moments_table.meta['WT_N'] = method_data['WEIGHT']['N']
-        bfd_moments_table.meta['WT_SIGMA'] = method_data['WEIGHT']['SIGMA']    
+        bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
+        bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']    
         # TO DO ADD TEMPLATE SPECIFIC STUFF
         #bfd_moments_table.meta['TMPL_SNMIN'] = method_data['TEMPLATE']['SNMIN']
         #bfd_moments_table.meta['TMPL_SIGMA_XY'] = method_data['TEMPLATE']['SIGMA_XY']
@@ -138,7 +140,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
         moments   = 0
         cov_even  = 0
         cov_odd   = 0
-        if method_data['isTarget'] == False:
+        if config_data['isTarget'] == False:
             dm_dg1     = 0
             dm_dg2     = 0
             dm_dmu     = 0
@@ -192,8 +194,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
         # will try to stack stamps eventually ,for now use 1st
         #stacked_stamp = make_stacked_stamp(gal_stamps,psf_stamps,sky_var_list)
 
-        bfd_info = get_bfd_info(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], method_data)
-        if method_data['isTarget']==True:
+        bfd_info = get_bfd_info(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], config_data)
+        if config_data['isTarget']==True:
             if bfd_info.lost:
                 nlost+=1
             else:
@@ -237,35 +239,3 @@ def bfd_measure_moments( data_stack, method_data=None ):
 
     return bfd_moments_table # No MCMC chains for this method
 
-def bfd_load_method_data(method_data_filename):
-    
-    # set up dictionary structure with defaults
-    method_data={'isTarget': True,
-                 'WEIGHT':{'N':4,
-                           'SIGMA':3.5},
-                 'TEMPLATE':{}
-             }
-
-    # read in configuration file
-    lines = [line.rstrip('\n') for line in open(method_data_filename)]
-
-    # loop through configuration file to add parameters
-    for l in lines:
-        param, val = l.split(" ")
-
-        if param.find('isTarget') != -1:
-            if val=='True':
-                method_data['isTarget']==True
-            elif val=='False':
-                method_data['isTarget']==False
-            else:
-                raise Exception("isTarget must be True or False")
-
-        if param.find('WT') != -1:
-            method_data['WEIGHT'][param.split("_")[1]]=np.float(val)
-        
-        if param.find('TMPL') != -1:
-            raise Exception("Need to setup template info")
-
-
-    return method_data
