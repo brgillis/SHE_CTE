@@ -94,9 +94,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
     if config_data['isTarget'] == True:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                               optional_columns= \
-                                                              [setf.x,
-                                                               setf.y,
-                                                               setf.bfd_moments,
+                                                              [setf.bfd_moments,
                                                                setf.bfd_cov_even,
                                                                setf.bfd_cov_odd,
                                                                setf.bfd_pqr])
@@ -108,9 +106,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
     else:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                          optional_columns= \
-                                                         [setf.x,
-                                                          setf.y,
-                                                          setf.bfd_moments,
+                                                         [setf.bfd_moments,
                                                           setf.bfd_deriv_moments_dg1,
                                                           setf.bfd_deriv_moments_dg2,
                                                           setf.bfd_deriv_moments_dmu,
@@ -125,34 +121,15 @@ def bfd_measure_moments( data_stack, method_data=None ):
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']    
-        # TO DO ADD TEMPLATE SPECIFIC STUFF
-        #bfd_moments_table.meta['TMPL_SNMIN'] = method_data['TEMPLATE']['SNMIN']
-        #bfd_moments_table.meta['TMPL_SIGMA_XY'] = method_data['TEMPLATE']['SIGMA_XY']
-        #bfd_moments_table.meta['TMPL_SIGMA_FLUX'] = method_data['TEMPLATE']['SIGMA_FLUX']
-        #bfd_moments_table.meta['TMPL_SIGMA_STEP'] = method_data['TEMPLATE']['SIGMA_STEP']
-        #bfd_moments_table.meta['TMPL_SIGMA_MAX'] = method_data['TEMPLATE']['SIGMA_MAX']
-        #bfd_moments_table.meta['TMPL_XY_MAX'] = method_data['TEMPLATE']['XY_MAX']
+        bfd_moments_table.meta['T_SNMIN'] = config_data['TEMPLATE']['SNMIN']
+        bfd_moments_table.meta['T_SIGXY'] = config_data['TEMPLATE']['SIGMA_XY']
+        bfd_moments_table.meta['T_SIGFLX'] = config_data['TEMPLATE']['SIGMA_FLUX']
+        bfd_moments_table.meta['T_SIGSTP'] = config_data['TEMPLATE']['SIGMA_STEP']
+        bfd_moments_table.meta['T_SIGMAX'] = config_data['TEMPLATE']['SIGMA_MAX']
+        bfd_moments_table.meta['T_XYMAX'] = config_data['TEMPLATE']['XY_MAX']
 
     for ID in IDs:
         
-        x         = 0
-        y         = 0
-        moments   = 0
-        cov_even  = 0
-        cov_odd   = 0
-        if config_data['isTarget'] == False:
-            dm_dg1     = 0
-            dm_dg2     = 0
-            dm_dmu     = 0
-            d2m_dg1dg1 = 0
-            d2m_dg1dg2 = 0
-            d2m_dg2dg2 = 0
-            d2m_dg1dmu = 0
-            d2m_dg2dmu = 0
-            d2m_dmudmu = 0
-            jsuppress  = 0
-            weight     = 0
-
         for table_index in range(num_exposures):
             
             gal_stamps=[]
@@ -208,8 +185,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
                 # Add this row to the estimates table
                 bfd_moments_table.add_row({ setf.ID : ID,
                                             setf.bfd_moments :bfd_info.m,
-                                            setf.x : bfd_info.x,
-                                            setf.y : bfd_info.y,
+                                            setf.x_world : bfd_info.x,
+                                            setf.y_world : bfd_info.y,
                                             setf.bfd_cov_even : cov_even,
                                             setf.bfd_cov_odd : cov_odd})
 
@@ -218,8 +195,8 @@ def bfd_measure_moments( data_stack, method_data=None ):
                 for i, tmpl in enumerate(bfd_info.templates):
                     bfd_info.get_template(i)
                     bfd_moments_table.add_row({setf.ID:ID,
-                                               setf.x:bfd_info.x,
-                                               setf.y:bfd_info.y,
+                                               setf.x_world:bfd_info.x,
+                                               setf.y_world:bfd_info.y,
                                                setf.bfd_moments:bfd_info.m,
                                                setf.bfd_dm_dg1:bfd_info.dm_dg1,
                                                setf.bfd_dm_dg2:bfd_info.dm_dg2,
