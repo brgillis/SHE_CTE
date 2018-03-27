@@ -38,71 +38,27 @@ from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, bfd_load_confi
 
 
 
-def bfd_measure_moments( data_stack, method_data=None ):
-    
-    # method_data is training data
+def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
+    # not using training data or calibration data yet
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
 
-    # check to see if method_data has been given, if None go get 
-    # standard file in SHE_BFD auxdir
-
     # get configuration info
     config_data = bfd_load_configuration()
     
-    # Get lists of exposures, PSF images, and detection tables
-    data_images = []
-    detection_tables = []
-    bulge_psf_images = []
-    disk_psf_images = []
-    psf_tables = []
-    
-    num_exposures = len(data_stack.exposures)
-
-    for i in range(num_exposures):
-        data_images.append(data_stack.exposures[i].science_image)
-        detection_tables.append(data_stack.exposures[i].detections_table)
-        bulge_psf_images.append(data_stack.exposures[i].bpsf_image)
-        disk_psf_images.append(data_stack.exposures[i].dpsf_image)
-        psf_tables.append(data_stack.exposures[i].psf_table)
- 
-    # Calculate the sky variances
-    sky_vars = []
-    for table_index in range(num_exposures):
-        detections_table = detection_tables[table_index]
-        sky_vars.append(get_var_ADU_per_pixel(pixel_value_ADU=0.,
-                                                sky_level_ADU_per_sq_arcsec=detections_table.meta[detf.m.subtracted_sky_level],
-                                                read_noise_count=detections_table.meta[detf.m.read_noise],
-                                                pixel_scale=data_images[table_index].header[scale_label],
-                                                gain=detections_table.meta[detf.m.gain]))
-
-
-    # Get all unique IDs
-    IDs = None
-    for table_index in range(num_exposures):
-
-        if IDs is None:
-            IDs = set(detection_tables[table_index][detf.ID])
-        else:
-            IDs = set.union(IDs,detection_tables[table_index][detf.ID])
-
-        # Set the ID as an index for each table
-        detection_tables[table_index].add_index(detf.ID)
-        psf_tables[table_index].add_index(pstf.ID)
-
+    # intialize the table
     if config_data['isTarget'] == True:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
-                                                              optional_columns= \
-                                                              [setf.bfd_moments,
-                                                               setf.bfd_cov_even,
-                                                               setf.bfd_cov_odd,
-                                                               setf.bfd_pqr])
+                                                         optional_columns= \
+                                                         [setf.bfd_moments,
+                                                          setf.bfd_cov_even,
+                                                          setf.bfd_cov_odd,
+                                                          setf.bfd_pqr])
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
         nlost=0
-
     else:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                          optional_columns= \
@@ -128,50 +84,73 @@ def bfd_measure_moments( data_stack, method_data=None ):
         bfd_moments_table.meta['T_SIGMAX'] = config_data['TEMPLATE']['SIGMA_MAX']
         bfd_moments_table.meta['T_XYMAX'] = config_data['TEMPLATE']['XY_MAX']
 
-    for ID in IDs:
+    # define pixel scales
+    if scale_label in data_stack.stacked_image.header:
+        stacked_gal_scale = data_stack.stacked_image.header[scale_label]
+    else:
+        stacked_gal_scale = 0.1
         
-        for table_index in range(num_exposures):
-            
-            gal_stamps=[]
-            bulge_psf_stamps=[]
-            disk_psf_stamps=[]
-            sky_var_list=[]
-
-            try:
-                
-                # Get the row for this ID
-                g_row = detection_tables[table_index].loc[ID]
-                p_row = psf_tables[table_index].loc[ID]
-
-                # Get galaxy and PSF stamps
-                gal_stamps.append(data_images[table_index].extract_stamp(g_row[detf.gal_x],
-                                                                         g_row[detf.gal_y],
-                                                                         data_images[table_index].header[stamp_size_label],
-                                                                         keep_header=True))
-
-                bulge_psf_stamps.append(bulge_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                                    p_row[pstf.psf_y],
-                                                                                    bulge_psf_images[table_index].header[stamp_size_label],
-                                                                                    keep_header=True))
-
-                disk_psf_stamps.append(disk_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                                  p_row[pstf.psf_y],
-                                                                                  disk_psf_images[table_index].header[stamp_size_label],
-                                                                                  keep_header=True))
-
-
-                sky_var_list.append(sky_vars[table_index])
-
-            except KeyError as e:
-                if "No matches found for key" in e:
-                    pass # ID isn't present in this table, so just skip it
-                else:
-                    raise
+    if scale_label in data_stack.exposures[0].detectors[1,1].header:
+        gal_scale = data_stack.exposures[0].detectors[1,1].header[scale_label]
+    else:
+        gal_scale = 0.1
         
-        # will try to stack stamps eventually ,for now use 1st
-        #stacked_stamp = make_stacked_stamp(gal_stamps,psf_stamps,sky_var_list)
+    if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
+    else:
+        psf_scale = 0.1
 
-        bfd_info = get_bfd_info(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], config_data)
+    # Loop over galaxies and get an estimate for each one
+    for row in data_stack.detections_catalogue:
+        
+        gal_id = row[detf.ID]
+        gal_x_world = row[detf.gal_x_world]
+        gal_y_world = row[detf.gal_y_world]
+        
+        # Get a stack of the galaxy images
+        gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
+                                                         y_world=gal_y_world,
+                                                         width=stamp_size,
+                                                         x_buffer=x_buffer,
+                                                         y_buffer=y_buffer)
+        
+        # If there's no data for this galaxy, don't add it to the catalogue at all
+        if gal_stamp_stack.is_empty():
+            continue
+
+        # Get stacks of the psf images
+        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id,
+                                                                        make_stacked_psf=True,)
+
+        # pull out images, sky variance, and wcs
+        stacked_gal_stamp = gal_stamp_stack.stacked_image
+        stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+        stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+
+        stacked_gal_image=stacked_gal_stamp.data
+        stacked_psf_image=stacked_bulge_psf_stamp.data
+
+        sky_var=np.square(stacked_gal_stamp.noisemap).mean #? what are units of noisemap?
+        
+        origin = (0.,0.)
+        uvgal=(gal_x_world,gal_y_world)
+        xygal = gal_stamp_stack.world2pix(gal_x_world,gal_y_world)
+        
+        uvstamp=uvgal
+        xystamp=(128,128)
+        
+        duv_dxy=gal_stamp_stack.get_pix2world_transformation(xyref[0],xyref[1])
+        wcs=bfd.WCS(duv_dxy,xyref=xystamp,uvref=uvstamp)
+
+        bfd_info = get_bfd_info(stacked_gal_image,
+                                stacked_psf_image,
+                                stacked_gal_scale,
+                                psf_scale,
+                                sky_var, 
+                                gal_id,
+                                wcs=wcs,
+                                config_data)
+
         if config_data['isTarget']==True:
             if bfd_info.lost:
                 nlost+=1
@@ -209,7 +188,7 @@ def bfd_measure_moments( data_stack, method_data=None ):
                                                setf.bfd_d2m_dmu_dmu:bfd_info.d2m_dmudmu,
                                                setf.bfd_jsuppression:bfd_info.jsuppression,
                                                setf.bfd_weight:bfd_info.weight})
-        if method_data['isTarget'] == True:
+        if config_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
 
     logger.debug("Exiting BFD_measure_moments")
