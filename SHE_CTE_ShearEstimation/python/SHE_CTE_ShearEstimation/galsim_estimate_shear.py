@@ -310,6 +310,7 @@ def GS_estimate_shear( data_stack, method, workdir ):
                                         setf.g2 : stack_g2,
                                         setf.g1_err : np.sqrt(stack_gerr**2+shape_noise**2),
                                         setf.g2_err : np.sqrt(stack_gerr**2+shape_noise**2),
+                                        setf.g1g2_covar:0,
                                         setf.re : stack_re,
                                         setf.snr : stack_snr,
                                         setf.x_world : stack_x_world,
