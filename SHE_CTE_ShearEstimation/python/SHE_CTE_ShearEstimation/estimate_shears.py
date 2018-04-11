@@ -175,7 +175,7 @@ def estimate_shears_from_args( args, dry_run = False ):
                 # Cleanup loaded data for this method
                 del training_data, calibration_data
 
-            except Exception as e:
+            except (NotImplementedError,ValueError) as e:
 
                 logger.warning( str( e ) )
 
