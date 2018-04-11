@@ -167,8 +167,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                        1e99,
                                        np.NaN,
                                        np.NaN,
-                                       gal_stamp.data.shape()[0],
-                                       gal_stamp.data.shape()[1])
+                                       gal_stamp.data.shape[0],
+                                       gal_stamp.data.shape[1])
         
     logger.debug("Exiting get_shear_estimate")
     
