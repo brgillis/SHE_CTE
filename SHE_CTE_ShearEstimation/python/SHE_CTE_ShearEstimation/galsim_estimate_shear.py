@@ -173,14 +173,14 @@ def inv_var_stack( a, a_err ):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering inv_var_stack")
     
+    if a is None:
+        return None, None
+    
     a_inv_var = 1/a_err**2
     
     inv_a_inv_var_sum = 1./a_inv_var.sum()
     
     a_sum = np.nansum(a*a_inv_var)
-    
-    if a_sum is None:
-        return None, None
     
     a_m = np.nansum(a*a_inv_var)*inv_a_inv_var_sum
     
