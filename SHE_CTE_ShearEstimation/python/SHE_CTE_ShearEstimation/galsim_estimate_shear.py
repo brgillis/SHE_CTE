@@ -39,7 +39,7 @@ y_buffer = -5
 shape_noise = 0.25
 
 class ShearEstimate(object):
-    def __init__(self, g1, g2, gerr=None, re=None, snr=None, x=None, y=None):
+    def __init__(self, g1, g2, gerr, re, snr, x, y):
         self.g1 = g1
         self.g2 = g2
         self.gerr = gerr
@@ -162,7 +162,13 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         if ("HSM Error" not in str(e)):
             raise
         logger.debug(str(e))
-        shear_estimate = ShearEstimate(np.NaN, np.NaN, 1e99)
+        shear_estimate = ShearEstimate(np.NaN,
+                                       np.NaN,
+                                       1e99,
+                                       np.NaN,
+                                       np.NaN,
+                                       gal_stamp.data.shape()[0],
+                                       gal_stamp.data.shape()[1])
         
     logger.debug("Exiting get_shear_estimate")
     
