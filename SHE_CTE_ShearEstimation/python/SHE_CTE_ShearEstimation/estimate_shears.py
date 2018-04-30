@@ -144,7 +144,7 @@ def estimate_shears_from_args( args, dry_run = False ):
 
                 # Check we've supplied a method for it
                 if estimate_shear is None:
-                    raise NotImplementedError( "No sheare measurement method supplied for method " + method + "." )
+                    raise NotImplementedError( "No shear measurement method supplied for method " + method + "." )
 
                 if load_training_data is not None:
                     training_data = load_training_data( training_data_filenames[method] )
@@ -176,7 +176,7 @@ def estimate_shears_from_args( args, dry_run = False ):
                 # Cleanup loaded data for this method
                 del training_data, calibration_data
 
-            except Exception as e:
+            except (NotImplementedError,ValueError) as e:
 
                 logger.warning( str( e ) )
 
@@ -190,13 +190,15 @@ def estimate_shears_from_args( args, dry_run = False ):
                     # Fill it with NaN measurements and 1e99 errors
 
                     shear_estimates_table.add_row( {setf.ID:data_stack.detections_catalogue[detf.ID][r],
-                                 setf.g1:np.NaN,
-                                 setf.g2:np.NaN,
-                                 setf.g1_err:1e99,
-                                 setf.g2_err:1e99,
-                                 setf.g1g2_covar:1e99,
-                                 setf.x_world:data_stack.detections_catalogue[detf.gal_x_world][r],
-                                 setf.y_world:data_stack.detections_catalogue[detf.gal_y_world][r], } )
+                                                    setf.g1:np.NaN,
+                                                    setf.g2:np.NaN,
+                                                    setf.g1_err:1e99,
+                                                    setf.g2_err:1e99,
+                                                    setf.g1g2_covar:np.NaN,
+                                                    setf.re : np.NaN,
+                                                    setf.snr : np.NaN,
+                                                    setf.x_world:data_stack.detections_catalogue[detf.gal_x_world][r],
+                                                    setf.y_world:data_stack.detections_catalogue[detf.gal_y_world][r], } )
 
                 hdulist.append( table_to_hdu( shear_estimates_table ) )
 
