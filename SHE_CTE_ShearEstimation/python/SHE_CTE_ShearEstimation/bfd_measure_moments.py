@@ -47,7 +47,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
     # get configuration info
     config_data = bfd_load_configuration()
     
-    # intialize the table
+    # initialize the table
     if config_data['isTarget'] == True:
         bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
                                                          optional_columns= \
