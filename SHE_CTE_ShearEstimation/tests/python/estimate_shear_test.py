@@ -129,7 +129,7 @@ class TestCase:
                 gal_stamp.header[scale_label] = observed_gal_image.scale
                 
                 # Get the shear estimate
-                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, sky_var, method, 0)
+                shear_estimate = get_shear_estimate(gal_stamp, psf_stamp, observed_gal_image.scale, ss_psf_image.scale, 0, method)
                 est_g1, est_g2 = shear_estimate.g1, shear_estimate.g2
                 
                 assert np.isclose( est_g1, g1, rtol=0.2, atol=0.01 )
