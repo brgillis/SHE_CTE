@@ -253,8 +253,7 @@ def GS_estimate_shear( data_stack, method, workdir ):
                                             ID = gal_id,
                                             method = method )
 
-        stack_g1 = shear_estimate.g1
-        stack_g2 = shear_estimate.g2
+        stack_g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
         stack_gerr = shear_estimate.gerr
         stack_re = shear_estimate.re
         stack_snr = shear_estimate.snr
@@ -263,10 +262,11 @@ def GS_estimate_shear( data_stack, method, workdir ):
         stack_x_pix = shear_estimate.x + stacked_gal_stamp.offset[0]
         stack_y_pix = shear_estimate.y + stacked_gal_stamp.offset[1]
 
-        stack_x_world, stack_y_world = data_stack.stacked_image.pix2world( stack_x_pix, stack_y_pix, negate_ra = True )
+        stack_x_world, stack_y_world = data_stack.stacked_image.pix2world( stack_x_pix, stack_y_pix )
 
         # Need to convert g1/g2 and errors to -ra/dec coordinates
-        transformation_matrix = data_stack.stacked_image.get_pix2world_transformation( stack_x_pix, stack_y_pix, negate_ra = True )
+        stack_rotation_matrix = data_stack.stacked_image.get_pix2world_rotation( stack_x_pix, stack_y_pix )
+        stack_g_world = stack_rotation_matrix @ (stack_rotation_matrix @ stack_g_pix)
 
         # Get estimates for each exposure
 
@@ -293,11 +293,23 @@ def GS_estimate_shear( data_stack, method, workdir ):
                                                 ID = gal_id,
                                                 method = method )
 
-            g1s.append( shear_estimate.g1 )
-            g2s.append( shear_estimate.g2 )
+            # Get pixel coordinates on the orginal image
+            x_pix = shear_estimate.x + gal_stamp.offset[0]
+            y_pix = shear_estimate.y + gal_stamp.offset[1]
+            
+            g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
+
+            # Need to convert g1/g2 and errors to -ra/dec coordinates
+            rotation_matrix = data_stack.exposures[x].get_pix2world_rotation( x_pix, y_pix )
+            g_world = rotation_matrix @ (rotation_matrix @ g_pix)
+            
+            g1s.append(g_world[0])
+            g2s.append(g_world[1])
             gerrs.append( shear_estimate.gerr )
             res.append( shear_estimate.re )
             snrs.append( shear_estimate.snr )
+            
+            
 
         g1s = np.array( g1s )
         g2s = np.array( g2s )
@@ -312,11 +324,11 @@ def GS_estimate_shear( data_stack, method, workdir ):
 
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row( { setf.ID : gal_id,
-                                        setf.g1 : stack_g1,
-                                        setf.g2 : stack_g2,
+                                        setf.g1 : stack_g_world[0],
+                                        setf.g2 : stack_g_world[0],
                                         setf.g1_err : np.sqrt( stack_gerr ** 2 + shape_noise ** 2 ),
                                         setf.g2_err : np.sqrt( stack_gerr ** 2 + shape_noise ** 2 ),
-                                        setf.g1g2_covar:0,
+                                        setf.g1g2_covar : 0,
                                         setf.re : stack_re,
                                         setf.snr : stack_snr,
                                         setf.x_world : stack_x_world,
