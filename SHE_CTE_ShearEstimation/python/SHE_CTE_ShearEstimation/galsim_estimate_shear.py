@@ -254,7 +254,6 @@ def GS_estimate_shear( data_stack, method, workdir ):
                                             method = method )
 
         stack_g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
-        stack_gerr = shear_estimate.gerr
         stack_re = shear_estimate.re
         stack_snr = shear_estimate.snr
 
@@ -266,7 +265,11 @@ def GS_estimate_shear( data_stack, method, workdir ):
 
         # Need to convert g1/g2 and errors to -ra/dec coordinates
         stack_rotation_matrix = data_stack.stacked_image.get_pix2world_rotation( stack_x_pix, stack_y_pix )
-        stack_g_world = stack_rotation_matrix @ (stack_rotation_matrix @ stack_g_pix)
+        stack_double_rotation_matrix = stack_rotation_matrix @ stack_rotation_matrix # 2x2 so it's commutative
+        stack_g_world = stack_double_rotation_matrix @ stack_g_pix
+        
+        stack_covar_pix = np.matrix([[shear_estimate.gerr,0],[0,shear_estimate.gerr]])
+        stack_covar_world = stack_double_rotation_matrix @ stack_covar_pix @ stack_double_rotation_matrix.transpose()
 
         # Get estimates for each exposure
 
@@ -326,9 +329,9 @@ def GS_estimate_shear( data_stack, method, workdir ):
         shear_estimates_table.add_row( { setf.ID : gal_id,
                                         setf.g1 : stack_g_world[0],
                                         setf.g2 : stack_g_world[0],
-                                        setf.g1_err : np.sqrt( stack_gerr ** 2 + shape_noise ** 2 ),
-                                        setf.g2_err : np.sqrt( stack_gerr ** 2 + shape_noise ** 2 ),
-                                        setf.g1g2_covar : 0,
+                                        setf.g1_err : np.sqrt( stack_covar_world[0,0] ** 2 + shape_noise ** 2 ),
+                                        setf.g2_err : np.sqrt( stack_covar_world[1,1] ** 2 + shape_noise ** 2 ),
+                                        setf.g1g2_covar : stack_covar_world[0,1],
                                         setf.re : stack_re,
                                         setf.snr : stack_snr,
                                         setf.x_world : stack_x_world,
