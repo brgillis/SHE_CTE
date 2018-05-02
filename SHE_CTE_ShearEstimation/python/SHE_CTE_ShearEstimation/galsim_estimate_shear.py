@@ -229,7 +229,7 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
             break
         else:
             row_index += 1
-            if (row_index-1)%1 == 0:
+            if (row_index-1)%100 == 0:
                 logger.info("Calculating shear for galaxy " + str(row_index))
 
         gal_id = row[detf.ID]
