@@ -127,6 +127,8 @@ def estimate_shears_from_args( args, dry_run = False ):
             methods = args.methods
 
         for method in methods:
+            
+            logger.info("Estimating shear with method " + method + "...")
 
             load_training_data = loading_methods[method]
 
