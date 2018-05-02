@@ -270,6 +270,10 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
         stack_y_pix = shear_estimate.y + stacked_gal_stamp.offset[1]
 
         stack_x_world, stack_y_world = data_stack.stacked_image.pix2world( stack_x_pix, stack_y_pix )
+        stack_x_world2, stack_y_world2 = stacked_gal_stamp.pix2world( shear_estimate.x, shear_estimate.y )
+        
+        assert stack_x_world == stack_x_world2
+        assert stack_y_world == stack_y_world2
 
         # Need to convert g1/g2 and errors to -ra/dec coordinates
         stack_rotation_matrix = data_stack.stacked_image.get_pix2world_rotation( stack_x_pix, stack_y_pix )
@@ -303,15 +307,11 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
                                                 psf_scale = psf_scale,
                                                 ID = gal_id,
                                                 method = method )
-
-            # Get pixel coordinates on the orginal image
-            x_pix = shear_estimate.x + gal_stamp.offset[0]
-            y_pix = shear_estimate.y + gal_stamp.offset[1]
             
             g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
 
             # Need to convert g1/g2 and errors to -ra/dec coordinates
-            rotation_matrix = data_stack.exposures[x].get_pix2world_rotation( x_pix, y_pix )
+            rotation_matrix = gal_stamp.get_pix2world_rotation( shear_estimate.x, shear_estimate.y )
             g_world = rotation_matrix @ (rotation_matrix @ g_pix)
             
             g1s.append(g_world[0])
