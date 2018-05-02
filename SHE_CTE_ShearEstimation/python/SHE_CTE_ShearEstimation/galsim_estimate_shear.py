@@ -224,13 +224,13 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
         
-        if debug and row_index>1000:
+        if debug and row_index>100:
             logger.debug("Debug mode enabled, so exiting GS_estimate_shear early")
             break
         else:
             row_index += 1
-            if (row_index-1)%100 == 0:
-                logger.info("Calculating shear for galaxy " + str(row_index))
+            if (row_index-1)%10 == 0:
+                logger.info("Calculating shear for galaxy " + str(row_index-1))
 
         gal_id = row[detf.ID]
         gal_x_world = row[detf.gal_x_world]
