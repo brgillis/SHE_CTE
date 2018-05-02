@@ -274,7 +274,7 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
         stack_x_world, stack_y_world = stacked_gal_stamp.pix2world( shear_estimate.x, shear_estimate.y )
 
         # Need to convert g1/g2 and errors to -ra/dec coordinates
-        stack_rotation_matrix = data_stack.stacked_image.get_pix2world_rotation( stack_x_pix, stack_y_pix )
+        stack_rotation_matrix = dstacked_gal_stamp.get_pix2world_rotation( shear_estimate.x, shear_estimate.y )
         stack_double_rotation_matrix = stack_rotation_matrix @ stack_rotation_matrix # 2x2 so it's commutative
         stack_g_world = stack_double_rotation_matrix @ stack_g_pix
         
