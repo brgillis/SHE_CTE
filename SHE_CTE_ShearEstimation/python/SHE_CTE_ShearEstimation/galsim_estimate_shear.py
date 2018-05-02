@@ -65,13 +65,13 @@ def get_resampled_image( subsampled_image, resampled_scale ):
 
     return resampled_image
 
-def KSB_estimate_shear( data_stack, training_data, calibration_data, workdir ):
+def KSB_estimate_shear( data_stack, training_data, calibration_data, workdir, *args, **kwargs ):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear( data_stack, method = "KSB", workdir = workdir )
+    return GS_estimate_shear( data_stack, method = "KSB", workdir = workdir, *args, **kwargs )
 
-def REGAUSS_estimate_shear( data_stack, training_data, calibration_data, workdir ):
+def REGAUSS_estimate_shear( data_stack, training_data, calibration_data, workdir, *args, **kwargs ):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear( data_stack, method = "REGAUSS", workdir = workdir )
+    return GS_estimate_shear( data_stack, method = "REGAUSS", workdir = workdir, *args, **kwargs )
 
 def get_KSB_shear_estimate( galsim_shear_estimate ):
 
@@ -196,7 +196,7 @@ def inv_var_stack( a, a_err ):
 
     logger.debug( "Exiting inv_var_stack" )
 
-def GS_estimate_shear( data_stack, method, workdir ):
+def GS_estimate_shear( data_stack, method, workdir, debug = False ):
 
     logger = getLogger( mv.logger_name )
     logger.debug( "Entering GS_estimate_shear" )
@@ -217,9 +217,17 @@ def GS_estimate_shear( data_stack, method, workdir ):
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
         psf_scale = 0.1
+        
+    row_index = 0
 
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
+        
+        if debug and row_index>1000:
+            logger.debug("Debug mode enabled, so exiting GS_estimate_shear early")
+            break
+        else:
+            row_index += 1
 
         gal_id = row[detf.ID]
         gal_x_world = row[detf.gal_x_world]
@@ -227,10 +235,10 @@ def GS_estimate_shear( data_stack, method, workdir ):
 
         # Get a stack of the galaxy images
         gal_stamp_stack = data_stack.extract_stamp_stack( x_world = gal_x_world,
-                                                         y_world = gal_y_world,
-                                                         width = stamp_size,
-                                                         x_buffer = x_buffer,
-                                                         y_buffer = y_buffer, )
+                                                          y_world = gal_y_world,
+                                                          width = stamp_size,
+                                                          x_buffer = x_buffer,
+                                                          y_buffer = y_buffer, )
 
         # If there's no data for this galaxy, don't add it to the catalogue at all
         if gal_stamp_stack.is_empty():

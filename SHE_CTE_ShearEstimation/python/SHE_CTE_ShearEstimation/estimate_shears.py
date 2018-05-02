@@ -21,9 +21,6 @@
 from os.path import join
 
 from astropy.io import fits
-from astropy.table import Table
-import astropy.table
-import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
@@ -165,7 +162,8 @@ def estimate_shears_from_args( args, dry_run = False ):
                 shear_estimates_table = estimate_shear( data_stack,
                                                         training_data = training_data,
                                                         calibration_data = calibration_data,
-                                                        workdir = args.workdir )
+                                                        workdir = args.workdir,
+                                                        debug = args.debug )
 
                 if not is_in_format( shear_estimates_table, setf ):
                     raise ValueError( "Shear estimation table returned in invalid format for method " + method + "." )
