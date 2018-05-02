@@ -231,6 +231,8 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
             if (row_index-1)%100 == 0:
                 logger.info("Calculating shear for galaxy " + str(row_index))
 
+        import pdb; pdb.set_trace()
+
         gal_id = row[detf.ID]
         gal_x_world = row[detf.gal_x_world]
         gal_y_world = row[detf.gal_y_world]
@@ -267,15 +269,9 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
         stack_re = shear_estimate.re
         stack_snr = shear_estimate.snr
 
-        # Get pixel coordinates on the orginal image
-        stack_x_pix = shear_estimate.x + stacked_gal_stamp.offset[0]
-        stack_y_pix = shear_estimate.y + stacked_gal_stamp.offset[1]
+        # Get world coordinates
 
-        stack_x_world, stack_y_world = data_stack.stacked_image.pix2world( stack_x_pix, stack_y_pix )
-        stack_x_world2, stack_y_world2 = stacked_gal_stamp.pix2world( shear_estimate.x, shear_estimate.y )
-        
-        assert stack_x_world == stack_x_world2
-        assert stack_y_world == stack_y_world2
+        stack_x_world, stack_y_world = stacked_gal_stamp.pix2world( shear_estimate.x, shear_estimate.y )
 
         # Need to convert g1/g2 and errors to -ra/dec coordinates
         stack_rotation_matrix = data_stack.stacked_image.get_pix2world_rotation( stack_x_pix, stack_y_pix )
