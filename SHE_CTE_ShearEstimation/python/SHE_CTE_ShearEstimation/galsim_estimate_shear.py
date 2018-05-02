@@ -37,6 +37,7 @@ stamp_size = 256
 x_buffer = -5
 y_buffer = -5
 shape_noise = 0.25
+get_exposure_estimates = False
 
 class ShearEstimate( object ):
     def __init__( self, g1, g2, gerr, re, snr, x, y ):
@@ -279,55 +280,55 @@ def GS_estimate_shear( data_stack, method, workdir, debug = False ):
         stack_covar_pix = np.matrix([[shear_estimate.gerr,0],[0,shear_estimate.gerr]])
         stack_covar_world = stack_double_rotation_matrix @ stack_covar_pix @ stack_double_rotation_matrix.transpose()
 
-        # Get estimates for each exposure
+        if get_exposure_estimates:
 
-        g1s = []
-        g2s = []
-        gerrs = []
-        res = []
-        snrs = []
-        x_worlds = []
-        y_worlds = []
+            # Get estimates for each exposure
 
-        for x in range( len( data_stack.exposures ) ):
+            g1s = []
+            g2s = []
+            gerrs = []
+            res = []
+            snrs = []
+            x_worlds = []
+            y_worlds = []
 
-            gal_stamp = gal_stamp_stack.exposures[x]
-            if gal_stamp is None:
-                continue
-            bulge_psf_stamp = bulge_psf_stack.exposures[x]
-            disk_psf_stamp = disk_psf_stack.exposures[x]
+            for x in range( len( data_stack.exposures ) ):
 
-            shear_estimate = get_shear_estimate( gal_stamp,
-                                                bulge_psf_stamp,  # FIXME Handle colour gradients
-                                                gal_scale = stacked_gal_scale,
-                                                psf_scale = psf_scale,
-                                                ID = gal_id,
-                                                method = method )
+                gal_stamp = gal_stamp_stack.exposures[x]
+                if gal_stamp is None:
+                    continue
+                bulge_psf_stamp = bulge_psf_stack.exposures[x]
+                disk_psf_stamp = disk_psf_stack.exposures[x]
+
+                shear_estimate = get_shear_estimate( gal_stamp,
+                                                    bulge_psf_stamp,  # FIXME Handle colour gradients
+                                                    gal_scale = stacked_gal_scale,
+                                                    psf_scale = psf_scale,
+                                                    ID = gal_id,
+                                                    method = method )
             
-            g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
+                g_pix = np.matrix([[shear_estimate.g1],[shear_estimate.g2]])
 
-            # Need to convert g1/g2 and errors to -ra/dec coordinates
-            rotation_matrix = gal_stamp.get_pix2world_rotation( shear_estimate.x, shear_estimate.y )
-            g_world = rotation_matrix @ (rotation_matrix @ g_pix)
+                # Need to convert g1/g2 and errors to -ra/dec coordinates
+                rotation_matrix = gal_stamp.get_pix2world_rotation( shear_estimate.x, shear_estimate.y )
+                g_world = rotation_matrix @ (rotation_matrix @ g_pix)
             
-            g1s.append(g_world[0])
-            g2s.append(g_world[1])
-            gerrs.append( shear_estimate.gerr )
-            res.append( shear_estimate.re )
-            snrs.append( shear_estimate.snr )
-            
-            
+                g1s.append(g_world[0])
+                g2s.append(g_world[1])
+                gerrs.append( shear_estimate.gerr )
+                res.append( shear_estimate.re )
+                snrs.append( shear_estimate.snr )            
 
-        g1s = np.array( g1s )
-        g2s = np.array( g2s )
-        gerrs = np.array( gerrs )
-        res = np.array( res )
-        snrs = np.array( snrs )
+            g1s = np.array( g1s )
+            g2s = np.array( g2s )
+            gerrs = np.array( gerrs )
+            res = np.array( res )
+            snrs = np.array( snrs )
 
-        g1, gerr = inv_var_stack( g1s, gerrs )
-        g2, _ = inv_var_stack( g2s, gerrs )
-        re, _ = inv_var_stack( res, gerrs )
-        snr, _ = inv_var_stack( snrs, gerrs )
+            g1, gerr = inv_var_stack( g1s, gerrs )
+            g2, _ = inv_var_stack( g2s, gerrs )
+            re, _ = inv_var_stack( res, gerrs )
+            snr, _ = inv_var_stack( snrs, gerrs )
 
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row( { setf.ID : gal_id,
