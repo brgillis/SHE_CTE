@@ -46,6 +46,8 @@ def defineSpecificProgramOptions():
                         help = 'Store profiling data for execution.' )
     parser.add_argument( '--dry_run', action = 'store_true',
                         help = 'Dry run (no data processed).' )
+    parser.add_argument( '--debug', action = 'store_true',
+                        help = 'Enables debug mode - only process first 1000 galaxies.' )
 
     # Required input arguments
 
@@ -128,7 +130,7 @@ def mainMethod( args ):
                         {"estimate_shears_from_args":estimate_shears_from_args,
                          "args":args,
                          "dry_run":dry_run},
-                        filename = "measure_shapes.prof" )
+                        filename = "estimate_shears.prof" )
     else:
         estimate_shears_from_args( args, dry_run )
 
