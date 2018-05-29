@@ -84,6 +84,9 @@ def defineSpecificProgramOptions():
     parser.add_argument( '--regauss_training_data', type = str, default = None,  # Use default in case we don't use it for SC4
                         help = 'Data product for REGAUSS training data.' )
 
+    parser.add_argument( '--galaxy_population_priors_table', type = str,
+                        help = '.json listfile containing filenames of detections table products.' )
+
     parser.add_argument( '--calibration_parameters_product', type = str, default = None,  # Use default in case we don't use it for SC4
                         help = 'Filename of calibration parameters product (XML data product).' )
 
