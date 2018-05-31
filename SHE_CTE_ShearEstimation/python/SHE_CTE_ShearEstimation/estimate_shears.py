@@ -25,6 +25,7 @@ from astropy.io import fits
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.detections import tf as detf
@@ -47,7 +48,7 @@ loading_methods = {"KSB":None,
 estimation_methods = {"KSB":KSB_estimate_shear,
                       "REGAUSS":REGAUSS_estimate_shear,
                       "MomentsML":None,
-                      "LensMC":None,
+                      "LensMC":fit_frame_stack,
                       "BFD":bfd_measure_moments}
 
 def estimate_shears_from_args( args, dry_run = False ):
