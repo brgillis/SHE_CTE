@@ -61,7 +61,8 @@ def fit_psfs(args, dry_run=False):
     frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                      detections_listfile_filename=args.detections_tables,
                                      workdir=args.workdir,
-                                     clean_detections=True)
+                                     clean_detections=True,
+                                     apply_sc3_fix=True)
         
     # AocsTimeSeries products
     
