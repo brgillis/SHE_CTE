@@ -205,7 +205,7 @@ def estimate_shears_from_args(args, dry_run = False):
             method_shear_estimates[method] = shear_estimates_table
 
             # Output the shear estimates
-            hdulist.writeto(join(args.workdir, shear_estimates_filename), clobber = True)
+            hdulist.writeto(join(args.workdir, shear_estimates_filename), overwrite = True)
 
     else:  # Dry run
 
