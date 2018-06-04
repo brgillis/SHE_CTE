@@ -154,7 +154,7 @@ def cross_validate_shear(args, dry_run = False):
                                         validated_shear_estimates_filename)
 
     write_xml_product(validated_shear_estimates_prod,
-                      join(args.workdir, args.cross_validated_shear_estimates_table))
+                      join(args.workdir, args.cross_validated_shear_estimates_product))
 
     primary_shear_estimates_table.write(validated_shear_estimates_filename)
 
