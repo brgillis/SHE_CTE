@@ -218,6 +218,11 @@ def estimate_shears_from_args(args, dry_run = False):
 
             hdulist.writeto(join(args.workdir, filename), clobber = True)
 
+    # If we're not using all methods, don't write unused ones in the product
+    for method in estimation_methods:
+        if method not in methods:
+            shear_estimates_prod.set_method_filename(method, None)
+
     write_xml_product(shear_estimates_prod,
                       join(args.workdir, args.shear_estimates_product))
 
