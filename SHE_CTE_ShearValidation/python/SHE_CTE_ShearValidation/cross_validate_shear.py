@@ -107,10 +107,12 @@ def cross_validate_shear(args, dry_run = False):
 
         filename = shear_estimates_prod.get_method_filename(method)
 
-        shear_estimates_table = Table.read(join(args.workdir, filename), format = 'fits')
-
-        if not is_in_format(shear_estimates_table, setfs[method]):
-            raise ValueError("Shear estimates table from " + join(args.workdir, filename) + " is in invalid format.")
+        if filename is not None:
+            shear_estimates_table = Table.read(join(args.workdir, filename), format = 'fits')
+            if not is_in_format(shear_estimates_table, setfs[method]):
+                raise ValueError("Shear estimates table from " + join(args.workdir, filename) + " is in invalid format.")
+        else:
+            shear_estimates_table = None
 
         if method == args.primary_method:
             primary_shear_estimates_table = shear_estimates_table
