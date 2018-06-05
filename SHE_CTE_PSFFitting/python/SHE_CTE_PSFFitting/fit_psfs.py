@@ -112,7 +112,7 @@ def fit_psfs(args, dry_run = False):
 
         write_pickled_product(field_param_product, field_param_filename)
 
-    write_listfile(args.psf_field_params, field_param_filenames)
+    write_listfile(args.psf_field_params, join(args.workdir, field_param_filenames))
 
     return
 
