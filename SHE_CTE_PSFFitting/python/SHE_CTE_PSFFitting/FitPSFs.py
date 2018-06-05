@@ -2,7 +2,7 @@
 
     Created 12 Oct 2017
 
-    Executable for generating model PSFs.
+    Executable for fitting PSFs and generating images of them.
 """
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -23,7 +23,7 @@ import argparse
 from ElementsKernel.Logging import getLogger
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_PSFFitting import magic_values as mv
-from SHE_CTE_PSFFitting.model_psfs import model_psfs
+from SHE_CTE_PSFFitting.fit_psfs import fit_psfs
 
 
 def defineSpecificProgramOptions():
@@ -38,7 +38,7 @@ def defineSpecificProgramOptions():
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ModelPSFs defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_FitPSFs defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -58,19 +58,17 @@ def defineSpecificProgramOptions():
                         help = 'Filename for list of AOCS data series data products (.json listfile)')
     parser.add_argument('--psf_calibration_product', type = str, default = None,  # Allowing to use without for SC4
                         help = 'Filename for PSF calibration data product (.json listfile)')
-    parser.add_argument('--psf_field_params', type = str,
-                        help = 'Filename for PSF field parameters (.json listfile).')
 
     # Output filenames
-    parser.add_argument('--psf_images_and_tables', type = str,
-                        help = 'Desired filename for output PSF images and tables fits file.')
+    parser.add_argument('--psf_field_params_product', type = str,
+                        help = 'Desired filename for output PSF field parameters product.')
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type = str, default = ".")
     parser.add_argument('--logdir', type = str, default = ".")
 
 
-    logger.debug('Exiting SHE_CTE_ModelPSFs defineSpecificProgramOptions()')
+    logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')
 
     return parser
 
@@ -88,22 +86,22 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ModelPSFs mainMethod()')
+    logger.debug('# Entering SHE_CTE_FitPSFs mainMethod()')
     logger.debug('#')
 
     dry_run = args.dry_run or force_dry_run
 
     if args.profile:
         import cProfile
-        cProfile.runctx("model_psfs(args,dry_run=dry_run)", {},
-                        {"model_psfs":fit_psfs,
+        cProfile.runctx("fit_psfs(args,dry_run=dry_run)", {},
+                        {"fit_psfs":fit_psfs,
                          "args":args,
                          "dry_run":dry_run, },
-                        filename = "model_psfs.prof")
+                        filename = "fit_psfs.prof")
     else:
-        model_psfs(args, dry_run = dry_run)
+        fit_psfs(args, dry_run = dry_run)
 
-    logger.debug('Exiting SHE_CTE_ModelPSFs mainMethod()')
+    logger.debug('Exiting SHE_CTE_FitPSFs mainMethod()')
 
     return
 
