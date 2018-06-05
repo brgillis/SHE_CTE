@@ -60,8 +60,8 @@ def defineSpecificProgramOptions():
                         help = 'Filename for PSF calibration data product (.json listfile)')
 
     # Output filenames
-    parser.add_argument('--psf_field_params_product', type = str,
-                        help = 'Desired filename for output PSF field parameters product.')
+    parser.add_argument('--psf_field_params', type = str,
+                        help = 'Desired filename for output PSF field parameters listfile.')
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type = str, default = ".")
