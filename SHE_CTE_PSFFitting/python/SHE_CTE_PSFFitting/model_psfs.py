@@ -23,7 +23,6 @@ import os
 from os.path import join
 
 from astropy.io import fits
-from astropy.table import Table
 
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
