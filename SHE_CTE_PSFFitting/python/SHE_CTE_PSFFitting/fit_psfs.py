@@ -110,7 +110,7 @@ def fit_psfs(args, dry_run = False):
 
         field_param_product = products.psf_field_params.create_dpd_she_psf_field_params()
 
-        write_pickled_product(field_param_product, field_param_filename)
+        write_pickled_product(field_param_product, join(args.workdir, field_param_filename))
 
     write_listfile(args.psf_field_params, join(args.workdir, field_param_filenames))
 
