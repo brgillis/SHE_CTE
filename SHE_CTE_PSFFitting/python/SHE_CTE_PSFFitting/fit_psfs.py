@@ -105,7 +105,7 @@ def fit_psfs(args, dry_run = False):
 
     for i in range(len(frame_stack.exposures)):
 
-        field_param_filename = get_allowed_filename("PSF_FieldParam", i)
+        field_param_filename = get_allowed_filename("PSF_FieldParam", str(i))
         field_param_filenames.append(field_param_filename)
 
         field_param_product = products.psf_field_params.create_dpd_she_psf_field_params()
