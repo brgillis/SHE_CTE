@@ -130,7 +130,6 @@ class TestCase:
                 gal_stamp.header[scale_label] = observed_gal_image.scale
 
                 # Get the shear estimate
-                import pdb; pdb.set_trace()
                 shear_estimate = get_shear_estimate(gal_stamp,
                                                     psf_stamp,
                                                     gal_scale = 0.10,
