@@ -35,9 +35,6 @@ from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
-
-from SHE_PSM_toolkit.toolkit import SHE_PSFGen
-
 import numpy as np
 
 
@@ -161,10 +158,6 @@ def model_psfs(args, dry_run = False):
 
     logger.info("Base files for PSF data set up.")
 
-    logger.info("Initialising PSM generation")
-    PSF_generator = SHE_PSFGen(config_path = args.psm_options)
-    logger.info("Successfully initialised PSF generation")
-
     # For each galaxy, add a bulge and disk PSF image if it's in the frame
     bulge_hdu = 2
     counter = 0
@@ -187,16 +180,9 @@ def model_psfs(args, dry_run = False):
         for x in range(num_exposures):
 
             if first_galaxy or not test_mode:
-
-
-                # Get dummy info from generator
-                
-                bpsf_array = PSF_generator.get_psf(asDetector = True)
-                dpsf_array = deepcopy(bpsf_array)
-
                 # Get mock data for bulge and disk psfs
-                #bpsf_array = deepcopy(mock_psf_data)
-                #dpsf_array = deepcopy(mock_psf_data)
+                bpsf_array = deepcopy(mock_psf_data)
+                dpsf_array = deepcopy(mock_psf_data)
 
                 # Add the bulge and disk HDUs
                 bulge_psf_header = fits.header.Header(((ppt_mv.extname_label, str(gal_id) + "." + ppt_mv.bulge_psf_tag),

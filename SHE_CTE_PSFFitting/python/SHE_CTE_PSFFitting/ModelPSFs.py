@@ -60,8 +60,6 @@ def defineSpecificProgramOptions():
                         help = 'Filename for PSF calibration data product (.json listfile)')
     parser.add_argument('--psf_field_params', type = str,
                         help = 'Filename for PSF field parameters (.json listfile).')
-    parser.add_argument("--psm_options", type = str,
-                        help = "Path for PSM options file")
 
     # Output filenames
     parser.add_argument('--psf_images_and_tables', type = str,
