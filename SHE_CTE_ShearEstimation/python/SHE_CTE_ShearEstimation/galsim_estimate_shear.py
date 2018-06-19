@@ -133,7 +133,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     # Get a resampled PSF stamp
     resampled_psf_stamp = get_resampled_image(psf_stamp, gal_scale)
 
-    badpix = (gal_stamp.get_object_mask(ID)).astype(np.uint16)  # Galsim requires int array
+    badpix = (gal_stamp.boolmask).astype(np.uint16)  # Galsim requires int array
 
     # FIXME - What units should sky_var be in?
     sky_var = np.square(gal_stamp.noisemap.transpose()).mean()  # Galsim doesn't allow an array here
