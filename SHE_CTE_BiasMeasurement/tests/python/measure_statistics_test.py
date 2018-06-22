@@ -27,7 +27,7 @@ from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_a
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT import table_formats
-from SHE_PPT.file_io import write_xml_product
+from SHE_PPT.file_io import write_xml_product, read_xml_product
 from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
