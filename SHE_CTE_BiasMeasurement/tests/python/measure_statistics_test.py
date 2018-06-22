@@ -69,9 +69,9 @@ class TestMeasureStatistics:
         cls.ex_m2 = 0
         cls.ex_c2 = 0
 
-        cls.g2_true = np.array([0.00, 0.01, 0.02, 0.03, 0.04])
-        cls.g2_est = (1 + cls.ex_m2) * g2_true + cls.ex_c2 + np.array([-0.25, 0.25, 0, 0.25, -0.25])
-        cls.g2_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
+        g2_true = np.array([0.00, 0.01, 0.02, 0.03, 0.04])
+        g2_est = (1 + cls.ex_m2) * g2_true + cls.ex_c2 + np.array([-0.25, 0.25, 0, 0.25, -0.25])
+        g2_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
 
         for i in range(len(g1_true)):
             cls.details.add_row(vals={datf.ID: i})
@@ -131,13 +131,13 @@ class TestMeasureStatistics:
         details_filename = "test_details_table.fits"
         details_product = products.details.create_details_product(details_filename)
         write_xml_product(details_product, join(args.workdir, args.details_table))
-        self.details.write(join(args.workdir, args.details_filename), format="fits")
+        self.details.write(join(args.workdir, details_filename), format="fits")
 
         shear_estimates_filename = "test_shear_estimates.fits"
         shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
             KSB_filename=shear_estimates_filename)
         write_xml_product(shear_estimates_product, join(args.workdir, args.shear_estimates))
-        self.shear_estimates.write(join(args.workdir, args.shear_estimates_filename), format="fits")
+        self.shear_estimates.write(join(args.workdir, shear_estimates_filename), format="fits")
 
         # Call the function
         measure_statistics_from_args(args)
