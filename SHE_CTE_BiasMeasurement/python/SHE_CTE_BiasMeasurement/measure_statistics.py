@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-06-21"
+__updated__ = "2018-06-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,6 +28,7 @@ from os.path import join
 from astropy.table import Table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
@@ -35,6 +36,7 @@ from SHE_PPT.logging import getLogger
 
 products.details.init()
 products.shear_estimates.init()
+products.shear_bias_stats.init()
 
 
 def measure_statistics_from_args(args):
@@ -44,27 +46,23 @@ def measure_statistics_from_args(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug(
-        '# Entering SHE_CTE_MeasureStatistics measure_statistics_from_args()')
+    logger.debug('# Entering SHE_CTE_MeasureStatistics measure_statistics_from_args()')
     logger.debug('#')
 
     # Open the input files
 
     # Get the details table
 
-    details_table_product = read_xml_product(
-        join(args.workdir, args.details_table))
-    details_table = Table.read(
-        join(args.workdir, details_table_product.get_data_filename()))
+    details_table_product = read_xml_product(join(args.workdir, args.details_table))
+    details_table = Table.read(join(args.workdir, details_table_product.get_data_filename()))
 
     # Get the shear estimates product
 
-    shear_estimates_table_product = read_xml_product(
-        join(args.workdir, args.shear_estimates))
+    shear_estimates_table_product = read_xml_product(join(args.workdir, args.shear_estimates))
 
     # Initialise the output product
 
-    shear_bias_statistics_product = products.shear_bias_statistics.create_shear_bias_statistics_product()
+    shear_bias_statistics_product = products.shear_bias_stats.create_shear_bias_statistics_product()
 
     # Read in shear estimates, and calculate statistics for each method
 
@@ -80,18 +78,14 @@ def measure_statistics_from_args(args):
             join(args.workdir, estimates_table_filename))
 
         # Calculate statistics
-        shear_bias_statistics = calculate_shear_bias_statistics(
-            estimates_table, details_table)
+        shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
 
         # Save these in the data product
-        shear_bias_statistics_product.set_method_statistics(
-            method, shear_bias_statistics)
+        shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
 
     # Write out the statistics product
-    write_xml_product(shear_bias_statistics_product, join(
-        args.workdir, args.shear_bias_statistics))
+    write_xml_product(shear_bias_statistics_product, join(args.workdir, args.shear_bias_statistics))
 
-    logger.debug(
-        '# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')
+    logger.debug('# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')
 
     return
