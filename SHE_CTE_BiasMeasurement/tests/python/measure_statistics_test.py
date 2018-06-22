@@ -24,7 +24,7 @@ import pytest
 
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import table_formats
-from SHE_PPT.math import BiasMeasurements, linregress_with_errors
+from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
