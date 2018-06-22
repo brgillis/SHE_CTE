@@ -71,7 +71,7 @@ def measure_statistics_from_args(args):
         estimates_table_filename = shear_estimates_table_product.get_method_filename(
             method)
 
-        if estimates_table_filename is None:
+        if estimates_table_filename is None or estimates_table_filename == "":
             continue
 
         estimates_table = Table.read(
