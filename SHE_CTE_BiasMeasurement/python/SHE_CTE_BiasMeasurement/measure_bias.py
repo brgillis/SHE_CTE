@@ -4,61 +4,91 @@
 
     Primary execution loop for measuring bias in shear estimates.
 """
-
-# Copyright (C) 2012-2020 Euclid Science Ground Segment      
-#        
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General    
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)    
-# any later version.    
-#        
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied    
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more    
-# details.    
-#        
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
-from astropy.io import fits
-from astropy.table import Table
-import galsim
-
-from SHE_PPT.logging import getLogger
+from os.path import join
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.input_file_finding import get_input_files
-from SHE_CTE_BiasMeasurement.measurement_extraction import get_all_shear_measurements
-from SHE_CTE_BiasMeasurement.bias_calculation import calculate_bias
 from SHE_CTE_BiasMeasurement.bias_measurement_outputting import output_bias_measurement
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
+from SHE_PPT.logging import getLogger
+from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
-def measure_bias_from_args(kwargs):
+
+__updated__ = "2018-06-25"
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+
+products.shear_bias_stats.init()
+products.shear_bias_measurements.init()
+
+
+class MethodStatisticsList(object):
+    """Class to contain lists of g1 and g2 bias statistics.
+    """
+
+    def __init__(self):
+        self.g1_statistics_list = []
+        self.g2_statistics_list = []
+
+
+def measure_bias_from_args(args):
     """
     @brief
         Perform bias measurement, given arguments from the command-line.
-    
-    @param kwargs <dict>
-    
+
+    @param args
+
     @return None
     """
-    
+
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measure_bias_from_args.")
-    
-    # Load input files
-    input_files = get_input_files(root_dir=kwargs["input_dir"],
-                                  required_input_pattern=kwargs["required_input_pattern"],
-                                  depth=kwargs["input_depth"])
-    
-    # Get shear measurement and actual value arrays from the combination of all input data
-    all_shear_measurements = get_all_shear_measurements(input_files, var_e=mv.var_e[kwargs["e"]])
-    
-    # Calculate the bias
-    bias_measurement = calculate_bias(all_shear_measurements)
-    
-    # Output the bias measurement
-    output_bias_measurement(bias_measurement=bias_measurement,
-                            output_file_name=kwargs["output_file_name"],
-                            output_format=kwargs["output_format"])
-    
+
+    # Get a list of input files
+    shear_statistics_files = read_listfile(join(args.workdir, args.shear_bias_statistics))
+
+    # Load in statistics from each file
+    method_shear_statistics_lists = {}
+    for method in mv.estimation_methods:
+        method_shear_statistics_lists[method] = MethodStatisticsList()
+
+    for shear_statistics_file in shear_statistics_files:
+        shear_statistics_prod = read_xml_product(join(args.workdir, shear_statistics_file))
+
+        for method in mv.estimation_methods:
+            method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
+            if method_shear_statistics[0] is not None:
+                method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
+            if method_shear_statistics[1] is not None:
+                method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
+
+    # Calculate the bias and compile into a data product
+    bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
+
+    for method in mv.estimation_methods:
+        if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+            g1_bias_measurements = BiasMeasurements(
+                combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+        if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+            g2_bias_measurements = BiasMeasurements(
+                combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
+
+        bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
+
+    write_xml_product(bias_measurement_prod, join(args.workdir, args.shear_bias_measurements))
+
     logger.debug("Exiting measure_bias_from_args.")
-    
+
     return
