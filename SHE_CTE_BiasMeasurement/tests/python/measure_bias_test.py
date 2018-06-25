@@ -120,7 +120,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
 
-        g1_bias_measurements, g2_bias_measurements = shear_bias_measurements_product.get_KSB_bias_measurements()
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
 
         assert_almost_equal(g1_bias.m, self.ex_m1)
         assert_almost_equal(g1_bias.c, self.ex_c1)
