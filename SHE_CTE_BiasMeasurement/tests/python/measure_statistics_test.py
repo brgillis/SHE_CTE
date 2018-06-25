@@ -43,6 +43,7 @@ class Args(object):
 
     def __init__(self):
         self.workdir = None
+        self.profile = False
         self.details_table = None
         self.shear_estimates = None
         self.shear_bias_statistics = None
