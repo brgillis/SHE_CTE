@@ -78,10 +78,12 @@ def measure_bias_from_args(args):
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
 
     for method in mv.estimation_methods:
-        g1_bias_measurements = BiasMeasurements(
-            combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
-        g2_bias_measurements = BiasMeasurements(
-            combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
+        if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+            g1_bias_measurements = BiasMeasurements(
+                combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+        if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+            g2_bias_measurements = BiasMeasurements(
+                combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 
