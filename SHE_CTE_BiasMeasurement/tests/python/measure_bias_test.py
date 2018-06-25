@@ -70,11 +70,11 @@ class TestMeasureStatistics:
         cls.ex_c1_1 = -0.05
 
         cls.g1_0_bias_statistics = LinregressStatistics()
-        cls.g1_0_bias_statistics.w = 80.0
+        cls.g1_0_bias_statistics.w = 160.0
         cls.g1_0_bias_statistics.xm = 0.0
         cls.g1_0_bias_statistics.x2m = 0.00019999999494757503
-        cls.g1_0_bias_statistics.ym = 0.0
-        cls.g1_0_bias_statistics.xym = 0.0001999999955296518
+        cls.g1_0_bias_statistics.ym = -0.05000000000000001
+        cls.g1_0_bias_statistics.xym = 0.00020399999544024476
 
         cls.ex_m2_0 = 0
         cls.ex_c2_0 = 0
@@ -90,11 +90,11 @@ class TestMeasureStatistics:
         cls.ex_c2_1 = 0.0
 
         cls.g2_0_bias_statistics = LinregressStatistics()
-        cls.g2_0_bias_statistics.w = 80.0
+        cls.g2_0_bias_statistics.w = 160.0
         cls.g2_0_bias_statistics.xm = 0.019999999552965164
         cls.g2_0_bias_statistics.x2m = 0.0005999999862979166
-        cls.g2_0_bias_statistics.ym = 0.02000000000000001
-        cls.g2_0_bias_statistics.xym = 0.0005999999865889553
+        cls.g2_0_bias_statistics.ym = 0.022000000000000013
+        cls.g2_0_bias_statistics.xym = 0.0006599999852478506
 
         return
 
@@ -123,15 +123,33 @@ class TestMeasureStatistics:
 
         # Set up the files to be read in
 
-        shear_bias_statistics_prod = products.shear_bias_stats.create_shear_bias_statistics_product()
-        shear_bias_statistics_prod.set_KSB_statistics(self.g1_bias_statistics, self.g2_bias_statistics)
+        shear_bias_statistics_prod_0 = products.shear_bias_stats.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_0.set_KSB_statistics(self.g1_0_bias_statistics, self.g2_0_bias_statistics)
+        shear_bias_statistics_prod_1 = products.shear_bias_stats.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_1.set_KSB_statistics(self.g1_1_bias_statistics, self.g2_1_bias_statistics)
 
-        shear_bias_statistics_filenames = []
-        for i in range(10):
-            filename = get_allowed_filename("test_shear_bias_stats", str(i), extension=".xml")
-            write_xml_product(shear_bias_statistics_prod, join(args.workdir, filename))
-            shear_bias_statistics_filenames.append(filename)
-        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames)
+        shear_bias_statistics_filenames_0 = []
+        shear_bias_statistics_filenames_1 = []
+        shear_bias_statistics_filenames_01 = []
+
+        for i in range(2):
+
+            filename_0 = get_allowed_filename("test_shear_bias_stats_0", str(i), extension=".xml")
+            filename_1 = get_allowed_filename("test_shear_bias_stats_1", str(i), extension=".xml")
+
+            write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
+            write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_1))
+
+            shear_bias_statistics_filenames_0.append(filename_0)
+            shear_bias_statistics_filenames_1.append(filename_1)
+            if i % 2 == 0:
+                shear_bias_statistics_filenames_01.append(filename_0)
+            else:
+                shear_bias_statistics_filenames_01.append(filename_1)
+
+        # Test for bias 0
+
+        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_0)
 
         # Call the function
         measure_bias_from_args(args)
@@ -141,8 +159,46 @@ class TestMeasureStatistics:
 
         g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
 
-        assert_almost_equal(g1_bias.m, self.ex_m1)
-        assert_almost_equal(g1_bias.c, self.ex_c1)
+        assert_almost_equal(g1_bias.m, self.ex_m1_0)
+        assert_almost_equal(g1_bias.c, self.ex_c1_0)
 
-        assert_almost_equal(g2_bias.m, self.ex_m2)
-        assert_almost_equal(g2_bias.c, self.ex_c2)
+        assert_almost_equal(g2_bias.m, self.ex_m2_0)
+        assert_almost_equal(g2_bias.c, self.ex_c2_0)
+
+        # Test for bias 1
+
+        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_1)
+
+        # Call the function
+        measure_bias_from_args(args)
+
+        # Read in and check the results
+        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
+
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
+
+        assert_almost_equal(g1_bias.m, self.ex_m1_1)
+        assert_almost_equal(g1_bias.c, self.ex_c1_1)
+
+        assert_almost_equal(g2_bias.m, self.ex_m2_1)
+        assert_almost_equal(g2_bias.c, self.ex_c2_1)
+
+        # Test for bias 01
+
+        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_01)
+
+        # Call the function
+        measure_bias_from_args(args)
+
+        # Read in and check the results
+        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
+
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
+
+        assert_almost_equal(g1_bias.m, (self.ex_m1_0 + 2 * self.ex_m1_1) / 3)
+        assert_almost_equal(g1_bias.c, (self.ex_c1_0 + 2 * self.ex_c1_1) / 3)
+
+        assert_almost_equal(g2_bias.m, (self.ex_m2_0 + 2 * self.ex_m2_1) / 3)
+        assert_almost_equal(g2_bias.c, (self.ex_c2_0 + 2 * self.ex_c2_1) / 3)
+
+        return
