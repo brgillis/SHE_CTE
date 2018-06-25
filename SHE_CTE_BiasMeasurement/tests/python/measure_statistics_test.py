@@ -78,7 +78,8 @@ class TestMeasureStatistics:
         g2_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
 
         for i in range(len(g1_true)):
-            cls.details.add_row(vals={datf.ID: i})
+            cls.details.add_row(vals={datf.ID: i,
+                                      datf.group_ID: i})
             cls.shear_estimates.add_row(vals={setf.ID: i})
 
         cls.details[datf.g1] = g1_true
