@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-06-21"
+__updated__ = "2018-06-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -60,6 +60,10 @@ def defineSpecificProgramOptions():
     # Output data
     parser.add_argument('--shear_bias_statistics', type=str,
                         help='Desired name of the output shear bias statistics data product')
+
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics mainMethod()')
 
