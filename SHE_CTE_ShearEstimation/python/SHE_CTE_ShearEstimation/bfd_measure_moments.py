@@ -24,8 +24,8 @@ from math import sqrt
 import numpy as np
 import pdb
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_GST_GalaxyImageGeneration.noise import get_var_ADU_per_pixel
-from SHE_GST_GalaxyImageGeneration.unweighted_moments import get_g_from_e
+from SHE_PPT.noise import get_var_ADU_per_pixel
+from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.she_image import SHEImage
@@ -61,7 +61,7 @@ def get_bfd_moment_calculator(gal_stamp, psf_stamp, sky_var, method_data):
 
 
 
-def bfd_measure_moments( data_stack, method_data=None ):
+def bfd_measure_moments( data_stack, method_data=None, debug=False, *args, **kwargs ):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
@@ -153,8 +153,16 @@ def bfd_measure_moments( data_stack, method_data=None ):
         #bfd_moments_table.meta['TMPL_SIGMA_STEP'] = method_data['TEMPLATE']['SIGMA_STEP']
         #bfd_moments_table.meta['TMPL_SIGMA_MAX'] = method_data['TEMPLATE']['SIGMA_MAX']
         #bfd_moments_table.meta['TMPL_XY_MAX'] = method_data['TEMPLATE']['XY_MAX']
+        
+    row_index = 0
 
     for ID in IDs:
+        
+        if debug and row_index>1000:
+            logger.debug("Debug mode enabled, so exiting BFD_measure_moments early")
+            break
+        else:
+            row_index += 1
         
         x = 0
         y = 0

@@ -4,9 +4,9 @@ elements_subdir(SHE_CTE_ShearEstimation)
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(SHE_CTE)
-elements_depends_on_subdirs(SHE_GST_GalaxyImageGeneration)
 elements_depends_on_subdirs(SHE_PPT)
 elements_depends_on_subdirs(SHE_MomentsML)
+elements_depends_on_subdirs(SHE_LensMC)
 
 # Instruction for Python module installation
 elements_install_python_modules()

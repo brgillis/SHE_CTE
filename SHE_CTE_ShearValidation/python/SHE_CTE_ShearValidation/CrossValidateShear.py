@@ -1,8 +1,8 @@
-""" @file ValidateShear.py
+""" @file CrossValidateShear.py
 
     Created 12 Oct 2017
 
-    Executable for validating shear measurements and creating a combined catalogue.
+    Executable for cross-validating shear measurements and creating a combined catalogue.
 """
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment      
@@ -23,7 +23,7 @@ import argparse
 from ElementsKernel.Logging import getLogger
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearValidation import magic_values as mv
-from SHE_CTE_ShearValidation.validate_shear import validate_shear
+from SHE_CTE_ShearValidation.cross_validate_shear import cross_validate_shear
 
 
 def defineSpecificProgramOptions():
@@ -38,7 +38,7 @@ def defineSpecificProgramOptions():
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ValidateShear defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_CrossValidateShear defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -52,21 +52,24 @@ def defineSpecificProgramOptions():
     # Input filenames
     parser.add_argument('--shear_estimates_product',type=str,
                         help='Filename for shear estimates data product (XML data product)')
-    parser.add_argument('--shear_estimates_listfile',type=str,
-                        help='Filename for listfile associated with shear estimates data product (.json listfile)')
-    parser.add_argument('--shear_validation_statistics_table',type=str,
-                        help='Filename for table of shear validation statistics.')
+    
+#     parser.add_argument('--shear_validation_statistics_table',type=str, # Disabled until it exists
+#                         help='Filename for table of shear validation statistics.')
     
     # Output filenames
-    parser.add_argument('--validated_shear_estimates_table',type=str,
+    parser.add_argument('--cross_validated_shear_estimates_product',type=str,
                         help='Desired filename for output shear estimates table (multi-HDU fits file).')
     
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir',type=str,default=".")
     parser.add_argument('--logdir',type=str,default=".")
     
+    # Optional arguments (can't be used with pipeline runner)
+    parser.add_argument('--primary_method',type=str,default="LensMC",
+                        help="Shear measurement method to consider primary, and compare against others.")
+    
 
-    logger.debug('Exiting SHE_CTE_ValidateShear defineSpecificProgramOptions()')
+    logger.debug('Exiting SHE_CTE_CrossValidateShear defineSpecificProgramOptions()')
 
     return parser
 
@@ -84,22 +87,22 @@ def mainMethod(args):
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ValidateShear mainMethod()')
+    logger.debug('# Entering SHE_CTE_CrossValidateShear mainMethod()')
     logger.debug('#')
     
     dry_run = args.dry_run or force_dry_run
         
     if args.profile:
         import cProfile
-        cProfile.runctx("validate_shear(args,dry_run=dry_run)",{},
-                        {"validate_shear":validate_shear,
+        cProfile.runctx("cross_validate_shear(args,dry_run=dry_run)",{},
+                        {"cross_validate_shear":validate_shear,
                          "args":args,
                          "dry_run":dry_run,},
-                        filename="validate_shear.prof")
+                        filename="cross_validate_shear.prof")
     else:
-        validate_shear(args)
+        cross_validate_shear(args)
 
-    logger.debug('Exiting SHE_CTE_ValidateShear mainMethod()')
+    logger.debug('Exiting SHE_CTE_CrossValidateShear mainMethod()')
 
     return
 
