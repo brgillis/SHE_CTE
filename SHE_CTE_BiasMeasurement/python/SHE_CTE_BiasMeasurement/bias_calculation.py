@@ -18,25 +18,38 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_PPT.math import linregress_with_errors
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
 
 
 class CombinedBiasMeasurement(object):
 
-    def __init__(self):
-        self.m1 = None
-        self.m2 = None
-        self.m1_err = None
-        self.m2_err = None
-        self.c1 = None
-        self.c2 = None
-        self.c1_err = None
-        self.c2_err = None
-        self.m1c1_covar = None
-        self.m2c2_covar = None
+    def __init__(self, g1_bias_measurement, g2_bias_measurement):
+
+        if g1_bias_measurement is not None:
+            self.m1 = g1_bias_measurement.m
+            self.m1_err = g1_bias_measurement.m_err
+            self.c1 = g1_bias_measurement.c
+            self.c1_err = g1_bias_measurement.c_err
+            self.m1c1_covar = g1_bias_measurement.mc_covar
+        else:
+            self.m1 = None
+            self.m1_err = None
+            self.c1 = None
+            self.c1_err = None
+            self.m1c1_covar = None
+
+        if g2_bias_measurement is not None:
+            self.m2 = g2_bias_measurement.m
+            self.m2_err = g2_bias_measurement.m_err
+            self.c2 = g2_bias_measurement.c
+            self.c2_err = g2_bias_measurement.c_err
+            self.m2c2_covar = g2_bias_measurement.mc_covar
+        else:
+            self.m2 = None
+            self.m2_err = None
+            self.c2 = None
+            self.c2_err = None
+            self.m2c2_covar = None
 
     def get_m(self):
         return np.sqrt(self.m1**2 + self.m2**2)
