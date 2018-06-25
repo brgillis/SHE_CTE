@@ -104,7 +104,7 @@ class TestMeasureStatistics:
             for j in range(len_group):
                 cls.details_group.add_row(vals={datf.ID: i * len_group + j,
                                                 datf.group_ID: i})
-                cls.shear_estimates_group.add_row(vals={datf.ID: i * len_group + j})
+                cls.shear_estimates_group.add_row(vals={setf.ID: i * len_group + j})
 
         # Save details data
         cls.details[datf.g1] = g1_true
