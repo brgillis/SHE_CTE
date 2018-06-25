@@ -69,8 +69,10 @@ def measure_bias_from_args(args):
 
         for method in mv.estimation_methods:
             method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
-            method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
-            method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
+            if method_shear_statistics[0] is not None:
+                method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
+            if method_shear_statistics[1] is not None:
+                method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
 
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
