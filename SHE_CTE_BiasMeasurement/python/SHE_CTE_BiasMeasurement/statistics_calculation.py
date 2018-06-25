@@ -46,7 +46,7 @@ def compress_details_and_measurements(combined_table):
 
     # First go through and see what we need to combine
     for row in combined_table:
-        group_id = combined_table[datf.group_ID]
+        group_id = row[datf.group_ID]
         if not group_id in groups:
             groups[group_id] = [row]
         else:
