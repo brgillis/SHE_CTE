@@ -45,12 +45,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
 
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
-
     # Input data
     parser.add_argument('--shear_bias_statistics', type=str,
-                        help='Desired name of the output shear bias statistics data product')
+                        help='Listfile pointing to shear bias statistics objects.')
 
     # Output data
     parser.add_argument('--shear_bias_measurements', type=str,
@@ -82,7 +79,7 @@ def mainMethod(args):
         cProfile.runctx("measure_bias_from_args(args)", {},
                         {"measure_bias_from_args": measure_bias_from_args,
                          "args": args}, filename="measure_bias.prof")
-    else:
+    else: <dict>
         measure_bias_from_args(vars(args))
 
     logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
