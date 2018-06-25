@@ -63,15 +63,15 @@ class TestMeasureStatistics:
         cls.details = table_formats.details.initialise_details_table()
         cls.shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
 
-        cls.ex_m1 = 0
-        cls.ex_c1 = 0
+        cls.ex_m1 = 0.02
+        cls.ex_c1 = -0.05
 
         g1_true = np.array([-0.02, -0.01, 0.00, 0.01, 0.02])
         g1_est = (1 + cls.ex_m1) * g1_true + cls.ex_c1 + np.array([0.25, -0.25, 0, -0.25, 0.25])
         g1_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
 
-        cls.ex_m2 = 0
-        cls.ex_c2 = 0
+        cls.ex_m2 = 0.1
+        cls.ex_c2 = 0.0
 
         g2_true = np.array([0.00, 0.01, 0.02, 0.03, 0.04])
         g2_est = (1 + cls.ex_m2) * g2_true + cls.ex_c2 + np.array([-0.25, 0.25, 0, 0.25, -0.25])

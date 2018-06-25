@@ -56,26 +56,45 @@ class TestMeasureStatistics:
 
         # Set up some mock data for the test
 
-        cls.ex_m1 = 0
-        cls.ex_c1 = 0
+        cls.ex_m1_0 = 0
+        cls.ex_c1_0 = 0
 
-        cls.g1_bias_statistics = LinregressStatistics()
-        cls.g1_bias_statistics.w = 80.0
-        cls.g1_bias_statistics.xm = 0.0
-        cls.g1_bias_statistics.x2m = 0.00019999999494757503
-        cls.g1_bias_statistics.ym = 0.0
-        cls.g1_bias_statistics.xym = 0.0001999999955296518
-        g1_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
+        cls.g1_0_bias_statistics = LinregressStatistics()
+        cls.g1_0_bias_statistics.w = 80.0
+        cls.g1_0_bias_statistics.xm = 0.0
+        cls.g1_0_bias_statistics.x2m = 0.00019999999494757503
+        cls.g1_0_bias_statistics.ym = 0.0
+        cls.g1_0_bias_statistics.xym = 0.0001999999955296518
 
-        cls.ex_m2 = 0
-        cls.ex_c2 = 0
+        cls.ex_m1_1 = 0.02
+        cls.ex_c1_1 = -0.05
 
-        cls.g2_bias_statistics = LinregressStatistics()
-        cls.g2_bias_statistics.w = 80.0
-        cls.g2_bias_statistics.xm = 0.019999999552965164
-        cls.g2_bias_statistics.x2m = 0.0005999999862979166
-        cls.g2_bias_statistics.ym = 0.02000000000000001
-        cls.g2_bias_statistics.xym = 0.0005999999865889553
+        cls.g1_0_bias_statistics = LinregressStatistics()
+        cls.g1_0_bias_statistics.w = 80.0
+        cls.g1_0_bias_statistics.xm = 0.0
+        cls.g1_0_bias_statistics.x2m = 0.00019999999494757503
+        cls.g1_0_bias_statistics.ym = 0.0
+        cls.g1_0_bias_statistics.xym = 0.0001999999955296518
+
+        cls.ex_m2_0 = 0
+        cls.ex_c2_0 = 0
+
+        cls.g2_0_bias_statistics = LinregressStatistics()
+        cls.g2_0_bias_statistics.w = 80.0
+        cls.g2_0_bias_statistics.xm = 0.019999999552965164
+        cls.g2_0_bias_statistics.x2m = 0.0005999999862979166
+        cls.g2_0_bias_statistics.ym = 0.02000000000000001
+        cls.g2_0_bias_statistics.xym = 0.0005999999865889553
+
+        cls.ex_m2_1 = 0.1
+        cls.ex_c2_1 = 0.0
+
+        cls.g2_0_bias_statistics = LinregressStatistics()
+        cls.g2_0_bias_statistics.w = 80.0
+        cls.g2_0_bias_statistics.xm = 0.019999999552965164
+        cls.g2_0_bias_statistics.x2m = 0.0005999999862979166
+        cls.g2_0_bias_statistics.ym = 0.02000000000000001
+        cls.g2_0_bias_statistics.xym = 0.0005999999865889553
 
         return
 
