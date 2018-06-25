@@ -138,7 +138,7 @@ class TestMeasureStatistics:
             filename_1 = get_allowed_filename("test_shear_bias_stats_1", str(i), extension=".xml")
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
-            write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_1))
+            write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
 
             shear_bias_statistics_filenames_0.append(filename_0)
             shear_bias_statistics_filenames_1.append(filename_1)
