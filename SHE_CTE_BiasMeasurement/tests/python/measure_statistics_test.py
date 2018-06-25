@@ -61,7 +61,13 @@ class TestMeasureStatistics:
 
         # Set up some mock data for the test
         cls.details = table_formats.details.initialise_details_table()
+        cls.details_group = table_formats.details.initialise_details_table()
         cls.shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
+        cls.shear_estimates_group = table_formats.shear_estimates.initialise_shear_estimates_table()
+
+        len_group = 2  # Number of galaxies per group
+
+        # G1 data
 
         cls.ex_m1 = 0.02
         cls.ex_c1 = -0.05
@@ -70,25 +76,56 @@ class TestMeasureStatistics:
         g1_est = (1 + cls.ex_m1) * g1_true + cls.ex_c1 + np.array([0.25, -0.25, 0, -0.25, 0.25])
         g1_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
 
+        g1_true_group = np.concatenate((g1_true, g1_true))
+        g1_est_group = np.concatenate((g1_est, g1_est))
+        g1_err_group = np.concatenate((g1_err, g1_err))
+
+        g1_est_group += np.array([0.01] * 5 + [-0.01] * 5)
+
         cls.ex_m2 = 0.1
         cls.ex_c2 = 0.0
+
+        # G2 data
 
         g2_true = np.array([0.00, 0.01, 0.02, 0.03, 0.04])
         g2_est = (1 + cls.ex_m2) * g2_true + cls.ex_c2 + np.array([-0.25, 0.25, 0, 0.25, -0.25])
         g2_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
 
-        for i in range(len(g1_true)):
-            cls.details.add_row(vals={datf.ID: i})
-            cls.shear_estimates.add_row(vals={setf.ID: i})
+        g2_true_group = np.concatenate((g2_true, g2_true))
+        g2_est_group = np.concatenate((g2_est, g2_est))
+        g2_err_group = np.concatenate((g2_err, g2_err))
 
+        g2_est_group += np.array([-0.2] * 5 + [0.2] * 5)
+
+        for i in range(len(g1_true)):
+            cls.details.add_row(vals={datf.ID: i,
+                                      datf.group_ID: i})
+            cls.shear_estimates.add_row(vals={setf.ID: i})
+        for j in range(len_group):
+            for i in range(len(g1_true)):
+                cls.details_group.add_row(vals={datf.ID: i * len_group + j,
+                                                datf.group_ID: i})
+                cls.shear_estimates_group.add_row(vals={setf.ID: i * len_group + j})
+
+        # Save details data
         cls.details[datf.g1] = g1_true
         cls.details[datf.g2] = g2_true
 
+        # Save details_group data
+        cls.details_group[datf.g1] = g1_true_group
+        cls.details_group[datf.g2] = g2_true_group
+
+        # Save shear_estimates data
         cls.shear_estimates[setf.g1] = g1_est
         cls.shear_estimates[setf.g2] = g2_est
-
         cls.shear_estimates[setf.g1_err] = g1_err
         cls.shear_estimates[setf.g2_err] = g2_err
+
+        # Save shear_estimates_group data
+        cls.shear_estimates_group[setf.g1] = g1_est_group
+        cls.shear_estimates_group[setf.g2] = g2_est_group
+        cls.shear_estimates_group[setf.g1_err] = g1_err_group
+        cls.shear_estimates_group[setf.g2_err] = g2_err_group
 
         return
 
@@ -108,6 +145,22 @@ class TestMeasureStatistics:
         """Try using the calculate_shear_bias_statistics function and check the results.
         """
         g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.shear_estimates, self.details)
+
+        g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
+        g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
+
+        assert_almost_equal(g1_bias.m, self.ex_m1)
+        assert_almost_equal(g1_bias.c, self.ex_c1)
+
+        assert_almost_equal(g2_bias.m, self.ex_m2)
+        assert_almost_equal(g2_bias.c, self.ex_c2)
+
+        return
+
+    def test_calculate_shear_bias_statistics_group(self):
+        """Try using the calculate_shear_bias_statistics function and check the results on grouped data.
+        """
+        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.shear_estimates_group, self.details_group)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
