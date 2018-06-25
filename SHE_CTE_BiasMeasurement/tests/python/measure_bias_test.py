@@ -69,12 +69,12 @@ class TestMeasureStatistics:
         cls.ex_m1_1 = 0.02
         cls.ex_c1_1 = -0.05
 
-        cls.g1_0_bias_statistics = LinregressStatistics()
-        cls.g1_0_bias_statistics.w = 160.0
-        cls.g1_0_bias_statistics.xm = 0.0
-        cls.g1_0_bias_statistics.x2m = 0.00019999999494757503
-        cls.g1_0_bias_statistics.ym = -0.05000000000000001
-        cls.g1_0_bias_statistics.xym = 0.00020399999544024476
+        cls.g1_1_bias_statistics = LinregressStatistics()
+        cls.g1_1_bias_statistics.w = 160.0
+        cls.g1_1_bias_statistics.xm = 0.0
+        cls.g1_1_bias_statistics.x2m = 0.00019999999494757503
+        cls.g1_1_bias_statistics.ym = -0.05000000000000001
+        cls.g1_1_bias_statistics.xym = 0.00020399999544024476
 
         cls.ex_m2_0 = 0
         cls.ex_c2_0 = 0
@@ -89,12 +89,12 @@ class TestMeasureStatistics:
         cls.ex_m2_1 = 0.1
         cls.ex_c2_1 = 0.0
 
-        cls.g2_0_bias_statistics = LinregressStatistics()
-        cls.g2_0_bias_statistics.w = 160.0
-        cls.g2_0_bias_statistics.xm = 0.019999999552965164
-        cls.g2_0_bias_statistics.x2m = 0.0005999999862979166
-        cls.g2_0_bias_statistics.ym = 0.022000000000000013
-        cls.g2_0_bias_statistics.xym = 0.0006599999852478506
+        cls.g2_1_bias_statistics = LinregressStatistics()
+        cls.g2_1_bias_statistics.w = 160.0
+        cls.g2_1_bias_statistics.xm = 0.019999999552965164
+        cls.g2_1_bias_statistics.x2m = 0.0005999999862979166
+        cls.g2_1_bias_statistics.ym = 0.022000000000000013
+        cls.g2_1_bias_statistics.xym = 0.0006599999852478506
 
         return
 
