@@ -156,6 +156,22 @@ class TestMeasureStatistics:
 
         return
 
+    def test_calculate_shear_bias_statistics_group(self):
+        """Try using the calculate_shear_bias_statistics function and check the results on grouped data.
+        """
+        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.shear_estimates_group, self.details_group)
+
+        g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
+        g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
+
+        assert_almost_equal(g1_bias.m, self.ex_m1)
+        assert_almost_equal(g1_bias.c, self.ex_c1)
+
+        assert_almost_equal(g2_bias.m, self.ex_m2)
+        assert_almost_equal(g2_bias.c, self.ex_c2)
+
+        return
+
     def test_measure_statistics_from_args(self):
         """Try using the measure_statistics_from_args function and check the results.
         """
