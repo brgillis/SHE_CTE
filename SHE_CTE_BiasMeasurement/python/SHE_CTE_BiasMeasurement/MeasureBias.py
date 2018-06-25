@@ -53,6 +53,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
+
     logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
 
     return parser

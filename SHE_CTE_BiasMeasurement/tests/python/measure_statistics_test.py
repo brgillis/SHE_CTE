@@ -1,9 +1,11 @@
 """ @file measure_statistics_test.py
 
-    Created 22 June 2017
+    Created 22 June 2018
 
     Unit tests for measuring shear bias statistics.
 """
+
+__updated__ = "2018-06-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -43,6 +45,7 @@ class Args(object):
 
     def __init__(self):
         self.workdir = None
+        self.logdir = None
         self.profile = False
         self.details_table = None
         self.shear_estimates = None
@@ -97,6 +100,7 @@ class TestMeasureStatistics:
     @pytest.fixture(autouse=True)
     def setup(self, tmpdir):
         self.workdir = tmpdir.strpath
+        self.logdir = join(tmpdir.strpath, "logs")
 
         return
 
@@ -123,6 +127,7 @@ class TestMeasureStatistics:
         # Set up the arguments object
         args = Args()
         args.workdir = self.workdir
+        args.logdir = self.logdir
         args.details_table = "test_details_table.xml"
         args.shear_estimates = "test_shear_estimates.xml"
         args.shear_bias_statistics = "test_shear_statistics.xml"
