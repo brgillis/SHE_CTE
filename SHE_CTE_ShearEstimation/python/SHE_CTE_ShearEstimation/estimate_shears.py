@@ -85,7 +85,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                     detections_listfile_filename=args.detections_tables,
                                     workdir=args.workdir,
                                     clean_detections=True,
-                                    apply_sc3_fix=True)
+                                    apply_sc3_fix=False)
 
     # Calibration parameters product
 
