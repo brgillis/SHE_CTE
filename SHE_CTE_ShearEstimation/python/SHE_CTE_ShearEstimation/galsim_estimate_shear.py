@@ -39,8 +39,11 @@ x_buffer = -5
 y_buffer = -5
 shape_noise = 0.25
 get_exposure_estimates = False
+subsampled_scale = 0.2
+
 
 class ShearEstimate(object):
+
     def __init__(self, g1, g2, gerr, re, snr, x, y):
         self.g1 = g1
         self.g2 = g2
@@ -50,30 +53,37 @@ class ShearEstimate(object):
         self.x = x
         self.y = y
 
+
 def get_resampled_image(subsampled_image, resampled_scale):
 
-    ss_scale = subsampled_image.header[scale_label]
+    if scale_label in subsampled_image.header:
+        ss_scale = subsampled_image.header[scale_label]
+    else:
+        ss_scale = 0.02
 
     resampled_nx = int(np.shape(subsampled_image.data)[0] / (resampled_scale / ss_scale))
     resampled_ny = int(np.shape(subsampled_image.data)[1] / (resampled_scale / ss_scale))
 
-    resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale = resampled_scale)
+    resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
 
     galsim.InterpolatedImage(galsim.Image(subsampled_image.data,
-                                          scale = subsampled_image.header[scale_label])).drawImage(resampled_gs_image, use_true_center = True)
+                                          scale=subsampled_image.header[scale_label])).drawImage(resampled_gs_image, use_true_center=True)
 
     resampled_image = SHEImage(resampled_gs_image.array)
     resampled_image.header[scale_label] = resampled_scale
 
     return resampled_image
 
+
 def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method = "KSB", workdir = workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, method="KSB", workdir=workdir, *args, **kwargs)
+
 
 def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method = "REGAUSS", workdir = workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, method="REGAUSS", workdir=workdir, *args, **kwargs)
+
 
 def get_KSB_shear_estimate(galsim_shear_estimate):
 
@@ -88,12 +98,12 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
         raise RuntimeError("HSM Error: Magnitude of g shear is too large: " + str(mag))
 
     shear_estimate = ShearEstimate(galsim_shear_estimate.corrected_g1,
-        galsim_shear_estimate.corrected_g2,
-        galsim_shear_estimate.corrected_shape_err,
-        galsim_shear_estimate.moments_sigma,
-        galsim_shear_estimate.moments_amp,
-        galsim_shear_estimate.moments_centroid.x,
-        galsim_shear_estimate.moments_centroid.y)
+                                   galsim_shear_estimate.corrected_g2,
+                                   galsim_shear_estimate.corrected_shape_err,
+                                   galsim_shear_estimate.moments_sigma,
+                                   galsim_shear_estimate.moments_amp,
+                                   galsim_shear_estimate.moments_centroid.x,
+                                   galsim_shear_estimate.moments_centroid.y)
 
     logger.debug("Exiting get_KSB_shear_estimate")
 
@@ -116,14 +126,15 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     gerr = galsim_shear_estimate.corrected_shape_err * np.sqrt((g1 ** 2 + g2 ** 2) / (e1 ** 2 + e2 ** 2))
 
     shear_estimate = ShearEstimate(g1, g2, gerr,
-        galsim_shear_estimate.moments_sigma,
-        galsim_shear_estimate.moments_amp,
-        galsim_shear_estimate.moments_centroid.x,
-        galsim_shear_estimate.moments_centroid.y)
+                                   galsim_shear_estimate.moments_sigma,
+                                   galsim_shear_estimate.moments_amp,
+                                   galsim_shear_estimate.moments_centroid.x,
+                                   galsim_shear_estimate.moments_centroid.y)
 
     logger.debug("Exiting get_REGAUSS_shear_estimate")
 
     return shear_estimate
+
 
 def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
@@ -140,14 +151,14 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     try:
 
-        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image = galsim.Image(gal_stamp.data.transpose(), scale = gal_scale),
-                                                         PSF_image = galsim.Image(resampled_psf_stamp.data.transpose(),
-                                                                                scale = gal_scale),
-                                                         badpix = galsim.Image(badpix.transpose(), scale = gal_scale),
-                                                         sky_var = float(sky_var),  # Need to match type signature
-                                                         guess_sig_gal = 0.5 / gal_scale,
-                                                         guess_sig_PSF = 0.2 / gal_scale,
-                                                         shear_est = method)
+        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_scale),
+                                                         PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(),
+                                                                                scale=gal_scale),
+                                                         badpix=galsim.Image(badpix.transpose(), scale=gal_scale),
+                                                         sky_var=float(sky_var),  # Need to match type signature
+                                                         guess_sig_gal=0.5 / gal_scale,
+                                                         guess_sig_PSF=0.2 / gal_scale,
+                                                         shear_est=method)
 
         if method == "KSB":
 
@@ -176,6 +187,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     return shear_estimate
 
+
 def inv_var_stack(a, a_err):
 
     logger = getLogger(mv.logger_name)
@@ -198,7 +210,8 @@ def inv_var_stack(a, a_err):
 
     logger.debug("Exiting inv_var_stack")
 
-def GS_estimate_shear(data_stack, method, workdir, debug = False):
+
+def GS_estimate_shear(data_stack, method, workdir, debug=False):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering GS_estimate_shear")
@@ -238,19 +251,19 @@ def GS_estimate_shear(data_stack, method, workdir, debug = False):
         gal_y_world = row[detf.gal_y_world]
 
         # Get a stack of the galaxy images
-        gal_stamp_stack = data_stack.extract_stamp_stack(x_world = gal_x_world,
-                                                          y_world = gal_y_world,
-                                                          width = stamp_size,
-                                                          x_buffer = x_buffer,
-                                                          y_buffer = y_buffer,)
+        gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
+                                                         y_world=gal_y_world,
+                                                         width=stamp_size,
+                                                         x_buffer=x_buffer,
+                                                         y_buffer=y_buffer,)
 
         # If there's no data for this galaxy, don't add it to the catalogue at all
         if gal_stamp_stack.is_empty():
             continue
 
         # Get stacks of the psf images
-        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id = gal_id,
-                                                                        make_stacked_psf = True,)
+        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id,
+                                                                        make_stacked_psf=True,)
 
         # Get the shear estimate from the stacked image
 
@@ -260,10 +273,10 @@ def GS_estimate_shear(data_stack, method, workdir, debug = False):
 
         shear_estimate = get_shear_estimate(stacked_gal_stamp,
                                             stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
-                                            gal_scale = stacked_gal_scale,
-                                            psf_scale = psf_scale,
-                                            ID = gal_id,
-                                            method = method)
+                                            gal_scale=stacked_gal_scale,
+                                            psf_scale=psf_scale,
+                                            ID=gal_id,
+                                            method=method)
 
         stack_g_pix = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
         stack_re = shear_estimate.re
@@ -303,10 +316,10 @@ def GS_estimate_shear(data_stack, method, workdir, debug = False):
 
                 shear_estimate = get_shear_estimate(gal_stamp,
                                                     bulge_psf_stamp,  # FIXME Handle colour gradients
-                                                    gal_scale = stacked_gal_scale,
-                                                    psf_scale = psf_scale,
-                                                    ID = gal_id,
-                                                    method = method)
+                                                    gal_scale=stacked_gal_scale,
+                                                    psf_scale=psf_scale,
+                                                    ID=gal_id,
+                                                    method=method)
 
                 g_pix = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
 
@@ -332,20 +345,18 @@ def GS_estimate_shear(data_stack, method, workdir, debug = False):
             snr, _ = inv_var_stack(snrs, gerrs)
 
         # Add this row to the estimates table (for now just using stack values)
-        shear_estimates_table.add_row({ setf.ID : gal_id,
-                                        setf.g1 : stack_g_world[0],
-                                        setf.g2 : stack_g_world[0],
-                                        setf.g1_err : np.sqrt(stack_covar_world[0, 0] ** 2 + shape_noise ** 2),
-                                        setf.g2_err : np.sqrt(stack_covar_world[1, 1] ** 2 + shape_noise ** 2),
-                                        setf.g1g2_covar : stack_covar_world[0, 1],
-                                        setf.re : stack_re,
-                                        setf.snr : stack_snr,
-                                        setf.x_world : stack_x_world,
-                                        setf.y_world : stack_y_world,
+        shear_estimates_table.add_row({setf.ID: gal_id,
+                                       setf.g1: stack_g_world[0],
+                                       setf.g2: stack_g_world[0],
+                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + shape_noise ** 2),
+                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + shape_noise ** 2),
+                                       setf.g1g2_covar: stack_covar_world[0, 1],
+                                       setf.re: stack_re,
+                                       setf.snr: stack_snr,
+                                       setf.x_world: stack_x_world,
+                                       setf.y_world: stack_y_world,
                                        })
-
 
     logger.debug("Exiting GS_estimate_shear")
 
     return shear_estimates_table
-
