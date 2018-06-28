@@ -67,7 +67,7 @@ def get_resampled_image(subsampled_image, resampled_scale):
     resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
 
     galsim.InterpolatedImage(galsim.Image(subsampled_image.data,
-                                          scale=subsampled_image.header[scale_label])).drawImage(resampled_gs_image, use_true_center=True)
+                                          scale=ss_scale)).drawImage(resampled_gs_image, use_true_center=True)
 
     resampled_image = SHEImage(resampled_gs_image.array)
     resampled_image.header[scale_label] = resampled_scale
