@@ -190,7 +190,7 @@ class TestMeasureStatistics:
             row = somebad_shear_estimates[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = 1e99, 1e99
-        for i in range(len(g1_true)):
+        for i in range(len(self.shear_estimates)):
             row = allbad_shear_estimates[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = 1e99, 1e99
