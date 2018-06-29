@@ -177,7 +177,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         logger.debug(str(e))
         shear_estimate = ShearEstimate(np.NaN,
                                        np.NaN,
-                                       1e99,
+                                       np.inf,
                                        np.NaN,
                                        np.NaN,
                                        gal_stamp.data.shape[0],
