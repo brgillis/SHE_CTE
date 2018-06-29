@@ -172,7 +172,7 @@ class TestMeasureStatistics:
         somebad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
         allbad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
 
-        for i in range(len(g1_true)):
+        for i in range(len(cls.shear_estimates)):
             somebad_shear_estimates.add_row(vals={setf.ID: i})
             allbad_shear_estimates.add_row(vals={setf.ID: i})
 
