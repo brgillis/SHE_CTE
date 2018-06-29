@@ -66,7 +66,7 @@ class TestMeasureStatistics:
         cls.shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
         cls.shear_estimates_group = table_formats.shear_estimates.initialise_shear_estimates_table()
 
-        len_group = 2  # Number of galaxies per group
+        cls.len_group = 2  # Number of galaxies per group
 
         # G1 data
 
@@ -104,7 +104,7 @@ class TestMeasureStatistics:
             cls.details.add_row(vals={datf.ID: i,
                                       datf.group_ID: i})
             cls.shear_estimates.add_row(vals={setf.ID: i})
-        for j in range(len_group):
+        for j in range(cls.len_group):
             for i in range(len(g1_true)):
                 cls.details_group.add_row(vals={datf.ID: i * len_group + j,
                                                 datf.group_ID: i})
@@ -191,6 +191,55 @@ class TestMeasureStatistics:
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
         for i in range(len(self.shear_estimates)):
+            row = allbad_shear_estimates[i]
+            row[setf.g1], row[setf.g2] = np.nan, np.nan
+            row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
+
+        # Check that we don't crash by calling calculate_shear_bias_statistics
+        g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
+            somebad_shear_estimates, self.details)
+        g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
+            allbad_shear_estimates, self.details)
+
+        # Check the statistics all have the expected weight
+
+        assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1)
+        assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2)
+
+        assert_almost_equal(g1_allbad_bias_stats.w, 0.)
+        assert_almost_equal(g2_allbad_bias_stats.w, 0.)
+
+        return
+
+    def test_bad_shear_bias_input_group(self):
+        """Tests that the calculate_shear_bias_statistics method is resilient to bad measurements.
+        """
+
+        # Set up data with some bad input
+
+        somebad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
+        allbad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
+
+        for j in range(cls.len_group):
+            for i in range(len(self.shear_estimates)):
+                cls.somebad_shear_estimates.add_row(vals={setf.ID: i * len_group + j})
+                cls.allbad_shear_estimates.add_row(vals={setf.ID: i * len_group + j})
+
+        somebad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
+        somebad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
+        somebad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
+        somebad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+
+        allbad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
+        allbad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
+        allbad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
+        allbad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+
+        for i in [0, 3, 7, 8]:
+            row = somebad_shear_estimates[i]
+            row[setf.g1], row[setf.g2] = np.nan, np.nan
+            row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
+        for i in range(len(self.shear_estimates_group)):
             row = allbad_shear_estimates[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
