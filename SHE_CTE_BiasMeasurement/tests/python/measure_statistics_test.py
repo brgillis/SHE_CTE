@@ -257,8 +257,8 @@ class TestMeasureStatistics:
 
         # Check the statistics all have the expected weight
 
-        assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1)
-        assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2)
+        assert_almost_equal(g1_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w1)
+        assert_almost_equal(g2_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w2)
 
         assert not np.isnan(g1_somebad_bias_stats.xm)
         assert not np.isnan(g1_somebad_bias_stats.x2m)
