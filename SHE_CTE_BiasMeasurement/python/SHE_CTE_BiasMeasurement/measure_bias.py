@@ -7,14 +7,13 @@
 from os.path import join
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.bias_measurement_outputting import output_bias_measurement
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
 
-__updated__ = "2018-06-25"
+__updated__ = "2018-06-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -64,7 +63,11 @@ def measure_bias_from_args(args):
     for method in mv.estimation_methods:
         method_shear_statistics_lists[method] = MethodStatisticsList()
 
-    for shear_statistics_file in shear_statistics_files:
+    for shear_statistics_file_tuple in shear_statistics_files:
+
+        # This is a merge point, so we get the file as a tuple of length 1 in the listfile
+        shear_statistics_file = shear_statistics_file_tuple[0]
+
         shear_statistics_prod = read_xml_product(join(args.workdir, shear_statistics_file))
 
         for method in mv.estimation_methods:
