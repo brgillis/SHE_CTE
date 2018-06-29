@@ -6,7 +6,7 @@
 """
 from numpy.testing.utils import assert_allclose
 
-__updated__ = "2018-06-25"
+__updated__ = "2018-06-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -83,6 +83,10 @@ def compress_details_and_measurements(combined_table):
             data[name] = np.zeros(num_good_rows)
             for i in range(num_good_rows):
                 data[name][i] = good_rows[i][name]
+
+        # Check we have a non-zero number of good values
+        if num_good_rows == 0:
+            continue
 
         # Check all real values are close. If not, we shouldn't be grouping
         assert_allclose(data[datf.g1], data[datf.g1][0])
