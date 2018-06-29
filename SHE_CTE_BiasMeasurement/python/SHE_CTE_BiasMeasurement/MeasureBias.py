@@ -84,7 +84,7 @@ def mainMethod(args):
                         {"measure_bias_from_args": measure_bias_from_args,
                          "args": args}, filename="measure_bias.prof")
     else:
-        measure_bias_from_args(vars(args))
+        measure_bias_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
 
