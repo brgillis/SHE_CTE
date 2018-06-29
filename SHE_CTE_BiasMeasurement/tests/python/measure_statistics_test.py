@@ -206,6 +206,11 @@ class TestMeasureStatistics:
         assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1)
         assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2)
 
+        assert not np.isnan(g1_somebad_bias_stats.xm)
+        assert not np.isnan(g1_somebad_bias_stats.x2m)
+        assert not np.isnan(g1_somebad_bias_stats.ym)
+        assert not np.isnan(g1_somebad_bias_stats.xym)
+
         assert_almost_equal(g1_allbad_bias_stats.w, 0.)
         assert_almost_equal(g2_allbad_bias_stats.w, 0.)
 
@@ -254,6 +259,11 @@ class TestMeasureStatistics:
 
         assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1)
         assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2)
+
+        assert not np.isnan(g1_somebad_bias_stats.xm)
+        assert not np.isnan(g1_somebad_bias_stats.x2m)
+        assert not np.isnan(g1_somebad_bias_stats.ym)
+        assert not np.isnan(g1_somebad_bias_stats.xym)
 
         assert_almost_equal(g1_allbad_bias_stats.w, 0.)
         assert_almost_equal(g2_allbad_bias_stats.w, 0.)
