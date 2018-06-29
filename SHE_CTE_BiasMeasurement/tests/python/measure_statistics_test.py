@@ -222,8 +222,8 @@ class TestMeasureStatistics:
 
         for j in range(self.len_group):
             for i in range(len(self.shear_estimates)):
-                cls.somebad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
-                cls.allbad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
+                somebad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
+                allbad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
 
         somebad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
         somebad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
