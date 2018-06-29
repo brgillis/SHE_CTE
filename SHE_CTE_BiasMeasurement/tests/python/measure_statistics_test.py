@@ -106,9 +106,9 @@ class TestMeasureStatistics:
             cls.shear_estimates.add_row(vals={setf.ID: i})
         for j in range(cls.len_group):
             for i in range(len(g1_true)):
-                cls.details_group.add_row(vals={datf.ID: i * len_group + j,
+                cls.details_group.add_row(vals={datf.ID: i * cls.len_group + j,
                                                 datf.group_ID: i})
-                cls.shear_estimates_group.add_row(vals={setf.ID: i * len_group + j})
+                cls.shear_estimates_group.add_row(vals={setf.ID: i * cls.len_group + j})
 
         # Save details data
         cls.details[datf.g1] = g1_true
@@ -220,10 +220,10 @@ class TestMeasureStatistics:
         somebad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
         allbad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
 
-        for j in range(cls.len_group):
+        for j in range(self.len_group):
             for i in range(len(self.shear_estimates)):
-                cls.somebad_shear_estimates.add_row(vals={setf.ID: i * len_group + j})
-                cls.allbad_shear_estimates.add_row(vals={setf.ID: i * len_group + j})
+                cls.somebad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
+                cls.allbad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
 
         somebad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
         somebad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
