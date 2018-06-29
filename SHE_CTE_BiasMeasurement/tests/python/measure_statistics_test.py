@@ -225,15 +225,15 @@ class TestMeasureStatistics:
                 somebad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
                 allbad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
 
-        somebad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
-        somebad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
-        somebad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
-        somebad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+        somebad_shear_estimates[setf.g1] = self.shear_estimates_group[setf.g1]
+        somebad_shear_estimates[setf.g2] = self.shear_estimates_group[setf.g2]
+        somebad_shear_estimates[setf.g1_err] = self.shear_estimates_group[setf.g1_err]
+        somebad_shear_estimates[setf.g2_err] = self.shear_estimates_group[setf.g2_err]
 
-        allbad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
-        allbad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
-        allbad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
-        allbad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+        allbad_shear_estimates[setf.g1] = self.shear_estimates_group[setf.g1]
+        allbad_shear_estimates[setf.g2] = self.shear_estimates_group[setf.g2]
+        allbad_shear_estimates[setf.g1_err] = self.shear_estimates_group[setf.g1_err]
+        allbad_shear_estimates[setf.g2_err] = self.shear_estimates_group[setf.g2_err]
 
         for i in [0, 3, 7, 8]:
             row = somebad_shear_estimates[i]
