@@ -246,9 +246,9 @@ class TestMeasureStatistics:
 
         # Check that we don't crash by calling calculate_shear_bias_statistics
         g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
-            somebad_shear_estimates, self.details)
+            somebad_shear_estimates, self.details_group)
         g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
-            allbad_shear_estimates, self.details)
+            allbad_shear_estimates, self.details_group)
 
         # Check the statistics all have the expected weight
 
