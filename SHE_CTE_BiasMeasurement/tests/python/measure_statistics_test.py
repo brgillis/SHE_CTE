@@ -189,11 +189,11 @@ class TestMeasureStatistics:
         for i in [0, 3]:
             row = somebad_shear_estimates[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
-            row[setf.g1_err], row[setf.g2_err] = 1e99, 1e99
+            row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
         for i in range(len(self.shear_estimates)):
             row = allbad_shear_estimates[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
-            row[setf.g1_err], row[setf.g2_err] = 1e99, 1e99
+            row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
 
         # Check that we don't crash by calling calculate_shear_bias_statistics
         g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
