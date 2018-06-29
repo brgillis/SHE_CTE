@@ -83,7 +83,7 @@ def mainMethod(args):
         cProfile.runctx("measure_bias_from_args(args)", {},
                         {"measure_bias_from_args": measure_bias_from_args,
                          "args": args}, filename="measure_bias.prof")
-    else: <dict>
+    else:
         measure_bias_from_args(vars(args))
 
     logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
