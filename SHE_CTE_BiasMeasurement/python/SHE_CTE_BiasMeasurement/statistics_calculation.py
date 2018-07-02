@@ -25,7 +25,7 @@ from astropy import table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT.logging import getLogger
-from SHE_PPT.math import get_linregress_statistics
+from SHE_PPT.math import get_linregress_statistics, LinregressStatistics
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
@@ -137,6 +137,18 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureStatistics calculate_shear_bias_statistics()')
     logger.debug('#')
+
+    # If there are no rows in the estimates table, exit early will an empty statistics object
+    if len(estimates_table) == 0:
+        g1_stats = LinregressStatistics()
+        g2_stats = LinregressStatistics()
+        for stats in g1_stats, g2_stats:
+            stats.w = 0
+            stats.xm = 0
+            stats.x2m = 0
+            stats.ym = 0
+            stats.xym = 0
+        return g1_stats, g2_stats
 
     # Create a combined table, joined on galaxy ID
     if setf.ID != datf.ID:
