@@ -6,7 +6,7 @@
 """
 from numpy.testing.utils import assert_allclose
 
-__updated__ = "2018-06-29"
+__updated__ = "2018-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -92,7 +92,8 @@ def compress_details_and_measurements(combined_table):
         assert_allclose(data[datf.g1], data[datf.g1][0])
         assert_allclose(data[datf.g2], data[datf.g2][0])
 
-        # Calculate weighted means of the measurements
+        # Calculate unweighted means of the measurements but retain full weight
+        # Must be unweighted to retain benefits of shape noise cancellation
         g1_weight = data[setf.g1_err]**-2
         g2_weight = data[setf.g2_err]**-2
 
@@ -102,11 +103,11 @@ def compress_details_and_measurements(combined_table):
         if total_g1_weight <= 0 or total_g2_weight <= 0:
             raise ValueError("Bad weights in combining shear measurements.")
 
-        mean_g1 = np.sum(data[setf.g1] * g1_weight) / total_g1_weight
-        mean_g2 = np.sum(data[setf.g2] * g2_weight) / total_g2_weight
+        combined_g1_err = total_g1_weight**-0.5
+        combined_g2_err = total_g2_weight**-0.5
 
-        mean_g1_err = np.sqrt(1 / np.sum(g1_weight))
-        mean_g2_err = np.sqrt(1 / np.sum(g2_weight))
+        mean_g1 = np.mean(data[setf.g1])
+        mean_g2 = np.mean(data[setf.g2])
 
         # Add these to the compressed table
         compressed_table.add_row(vals={datf.group_ID: group_id,
@@ -114,8 +115,8 @@ def compress_details_and_measurements(combined_table):
                                        datf.g2: data[datf.g2][0],
                                        setf.g1: mean_g1,
                                        setf.g2: mean_g2,
-                                       setf.g1_err: mean_g1_err,
-                                       setf.g2_err: mean_g2_err})
+                                       setf.g1_err: combined_g1_err,
+                                       setf.g2_err: combined_g2_err})
 
     return compressed_table
 
@@ -151,9 +152,9 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
     bias_stats = []
     for g_est_colname, g_err_colname, g_true_colname in ((setf.g1, setf.g1_err, datf.g1,),
                                                          (setf.g2, setf.g2_err, datf.g2,),):
-        lx = combined_table[g_true_colname].data
-        ly = combined_table[g_est_colname].data
-        ly_err = combined_table[g_err_colname].data
+        lx = compressed_table[g_true_colname].data
+        ly = compressed_table[g_est_colname].data
+        ly_err = compressed_table[g_err_colname].data
 
         bias_stats.append(get_linregress_statistics(lx, ly, ly_err))
 
