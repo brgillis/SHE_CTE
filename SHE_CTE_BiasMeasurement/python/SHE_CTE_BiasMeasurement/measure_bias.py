@@ -13,7 +13,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
 
-__updated__ = "2018-06-29"
+__updated__ = "2018-07-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -63,10 +63,14 @@ def measure_bias_from_args(args):
     for method in mv.estimation_methods:
         method_shear_statistics_lists[method] = MethodStatisticsList()
 
-    for shear_statistics_file_tuple in shear_statistics_files:
+    for shear_statistics_file in shear_statistics_files:
 
         # This is a merge point, so we get the file as a tuple of length 1 in the listfile
-        shear_statistics_file = shear_statistics_file_tuple[0]
+        if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
+            if len(shear_statistics_file) == 1:
+                shear_statistics_file = shear_statistics_file[0]
+            else:
+                raise ValueError("Unexpected format of shear statistics listfile.")
 
         shear_statistics_prod = read_xml_product(join(args.workdir, shear_statistics_file))
 

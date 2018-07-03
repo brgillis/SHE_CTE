@@ -17,7 +17,7 @@ from SHE_PPT.math import LinregressStatistics
 import numpy as np
 
 
-__updated__ = "2018-06-25"
+__updated__ = "2018-07-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -141,7 +141,7 @@ class TestMeasureStatistics:
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
 
             shear_bias_statistics_filenames_0.append(filename_0)
-            shear_bias_statistics_filenames_1.append(filename_1)
+            shear_bias_statistics_filenames_1.append([filename_1, ])  # We should also be able to read a length-1 tuple
             if i % 2 == 0:
                 shear_bias_statistics_filenames_01.append(filename_0)
             else:
