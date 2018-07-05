@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+import os
 from os.path import join
 
 from astropy.io import fits
@@ -114,11 +115,11 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Generating shear estimates product...")
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
-        BFD_filename=get_allowed_filename("BFD_SHM", "0"),
-        KSB_filename=get_allowed_filename("KSB_SHM", "0"),
-        LensMC_filename=get_allowed_filename("LensMC_SHM", "0"),
-        MomentsML_filename=get_allowed_filename("MomentsML_SHM", "0"),
-        REGAUSS_filename=get_allowed_filename("REGAUSS_SHM", "0"))
+        BFD_filename=get_allowed_filename("BFD_SHM", str(os.getpid())),
+        KSB_filename=get_allowed_filename("KSB_SHM", str(os.getpid())),
+        LensMC_filename=get_allowed_filename("LensMC_SHM", str(os.getpid())),
+        MomentsML_filename=get_allowed_filename("MomentsML_SHM", str(os.getpid())),
+        REGAUSS_filename=get_allowed_filename("REGAUSS_SHM", str(os.getpid())))
 
     if not dry_run:
 
