@@ -64,10 +64,18 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
     window_ny = int(resampled_ny * resampled_scale / in_scale) + 1
 
-    xm = (initial_image.shape[0] - window_nx) // 2
+    xm = (initial_image.shape[0] - window_nx) // 2 + 1
+    if xm < 1:
+        xm = 1
     xh = xm + window_nx - 1
-    ym = (initial_image.shape[1] - window_ny) // 2
+    if xh > initial_image.shape[0]:
+        xh = initial_image.shape[0]
+    ym = (initial_image.shape[1] - window_ny) // 2 + 1
+    if ym < 1:
+        ym = 1
     yh = ym + window_ny - 1
+    if yh > initial_image.shape[1]:
+        yh = initial_image.shape[1]
 
     subimage = galsim.Image(initial_image.data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
 
@@ -149,7 +157,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger.debug("Entering get_shear_estimate")
 
     # Get a resampled galaxy stamp
-    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
+    resampled_gal_stamp = get_resampled_image(gal_stamp, 0.02, psf_stamp.shape[0], psf_stamp.shape[1])
 
     badpix = (gal_stamp.boolmask).astype(np.uint16)  # Galsim requires int array
 
