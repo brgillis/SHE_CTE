@@ -157,7 +157,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger.debug("Entering get_shear_estimate")
 
     # Get a resampled galaxy stamp
-    resampled_gal_stamp = get_resampled_image(gal_stamp, 0.02, psf_stamp.shape[0], psf_stamp.shape[1])
+    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
 
     badpix = (gal_stamp.boolmask).astype(np.uint16)  # Galsim requires int array
 
@@ -246,7 +246,7 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
-        psf_scale = 0.1
+        psf_scale = 0.02
 
     row_index = 0
 
@@ -362,7 +362,7 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({setf.ID: gal_id,
                                        setf.g1: stack_g_world[0],
-                                       setf.g2: stack_g_world[0],
+                                       setf.g2: stack_g_world[1],
                                        setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + shape_noise ** 2),
                                        setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + shape_noise ** 2),
                                        setf.g1g2_covar: stack_covar_world[0, 1],
