@@ -54,20 +54,26 @@ class ShearEstimate(object):
         self.y = y
 
 
-def get_resampled_image(subsampled_image, resampled_scale):
+def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
 
-    if scale_label in subsampled_image.header:
-        ss_scale = subsampled_image.header[scale_label]
+    if scale_label in initial_image.header:
+        in_scale = initial_image.header[scale_label]
     else:
-        ss_scale = 0.02
+        in_scale = 0.1
 
-    resampled_nx = int(np.shape(subsampled_image.data)[0] / (resampled_scale / ss_scale))
-    resampled_ny = int(np.shape(subsampled_image.data)[1] / (resampled_scale / ss_scale))
+    window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
+    window_ny = int(resampled_ny * resampled_scale / in_scale) + 1
+
+    xm = (initial_image.shape[0] - window_nx) // 2
+    xh = xm + window_nx - 1
+    ym = (initial_image.shape[1] - window_ny) // 2
+    yh = ym + window_ny - 1
+
+    subimage = galsim.Image(initial_image.data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
 
     resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
 
-    galsim.InterpolatedImage(galsim.Image(subsampled_image.data,
-                                          scale=ss_scale)).drawImage(resampled_gs_image, use_true_center=True)
+    galsim.InterpolatedImage(subimage).drawImage(resampled_gs_image, use_true_center=True)
 
     resampled_image = SHEImage(resampled_gs_image.array)
     resampled_image.header[scale_label] = resampled_scale
@@ -125,6 +131,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     g1, g2 = get_g_from_e(e1, e2)
     gerr = galsim_shear_estimate.corrected_shape_err * np.sqrt((g1 ** 2 + g2 ** 2) / (e1 ** 2 + e2 ** 2))
 
+    # FIXME - apply psf scale to size measurement
     shear_estimate = ShearEstimate(g1, g2, gerr,
                                    galsim_shear_estimate.moments_sigma,
                                    galsim_shear_estimate.moments_amp,
@@ -141,8 +148,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
 
-    # Get a resampled PSF stamp
-    resampled_psf_stamp = get_resampled_image(psf_stamp, gal_scale)
+    # Get a resampled galaxy stamp
+    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
 
     badpix = (gal_stamp.boolmask).astype(np.uint16)  # Galsim requires int array
 
@@ -151,13 +158,13 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     try:
 
-        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(gal_stamp.data.transpose(), scale=gal_scale),
-                                                         PSF_image=galsim.Image(resampled_psf_stamp.data.transpose(),
+        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=gal_scale),
+                                                         PSF_image=galsim.Image(psf_stamp.data.transpose(),
                                                                                 scale=gal_scale),
                                                          badpix=galsim.Image(badpix.transpose(), scale=gal_scale),
                                                          sky_var=float(sky_var),  # Need to match type signature
-                                                         guess_sig_gal=0.5 / gal_scale,
-                                                         guess_sig_PSF=0.2 / gal_scale,
+                                                         guess_sig_gal=0.5 / psf_scale,
+                                                         guess_sig_PSF=0.2 / psf_scale,
                                                          shear_est=method)
 
         if method == "KSB":
