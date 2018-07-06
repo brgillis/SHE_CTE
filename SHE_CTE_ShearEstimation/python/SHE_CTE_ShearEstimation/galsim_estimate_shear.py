@@ -79,7 +79,7 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
     subimage = galsim.Image(initial_image.data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
 
-    if all(subimage.array == 0):
+    if (subimage.array == 0).all():
         resampled_image = SHEImage(np.zeros((resampled_nx, resampled_ny)))
     else:
         resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
