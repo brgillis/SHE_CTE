@@ -175,7 +175,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=psf_scale),
                                                          PSF_image=galsim.Image(psf_stamp.data.transpose(),
                                                                                 scale=psf_stamp),
-                                                         badpix=galsim.Image(badpix.transpose(), scale=psf_stamp),
+                                                         badpix=galsim.Image(badpix.transpose(), scale=psf_scale),
                                                          sky_var=float(sky_var),  # Need to match type signature
                                                          guess_sig_gal=0.5 / psf_scale,
                                                          guess_sig_PSF=0.2 / psf_scale,
