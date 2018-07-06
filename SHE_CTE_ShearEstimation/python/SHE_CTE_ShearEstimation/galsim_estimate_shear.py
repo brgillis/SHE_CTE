@@ -166,7 +166,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                              (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
                                          guess_sig=0.5 / gal_scale,)
 
-    resampled_gal_stamp_size = int(5 * gal_mom.sigma * gal_scale / psf_scale)
+    resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
