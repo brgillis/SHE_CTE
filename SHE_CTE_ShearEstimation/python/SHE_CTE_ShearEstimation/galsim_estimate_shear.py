@@ -160,10 +160,18 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
 
+    # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
+    gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(gal_stamp.data.transpose(), scale=psf_scale),
+                                         galsim.Image(
+                                             (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
+                                         guess_sig=0.5 / gal_scale,)
+
+    resampled_gal_stamp_size = int(5 * gal_mom.sigma * gal_scale / psf_scale)
+
     # Get a resampled galaxy stamp
-    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
+    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
     resampled_badpix = get_resampled_image(
-        SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
+        SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
 
     badpix = (resampled_badpix.data > 0.5).astype(np.uint16)  # Galsim requires int array
 
