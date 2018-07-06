@@ -159,7 +159,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
     resampled_badpix = get_resampled_image(
-        (gal_stamp.boolmask).astype(float), psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
+        SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
 
     badpix = (resampled_badpix > 0.5).astype(np.uint16)  # Galsim requires int array
 
