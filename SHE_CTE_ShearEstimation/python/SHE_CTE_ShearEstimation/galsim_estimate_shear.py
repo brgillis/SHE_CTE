@@ -199,6 +199,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         else:
             raise RuntimeError("Invalid shear estimation method for GalSim: " + str(method))
 
+        # Correct the shear estimate for x and y from resampled stamp
+        shear_estimate.x = (gal_stamp.shape[0] / 2 -
+                            ((resampled_gal_stamp.shape[0] / 2 - shear_estimate.x) * psf_scale / gal_scale))
+        shear_estimate.y = (gal_stamp.shape[1] / 2 -
+                            ((resampled_gal_stamp.shape[1] / 2 - shear_estimate.y) * psf_scale / gal_scale))
+
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
             raise
