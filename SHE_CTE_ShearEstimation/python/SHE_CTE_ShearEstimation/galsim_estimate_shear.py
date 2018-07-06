@@ -158,18 +158,20 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
+    resampled_badpix = get_resampled_image(
+        (gal_stamp.boolmask).astype(float), psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
 
-    badpix = (gal_stamp.boolmask).astype(np.uint16)  # Galsim requires int array
+    badpix = (resampled_badpix > 0.5).astype(np.uint16)  # Galsim requires int array
 
     # FIXME - What units should sky_var be in?
     sky_var = np.square(gal_stamp.noisemap.transpose()).mean()  # Galsim doesn't allow an array here
 
     try:
 
-        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=gal_scale),
+        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=psf_stamp),
                                                          PSF_image=galsim.Image(psf_stamp.data.transpose(),
-                                                                                scale=gal_scale),
-                                                         badpix=galsim.Image(badpix.transpose(), scale=gal_scale),
+                                                                                scale=psf_stamp),
+                                                         badpix=galsim.Image(badpix.transpose(), scale=psf_stamp),
                                                          sky_var=float(sky_var),  # Need to match type signature
                                                          guess_sig_gal=0.5 / psf_scale,
                                                          guess_sig_PSF=0.2 / psf_scale,
