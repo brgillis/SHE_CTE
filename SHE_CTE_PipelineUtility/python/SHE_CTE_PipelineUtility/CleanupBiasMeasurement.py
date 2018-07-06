@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-07-05"
+__updated__ = "2018-07-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -82,8 +82,9 @@ def mainMethod(args):
     def remove_file(qualified_filename):
         if not os.path.exists(qualified_filename):
             logger.warn("Expected file '" + qualified_filename + "' does not exist.")
-            continue
+            return
         os.remove(qualified_filename)
+        return
 
     def remove_product(qualified_filename):
 
