@@ -79,11 +79,15 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
     subimage = galsim.Image(initial_image.data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
 
-    resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
+    if all(subimage.data == 0):
+        resampled_image = SHEImage(np.zeros((resampled_nx, resampled_ny)))
+    else:
+        resampled_gs_image = galsim.Image(resampled_nx, resampled_ny, scale=resampled_scale)
 
-    galsim.InterpolatedImage(subimage).drawImage(resampled_gs_image, use_true_center=True)
+        galsim.InterpolatedImage(subimage).drawImage(resampled_gs_image, use_true_center=True)
 
-    resampled_image = SHEImage(resampled_gs_image.array)
+        resampled_image = SHEImage(resampled_gs_image.array)
+
     resampled_image.header[scale_label] = resampled_scale
 
     return resampled_image
