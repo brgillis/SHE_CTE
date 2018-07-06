@@ -103,7 +103,7 @@ def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir,
     return GS_estimate_shear(data_stack, method="REGAUSS", workdir=workdir, *args, **kwargs)
 
 
-def get_KSB_shear_estimate(galsim_shear_estimate):
+def get_KSB_shear_estimate(galsim_shear_estimate, scale):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_KSB_shear_estimate")
@@ -118,7 +118,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
     shear_estimate = ShearEstimate(galsim_shear_estimate.corrected_g1,
                                    galsim_shear_estimate.corrected_g2,
                                    galsim_shear_estimate.corrected_shape_err,
-                                   galsim_shear_estimate.moments_sigma,
+                                   galsim_shear_estimate.moments_sigma * scale,
                                    galsim_shear_estimate.moments_amp,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
@@ -128,7 +128,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate):
     return shear_estimate
 
 
-def get_REGAUSS_shear_estimate(galsim_shear_estimate):
+def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_REGAUSS_shear_estimate")
@@ -143,9 +143,8 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate):
     g1, g2 = get_g_from_e(e1, e2)
     gerr = galsim_shear_estimate.corrected_shape_err * np.sqrt((g1 ** 2 + g2 ** 2) / (e1 ** 2 + e2 ** 2))
 
-    # FIXME - apply psf scale to size measurement
     shear_estimate = ShearEstimate(g1, g2, gerr,
-                                   galsim_shear_estimate.moments_sigma,
+                                   galsim_shear_estimate.moments_sigma * scale,
                                    galsim_shear_estimate.moments_amp,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
@@ -176,7 +175,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     badpix = (resampled_badpix.data > 0.5).astype(np.uint16)  # Galsim requires int array
 
     # FIXME - What units should sky_var be in?
-    sky_var = np.square(gal_stamp.noisemap.transpose()).mean()  # Galsim doesn't allow an array here
+    sky_var = float(np.square(gal_stamp.noisemap.transpose()).mean())  # Galsim requires single float here
 
     try:
 
@@ -184,18 +183,18 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                                          PSF_image=galsim.Image(psf_stamp.data.transpose(),
                                                                                 scale=psf_scale),
                                                          badpix=galsim.Image(badpix.transpose(), scale=psf_scale),
-                                                         sky_var=float(sky_var),  # Need to match type signature
+                                                         sky_var=float(sky_var),
                                                          guess_sig_gal=0.5 / psf_scale,
                                                          guess_sig_PSF=0.2 / psf_scale,
                                                          shear_est=method)
 
         if method == "KSB":
 
-            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate)
+            shear_estimate = get_KSB_shear_estimate(galsim_shear_estimate, psf_scale)
 
         elif method == "REGAUSS":
 
-            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate)
+            shear_estimate = get_REGAUSS_shear_estimate(galsim_shear_estimate, psf_scale)
 
         else:
             raise RuntimeError("Invalid shear estimation method for GalSim: " + str(method))
