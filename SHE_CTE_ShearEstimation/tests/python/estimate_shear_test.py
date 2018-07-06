@@ -55,7 +55,7 @@ class TestCase:
 
                 # Try rebinning it
                 rb_image = get_resampled_image(
-                    ss_image, 1., ss_image.shape[0] * ss_factor, ss_image.shape[1] * ss_factor)
+                    ss_image, 1., ss_image.shape[0] / ss_factor, ss_image.shape[1] / ss_factor)
                 rb_data = rb_image.data
                 rb_data /= rb_data.sum()
 
