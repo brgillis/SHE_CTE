@@ -34,7 +34,6 @@ class TestCase:
 
     """
 
-
     def test_get_resampled_image(self):
 
         for ss_scale in (0.2, 0.4):
@@ -46,7 +45,8 @@ class TestCase:
                 ss_data = np.zeros((3 * ss_factor, 3 * ss_factor))
                 for i in range(3):
                     for j in range(3):
-                        ss_data[ ss_factor * i:ss_factor * i + ss_factor, ss_factor * j:ss_factor * j + ss_factor ] += i + 3 * j + 1
+                        ss_data[ss_factor * i:ss_factor * i + ss_factor,
+                                ss_factor * j:ss_factor * j + ss_factor] += i + 3 * j + 1
 
                 ss_data /= ss_data.sum()
 
@@ -54,16 +54,17 @@ class TestCase:
                 ss_image.header[scale_label] = 1. / ss_factor
 
                 # Try rebinning it
-                rb_image = get_resampled_image(ss_image, 1.)
+                rb_image = get_resampled_image(
+                    ss_image, 1., ss_image.shape[0] * ss_factor, ss_image.shape[1] * ss_factor)
                 rb_data = rb_image.data
                 rb_data /= rb_data.sum()
 
                 # Check the sections are close
                 for i in range(3):
                     for j in range(3):
-                        assert np.isclose(ss_data[ ss_factor * i:ss_factor * i + ss_factor, ss_factor * j:ss_factor * j + ss_factor ].sum(),
-                                           rb_data[ i:i + 1, j:j + 1 ].sum(),
-                                           rtol = 0.2)
+                        assert np.isclose(ss_data[ss_factor * i:ss_factor * i + ss_factor, ss_factor * j:ss_factor * j + ss_factor].sum(),
+                                          rb_data[i:i + 1, j:j + 1].sum(),
+                                          rtol=0.2)
 
     def test_inv_var_stack(self):
 
@@ -103,13 +104,13 @@ class TestCase:
         sky_var = 0
 
         # Set up the galaxy profile we'll be using
-        base_gal = galsim.Sersic(n = 1, half_light_radius = 0.5)
+        base_gal = galsim.Sersic(n=1, half_light_radius=0.5)
 
         # Set up the psf we'll be using and a subsampled image of it
-        psf = galsim.Airy(lam_over_diam = 0.2)
+        psf = galsim.Airy(lam_over_diam=0.2)
 
-        ss_psf_image = galsim.Image(250, 250, scale = 0.02)
-        psf.drawImage(ss_psf_image, use_true_center = False)
+        ss_psf_image = galsim.Image(250, 250, scale=0.02)
+        psf.drawImage(ss_psf_image, use_true_center=False)
 
         psf_stamp = SHEImage(ss_psf_image.array.transpose())
         psf_stamp.header[scale_label] = ss_psf_image.scale
@@ -120,24 +121,23 @@ class TestCase:
                            (0., -0.1)):
 
                 # Draw the galaxy
-                observed_gal = galsim.Convolve([base_gal.shear(g1 = g1, g2 = g2), psf])
-                observed_gal_image = galsim.Image(100, 100, scale = 0.10)
-                observed_gal.drawImage(observed_gal_image, use_true_center = False)
+                observed_gal = galsim.Convolve([base_gal.shear(g1=g1, g2=g2), psf])
+                observed_gal_image = galsim.Image(100, 100, scale=0.10)
+                observed_gal.drawImage(observed_gal_image, use_true_center=False)
 
                 gal_stamp = SHEImage(observed_gal_image.array.transpose(),
-                                     mask = np.zeros_like(observed_gal_image.array.transpose(), dtype = np.int8),
-                                     segmentation_map = np.ones_like(observed_gal_image.array.transpose(), dtype = np.int8))
+                                     mask=np.zeros_like(observed_gal_image.array.transpose(), dtype=np.int8),
+                                     segmentation_map=np.ones_like(observed_gal_image.array.transpose(), dtype=np.int8))
                 gal_stamp.header[scale_label] = observed_gal_image.scale
 
                 # Get the shear estimate
                 shear_estimate = get_shear_estimate(gal_stamp,
                                                     psf_stamp,
-                                                    gal_scale = 0.10,
-                                                    psf_scale = 0.02,
-                                                    method = method,
-                                                    ID = 1)
+                                                    gal_scale=0.10,
+                                                    psf_scale=0.02,
+                                                    method=method,
+                                                    ID=1)
                 est_g1, est_g2 = shear_estimate.g1, shear_estimate.g2
 
-                assert np.isclose(est_g1, g1, rtol = 0.2, atol = 0.01)
-                assert np.isclose(est_g2, g2, rtol = 0.2, atol = 0.01)
-
+                assert np.isclose(est_g1, g1, rtol=0.2, atol=0.01)
+                assert np.isclose(est_g2, g2, rtol=0.2, atol=0.01)
