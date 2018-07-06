@@ -172,7 +172,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     try:
 
-        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=psf_stamp),
+        galsim_shear_estimate = galsim.hsm.EstimateShear(gal_image=galsim.Image(resampled_gal_stamp.data.transpose(), scale=psf_scale),
                                                          PSF_image=galsim.Image(psf_stamp.data.transpose(),
                                                                                 scale=psf_stamp),
                                                          badpix=galsim.Image(badpix.transpose(), scale=psf_stamp),
