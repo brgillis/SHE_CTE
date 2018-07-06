@@ -162,7 +162,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
     gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(gal_stamp.data.transpose(), scale=psf_scale),
-                                         galsim.Image(
+                                         badpix=galsim.Image(
                                              (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
                                          guess_sig=0.5 / gal_scale,)
 
