@@ -165,7 +165,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     resampled_badpix = get_resampled_image(
         SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, psf_stamp.shape[0], psf_stamp.shape[1])
 
-    badpix = (resampled_badpix > 0.5).astype(np.uint16)  # Galsim requires int array
+    badpix = (resampled_badpix.data > 0.5).astype(np.uint16)  # Galsim requires int array
 
     # FIXME - What units should sky_var be in?
     sky_var = np.square(gal_stamp.noisemap.transpose()).mean()  # Galsim doesn't allow an array here
