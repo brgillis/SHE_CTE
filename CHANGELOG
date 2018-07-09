@@ -1,26 +1,28 @@
 Changelog for SHE_CTE Common Testing Environment
 
-Changes from v0.2 to v0.3
+Changes from v0.2 to v0.4
 =========================
 
 API Changes
 -----------
 
+- Removed interfaces for various input/output we aren't using yet
+- SHE_CTE_ValidateShearEstimates program renamed SHE_CTE_CrossValidateShearEstimates
+
 Dependency Changes
 ------------------
 
-- Now depends on SHE_PPT version 0.2
+- Now depends on SHE_PPT version 0.5
 - No longer depends on SHE_GST
 - Now depends on SHE_MomentsML version 1.0
 - Now depends on SHE_BFD version 0.1
+- Now depends on SHE_LensMC version 2.1
 
 Deprecated Features
 -------------------
 
-
 Bug Fixes
 ---------
-
 
 New Features
 ------------
