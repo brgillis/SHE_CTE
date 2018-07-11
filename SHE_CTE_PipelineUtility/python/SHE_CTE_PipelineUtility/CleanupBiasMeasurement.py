@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-07-06"
+__updated__ = "2018-07-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,6 +25,7 @@ import os
 
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -78,6 +79,10 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
     logger.debug('#')
+    
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_CleanupBiasMeasurement")
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
 
     def remove_file(qualified_filename):
         if not os.path.exists(qualified_filename):

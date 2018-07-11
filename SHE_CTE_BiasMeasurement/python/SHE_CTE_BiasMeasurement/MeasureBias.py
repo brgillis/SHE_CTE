@@ -20,9 +20,11 @@
 
 import argparse
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-from SHE_PPT.logging import getLogger
 
 
 def defineSpecificProgramOptions():
@@ -77,6 +79,10 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
     logger.debug('#')
+    
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureBias")
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
 
     if args.profile:
         import cProfile
