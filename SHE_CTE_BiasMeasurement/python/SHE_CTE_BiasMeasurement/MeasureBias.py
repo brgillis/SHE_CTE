@@ -79,8 +79,9 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
     logger.debug('#')
-    
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureBias")
+
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureBias",
+                                    store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
@@ -110,6 +111,7 @@ def main():
     mainMethod(args)
 
     return
+
 
 if __name__ == "__main__":
     main()
