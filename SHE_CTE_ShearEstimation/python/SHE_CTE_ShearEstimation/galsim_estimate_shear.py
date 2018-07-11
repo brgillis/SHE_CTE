@@ -20,9 +20,6 @@
 
 from math import sqrt
 
-import galsim
-
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.noise import get_var_ADU_per_pixel
@@ -31,6 +28,9 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+import galsim
+
+from SHE_CTE_ShearEstimation import magic_values as mv
 import numpy as np
 
 
@@ -160,12 +160,19 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger.debug("Entering get_shear_estimate")
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
-    gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(gal_stamp.data.transpose(), scale=psf_scale),
-                                         badpix=galsim.Image(
-                                             (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
-                                         guess_sig=0.5 / gal_scale,)
-
-    resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
+    try:
+        gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(gal_stamp.data.transpose(), scale=psf_scale),
+                                             badpix=galsim.Image(
+                                                 (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
+                                             guess_sig=0.5 / gal_scale,)
+    
+        resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
+    except RuntimeError as e:
+        if ("HSM Error" not in str(e)):
+            raise
+        else:
+            # If it fails, it's probably because the galaxy is small, so a small size will suffice
+            resampled_gal_stamp_size = 50
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
