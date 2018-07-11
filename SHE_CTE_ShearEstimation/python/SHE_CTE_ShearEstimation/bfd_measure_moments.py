@@ -33,23 +33,24 @@ from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 
 from SHE_BFD_CalculateMoments import bfd
-from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, bfd_load_configuration
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
 
+stamp_size=256 # hardcoded for now
+x_buffer = -5
+y_buffer = -5
 
-
-def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
+def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,debug=False):
     # not using training data or calibration data yet
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
 
     # get configuration info
-    config_data = bfd_load_configuration()
+    config_data = load_bfd_configuration()
     
     # initialize the table
     if config_data['isTarget'] == True:
-        bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
-                                                         optional_columns= \
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns= \
                                                          [setf.bfd_moments,
                                                           setf.bfd_cov_even,
                                                           setf.bfd_cov_odd,
@@ -59,8 +60,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
         nlost=0
     else:
-        bfd_moments_table = initialise_bfd_moments_table(detection_tables[0],
-                                                         optional_columns= \
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns= \
                                                          [setf.bfd_moments,
                                                           setf.bfd_deriv_moments_dg1,
                                                           setf.bfd_deriv_moments_dg2,
@@ -129,17 +129,17 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
 
         stacked_gal_image=stacked_gal_stamp.data
         stacked_psf_image=stacked_bulge_psf_stamp.data
+        # FIX? what are units?
+        sky_var = float(np.square(stacked_gal_stamp.noisemap.transpose()).mean())  # Galsim requires single float here
 
-        sky_var=np.square(stacked_gal_stamp.noisemap).mean #? what are units of noisemap?
-        
         origin = (0.,0.)
         uvgal=(gal_x_world,gal_y_world)
-        xygal = gal_stamp_stack.world2pix(gal_x_world,gal_y_world)
+        xygal = stacked_gal_stamp.world2pix(gal_x_world,gal_y_world)
         
         uvstamp=uvgal
         xystamp=(128,128)
         
-        duv_dxy=gal_stamp_stack.get_pix2world_transformation(xyref[0],xyref[1])
+        duv_dxy=stacked_gal_stamp.get_pix2world_transformation(xystamp[0],xystamp[1])
         wcs=bfd.WCS(duv_dxy,xyref=xystamp,uvref=uvstamp)
 
         bfd_info = get_bfd_info(stacked_gal_image,
@@ -148,7 +148,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
                                 psf_scale,
                                 sky_var, 
                                 gal_id,
-                                wcs=wcs,
+                                wcs,
                                 config_data)
 
         if config_data['isTarget']==True:

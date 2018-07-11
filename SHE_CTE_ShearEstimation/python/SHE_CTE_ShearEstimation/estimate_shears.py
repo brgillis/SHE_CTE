@@ -20,12 +20,12 @@
 
 import os
 from os.path import join
-
+import pdb
 from astropy.io import fits
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename)
@@ -45,7 +45,7 @@ loading_methods = {"KSB": None,
                    "REGAUSS": None,
                    "MomentsML": None,
                    "LensMC": None,
-                   "BFD": bfd_load_method_data}
+                   "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
