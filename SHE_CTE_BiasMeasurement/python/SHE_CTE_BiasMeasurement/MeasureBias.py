@@ -5,24 +5,27 @@
     Main program for measuring bias of shear estimates.
 """
 
-# Copyright (C) 2012-2020 Euclid Science Ground Segment      
-#        
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General    
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)    
-# any later version.    
-#        
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied    
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more    
-# details.    
-#        
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+
 from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+
 
 def defineSpecificProgramOptions():
     """
@@ -33,31 +36,28 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
+    logger = getLogger(mv.logger_name)
+
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--profile',action='store_true',
+    parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
-    
+
     # Input data
-    parser.add_argument('input_dir',type=str,
-                        help='Path of the directory containing shear measurements and details tables.')
-    parser.add_argument('--required_input_pattern', type=str, default=None,
-                        help='Required pattern in file names for measurements or details tables.')
-    parser.add_argument('--input_depth', type=int, default=0,
-                        help='Maximum subfolder depth to search for input files. 0 = input_dir only.')
-    
-    parser.add_argument('--e', type=str, default="p0",
-                        help='P(e) to use. Must be one of m2, m1, p0, p1, or p2.')
-    
+    parser.add_argument('--shear_bias_statistics', type=str,
+                        help='Listfile pointing to shear bias statistics objects.')
+
     # Output data
-    parser.add_argument('--output_file_name',type=str,default=mv.default_output_filename,
-                        help='Desired name of the output table containing bias measurements.')
-    parser.add_argument('--output_format',type=str,default=mv.default_output_format,
-                        help='Desired format of the output table.')
+    parser.add_argument('--shear_bias_measurements', type=str,
+                        help='Desired name of the output shear bias statistics data product')
+
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
 
     logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
 
@@ -79,32 +79,39 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
     logger.debug('#')
-        
+
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureBias",
+                                    store_true=["profile", "debug"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
+
     if args.profile:
         import cProfile
-        cProfile.runctx("measure_bias_from_args(vars(args))",{},
-                        {"measure_bias_from_args":measure_bias_from_args,
-                         "args":args},filename="measure_bias.prof")
+        cProfile.runctx("measure_bias_from_args(args)", {},
+                        {"measure_bias_from_args": measure_bias_from_args,
+                         "args": args}, filename="measure_bias.prof")
     else:
-        measure_bias_from_args(vars(args))
+        measure_bias_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
 
     return
+
 
 def main():
     """
     @brief
         Alternate entry point for non-Elements execution.
     """
-    
+
     parser = defineSpecificProgramOptions()
-    
+
     args = parser.parse_args()
-    
+
     mainMethod(args)
-    
+
     return
+
 
 if __name__ == "__main__":
     main()

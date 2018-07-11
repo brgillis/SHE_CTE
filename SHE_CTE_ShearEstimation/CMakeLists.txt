@@ -7,6 +7,7 @@ elements_depends_on_subdirs(SHE_CTE)
 elements_depends_on_subdirs(SHE_PPT)
 #elements_depends_on_subdirs(SHE_MomentsML)
 elements_depends_on_subdirs(SHE_BFD)
+elements_depends_on_subdirs(SHE_LensMC)
 
 # Instruction for Python module installation
 elements_install_python_modules()

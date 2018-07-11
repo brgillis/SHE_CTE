@@ -25,7 +25,6 @@ import numpy as np
 import pdb
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.noise import get_var_ADU_per_pixel
-from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.she_image import SHEImage
@@ -74,6 +73,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir):
                                                           setf.bfd_2ndderiv_moments_dmudmu,
                                                           setf.bfd_template_weight,
                                                           setf.bfd_jsuppress])
+
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']    
