@@ -22,7 +22,7 @@
 
 from math import sqrt
 import numpy as np
-import pdb
+
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.noise import get_var_ADU_per_pixel
 from SHE_PPT.logging import getLogger
@@ -98,7 +98,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
-        psf_scale = 0.1
+        psf_scale = 0.02
 
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
@@ -131,16 +131,11 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
         stacked_psf_image=stacked_bulge_psf_stamp.data
         # FIX? what are units?
         sky_var = float(np.square(stacked_gal_stamp.noisemap.transpose()).mean())  # Galsim requires single float here
-
-        origin = (0.,0.)
-        uvgal=(gal_x_world,gal_y_world)
-        xygal = stacked_gal_stamp.world2pix(gal_x_world,gal_y_world)
-        
-        uvstamp=uvgal
-        xystamp=(128,128)
-        
-        duv_dxy=stacked_gal_stamp.get_pix2world_transformation(xystamp[0],xystamp[1])
-        wcs=bfd.WCS(duv_dxy,xyref=xystamp,uvref=uvstamp)
+        # setup WCS with world and pixel coord of fixed point (nominal gal center)
+        uvgal=(gal_x_world,gal_y_world) 
+        xygal = stacked_gal_stamp.world2pix(gal_x_world,gal_y_world) 
+        duv_dxy=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1]) 
+        wcs=bfd.WCS(duv_dxy,xyref=xygal,uvref=uvgal)
 
         bfd_info = get_bfd_info(stacked_gal_image,
                                 stacked_psf_image,

@@ -174,8 +174,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        workdir=args.workdir,
                                                        debug=args.debug)
 
-                if not is_in_format(shear_estimates_table, setf):
-                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
+                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table,setf_bfd)):
+                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")  
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
