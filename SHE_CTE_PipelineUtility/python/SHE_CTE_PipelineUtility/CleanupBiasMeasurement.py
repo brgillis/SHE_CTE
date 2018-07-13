@@ -56,6 +56,8 @@ def defineSpecificProgramOptions():
     parser.add_argument('--details_table', type=str)
     parser.add_argument('--shear_estimates', type=str)
 
+    parser.add_argument('--shear_bias_statistics', type=str)  # Needed to ensure it waits until ready
+
     parser.add_argument('--workdir', type=str,)
     parser.add_argument('--logdir', type=str,)
 
