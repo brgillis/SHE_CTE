@@ -36,6 +36,7 @@ products.stack_mosaic.init()
 products.detections.init()
 products.details.init()
 products.shear_estimates.init()
+products.simulation_config.init()
 
 
 def defineSpecificProgramOptions():
