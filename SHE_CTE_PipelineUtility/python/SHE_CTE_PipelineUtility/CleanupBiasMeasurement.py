@@ -62,6 +62,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--workdir', type=str,)
     parser.add_argument('--logdir', type=str,)
 
+    parser.add_argument('--debug', type=bool, action='store_true',
+                        "Set to enable debugging protocols")
+
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 
     return parser
@@ -98,6 +101,9 @@ def mainMethod(args):
     def remove_product(qualified_filename):
 
         # Load the product
+        if not os.path.exists(qualified_filename):
+            logger.warn("Expected file '" + qualified_filename + "' does not exist.")
+            return
         p = read_xml_product(qualified_filename)
 
         # Remove all files this points to
@@ -116,6 +122,10 @@ def mainMethod(args):
                           args.detections_tables):
 
         qualified_listfile_name = os.path.join(args.workdir, listfile_name)
+
+        if not os.path.exists(qualified_listfile_name):
+            logger.warn("Expected file '" + qualified_listfile_name + "' does not exist.")
+            return
 
         filenames = read_listfile(qualified_listfile_name)
 
