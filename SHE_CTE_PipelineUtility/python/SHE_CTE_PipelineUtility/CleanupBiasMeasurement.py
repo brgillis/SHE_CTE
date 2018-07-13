@@ -28,6 +28,15 @@ from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
+products.calibrated_frame.init()
+products.stacked_frame.init()
+products.psf_image.init()
+products.mosaic.init()
+products.stack_mosaic.init()
+products.detections.init()
+products.details.init()
+products.shear_estimates.init()
+
 
 def defineSpecificProgramOptions():
     """
