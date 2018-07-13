@@ -123,7 +123,8 @@ def mainMethod(args):
         if hasattr(p, "get_all_filenames"):
             data_filenames = p.get_all_filenames()
             for data_filename in data_filenames:
-                remove_file(os.path.join(args.workdir, data_filename))
+                if data_filename is not None:
+                    remove_file(os.path.join(args.workdir, data_filename))
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
             if not args.debug:
