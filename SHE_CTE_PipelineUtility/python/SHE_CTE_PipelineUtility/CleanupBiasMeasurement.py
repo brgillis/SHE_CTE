@@ -62,7 +62,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--workdir', type=str,)
     parser.add_argument('--logdir', type=str,)
 
-    parser.add_argument('--debug', type=bool, action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         help="Set to enable debugging protocols")
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
