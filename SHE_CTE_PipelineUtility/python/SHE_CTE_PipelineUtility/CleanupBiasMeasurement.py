@@ -57,10 +57,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--details_table', type=str)
     parser.add_argument('--shear_estimates', type=str)
 
-    parser.add_argument('--shear_bias_statistics', type=str)  # Needed to ensure it waits until ready
+    parser.add_argument('--shear_bias_statistics_in', type=str)  # Needed to ensure it waits until ready
 
     # Output arguments
-    parser.add_argument('--output_tag', type=str)
+    parser.add_argument('--shear_bias_statistics_out', type=str)
 
     # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
@@ -144,6 +144,12 @@ def mainMethod(args):
                              args.details_table,
                              args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
+
+    # Move the statistics product to the new name
+    qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
+    qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
+
+    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
 
