@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-07-11"
+__updated__ = "2018-07-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -48,7 +48,7 @@ def defineSpecificProgramOptions():
     # Input arguments
     parser.add_argument('--simulation_config', type=str)
     parser.add_argument('--data_images', type=str)
-    parser.add_argument('--stacked_image', type=str)
+    parser.add_argument('--stacked_data_image', type=str)
     parser.add_argument('--psf_images_and_tables', type=str)
     parser.add_argument('--segmentation_images', type=str)
     parser.add_argument('--stacked_segmentation_image', type=str)
@@ -123,7 +123,7 @@ def mainMethod(args):
 
     # Now remove all products
     for product_filename in (args.simulation_config,
-                             args.stacked_image,
+                             args.stacked_data_image,
                              args.stacked_segmentation_image,
                              args.details_table,
                              args.shear_estimates):
