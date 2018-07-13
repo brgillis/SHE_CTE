@@ -23,6 +23,7 @@ __updated__ = "2018-07-13"
 import argparse
 import os
 
+from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
