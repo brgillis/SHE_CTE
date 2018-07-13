@@ -125,7 +125,7 @@ def mainMethod(args):
 
         if not os.path.exists(qualified_listfile_name):
             logger.warn("Expected file '" + qualified_listfile_name + "' does not exist.")
-            return
+            continue
 
         filenames = read_listfile(qualified_listfile_name)
 
