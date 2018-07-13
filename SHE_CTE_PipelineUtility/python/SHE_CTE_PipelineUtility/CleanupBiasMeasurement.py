@@ -126,7 +126,7 @@ def mainMethod(args):
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
             if not args.debug:
-                raise("Product " + qualified_filename + " has no 'get_all_filenames' method.")
+                raise RuntimeError("Product " + qualified_filename + " has no 'get_all_filenames' method.")
 
         # Remove the product itself
         remove_file(qualified_filename)
