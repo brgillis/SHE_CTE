@@ -27,6 +27,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+import numpy as np
 
 
 products.shear_bias_measurements.init()
@@ -96,11 +97,14 @@ def mainMethod(args):
 
     for method in methods:
 
+        g1_bias, g2_bias = p.get_method_bias_measurements(method)
+
+        if np.isnan(g1_bias.m) or np.isnan(g2_bias.m):
+            continue
+
         logger.info('#')
         logger.info('# Bias measurements for method "' + method + '":')
         logger.info('#')
-
-        g1_bias, g2_bias = p.get_method_bias_measurements(method)
 
         for bias, label in ((g1_bias, "G1"),
                             (g2_bias, "G2")):
