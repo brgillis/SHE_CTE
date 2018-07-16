@@ -20,7 +20,6 @@
 
 import os
 from os.path import join
-import pdb
 from astropy.io import fits
 
 from SHE_CTE_ShearEstimation import magic_values as mv

@@ -35,7 +35,7 @@ from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf a
 from SHE_BFD_CalculateMoments import bfd
 from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
 
-stamp_size=256 # hardcoded for now
+stamp_size=128 # hardcoded for now
 x_buffer = -5
 y_buffer = -5
 
@@ -132,9 +132,12 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
         # FIX? what are units?
         sky_var = float(np.square(stacked_gal_stamp.noisemap.transpose()).mean())  # Galsim requires single float here
         # setup WCS with world and pixel coord of fixed point (nominal gal center)
-        uvgal=(gal_x_world,gal_y_world) 
-        xygal = stacked_gal_stamp.world2pix(gal_x_world,gal_y_world) 
-        duv_dxy=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1]) 
+        uvgal=(0.,0.) # define center as 0,0 (gal_x_world,gal_y_world) 
+        xygal = np.array(stacked_gal_stamp.world2pix(gal_x_world,gal_y_world)) 
+        transformation_matrix=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1]) 
+        duv_dxy=np.array( [ [transformation_matrix[0,0],transformation_matrix[0,1]],
+                            [transformation_matrix[1,0],transformation_matrix[1,1]] ] )
+
         wcs=bfd.WCS(duv_dxy,xyref=xygal,uvref=uvgal)
 
         bfd_info = get_bfd_info(stacked_gal_image,
@@ -151,13 +154,14 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
                 nlost+=1
             else:
                 cov_even=[]
-                for i in xrange(5):
+                for i in range(5):
                     cov_even=np.append(cov_even,bfd_info.cov_even[i,i:5])
 
                 cov_odd=np.append(bfd_info.cov_odd[0,0:2],bfd_info.cov_odd[1,1:2])
-
+                bfd_info.x+=gal_x_world
+                bfd_info.y+=gal_y_world
                 # Add this row to the estimates table
-                bfd_moments_table.add_row({ setf.ID : ID,
+                bfd_moments_table.add_row({ setf.ID : gal_id,
                                             setf.bfd_moments :bfd_info.m,
                                             setf.x_world : bfd_info.x,
                                             setf.y_world : bfd_info.y,
