@@ -21,11 +21,15 @@
 import argparse
 import os
 
+from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+
+
+products.shear_bias_measurements.init()
 
 methods = ["BFD",
            "KSB",
