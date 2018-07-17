@@ -152,9 +152,12 @@ def estimate_shears_from_args(args, dry_run=False):
                     raise NotImplementedError("No shear measurement method supplied for method " + method + ".")
 
                 if load_training_data is not None:
-                    if training_data_filenames[method] is None:
+                    training_data_filename = training_data_filenames[method]
+                    if training_data_filename == 'None':
+                        training_data_filename = None
+                    if training_data_filename is None:
                         raise ValueError("No training data supplied for method " + method + ".")
-                    training_data = load_training_data(training_data_filenames[method])
+                    training_data = load_training_data(training_data_filename)
 
                 else:
                     training_data = None
