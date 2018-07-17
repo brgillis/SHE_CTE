@@ -22,7 +22,8 @@ import os
 from os.path import join
 
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename)
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_instance_id,
+                             get_data_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
@@ -114,7 +115,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
     logger.info("Generating shear estimates product...")
 
-    estimates_instance_id = str(os.getpid())
+    estimates_instance_id = get_instance_id(get_data_filename(args.stacked_image, workdir=args.workdir))
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD_SHM", estimates_instance_id),
