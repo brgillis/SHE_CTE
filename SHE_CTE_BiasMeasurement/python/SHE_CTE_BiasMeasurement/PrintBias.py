@@ -5,6 +5,8 @@
     Main program for printing out bias of shear estimates
 """
 
+__updated__ = "2018-07-19"
+
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
