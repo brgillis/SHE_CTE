@@ -190,11 +190,13 @@ def plot_bias_measurements_from_args(args):
 
                 # Determine combined y differently for error and non-error values
                 if "_err" in measurement_key:
-                    y_vals = (y1_o_vals * y1_vals + y2_o_vals * y2_vals) / np.sqrt(y1_o_vals**2 + y2_o_vals**2)
+                    y_vals = (np.abs(y1_o_vals) * y1_vals + np.abs(y2_o_vals)
+                              * y2_vals) / np.sqrt(y1_o_vals**2 + y2_o_vals**2)
                     y_errs = None
                 else:
                     y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
-                    y_errs = (y1_vals * y1_o_vals + y2_vals * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
+                    y_errs = (np.abs(y1_vals) * y1_o_vals + np.abs(y2_vals)
+                              * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
 
                 # Plot the values (and optionally error bars)
                 if "_err" not in measurement_key:
