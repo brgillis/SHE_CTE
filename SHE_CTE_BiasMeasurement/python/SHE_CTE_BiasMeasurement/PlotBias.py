@@ -52,11 +52,17 @@ def defineSpecificProgramOptions():
     # Input Data
     parser.add_argument('--methods', nargs='*', default=[],
                         help='Methods to plot bias measurements for.')
-    parser.add_argument('--root_data_folder', default="/home/user/Work")
-    parser.add_argument('--data_folder_head', default="workspace_")
-    parser.add_argument('--output_file_name_root', default="sensitivity_testing")
-    parser.add_argument('--output_format', default="png")
-    parser.add_argument('--hide', action="store_true")
+    parser.add_argument('--root_data_folder', default="/home/user/Work",
+                        help="Folder containing folders which contain bias measurements. Must be either absolute " +
+                             "or relative to workdir.")
+    parser.add_argument('--data_folder_head', default="workspace_",
+                        help="Head of folder names containing bias measurements, minus the E??P??S?? portion.")
+    parser.add_argument('--output_file_name_head', default="sensitivity_testing",
+                        help="Desired head of filenames for created files.")
+    parser.add_argument('--output_format', default="png",
+                        help="File format (and extension) of created images.")
+    parser.add_argument('--hide', action="store_true",
+                        help="If set, will not display plots when they are generated.")
 
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
