@@ -324,7 +324,8 @@ def plot_bias_measurements_from_args(args):
                             guess = method_data["x"][2] + target / (method_data["y"][i] -
                                                                     method_data["y"][2]) * (method_data["x"][i] -
                                                                                             method_data["x"][2])
-                            intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
+                            # intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
+                            intersections[side_label] = guess  # FIXME
 
                         fractional_limits[limit_label] = (
                             (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
