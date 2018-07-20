@@ -21,6 +21,9 @@
 import argparse
 from os.path import join
 
+from SHE_PPT import products
+from SHE_PPT.file_io import read_xml_product
+
 from astropy.table import Table
 import matplotlib
 import matplotlib.pyplot as pyplot
@@ -28,6 +31,8 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as Spline
 from scipy.optimize import fsolve
 
+
+products.shear_bias_measurements.init()
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
@@ -105,13 +110,25 @@ def plot_bias_measurements_from_args(args):
     """ @TODO main docstring
     """
 
+    # Determine the qualified path to the root data folder
+    if args.root_data_folder[0] == "/":
+        root_data_folder = args.root_data_folder
+    else:
+        # Relative to workdir in this case
+        root_data_folder = join(args.workdir, args.root_data_folder)
+
+    # Open and and keep in memory all bias measurements
+    all_bias_measurements = {}
+
+    def read_bias_measurements(tag):
+        if not tag in all_bias_measurements:
+            all_bias_measurements[tag] = read_xml_product(join(root_data_folder, args.data_folder_head + tag +
+                                                               "/she_measure_bias/shear_bias_measurements.xml"))
+
     # Read in data for each method
     bias_measurements_dict = {}
     for method in args.methods:
         bias_measurements = {}
-
-        # Put together the filename root for the method
-        method_file_name_root = join(args.data_folder, "bias_measurements_" + method)
 
         # Get data for each test we're running
         for testing_data_key in testing_data_keys:
@@ -232,7 +249,7 @@ def plot_bias_measurements_from_args(args):
             ax.legend(loc="lower right", numpoints=1)
 
             # Save and show it
-            output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_" + measurement_key + "." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
             if not args.hide:
@@ -357,7 +374,7 @@ def plot_bias_measurements_from_args(args):
                     fontsize=text_size)
 
             # Save and show it
-            output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
             if not args.hide:
@@ -401,7 +418,7 @@ def plot_bias_measurements_from_args(args):
         ax.legend(loc="upper right", scatterpoints=1)
 
         # Save and show it
-        output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+        output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                testing_data_key + "_fractional_limits." + args.output_format)
         pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
         if not args.hide:
@@ -410,7 +427,3 @@ def plot_bias_measurements_from_args(args):
             pyplot.close()
 
     return
-
-
-if __name__ == "__main__":
-    main()

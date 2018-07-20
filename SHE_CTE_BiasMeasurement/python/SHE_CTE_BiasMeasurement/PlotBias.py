@@ -52,7 +52,7 @@ def defineSpecificProgramOptions():
     # Input Data
     parser.add_argument('--methods', nargs='*', default=[],
                         help='Methods to plot bias measurements for.')
-    parser.add_argument('--root_data_folder', default="/home/user/Work",
+    parser.add_argument('--root_data_folder', default="../",
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
                              "or relative to workdir.")
     parser.add_argument('--data_folder_head', default="workspace_",
