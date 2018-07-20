@@ -166,7 +166,7 @@ def plot_bias_measurements_from_args(args):
 
                     # Set the x value
                     lx.append(x_ranges[testing_data_key][i] + method_offsets[method] *
-                              np.abs(x_ranges[testing_data_key][3] - x_ranges[testing_data_key][1]))
+                              np.abs(x_values[testing_data_key][3] - x_values[testing_data_key][1]))
 
                     g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
                         method)
