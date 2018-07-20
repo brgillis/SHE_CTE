@@ -34,9 +34,9 @@ from scipy.optimize import fsolve
 
 products.shear_bias_measurements.init()
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
-matplotlib.rcParams['text.usetex'] = True
+# matplotlib.rcParams['ps.useafm'] = True
+# matplotlib.rcParams['pdf.use14corefonts'] = True
+# matplotlib.rcParams['text.usetex'] = True
 
 testing_data_labels = {"P": "PSF Size",
                        "S": "Sky Level",
