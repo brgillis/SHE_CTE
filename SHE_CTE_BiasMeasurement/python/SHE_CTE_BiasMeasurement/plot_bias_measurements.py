@@ -101,22 +101,9 @@ def get_bias_measurement_filenames(file_name_root, key):
     return filenames
 
 
-def main():
+def plot_bias_measurements_from_args(args):
     """ @TODO main docstring
     """
-
-    # Set up the command-line arguments
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS"],
-                        help='Methods to plot bias measurements for.')
-    parser.add_argument('--data_folder', default="/home/brg/Data/SHE_SIM/sensitivity_testing/bias_measurements")
-    parser.add_argument('--output_folder', default="/home/brg/Data/SHE_SIM/sensitivity_testing/plots")
-    parser.add_argument('--output_file_name_root', default="sensitivity_testing")
-    parser.add_argument('--output_format', default="png")
-    parser.add_argument('--hide', action="store_true")
-
-    args = parser.parse_args()
 
     # Read in data for each method
     bias_measurements_dict = {}
