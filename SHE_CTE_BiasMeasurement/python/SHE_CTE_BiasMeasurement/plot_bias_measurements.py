@@ -217,8 +217,8 @@ def plot_bias_measurements_from_args(args):
                     y1_o_spline = Spline(x_vals, y1_o_vals)
                     y2_o_spline = Spline(x_vals, y2_o_vals)
 
-                    def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
-                                             * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
+                    def y_spline(x): return (np.abs(y1_o_spline(x)) * y1_spline(x) + np.abs(y2_o_spline(x))
+                                             * y1_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
 
                 x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
                 y_spline_vals = y_spline(x_spline_vals)
