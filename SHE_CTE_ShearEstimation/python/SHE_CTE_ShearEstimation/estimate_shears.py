@@ -28,6 +28,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 
 from SHE_CTE_ShearEstimation import magic_values as mv
@@ -45,7 +46,7 @@ loading_methods = {"KSB": None,
                    "REGAUSS": None,
                    "MomentsML": None,
                    "LensMC": None,
-                   "BFD": bfd_load_method_data}
+                   "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
@@ -179,8 +180,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        workdir=args.workdir,
                                                        debug=args.debug)
 
-                if not is_in_format(shear_estimates_table, setf):
-                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
+                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table,setf_bfd)):
+                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")  
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
