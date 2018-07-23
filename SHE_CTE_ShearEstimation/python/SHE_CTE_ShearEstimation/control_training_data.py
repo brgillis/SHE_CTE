@@ -72,11 +72,25 @@ class ControlTraining(object):
         """
         return self._e1_var
 
+    @e1_var.setter
+    def e1_var(self, value):
+        """Set the variance of the ellipticity measurements, component 1.
+        """
+        self._e1_var = value
+        return
+
     @property
     def e2_var(self):
         """The variance of the ellipticity measurements, component 2.
         """
         return self._e2_var
+
+    @e2_var.setter
+    def e2_var(self, value):
+        """Set the variance of the ellipticity measurements, component 2.
+        """
+        self._e2_var = value
+        return
 
 
 def load_control_training_data(training_data_filename, workdir="."):
