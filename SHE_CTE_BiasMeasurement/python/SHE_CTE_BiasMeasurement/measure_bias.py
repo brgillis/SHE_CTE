@@ -6,14 +6,15 @@
 """
 from os.path import join
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
 
-__updated__ = "2018-07-03"
+
+__updated__ = "2018-07-16"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -88,9 +89,13 @@ def measure_bias_from_args(args):
         if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
             g1_bias_measurements = BiasMeasurements(
                 combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+        else:
+            g1_bias_measurements = None
         if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
             g2_bias_measurements = BiasMeasurements(
                 combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
+        else:
+            g2_bias_measurements = None
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 

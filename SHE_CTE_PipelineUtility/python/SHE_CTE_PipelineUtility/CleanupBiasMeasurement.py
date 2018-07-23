@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-07-11"
+__updated__ = "2018-07-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,9 +23,20 @@ __updated__ = "2018-07-11"
 import argparse
 import os
 
+from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+products.calibrated_frame.init()
+products.stacked_frame.init()
+products.psf_image.init()
+products.mosaic.init()
+products.stack_mosaic.init()
+products.detections.init()
+products.details.init()
+products.shear_estimates.init()
+products.simulation_config.init()
 
 
 def defineSpecificProgramOptions():
@@ -48,7 +59,7 @@ def defineSpecificProgramOptions():
     # Input arguments
     parser.add_argument('--simulation_config', type=str)
     parser.add_argument('--data_images', type=str)
-    parser.add_argument('--stacked_image', type=str)
+    parser.add_argument('--stacked_data_image', type=str)
     parser.add_argument('--psf_images_and_tables', type=str)
     parser.add_argument('--segmentation_images', type=str)
     parser.add_argument('--stacked_segmentation_image', type=str)
@@ -56,8 +67,16 @@ def defineSpecificProgramOptions():
     parser.add_argument('--details_table', type=str)
     parser.add_argument('--shear_estimates', type=str)
 
+    parser.add_argument('--shear_bias_statistics_in', type=str)  # Needed to ensure it waits until ready
+
+    # Output arguments
+    parser.add_argument('--shear_bias_statistics_out', type=str)
+
+    # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
     parser.add_argument('--logdir', type=str,)
+    parser.add_argument('--debug', action='store_true',
+                        help="Set to enable debugging protocols")
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 
@@ -95,13 +114,21 @@ def mainMethod(args):
     def remove_product(qualified_filename):
 
         # Load the product
+        if not os.path.exists(qualified_filename):
+            logger.warn("Expected file '" + qualified_filename + "' does not exist.")
+            return
         p = read_xml_product(qualified_filename)
 
         # Remove all files this points to
         if hasattr(p, "get_all_filenames"):
             data_filenames = p.get_all_filenames()
             for data_filename in data_filenames:
-                remove_file(os.path.join(args.workdir, data_filename))
+                if data_filename is not None and data_filename != "default_filename.fits":
+                    remove_file(os.path.join(args.workdir, data_filename))
+        else:
+            logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
+            if not args.debug:
+                raise RuntimeError("Product " + qualified_filename + " has no 'get_all_filenames' method.")
 
         # Remove the product itself
         remove_file(qualified_filename)
@@ -114,6 +141,10 @@ def mainMethod(args):
 
         qualified_listfile_name = os.path.join(args.workdir, listfile_name)
 
+        if not os.path.exists(qualified_listfile_name):
+            logger.warn("Expected file '" + qualified_listfile_name + "' does not exist.")
+            continue
+
         filenames = read_listfile(qualified_listfile_name)
 
         for filename in filenames:
@@ -123,11 +154,17 @@ def mainMethod(args):
 
     # Now remove all products
     for product_filename in (args.simulation_config,
-                             args.stacked_image,
+                             args.stacked_data_image,
                              args.stacked_segmentation_image,
                              args.details_table,
                              args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
+
+    # Move the statistics product to the new name
+    qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
+    qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
+
+    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
 

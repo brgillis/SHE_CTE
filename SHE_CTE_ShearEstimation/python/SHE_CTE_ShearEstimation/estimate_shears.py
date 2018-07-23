@@ -20,20 +20,22 @@
 
 import os
 from os.path import join
-from astropy.io import fits
 
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename)
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_instance_id,
+                             get_data_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
+
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from astropy.io import fits
 import numpy as np
 
 
@@ -114,12 +116,14 @@ def estimate_shears_from_args(args, dry_run=False):
 
     logger.info("Generating shear estimates product...")
 
+    estimates_instance_id = get_instance_id(get_data_filename(args.stacked_image, workdir=args.workdir))
+
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
-        BFD_filename=get_allowed_filename("BFD_SHM", str(os.getpid())),
-        KSB_filename=get_allowed_filename("KSB_SHM", str(os.getpid())),
-        LensMC_filename=get_allowed_filename("LensMC_SHM", str(os.getpid())),
-        MomentsML_filename=get_allowed_filename("MomentsML_SHM", str(os.getpid())),
-        REGAUSS_filename=get_allowed_filename("REGAUSS_SHM", str(os.getpid())))
+        BFD_filename=get_allowed_filename("BFD_SHM", estimates_instance_id),
+        KSB_filename=get_allowed_filename("KSB_SHM", estimates_instance_id),
+        LensMC_filename=get_allowed_filename("LensMC_SHM", estimates_instance_id),
+        MomentsML_filename=get_allowed_filename("MomentsML_SHM", estimates_instance_id),
+        REGAUSS_filename=get_allowed_filename("REGAUSS_SHM", estimates_instance_id))
 
     if not dry_run:
 
@@ -149,9 +153,12 @@ def estimate_shears_from_args(args, dry_run=False):
                     raise NotImplementedError("No shear measurement method supplied for method " + method + ".")
 
                 if load_training_data is not None:
-                    if training_data_filenames[method] is None:
+                    training_data_filename = training_data_filenames[method]
+                    if training_data_filename == 'None':
+                        training_data_filename = None
+                    if training_data_filename is None:
                         raise ValueError("No training data supplied for method " + method + ".")
-                    training_data = load_training_data(training_data_filenames[method])
+                    training_data = load_training_data(training_data_filename)
 
                 else:
                     training_data = None
