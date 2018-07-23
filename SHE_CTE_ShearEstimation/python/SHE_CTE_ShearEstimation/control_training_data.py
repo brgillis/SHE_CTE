@@ -61,7 +61,7 @@ class ControlTraining(object):
             assert is_in_format(t, kttf)
 
             self.e1_var = t[kttf.e1].var()
-            self.e2_var = t[kttf.e1].var()
+            self.e2_var = t[kttf.e2].var()
 
         logger.debug("Exiting ControlTraining __init__")
         return
