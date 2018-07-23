@@ -43,8 +43,8 @@ import numpy as np
 products.shear_estimates.init()
 
 
-loading_methods = {"KSB": None,
-                   "REGAUSS": None,
+loading_methods = {"KSB": load_control_training_data,
+                   "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": None,
                    "BFD": None}
