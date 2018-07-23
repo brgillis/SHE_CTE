@@ -28,16 +28,15 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-import galsim
 import numpy as np
 
 
 stamp_size = 256
 x_buffer = -5
 y_buffer = -5
-shape_noise = 0.25
 get_exposure_estimates = False
 subsampled_scale = 0.2
 
@@ -97,12 +96,13 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
 def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method="KSB", workdir=workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="KSB", workdir=workdir, *args, **kwargs)
 
 
 def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method="REGAUSS", workdir=workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="REGAUSS", workdir=workdir, *args,
+                             **kwargs)
 
 
 def get_KSB_shear_estimate(galsim_shear_estimate, scale):
@@ -257,7 +257,7 @@ def inv_var_stack(a, a_err):
     logger.debug("Exiting inv_var_stack")
 
 
-def GS_estimate_shear(data_stack, method, workdir, debug=False):
+def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering GS_estimate_shear")
@@ -394,8 +394,8 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
         shear_estimates_table.add_row({setf.ID: gal_id,
                                        setf.g1: stack_g_world[0],
                                        setf.g2: stack_g_world[1],
-                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + shape_noise ** 2),
-                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + shape_noise ** 2),
+                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + training_data.e1_var),
+                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + training_data.e2_var),
                                        setf.g1g2_covar: stack_covar_world[0, 1],
                                        setf.re: stack_re,
                                        setf.snr: stack_snr,
