@@ -28,9 +28,9 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
-import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
+import galsim
 import numpy as np
 
 
@@ -61,23 +61,25 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
     else:
         in_scale = 0.1
 
+    bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
+
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
     window_ny = int(resampled_ny * resampled_scale / in_scale) + 1
 
-    xm = (initial_image.shape[0] - window_nx) // 2 + 1
+    xm = (bkg_subtracted_stamp_data.shape[0] - window_nx) // 2 + 1
     if xm < 1:
         xm = 1
     xh = xm + window_nx - 1
-    if xh > initial_image.shape[0]:
-        xh = initial_image.shape[0]
-    ym = (initial_image.shape[1] - window_ny) // 2 + 1
+    if xh > bkg_subtracted_stamp_data.shape[0]:
+        xh = bkg_subtracted_stamp_data.shape[0]
+    ym = (bkg_subtracted_stamp_data.shape[1] - window_ny) // 2 + 1
     if ym < 1:
         ym = 1
     yh = ym + window_ny - 1
-    if yh > initial_image.shape[1]:
-        yh = initial_image.shape[1]
+    if yh > bkg_subtracted_stamp_data.shape[1]:
+        yh = bkg_subtracted_stamp_data.shape[1]
 
-    subimage = galsim.Image(initial_image.data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
+    subimage = galsim.Image(bkg_subtracted_stamp_data, scale=in_scale).subImage(galsim.BoundsI(xm, xh, ym, yh))
 
     if (subimage.array == 0).all():
         resampled_image = SHEImage(np.zeros((resampled_nx, resampled_ny)))
@@ -159,13 +161,16 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     logger = getLogger(mv.logger_name)
     logger.debug("Entering get_shear_estimate")
 
+    # Subtract off the background from the galaxy
+    bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
+
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
     try:
-        gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(gal_stamp.data.transpose(), scale=psf_scale),
+        gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(bkg_subtracted_gal_stamp_data.transpose(), scale=psf_scale),
                                              badpix=galsim.Image(
                                                  (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
                                              guess_sig=0.5 / gal_scale,)
-    
+
         resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
