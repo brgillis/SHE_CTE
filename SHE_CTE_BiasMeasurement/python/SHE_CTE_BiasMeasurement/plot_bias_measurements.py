@@ -21,6 +21,9 @@
 import argparse
 from os.path import join
 
+from SHE_PPT import products
+from SHE_PPT.file_io import read_xml_product
+
 from astropy.table import Table
 import matplotlib
 import matplotlib.pyplot as pyplot
@@ -29,38 +32,41 @@ from scipy.interpolate import InterpolatedUnivariateSpline as Spline
 from scipy.optimize import fsolve
 
 
-matplotlib.rcParams['ps.useafm'] = True
-matplotlib.rcParams['pdf.use14corefonts'] = True
-matplotlib.rcParams['text.usetex'] = True
+products.shear_bias_measurements.init()
 
-testing_data_keys = ("p", "s", "e")
-testing_data_labels = {"p": "PSF Size",
-                       "s": "Sky Level",
-                       "e": "P(e)"}
+# matplotlib.rcParams['ps.useafm'] = True
+# matplotlib.rcParams['pdf.use14corefonts'] = True
+# matplotlib.rcParams['text.usetex'] = True
+
+testing_data_labels = {"P": "PSF Size",
+                       "S": "Sky Level",
+                       "E": "P(e)"}
+
+tag_template = "Ep0Pp0Sp0"
 
 testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
-x_values = {"p": [0.8, 0.9, 1.0, 1.1, 1.2],
-            "s": [8.0608794667689825, 9.0670343062718768, 10.073467500059127,
+x_values = {"P": [0.8, 0.9, 1.0, 1.1, 1.2],
+            "S": [8.0608794667689825, 9.0670343062718768, 10.073467500059127,
                   11.07982970368346,  12.086264012414167],
-            "e": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
+            "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
             }
 
-x_ranges = {"p": (0.75, 1.25),
-            "s": (7.5, 12.5),
-            "e": (0.170, 0.315)}
+x_ranges = {"P": (0.75, 1.25),
+            "S": (7.5, 12.5),
+            "E": (0.170, 0.315)}
 
-target_limit_factors = {"p": {"m": 64, "c": 32},
-                        "s": {"m": 32, "c": 20},
-                        "e": {"m": 24,  "c": 32}, }
+target_limit_factors = {"P": {"m": 64, "c": 32},
+                        "S": {"m": 32, "c": 20},
+                        "E": {"m": 24,  "c": 32}, }
 
 y_range = (1e-6, 5e-1)
 
-err_factor = np.sqrt(0.0001)
+err_factor = 1
 
 m_target = 1e-4
 c_target = 5e-6
@@ -89,74 +95,39 @@ fontsize = 12
 text_size = 18
 
 
-def get_bias_measurement_filenames(file_name_root, key):
-
-    base_tail = "_pp0_sp0_ep0.fits"
-
-    filenames = []
-
-    for testing_variant_label in testing_variant_labels:
-        filenames.append(file_name_root + base_tail.replace(key + "p0", key + testing_variant_label))
-
-    return filenames
-
-
-def main():
+def plot_bias_measurements_from_args(args):
     """ @TODO main docstring
     """
 
-    # Set up the command-line arguments
-    parser = argparse.ArgumentParser()
+    # Determine the qualified path to the root data folder
+    if args.root_data_folder[0] == "/":
+        root_data_folder = args.root_data_folder
+    else:
+        # Relative to workdir in this case
+        root_data_folder = join(args.workdir, args.root_data_folder)
 
-    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS"],
-                        help='Methods to plot bias measurements for.')
-    parser.add_argument('--data_folder', default="/home/brg/Data/SHE_SIM/sensitivity_testing/bias_measurements")
-    parser.add_argument('--output_folder', default="/home/brg/Data/SHE_SIM/sensitivity_testing/plots")
-    parser.add_argument('--output_file_name_root', default="sensitivity_testing")
-    parser.add_argument('--output_format', default="png")
-    parser.add_argument('--hide', action="store_true")
+    # Open and and keep in memory all bias measurements
+    all_bias_measurements = {}
 
-    args = parser.parse_args()
+    def read_bias_measurements(tag):
+        if not tag in all_bias_measurements:
+            all_bias_measurements[tag] = read_xml_product(join(root_data_folder, args.data_folder_head + tag +
+                                                               "/she_measure_bias/shear_bias_measurements.xml"))
 
-    # Read in data for each method
-    bias_measurements_dict = {}
-    for method in args.methods:
-        bias_measurements = {}
+    # Do a loop of reading for each property
+    for testing_variant in testing_variant_labels:
 
-        # Put together the filename root for the method
-        method_file_name_root = join(args.data_folder, "bias_measurements_" + method)
+        e_tag = tag_template.replace("Ep0", "E" + testing_variant)
+        read_bias_measurements(e_tag)
 
-        # Get data for each test we're running
-        for testing_data_key in testing_data_keys:
-            sens_testing_data = {}
+        p_tag = tag_template.replace("Pp0", "P" + testing_variant)
+        read_bias_measurements(p_tag)
 
-            sens_testing_data["x"] = x_values[testing_data_key]
-
-            for measurement_key_template in measurement_key_templates:
-                for dim in range(3):
-                    sens_testing_data[measurement_key_template.replace("DIM", str(dim))] = []
-
-            bias_measurement_filenames = get_bias_measurement_filenames(method_file_name_root, testing_data_key)
-
-            # Read the measurements from each file
-            for bias_measurement_filename in bias_measurement_filenames:
-                bias_measurement_table = Table.read(bias_measurement_filename)
-                for row_i in range(3):
-                    dim = bias_measurement_table["dimension"][row_i]
-
-                    # Store the measured values
-                    for measurement_key_template in measurement_key_templates:
-                        sens_testing_data[measurement_key_template.replace("DIM", str(dim))].append(
-                            bias_measurement_table[measurement_key_template.replace("DIM", "")][row_i])
-
-            # Store this in the measurements object for this method
-            bias_measurements[testing_data_key] = sens_testing_data
-
-        # Store this method's measurements in the global measurements object
-        bias_measurements_dict[method] = bias_measurements
+        s_tag = tag_template.replace("Sp0", "S" + testing_variant)
+        read_bias_measurements(s_tag)
 
     # Plot the biases and errors for each measurement
-    for testing_data_key in testing_data_keys:
+    for testing_data_key in testing_data_labels:
 
         fractional_limits = {}
 
@@ -175,29 +146,60 @@ def main():
             ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
             ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
+            all_methods_data = {}
+
             # Plot points for each method
             for method in args.methods:
 
-                sens_testing_data = bias_measurements_dict[method][testing_data_key]
+                lx = []
+                ly1 = []
+                ly2 = []
+                ly1_o = []
+                ly2_o = []
 
-                x_vals = np.array(np.add(sens_testing_data["x"],
-                                         method_offsets[method] * np.abs(sens_testing_data["x"][3] - sens_testing_data["x"][1])))
-                y1_vals = np.array(sens_testing_data[measurement_key_1])
-                y2_vals = np.array(sens_testing_data[measurement_key_2])
+                # Loop over each testing variant (m2, m1, etc.)
+                for i in range(len(testing_variant_labels)):
 
-                if testing_data_key == "e":
-                    x_vals = np.flipud(x_vals)
-                    y1_vals = np.flipud(y1_vals)
-                    y2_vals = np.flipud(y2_vals)
+                    # Get the tag for this variant
+                    testing_variant = testing_variant_labels[i]
+                    tag = tag_template.replace(testing_data_key + "p0", testing_data_key + testing_variant)
 
-                y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                    # Set the x value
+                    lx.append(x_values[testing_data_key][i] + method_offsets[method] *
+                              np.abs(x_values[testing_data_key][3] - x_values[testing_data_key][1]))
+
+                    g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
+                        method)
+                    ly1.append(getattr(g1_bias_measurements, measurement_key))
+                    ly2.append(getattr(g2_bias_measurements, measurement_key))
+
+                    # To calculate combined error, we also need non-error
+                    if "_err" in measurement_key:
+                        ly1_o.append(getattr(g1_bias_measurements, measurement_key.replace("_err", "")))
+                        ly2_o.append(getattr(g2_bias_measurements, measurement_key.replace("_err", "")))
+                    else:
+                        # And for non-error values, we'll want to plot error bars too, so we need that
+                        ly1_o.append(getattr(g1_bias_measurements, measurement_key + "_err"))
+                        ly2_o.append(getattr(g2_bias_measurements, measurement_key + "_err"))
+
+                x_vals = np.array(lx)
+                y1_vals = np.array(ly1)
+                y2_vals = np.array(ly2)
+                y1_o_vals = np.array(ly1_o)
+                y2_o_vals = np.array(ly2_o)
+
+                # Determine combined y differently for error and non-error values
+                if "_err" in measurement_key:
+                    y_vals = (np.abs(y1_o_vals) * y1_vals + np.abs(y2_o_vals)
+                              * y2_vals) / np.sqrt(y1_o_vals**2 + y2_o_vals**2)
+                    y_errs = None
+                else:
+                    y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                    y_errs = (np.abs(y1_vals) * y1_o_vals + np.abs(y2_vals)
+                              * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
 
                 # Plot the values (and optionally error bars)
                 if "_err" not in measurement_key:
-                    err_key = measurement_key + "0_err"
-                    y_errs = sens_testing_data[err_key]
-                    if testing_data_key == "e":
-                        y_errs = np.flipud(y_errs)
                     ax.errorbar(x_vals, y_vals, y_errs, color=method_colors[method], linestyle='None')
                 else:
                     y1_vals *= err_factor
@@ -209,7 +211,14 @@ def main():
                 y1_spline = Spline(x_vals, y1_vals)
                 y2_spline = Spline(x_vals, y2_vals)
 
-                def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                if "_err" not in measurement_key:
+                    def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                else:
+                    y1_o_spline = Spline(x_vals, y1_o_vals)
+                    y2_o_spline = Spline(x_vals, y2_o_vals)
+
+                    def y_spline(x): return (np.abs(y1_o_spline(x)) * y1_spline(x) + np.abs(y2_o_spline(x))
+                                             * y2_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
 
                 x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
                 y_spline_vals = y_spline(x_spline_vals)
@@ -221,6 +230,17 @@ def main():
 
                 ax.plot(x_spline_vals, y_spline_vals, color=method_colors[method], marker='None',
                         label=label)
+
+                # Save this data for the next plot
+                method_data = {"x": x_vals,
+                               "y": y_vals,
+                               "y_err": y_errs,
+                               "y1": y1_vals,
+                               "y2": y2_vals,
+                               "y1_o": y1_o_vals,
+                               "y2_o": y2_o_vals,
+                               }
+                all_methods_data[method] = method_data
 
             # Plot the target line
             if "m" in measurement_key:
@@ -238,14 +258,14 @@ def main():
 
             # Set the limits and scale
             ax.set_xlim(xlim)
-            ax.set_ylim(y_range)
+            # ax.set_ylim(y_range) # FIXME - uncomment once we know about what the range will be
             ax.set_yscale("log", nonposy="clip")
 
             # Show the legend
             ax.legend(loc="lower right", numpoints=1)
 
             # Save and show it
-            output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_" + measurement_key + "." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
             if not args.hide:
@@ -272,41 +292,24 @@ def main():
             # Plot points for each method
             for method in args.methods:
 
-                sens_testing_data = bias_measurements_dict[method][testing_data_key]
+                # Get the data we saved before
+                method_data = all_methods_data[method]
 
-                x_vals = np.array(np.add(sens_testing_data["x"],
-                                         method_offsets[method] * np.abs(sens_testing_data["x"][3] - sens_testing_data["x"][1])))
-                y1_vals = np.array(np.subtract(
-                    sens_testing_data[measurement_key_1], sens_testing_data[measurement_key_1][2]))
-                y2_vals = np.array(np.subtract(
-                    sens_testing_data[measurement_key_2], sens_testing_data[measurement_key_2][2]))
-
-                if testing_data_key == "e":
-                    x_vals = np.flipud(x_vals)
-                    y1_vals = np.flipud(y1_vals)
-                    y2_vals = np.flipud(y2_vals)
-
-                y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
-
-                # Plot the values (and optionally error bars)
-                if "_err" not in measurement_key:
-                    err_key_1 = measurement_key + "1_err"
-                    err_key_2 = measurement_key + "2_err"
-                    y1_errs = sens_testing_data[err_key_1]
-                    y2_errs = sens_testing_data[err_key_2]
-                    if testing_data_key == "e":
-                        y_errs = np.flipud(y_errs)
-                    # ax.errorbar(y1_vals, y2_vals, y1_errs, y2_errs, color=method_colors[method], linestyle='None')
-                else:
-                    y1_vals *= err_factor
-                    y2_vals *= err_factor
-                ax.plot(y1_vals, y2_vals, color=method_colors[method], marker='o', linestyle='None')
+                ax.plot(method_data["y1"], method_data["y2"],
+                        color=method_colors[method], marker='o', linestyle='None')
 
                 # Calculate and plot an interpolating spline
-                y1_spline = Spline(x_vals, y1_vals)
-                y2_spline = Spline(x_vals, y2_vals)
+                y1_spline = Spline(method_data["x"], method_data["y1"])
+                y2_spline = Spline(method_data["x"], method_data["y2"])
 
-                def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                if "_err" not in measurement_key:
+                    def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                else:
+                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"])
+                    y2_o_spline = Spline(method_data["x"], method_data["y1_o"])
+
+                    def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
+                                             * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
 
                 x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
 
@@ -332,11 +335,13 @@ def main():
                         intersections = {}
 
                         for (i, side_label) in ((1, "low"), (3, "high")):
-                            guess = x_vals[2] + target / (y_vals[i] - y_vals[2]) * (x_vals[i] - x_vals[2])
+                            guess = method_data["x"][2] + target / (method_data["y"][i] -
+                                                                    method_data["y"][2]) * (method_data["x"][i] -
+                                                                                            method_data["x"][2])
                             intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
 
                         fractional_limits[limit_label] = (
-                            (intersections["high"] - intersections["low"]) / (2. * x_vals[2]))[0]
+                            (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
 
                     print(("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
                            method + " for " + measurement_key + ": " +
@@ -370,7 +375,7 @@ def main():
                     fontsize=text_size)
 
             # Save and show it
-            output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
             if not args.hide:
@@ -414,7 +419,7 @@ def main():
         ax.legend(loc="upper right", scatterpoints=1)
 
         # Save and show it
-        output_filename = join(args.output_folder, args.output_file_name_root + "_" +
+        output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                testing_data_key + "_fractional_limits." + args.output_format)
         pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
         if not args.hide:
@@ -423,7 +428,3 @@ def main():
             pyplot.close()
 
     return
-
-
-if __name__ == "__main__":
-    main()
