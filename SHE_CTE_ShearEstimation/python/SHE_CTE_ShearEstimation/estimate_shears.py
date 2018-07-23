@@ -32,7 +32,7 @@ from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_tab
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
