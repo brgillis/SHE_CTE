@@ -77,25 +77,34 @@ def measure_bias_from_args(args):
 
         for method in mv.estimation_methods:
             method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
-            if method_shear_statistics[0] is not None:
-                method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
-            if method_shear_statistics[1] is not None:
-                method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
+            if method == "BFD":
+                method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics[0])
+            else:
+                if method_shear_statistics[0] is not None:
+                    method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
+                if method_shear_statistics[1] is not None:
+                    method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
 
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
 
     for method in mv.estimation_methods:
-        if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
-            g1_bias_measurements = BiasMeasurements(
-                combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+        if method == "BFD":
+            g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                method_shear_statistics_list[method].bfd_statistics_list), do_g1=True)
+            g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                method_shear_statistics_list[method].bfd_statistics_list), do_g1=False)
         else:
-            g1_bias_measurements = None
-        if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
-            g2_bias_measurements = BiasMeasurements(
-                combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
-        else:
-            g2_bias_measurements = None
+            if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+                g1_bias_measurements = BiasMeasurements(
+                    combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+            else:
+                g1_bias_measurements = None
+            if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+                g2_bias_measurements = BiasMeasurements(
+                    combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
+            else:
+                g2_bias_measurements = None
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 

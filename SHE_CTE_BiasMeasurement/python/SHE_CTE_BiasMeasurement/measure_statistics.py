@@ -23,15 +23,16 @@ __updated__ = "2018-06-22"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301 USA
 
+from astropy.table import Table
 from os.path import join
 
-from astropy.table import Table
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.bfd_statistics_calculation import calculate_bfd_shear_bias_statistics
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 
 
 products.details.init()
@@ -78,7 +79,11 @@ def measure_statistics_from_args(args):
             join(args.workdir, estimates_table_filename))
 
         # Calculate statistics
-        shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
+        # if BFD use BFD statistics calculator, otherwise use standard    
+        if method=="BFD"
+            shear_bias_statistics=calculate_bfd_shear_bias_statistics(estimates_table, details_table)
+        else:
+            shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
 
         # Save these in the data product
         shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
