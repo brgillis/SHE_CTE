@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2018-07-23"
+__updated__ = "2018-07-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -46,9 +46,10 @@ class ControlTraining(object):
         logger = getLogger(mv.logger_name)
         logger.debug("Entering ControlTraining __init__")
 
-        if training_product_filename is None:
-            self.e1_var = None
-            self.e2_var = None
+        if training_product_filename is None or training_product_filename == "None":
+            logger.warn("No training data provided for control method; using default shape noise of 0.25.")
+            self.e1_var = 0.25**2
+            self.e2_var = 0.25**2
         else:
             # Read in the training data product
             qualified_training_product_filename = os.path.join(workdir, training_product_filename)
