@@ -4,17 +4,8 @@
 
     Primary execution loop for measuring bias in shear estimates.
 """
-from os.path import join
 
-from SHE_PPT import products
-from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
-from SHE_PPT.logging import getLogger
-from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-
-
-__updated__ = "2018-07-16"
+__updated__ = "2018-07-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,6 +19,17 @@ __updated__ = "2018-07-16"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+from os.path import join
+
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
+from SHE_PPT.logging import getLogger
+from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+
+import numpy as np
 
 
 products.shear_bias_stats.init()
@@ -86,12 +88,26 @@ def measure_bias_from_args(args):
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
 
     for method in mv.estimation_methods:
-        if len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+
+        if len(method_shear_statistics_lists[method].g1_statistics_list) > 50:
+            # We have enough data to calculate bootstrap errors
+            g1_bias_measurements = calculate_bootstrap_bias_measurements(
+                method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
+
+        elif len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+            # Not enough for bootstrap errors - calculate simply
             g1_bias_measurements = BiasMeasurements(
                 combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
         else:
             g1_bias_measurements = None
-        if len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+
+        if len(method_shear_statistics_lists[method].g2_statistics_list) > 50:
+            # We have enough data to calculate bootstrap errors
+            g2_bias_measurements = calculate_bootstrap_bias_measurements(
+                method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
+
+        elif len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+            # Not enough for bootstrap errors - calculate simply
             g2_bias_measurements = BiasMeasurements(
                 combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
         else:
@@ -104,3 +120,31 @@ def measure_bias_from_args(args):
     logger.debug("Exiting measure_bias_from_args.")
 
     return
+
+
+def calculate_bootstrap_bias_measurements(statistics_list, n_bootstrap=1000, seed=0):
+    """Calculates a BiasMeasurements object using bootstrap errors from a list of statistics objects.
+    """
+
+    # Seed the random number generator
+    np.random.seed(seed)
+
+    # Get a base object for the m and c calculations
+    bias_measurements = BiasMeasurements(combine_linregress_statistics(statistics_list))
+
+    # Bootstrap to get errors on m and c
+    n_sample = len(statistics_list)
+
+    m_bs = np.empty(n_bootstrap)
+    c_bs = np.empty(n_bootstrap)
+    for i in range(n_bootstrap):
+        u = np.random.random_integers(0, n_sample - 1, n_sample)
+        bias_measurements_bs = BiasMeasurements(combine_linregress_statistics(statistics_list[u]))
+        m_bs[i] = bias_measurements_bs.m
+        c_bs[i] = bias_measurements_bs.c
+
+    # Update the bias measurements in the output object
+    bias_measurements.m_err = np.std(m_bs)
+    bias_measurements.c_err = np.std(c_bs)
+
+    return bias_measurements
