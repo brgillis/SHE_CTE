@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-06-22"
+__updated__ = "2018-07-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,13 +25,13 @@ __updated__ = "2018-06-22"
 
 from os.path import join
 
-from astropy.table import Table
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
+from astropy.table import Table
 
 
 products.details.init()
@@ -78,7 +78,10 @@ def measure_statistics_from_args(args):
             join(args.workdir, estimates_table_filename))
 
         # Calculate statistics
-        shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
+        if not method == "BFD":
+            shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
+        else:
+            continue
 
         # Save these in the data product
         shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
