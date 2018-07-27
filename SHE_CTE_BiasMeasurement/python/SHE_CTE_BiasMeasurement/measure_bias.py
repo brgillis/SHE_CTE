@@ -137,6 +137,7 @@ def calculate_bootstrap_bias_measurements(statistics_list, n_bootstrap=1000, see
 
     m_bs = np.empty(n_bootstrap)
     c_bs = np.empty(n_bootstrap)
+    statistics_array = np.array(statistics_list)
     for i in range(n_bootstrap):
         u = np.random.random_integers(0, n_sample - 1, n_sample)
         bias_measurements_bs = BiasMeasurements(combine_linregress_statistics(statistics_list[u]))
