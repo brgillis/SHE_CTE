@@ -200,7 +200,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
-    supersampled_badpix.header[scale_label] = gal_stamp.stacked_image.header[scale_label]
+    supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
 
