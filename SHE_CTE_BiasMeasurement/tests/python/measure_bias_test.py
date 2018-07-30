@@ -134,8 +134,8 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("bias_stats_0", str(i), extension=".xml")
-            filename_1 = get_allowed_filename("bias_stats_1", str(i), extension=".xml")
+            filename_0 = get_allowed_filename("bias_stats_0", str(i), extension=".xml", subdir=None)
+            filename_1 = get_allowed_filename("bias_stats_1", str(i), extension=".xml", subdir=None)
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
