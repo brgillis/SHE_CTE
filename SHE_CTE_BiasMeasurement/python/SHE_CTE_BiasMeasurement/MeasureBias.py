@@ -50,6 +50,8 @@ def defineSpecificProgramOptions():
     # Input data
     parser.add_argument('--shear_bias_statistics', type=str,
                         help='Listfile pointing to shear bias statistics objects.')
+    parser.add_argument('--bootstrap_seed', type=int, default=0,
+                        help='Seed for bootstrapping of errors')
 
     # Output data
     parser.add_argument('--shear_bias_measurements', type=str,
