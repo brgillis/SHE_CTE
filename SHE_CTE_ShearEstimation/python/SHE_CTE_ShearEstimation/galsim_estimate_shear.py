@@ -38,7 +38,6 @@ stamp_size = 256
 x_buffer = -5
 y_buffer = -5
 get_exposure_estimates = False
-subsampled_scale = 0.2
 
 
 class ShearEstimate(object):
@@ -55,9 +54,12 @@ class ShearEstimate(object):
 
 def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
 
+    logger = getLogger(mv.logger_name)
+
     if scale_label in initial_image.header:
         in_scale = initial_image.header[scale_label]
     else:
+        logger.warn("Cannot find pixel scale in image header. Using default value of 0.1")
         in_scale = 0.1
 
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
@@ -272,11 +274,13 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
     if scale_label in data_stack.exposures[0].detectors[1, 1].header:
         gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]
     else:
+        logger.warn("Cannot find pixel scale in image header. Using default value of 0.1")
         gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
+        logger.warn("Cannot find pixel scale in PSF header. Using default value of 0.02")
         psf_scale = 0.02
 
     row_index = 0
