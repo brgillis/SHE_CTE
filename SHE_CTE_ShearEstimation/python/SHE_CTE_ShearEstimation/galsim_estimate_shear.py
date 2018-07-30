@@ -197,8 +197,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
-    resampled_badpix = get_resampled_image(
-        SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
+
+    # Get a resampled badpix map
+    supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
+    supersampled_badpix.header[scale_label] = gal_stamp.stacked_image.header[scale_label]
+    resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
+                                           resampled_gal_stamp_size, resampled_gal_stamp_size)
 
     badpix = (resampled_badpix.data > 0.5).astype(np.uint16)  # Galsim requires int array
 
@@ -330,6 +334,9 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
 
+        # Note the galaxy scale in the stamp's header
+        stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+
         shear_estimate = get_shear_estimate(stacked_gal_stamp,
                                             stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
                                             gal_scale=stacked_gal_scale,
@@ -370,6 +377,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                 gal_stamp = gal_stamp_stack.exposures[x]
                 if gal_stamp is None:
                     continue
+                gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
                 bulge_psf_stamp = bulge_psf_stack.exposures[x]
                 disk_psf_stamp = disk_psf_stack.exposures[x]
 
