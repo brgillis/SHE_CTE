@@ -271,12 +271,6 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
     else:
         stacked_gal_scale = 0.1
 
-    if scale_label in data_stack.exposures[0].detectors[1, 1].header:
-        gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]
-    else:
-        logger.warn("Cannot find pixel scale in image header. Using default value of 0.1")
-        gal_scale = 0.1
-
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
