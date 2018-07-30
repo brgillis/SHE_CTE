@@ -28,6 +28,7 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.utility import run_only_once
 import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
@@ -38,6 +39,9 @@ stamp_size = 256
 x_buffer = -5
 y_buffer = -5
 get_exposure_estimates = False
+
+default_galaxy_scale = 0.1
+default_psf_scale = 0.02
 
 
 class ShearEstimate(object):
@@ -52,15 +56,25 @@ class ShearEstimate(object):
         self.y = y
 
 
-def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
-
+@run_only_once
+def log_no_galaxy_scale():
     logger = getLogger(mv.logger_name)
+    logger.warn("Cannot find pixel scale in image header. Using default value of " + str(default_galaxy_scale))
+
+
+@run_only_once
+def log_no_psf_scale():
+    logger = getLogger(mv.logger_name)
+    logger.warn("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
+
+
+def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
 
     if scale_label in initial_image.header:
         in_scale = initial_image.header[scale_label]
     else:
-        logger.warn("Cannot find pixel scale in image header. Using default value of 0.1")
-        in_scale = 0.1
+        log_no_galaxy_scale()
+        in_scale = default_galaxy_scale
 
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
@@ -269,13 +283,14 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
     if scale_label in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]
     else:
-        stacked_gal_scale = 0.1
+        log_no_galaxy_scale()
+        stacked_gal_scale = default_galaxy_scale
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
-        logger.warn("Cannot find pixel scale in PSF header. Using default value of 0.02")
-        psf_scale = 0.02
+        log_no_psf_scale()
+        psf_scale = default_psf_scale
 
     row_index = 0
 
