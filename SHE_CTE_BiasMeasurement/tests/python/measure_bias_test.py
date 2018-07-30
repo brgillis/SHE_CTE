@@ -6,18 +6,18 @@
 """
 from numpy.testing import assert_almost_equal
 from os.path import join
-
 import pytest
 
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 from SHE_PPT import products
 from SHE_PPT.file_io import write_xml_product, read_xml_product,\
     get_allowed_filename, write_listfile
 from SHE_PPT.math import LinregressStatistics
+
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 import numpy as np
 
 
-__updated__ = "2018-07-03"
+__updated__ = "2018-07-30"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -134,8 +134,8 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("test_shear_bias_stats_0", str(i), extension=".xml")
-            filename_1 = get_allowed_filename("test_shear_bias_stats_1", str(i), extension=".xml")
+            filename_0 = get_allowed_filename("bias_stats_0", str(i), extension=".xml")
+            filename_1 = get_allowed_filename("bias_stats_1", str(i), extension=".xml")
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
