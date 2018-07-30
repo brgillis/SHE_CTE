@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-07-27"
+__updated__ = "2018-07-30"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -31,6 +31,7 @@ from SHE_CTE_BiasMeasurement import magic_values as mv
 
 import numpy as np
 
+bootstrap_threshold = 50
 
 products.shear_bias_stats.init()
 products.shear_bias_measurements.init()
@@ -89,7 +90,7 @@ def measure_bias_from_args(args):
 
     for method in mv.estimation_methods:
 
-        if len(method_shear_statistics_lists[method].g1_statistics_list) > 50:
+        if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
             g1_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
@@ -101,7 +102,7 @@ def measure_bias_from_args(args):
         else:
             g1_bias_measurements = None
 
-        if len(method_shear_statistics_lists[method].g2_statistics_list) > 50:
+        if len(method_shear_statistics_lists[method].g2_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
             g2_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
