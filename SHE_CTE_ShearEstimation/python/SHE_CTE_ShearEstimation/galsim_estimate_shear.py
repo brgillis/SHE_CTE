@@ -264,9 +264,7 @@ def inv_var_stack(a, a_err):
 
     inv_a_inv_var_sum = 1. / a_inv_var.sum()
 
-    a_sum = np.nansum(a * a_inv_var)
-
-    a_m = np.nansum(a * a_inv_var) * inv_a_inv_var_sum
+    a_m = a_sum * inv_a_inv_var_sum
 
     a_m_err = sqrt(inv_a_inv_var_sum)
 
@@ -398,16 +396,24 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                 res.append(shear_estimate.re)
                 snrs.append(shear_estimate.snr)
 
+                x_world, y_world = gal_stamp.pix2world(shear_estimate.x, shear_estimate.y)
+                x_worlds.append(x_world)
+                y_worlds.append(y_world)
+
             g1s = np.array(g1s)
             g2s = np.array(g2s)
             gerrs = np.array(gerrs)
             res = np.array(res)
             snrs = np.array(snrs)
+            x_worlds = np.array(x_worlds)
+            y_worlds = np.array(y_worlds)
 
             g1, gerr = inv_var_stack(g1s, gerrs)
             g2, _ = inv_var_stack(g2s, gerrs)
             re, _ = inv_var_stack(res, gerrs)
             snr, _ = inv_var_stack(snrs, gerrs)
+            x_world = inv_var_stack(x_worlds, gerrs)
+            y_world = inv_var_stack(y_worlds, gerrs)
 
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({setf.ID: gal_id,
