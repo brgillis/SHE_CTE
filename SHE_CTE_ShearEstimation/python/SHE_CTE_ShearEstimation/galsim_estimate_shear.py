@@ -22,11 +22,9 @@ from math import sqrt
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
-from SHE_PPT.noise import get_var_ADU_per_pixel
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
 import galsim
