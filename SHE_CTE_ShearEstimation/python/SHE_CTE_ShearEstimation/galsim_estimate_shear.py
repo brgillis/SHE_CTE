@@ -21,7 +21,7 @@
 from math import sqrt
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label, stamp_size_label
+from SHE_PPT.magic_values import scale_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
