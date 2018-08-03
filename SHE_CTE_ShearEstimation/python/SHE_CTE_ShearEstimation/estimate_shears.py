@@ -56,8 +56,6 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
 
-instance_id_maxlen = 17
-
 
 def estimate_shears_from_args(args, dry_run=False):
     """
@@ -126,12 +124,12 @@ def estimate_shears_from_args(args, dry_run=False):
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
         header = f[0].header
         if ppt_mv.model_hash_label in header:
-            estimates_instance_id = header[ppt_mv.model_hash_label][0:instance_id_maxlen]
+            estimates_instance_id = header[ppt_mv.model_hash_label][0:ppt_mv.short_instance_id_maxlen]
         elif ppt_mv.field_id_label in header:
-            estimates_instance_id = header[ppt_mv.field_id_label][0:instance_id_maxlen]
+            estimates_instance_id = header[ppt_mv.field_id_label][0:ppt_mv.short_instance_id_maxlen]
         else:
             logger.warn("Cannot determine proper instance ID for filenames. Using hash of stacked image header.")
-            estimates_instance_id = hash_any(header, format="base64", max_length=instance_id_maxlen)
+            estimates_instance_id = hash_any(header, format="base64", max_length=ppt_mv.short_instance_id_maxlen)
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id),
