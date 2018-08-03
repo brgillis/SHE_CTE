@@ -68,23 +68,30 @@ def measure_statistics_from_args(args):
 
     for method in mv.estimation_methods:
 
-        estimates_table_filename = shear_estimates_table_product.get_method_filename(
-            method)
+        try:
 
-        if estimates_table_filename is None or estimates_table_filename == "":
-            continue
+            estimates_table_filename = shear_estimates_table_product.get_method_filename(
+                method)
 
-        estimates_table = Table.read(
-            join(args.workdir, estimates_table_filename))
+            if estimates_table_filename is None or estimates_table_filename == "":
+                continue
 
-        # Calculate statistics
-        if not method == "BFD":
-            shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
-        else:
-            continue  # FIXME
+            estimates_table = Table.read(
+                join(args.workdir, estimates_table_filename))
 
-        # Save these in the data product
-        shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
+            # Calculate statistics
+            if not method == "BFD":
+                shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
+            else:
+                continue  # FIXME
+
+            # Save these in the data product
+            shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
+
+        except Exception as e:
+
+            logger.warn("Failsafe exception block triggered with exception: " + str(e))
+            shear_bias_statistics_product.set_method_statistics(method, None, None)
 
     # Write out the statistics product
     write_xml_product(shear_bias_statistics_product, join(args.workdir, args.shear_bias_statistics))
