@@ -77,6 +77,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--logdir', type=str,)
     parser.add_argument('--debug', action='store_true',
                         help="Set to enable debugging protocols")
+    parser.add_argument('--profile', action='store_true')
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 
@@ -177,7 +178,15 @@ def mainMethod(args):
     logger.info(exec_cmd)
 
     try:
-        cleanup_bias_measurement_from_args(args)
+
+        if args.profile:
+            import cProfile
+            cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
+                            {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
+                             "args": args, },
+                            filename="cleanup_bias_measurement.prof")
+        else:
+            cleanup_bias_measurement_from_args(args)
     except Exception as e:
         logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
