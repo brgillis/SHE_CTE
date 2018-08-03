@@ -47,7 +47,7 @@ products.shear_estimates.init()
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": None,
+                   "LensMC": load_control_training_data,
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
@@ -170,8 +170,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     if training_data_filename == 'None':
                         training_data_filename = None
                     if training_data_filename is None:
-                        # Don't raise for KSB and REGAUSS, which allow default behaviour here
-                        if method not in ("KSB", "REGAUSS"):
+                        # Don't raise for KSB, REGAUSS, and LensMC which allow default behaviour here
+                        if method not in ("KSB", "LensMC", "REGAUSS"):
                             raise ValueError(
                                 "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)

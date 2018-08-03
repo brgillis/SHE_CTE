@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2018-07-25"
+__updated__ = "2018-08-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,15 +26,12 @@ from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.ksb_training import tf as kttf
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from astropy.table import Table
 import numpy as np
-
-
-products.ksb_training_data.init()
-products.regauss_training_data.init()
 
 
 class ControlTraining(object):
@@ -47,9 +44,9 @@ class ControlTraining(object):
         logger.debug("Entering ControlTraining __init__")
 
         if training_product_filename is None or training_product_filename == "None":
-            logger.warn("No training data provided for control method; using default shape noise of 0.25.")
-            self.e1_var = 0.25**2
-            self.e2_var = 0.25**2
+            logger.warn("No training data provided; using default shape noise of 0.")
+            self.e1_var = 0.
+            self.e2_var = 0.
         else:
             # Read in the training data product
             qualified_training_product_filename = os.path.join(workdir, training_product_filename)
@@ -59,10 +56,13 @@ class ControlTraining(object):
             training_data_filename = p.get_data_filename()
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)
             t = Table.read(qualified_training_data_filename)
-            assert is_in_format(t, kttf)
 
-            self.e1_var = t[kttf.e1].var()
-            self.e2_var = t[kttf.e2].var()
+            if is_in_format(t, kttf):  # For KSB and REGAUSS
+                self.e1_var = t[kttf.e1].var()
+                self.e2_var = t[kttf.e2].var()
+            elif is_in_format(t, setf):  # For LensMC
+                self.e1_var = t[setf.g1].var()
+                self.e2_var = t[setf.g2].var()
 
         logger.debug("Exiting ControlTraining __init__")
         return
@@ -95,7 +95,7 @@ class ControlTraining(object):
 
 
 def load_control_training_data(training_data_filename, workdir="."):
-    """Loading method for getting KSB/REGAUSS training data.
+    """Loading method for getting KSB/REGAUSS/LensMC training data.
     """
 
     return ControlTraining(training_data_filename, workdir)
