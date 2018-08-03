@@ -172,7 +172,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     if training_data_filename is None:
                         # Don't raise for KSB and REGAUSS, which allow default behaviour here
                         if method not in ("KSB", "REGAUSS"):
-                            raise ValueError("No training data supplied for method " + method + ".")
+                            raise ValueError(
+                                "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
 
                 else:
@@ -196,16 +197,21 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        debug=args.debug)
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
-                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")
+                    raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
+                                     "for method " + method + ".")
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
                 # Cleanup loaded data for this method
                 del training_data, calibration_data
 
-            except (NotImplementedError, ValueError) as e:
+            except Exception as e:
 
-                logger.warning(str(e))
+                if isinstance(e, NotImplementedError) or (isinstance(e, ValueError) and
+                                                          "Invalid implementation:" in str(e)):
+                    logger.warn(str(e))
+                else:
+                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
 
