@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-07-27"
+__updated__ = "2018-08-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -81,7 +81,7 @@ def measure_statistics_from_args(args):
         if not method == "BFD":
             shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
         else:
-            continue
+            continue  # FIXME
 
         # Save these in the data product
         shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
