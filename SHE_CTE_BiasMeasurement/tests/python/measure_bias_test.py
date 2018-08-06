@@ -17,7 +17,7 @@ from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 import numpy as np
 
 
-__updated__ = "2018-07-30"
+__updated__ = "2018-08-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -134,8 +134,8 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("bias_stats_0", str(i), extension=".xml", subdir=None)
-            filename_1 = get_allowed_filename("bias_stats_1", str(i), extension=".xml", subdir=None)
+            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension=".xml", subdir=None)
+            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None)
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))

@@ -264,13 +264,13 @@ def inv_var_stack(a, a_err):
 
     inv_a_inv_var_sum = 1. / a_inv_var.sum()
 
-    a_m = a_sum * inv_a_inv_var_sum
+    a_m = (a*a_inv_var).sum() * inv_a_inv_var_sum
 
     a_m_err = sqrt(inv_a_inv_var_sum)
 
-    return a_m, a_m_err
-
     logger.debug("Exiting inv_var_stack")
+
+    return a_m, a_m_err
 
 
 def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
