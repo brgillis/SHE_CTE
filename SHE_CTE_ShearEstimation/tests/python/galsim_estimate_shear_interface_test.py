@@ -20,12 +20,15 @@ __updated__ = "2018-08-06"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from os.path import join
+
+from SHE_PPT.file_io import read_pickled_product, find_file
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 import pytest
 
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
-from SHE_PPT.file_io import read_pickled_product, find_file
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
+
 
 she_frame_location = "AUX/SHE_PPT/test_she_frame_stack_simple.bin"
 ksb_training_location = "AUX/SHE_PPT/test_KSB_training_data.bin"
@@ -54,6 +57,7 @@ class TestCase:
         
         ksb_cat = KSB_estimate_shear(she_frame,
                                      training_data=ksb_training_data,
+                                     calibration_data=None,
                                      workdir=self.workdir)
         
         # Check that we have valid data
