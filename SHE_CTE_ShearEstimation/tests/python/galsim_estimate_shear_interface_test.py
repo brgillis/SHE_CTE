@@ -62,7 +62,29 @@ class TestCase:
         
         # Check that we have valid data
         for row in ksb_cat:
-            for colname in (setf.g1, setf.g2):
+            for colname in (setf.g1, setf.g2, setf.g1_err, setf.g2_err):
+                g = row[colname]
+                if not (g>-1 and g<1):
+                    raise Exception("Bad value for " + colname + ": " + str(g))
+                
+        return
+
+    def test_regauss(self):
+        """Test that the interface for the REGAUSS method works properly.
+        """
+        
+        # Read in the test data
+        she_frame = read_pickled_product(find_file(she_frame_location))
+        regauss_training_data= read_pickled_product(find_file(regauss_training_location))
+        
+        regauss_cat = REGAUSS_estimate_shear(she_frame,
+                                             training_data=ksb_training_data,
+                                             calibration_data=None,
+                                             workdir=self.workdir)
+        
+        # Check that we have valid data
+        for row in regauss_cat:
+            for colname in (setf.g1, setf.g2, setf.g1_err, setf.g2_err):
                 g = row[colname]
                 if not (g>-1 and g<1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
