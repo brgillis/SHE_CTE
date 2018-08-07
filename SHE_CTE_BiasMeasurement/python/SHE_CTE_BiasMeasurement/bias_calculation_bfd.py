@@ -18,12 +18,12 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import numpy as np
-
 from SHE_PPT.math import linregress_with_errors
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+import numpy as np
+
 
 class BiasMeasurement(object):
     def __init__(self):
@@ -164,42 +164,42 @@ def calculate_bias(all_shear_measurements):
     bias_measurement = BiasMeasurement()
     
     # Get bias for both index 1 and 2 independently
- hdu_targ=fits.open("targettest_m_0.3_c_0.01_gdist.fits")
-hdu_temp=fits.open("templatetest.fits")
-hdu_targ_PQR = fits.open("targettestPQR_m_0.3_c_0.01_gdist.fits")
-g1t=hdu_targ[2].data['g1_true']
-g2t=hdu_targ[2].data['g2_true']
-
-P=hdu_targ_PQR[1].data['PQR'][:,0]
-Q1=hdu_targ_PQR[1].data['PQR'][:,1]
-Q2=hdu_targ_PQR[1].data['PQR'][:,2]
-R11=hdu_targ_PQR[1].data['PQR'][:,3]
-R12=hdu_targ_PQR[1].data['PQR'][:,4]
-R22=hdu_targ_PQR[1].data['PQR'][:,5]
-
-term1a = Q1/P
-term1b = Q2/P
-term2a = (Q1 * Q1)/P**2 - R11/P
-term2b = (Q1 * Q2)/P**2 - R12/P
-term2c = (Q2 * Q1)/P**2 - R12/P
-term2d = (Q2 * Q2)/P**2 - R22/P
-
-sum1= np.sum(g1t*term1a+g2t*term1b)
-sum2= np.sum(term1a + term1b)
-sum3= np.sum(g1t*(g1t*term2a+g2t*term2c)+g2t*(g1t*term2b+g2t*term2d))
-sum4= np.sum(g1t*term2a+g2t*term2c + g1t*term2b+g2t*term2d)
-sum5= np.sum(g1t*(term2a + term2c) + g2t*(term2b+term2d))
-sum6= np.sum(term2a+term2b+term2c+term2d)
-
-
-bb=np.matrix([[sum1],[sum2]])
-AA=np.matrix([[sum3,sum4],[sum5,sum6]])
-
-AaAAinv=np.linalg.inv(AA)
-
-
-print("m = %s +- %s" %((AAinv*bb)[0,0]-1.0,np.sqrt(AAinv[0,0])))
-print("c = %s +- %s" %((AAinv*bb)[1,0],np.sqrt(AAinv[1,1])))
+    hdu_targ=fits.open("targettest_m_0.3_c_0.01_gdist.fits")
+    hdu_temp=fits.open("templatetest.fits")
+    hdu_targ_PQR = fits.open("targettestPQR_m_0.3_c_0.01_gdist.fits")
+    g1t=hdu_targ[2].data['g1_true']
+    g2t=hdu_targ[2].data['g2_true']
+    
+    P=hdu_targ_PQR[1].data['PQR'][:,0]
+    Q1=hdu_targ_PQR[1].data['PQR'][:,1]
+    Q2=hdu_targ_PQR[1].data['PQR'][:,2]
+    R11=hdu_targ_PQR[1].data['PQR'][:,3]
+    R12=hdu_targ_PQR[1].data['PQR'][:,4]
+    R22=hdu_targ_PQR[1].data['PQR'][:,5]
+    
+    term1a = Q1/P
+    term1b = Q2/P
+    term2a = (Q1 * Q1)/P**2 - R11/P
+    term2b = (Q1 * Q2)/P**2 - R12/P
+    term2c = (Q2 * Q1)/P**2 - R12/P
+    term2d = (Q2 * Q2)/P**2 - R22/P
+    
+    sum1= np.sum(g1t*term1a+g2t*term1b)
+    sum2= np.sum(term1a + term1b)
+    sum3= np.sum(g1t*(g1t*term2a+g2t*term2c)+g2t*(g1t*term2b+g2t*term2d))
+    sum4= np.sum(g1t*term2a+g2t*term2c + g1t*term2b+g2t*term2d)
+    sum5= np.sum(g1t*(term2a + term2c) + g2t*(term2b+term2d))
+    sum6= np.sum(term2a+term2b+term2c+term2d)
+    
+    
+    bb=np.matrix([[sum1],[sum2]])
+    AA=np.matrix([[sum3,sum4],[sum5,sum6]])
+    
+    AaAAinv=np.linalg.inv(AA)
+    
+    
+    print("m = %s +- %s" %((AAinv*bb)[0,0]-1.0,np.sqrt(AAinv[0,0])))
+    print("c = %s +- %s" %((AAinv*bb)[1,0],np.sqrt(AAinv[1,1])))
    
     (bias_measurement.m1, bias_measurement.m1_err,
      bias_measurement.c1, bias_measurement.c1_err,
