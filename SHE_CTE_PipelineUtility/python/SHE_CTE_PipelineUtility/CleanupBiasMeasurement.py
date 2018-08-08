@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-07-13"
+__updated__ = "2018-08-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -77,32 +77,19 @@ def defineSpecificProgramOptions():
     parser.add_argument('--logdir', type=str,)
     parser.add_argument('--debug', action='store_true',
                         help="Set to enable debugging protocols")
+    parser.add_argument('--profile', action='store_true')
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 
     return parser
 
 
-def mainMethod(args):
-    """
-    @brief
-        The "main" method for this program, execute a pipeline.
-
-    @details
-        This method is the entry point to the program. In this sense, it is
-        similar to a main (and it is why it is called mainMethod()).
+def cleanup_bias_measurement_from_args(args):
+    """ Function which performs the heavy lifting of actually cleaning up unneeded intermediate files
+        in the bias measurement pipeline.
     """
 
     logger = getLogger(__name__)
-
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_CleanupBiasMeasurement",
-                                    store_true=["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
 
     def remove_file(qualified_filename):
         if not os.path.exists(qualified_filename):
@@ -165,6 +152,43 @@ def mainMethod(args):
     qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
 
     os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
+
+    return
+
+
+def mainMethod(args):
+    """
+    @brief
+        The "main" method for this program, execute a pipeline.
+
+    @details
+        This method is the entry point to the program. In this sense, it is
+        similar to a main (and it is why it is called mainMethod()).
+    """
+
+    logger = getLogger(__name__)
+
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
+    logger.debug('#')
+
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_CleanupBiasMeasurement",
+                                    store_true=["profile", "debug"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
+
+    try:
+
+        if args.profile:
+            import cProfile
+            cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
+                            {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
+                             "args": args, },
+                            filename="cleanup_bias_measurement.prof")
+        else:
+            cleanup_bias_measurement_from_args(args)
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
 

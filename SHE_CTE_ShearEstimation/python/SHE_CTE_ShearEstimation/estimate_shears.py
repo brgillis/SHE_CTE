@@ -21,18 +21,20 @@
 import os
 from os.path import join
 
+from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_instance_id,
-                             get_data_filename)
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from SHE_PPT.utility import hash_any
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_load_method_data
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from astropy.io import fits
@@ -42,10 +44,10 @@ import numpy as np
 products.shear_estimates.init()
 
 
-loading_methods = {"KSB": None,
-                   "REGAUSS": None,
+loading_methods = {"KSB": load_control_training_data,
+                   "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": None,
+                   "LensMC": load_control_training_data,
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
@@ -116,14 +118,25 @@ def estimate_shears_from_args(args, dry_run=False):
 
     logger.info("Generating shear estimates product...")
 
-    estimates_instance_id = get_instance_id(get_data_filename(args.stacked_image, workdir=args.workdir))
+    # Determine the instance ID to use for the estimates file
+    qualified_stacked_image_data_filename = join(
+        args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
+    with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
+        header = f[0].header
+        if ppt_mv.model_hash_label in header:
+            estimates_instance_id = header[ppt_mv.model_hash_label][0:ppt_mv.short_instance_id_maxlen]
+        elif ppt_mv.field_id_label in header:
+            estimates_instance_id = header[ppt_mv.field_id_label][0:ppt_mv.short_instance_id_maxlen]
+        else:
+            logger.warn("Cannot determine proper instance ID for filenames. Using hash of stacked image header.")
+            estimates_instance_id = hash_any(header, format="base64", max_length=ppt_mv.short_instance_id_maxlen)
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
-        BFD_filename=get_allowed_filename("BFD_SHM", estimates_instance_id),
-        KSB_filename=get_allowed_filename("KSB_SHM", estimates_instance_id),
-        LensMC_filename=get_allowed_filename("LensMC_SHM", estimates_instance_id),
-        MomentsML_filename=get_allowed_filename("MomentsML_SHM", estimates_instance_id),
-        REGAUSS_filename=get_allowed_filename("REGAUSS_SHM", estimates_instance_id))
+        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id),
+        KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id),
+        LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id),
+        MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id),
+        REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id))
 
     if not dry_run:
 
@@ -157,8 +170,11 @@ def estimate_shears_from_args(args, dry_run=False):
                     if training_data_filename == 'None':
                         training_data_filename = None
                     if training_data_filename is None:
-                        raise ValueError("No training data supplied for method " + method + ".")
-                    training_data = load_training_data(training_data_filename)
+                        # Don't raise for KSB, REGAUSS, and LensMC which allow default behaviour here
+                        if method not in ("KSB", "LensMC", "REGAUSS"):
+                            raise ValueError(
+                                "Invalid implementation: No training data supplied for method " + method + ".")
+                    training_data = load_training_data(training_data_filename, workdir=args.workdir)
 
                 else:
                     training_data = None
@@ -180,17 +196,22 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        workdir=args.workdir,
                                                        debug=args.debug)
 
-                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table,setf_bfd)):
-                    raise ValueError("Shear estimation table returned in invalid format for method " + method + ".")  
+                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
+                    raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
+                                     "for method " + method + ".")
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
                 # Cleanup loaded data for this method
                 del training_data, calibration_data
 
-            except (NotImplementedError, ValueError) as e:
+            except Exception as e:
 
-                logger.warning(str(e))
+                if isinstance(e, NotImplementedError) or (isinstance(e, ValueError) and
+                                                          "Invalid implementation:" in str(e)):
+                    logger.warn(str(e))
+                else:
+                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
 

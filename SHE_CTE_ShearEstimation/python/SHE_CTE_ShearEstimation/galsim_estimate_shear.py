@@ -21,25 +21,25 @@
 from math import sqrt
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label, stamp_size_label
-from SHE_PPT.noise import get_var_ADU_per_pixel
+from SHE_PPT.magic_values import scale_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.utility import run_only_once
+import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-import galsim
 import numpy as np
 
 
 stamp_size = 256
 x_buffer = -5
 y_buffer = -5
-shape_noise = 0.25
 get_exposure_estimates = False
-subsampled_scale = 0.2
+
+default_galaxy_scale = 0.1
+default_psf_scale = 0.02
 
 
 class ShearEstimate(object):
@@ -54,12 +54,25 @@ class ShearEstimate(object):
         self.y = y
 
 
+@run_only_once
+def log_no_galaxy_scale():
+    logger = getLogger(mv.logger_name)
+    logger.warn("Cannot find pixel scale in image header. Using default value of " + str(default_galaxy_scale))
+
+
+@run_only_once
+def log_no_psf_scale():
+    logger = getLogger(mv.logger_name)
+    logger.warn("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
+
+
 def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
 
     if scale_label in initial_image.header:
         in_scale = initial_image.header[scale_label]
     else:
-        in_scale = 0.1
+        log_no_galaxy_scale()
+        in_scale = default_galaxy_scale
 
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
@@ -97,12 +110,13 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
 def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method="KSB", workdir=workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="KSB", workdir=workdir, *args, **kwargs)
 
 
 def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, method="REGAUSS", workdir=workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="REGAUSS", workdir=workdir, *args,
+                             **kwargs)
 
 
 def get_KSB_shear_estimate(galsim_shear_estimate, scale):
@@ -181,8 +195,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
-    resampled_badpix = get_resampled_image(
-        SHEImage((gal_stamp.boolmask).astype(float)), psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
+
+    # Get a resampled badpix map
+    supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
+    supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
+                                           resampled_gal_stamp_size, resampled_gal_stamp_size)
 
     badpix = (resampled_badpix.data > 0.5).astype(np.uint16)  # Galsim requires int array
 
@@ -246,18 +264,16 @@ def inv_var_stack(a, a_err):
 
     inv_a_inv_var_sum = 1. / a_inv_var.sum()
 
-    a_sum = np.nansum(a * a_inv_var)
-
-    a_m = np.nansum(a * a_inv_var) * inv_a_inv_var_sum
+    a_m = (a*a_inv_var).sum() * inv_a_inv_var_sum
 
     a_m_err = sqrt(inv_a_inv_var_sum)
 
-    return a_m, a_m_err
-
     logger.debug("Exiting inv_var_stack")
 
+    return a_m, a_m_err
 
-def GS_estimate_shear(data_stack, method, workdir, debug=False):
+
+def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering GS_estimate_shear")
@@ -267,17 +283,14 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
     if scale_label in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]
     else:
-        stacked_gal_scale = 0.1
-
-    if scale_label in data_stack.exposures[0].detectors[1, 1].header:
-        gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]
-    else:
-        gal_scale = 0.1
+        log_no_galaxy_scale()
+        stacked_gal_scale = default_galaxy_scale
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
-        psf_scale = 0.02
+        log_no_psf_scale()
+        psf_scale = default_psf_scale
 
     row_index = 0
 
@@ -316,6 +329,9 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
         stacked_gal_stamp = gal_stamp_stack.stacked_image
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+
+        # Note the galaxy scale in the stamp's header
+        stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
 
         shear_estimate = get_shear_estimate(stacked_gal_stamp,
                                             stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
@@ -357,6 +373,7 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
                 gal_stamp = gal_stamp_stack.exposures[x]
                 if gal_stamp is None:
                     continue
+                gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
                 bulge_psf_stamp = bulge_psf_stack.exposures[x]
                 disk_psf_stamp = disk_psf_stack.exposures[x]
 
@@ -379,23 +396,31 @@ def GS_estimate_shear(data_stack, method, workdir, debug=False):
                 res.append(shear_estimate.re)
                 snrs.append(shear_estimate.snr)
 
+                x_world, y_world = gal_stamp.pix2world(shear_estimate.x, shear_estimate.y)
+                x_worlds.append(x_world)
+                y_worlds.append(y_world)
+
             g1s = np.array(g1s)
             g2s = np.array(g2s)
             gerrs = np.array(gerrs)
             res = np.array(res)
             snrs = np.array(snrs)
+            x_worlds = np.array(x_worlds)
+            y_worlds = np.array(y_worlds)
 
             g1, gerr = inv_var_stack(g1s, gerrs)
             g2, _ = inv_var_stack(g2s, gerrs)
             re, _ = inv_var_stack(res, gerrs)
             snr, _ = inv_var_stack(snrs, gerrs)
+            x_world = inv_var_stack(x_worlds, gerrs)
+            y_world = inv_var_stack(y_worlds, gerrs)
 
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({setf.ID: gal_id,
                                        setf.g1: stack_g_world[0],
                                        setf.g2: stack_g_world[1],
-                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + shape_noise ** 2),
-                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + shape_noise ** 2),
+                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + training_data.e1_var),
+                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + training_data.e2_var),
                                        setf.g1g2_covar: stack_covar_world[0, 1],
                                        setf.re: stack_re,
                                        setf.snr: stack_snr,
