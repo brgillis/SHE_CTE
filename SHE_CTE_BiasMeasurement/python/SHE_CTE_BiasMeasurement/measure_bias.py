@@ -28,7 +28,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_PipelineUtility.archive import archive_product
+from SHE_PPT.pipeline_utility import archive_product
 
 import numpy as np
 

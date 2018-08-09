@@ -31,7 +31,7 @@ from SHE_PPT.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
-from SHE_CTE_PipelineUtility.archive import archive_product
+from SHE_PPT.pipeline_utility import archive_product
 from astropy.table import Table
 
 
