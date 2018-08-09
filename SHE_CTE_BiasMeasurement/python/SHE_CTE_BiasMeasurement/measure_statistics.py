@@ -35,6 +35,25 @@ from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_
 from astropy.table import Table
 
 
+def archive_product(product_filename, archive_dir, workdir):
+
+    # Start by figuring out the subdirectory to store it in, based off of the workdir we're using
+    subdir = os.path.split(workdir)[1]
+    full_archive_dir = os.path.join(archive_dir, subdir)
+
+    # The filename will likely also contain a subdir, so figure that out
+    product_subpath = os.path.split(product_filename)[0]
+
+    # Make the directory to store it in
+    full_archive_subdir = os.path.join(full_archive_dir, product_subpath)
+    if not os.path.exists(full_archive_subdir):
+        os.makedirs(full_archive_subdir)
+
+    # Copy the file to the archive
+    qualified_archive_product_filename = os.path.join(full_archive_dir, product_filename)
+    copyfile(os.path.join(workdir, product_filename), qualified_archive_product_filename)
+
+
 def measure_statistics_from_args(args):
     """Workhorse function for measuring necessary statistics to calculate shear estimation bias.
     """
@@ -96,22 +115,9 @@ def measure_statistics_from_args(args):
     # Try to archive the product
     if args.archive_dir is not None:
         try:
-            # Start by figuring out the subdirectory to store it in, based off of the workdir we're using
-            subdir = os.path.split(args.workdir)[1]
-            full_archive_dir = os.path.join(args.archive_dir, subdir)
-
-            # The filename will likely also contain a subdir, so figure that out
-            statistics_subpath = os.path.split(args.shear_bias_statistics)[0]
-
-            # Make the directory to store it in
-            full_archive_subdir = os.path.join(full_archive_dir, statistics_subpath)
-            if not os.path.exists(full_archive_subdir):
-                os.makedirs(full_archive_subdir)
-
-            # Copy the file to the archive
-            qualified_archive_statistics_filename = os.path.join(full_archive_dir, args.shear_bias_statistics)
-            copyfile(qualified_statistics_filename, qualified_archive_statistics_filename)
-
+            archive_product(product_filename=args.shear_bias_statistics,
+                            archive_dir=args.archive_dir,
+                            workdir=args.workdir)
         except Exception as e:
             logger.warn("Failsafe exception block triggered when trying to save statistics product in archive. " +
                         "Exception was: " + str(e))
