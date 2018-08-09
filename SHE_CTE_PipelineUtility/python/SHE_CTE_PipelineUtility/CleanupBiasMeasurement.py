@@ -24,9 +24,12 @@ import argparse
 import os
 
 from SHE_PPT import products  # Need to import in order to initialise all products
-from SHE_PPT.file_io import read_listfile, read_xml_product
+from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.utility import get_arguments_string
+
+config_cleanup_key = "SHE_CTE_CleanupBiasMeasurement_cleanup"
 
 
 def defineSpecificProgramOptions():
@@ -83,6 +86,24 @@ def cleanup_bias_measurement_from_args(args):
     """
 
     logger = getLogger(__name__)
+
+    # Read in the pipeline config, which tells us whether to clean up or not
+    if args.pipeline_config is None:
+        logger.warn("No pipeline configuration found. Being safe and not cleaning up.")
+        return
+    pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+
+    # Check for the cleanup key
+    if config_cleanup_key not in pipeline_config:
+        logger.warn("Key " + config_cleanup_key + " not found in pipeline config " + args.pipeline_config + ". " +
+                    "Being safe and not cleaning up.")
+        return
+    clean_up = pipeline_config[config_cleanup_key]
+    if not clean_up.lower() == "true":
+        logger.info("Config is set to " + config_cleanup_key + "=" + clean_up + ", so not cleaning up.")
+        return
+
+    # If we get here, we are cleaning up
 
     def remove_file(qualified_filename):
         if not os.path.exists(qualified_filename):
