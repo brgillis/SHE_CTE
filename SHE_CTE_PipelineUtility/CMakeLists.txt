@@ -4,10 +4,6 @@ elements_subdir(SHE_CTE_PipelineUtility)
 # Declare Elements module dependencies
 elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(SHE_CTE)
-elements_depends_on_subdirs(SHE_CTE_BiasMeasurement)
-elements_depends_on_subdirs(SHE_CTE_ShearEstimation)
-elements_depends_on_subdirs(SHE_CTE_ShearValidation)
-elements_depends_on_subdirs(SHE_CTE_PSFFitting)
 elements_depends_on_subdirs(SHE_PPT)
 
 # Instruction for Python module installation
