@@ -59,6 +59,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_estimates', type=str,
                         help="Shear estimates data product")
 
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
     # Output data
     parser.add_argument('--shear_bias_statistics', type=str,
                         help='Desired name of the output shear bias statistics data product')

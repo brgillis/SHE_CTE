@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-08-03"
+__updated__ = "2018-08-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,20 +23,10 @@ __updated__ = "2018-08-03"
 import argparse
 import os
 
-from SHE_PPT import products
+from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
-
-products.calibrated_frame.init()
-products.stacked_frame.init()
-products.psf_image.init()
-products.mosaic.init()
-products.stack_mosaic.init()
-products.detections.init()
-products.details.init()
-products.shear_estimates.init()
-products.simulation_config.init()
 
 
 def defineSpecificProgramOptions():
@@ -68,6 +58,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_estimates', type=str)
 
     parser.add_argument('--shear_bias_statistics_in', type=str)  # Needed to ensure it waits until ready
+
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
 
     # Output arguments
     parser.add_argument('--shear_bias_statistics_out', type=str)

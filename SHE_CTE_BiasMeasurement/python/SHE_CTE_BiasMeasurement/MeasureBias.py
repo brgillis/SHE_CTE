@@ -53,6 +53,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--bootstrap_seed', type=int, default=0,
                         help='Seed for bootstrapping of errors')
 
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
     # Output data
     parser.add_argument('--shear_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
