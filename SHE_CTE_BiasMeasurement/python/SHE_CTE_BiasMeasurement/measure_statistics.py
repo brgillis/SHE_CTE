@@ -50,6 +50,8 @@ def archive_product(product_filename, archive_dir, workdir):
 
     """
 
+    logger = getLogger(mv.logger_name)
+
     # Start by figuring out the subdirectory to store it in, based off of the workdir we're using
     subdir = os.path.split(workdir)[1]
     full_archive_dir = os.path.join(archive_dir, subdir)
@@ -59,12 +61,38 @@ def archive_product(product_filename, archive_dir, workdir):
 
     # Make the directory to store it in
     full_archive_subdir = os.path.join(full_archive_dir, product_subpath)
+    full_archive_datadir = os.path.join(full_archive_dir, "data")
     if not os.path.exists(full_archive_subdir):
         os.makedirs(full_archive_subdir)
+    if not os.path.exists(full_archive_datadir):
+        os.makedirs(full_archive_datadir)
 
     # Copy the file to the archive
+    qualified_filename = os.path.join(workdir, product_filename)
     qualified_archive_product_filename = os.path.join(full_archive_dir, product_filename)
-    copyfile(os.path.join(workdir, product_filename), qualified_archive_product_filename)
+    copyfile(qualified_filename, qualified_archive_product_filename)
+
+    # Copy any files it points to to the archive as well
+    try:
+        p = read_xml_product(qualified_filename)
+
+        # Remove all files this points to
+        if hasattr(p, "get_all_filenames"):
+            data_filenames = p.get_all_filenames()
+            for data_filename in data_filenames:
+                if data_filename is not None and data_filename != "default_filename.fits" and data_filename != "":
+                    qualified_data_filename = os.path.join(workdir, data_filename)
+                    qualified_archive_data_filename = os.path.join(full_archive_dir, data_filename)
+                    copyfile(qualified_data_filename, qualified_archive_data_filename)
+
+        else:
+            logger.warn("Product " + qualified_filename + " has no 'get_all_filenames' method.")
+
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered when trying to save statistics product in archive. " +
+                    "Exception was: " + str(e))
+
+    return
 
 
 def measure_statistics_from_args(args):
