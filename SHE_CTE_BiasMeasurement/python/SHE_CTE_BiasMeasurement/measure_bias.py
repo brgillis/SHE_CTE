@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-07-30"
+__updated__ = "2018-08-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,6 +28,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_PipelineUtility.archive import archive_product
 
 import numpy as np
 
@@ -117,6 +118,16 @@ def measure_bias_from_args(args):
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 
     write_xml_product(bias_measurement_prod, join(args.workdir, args.shear_bias_measurements))
+
+    # Try to archive the product
+    if args.archive_dir is not None:
+        try:
+            archive_product(product_filename=args.shear_bias_measurements,
+                            archive_dir=args.archive_dir,
+                            workdir=args.workdir)
+        except Exception as e:
+            logger.warn("Failsafe exception block triggered when trying to save bias product in archive. " +
+                        "Exception was: " + str(e))
 
     logger.debug("Exiting measure_bias_from_args.")
 
