@@ -57,6 +57,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
+    # Archive directory - only default value can be used in pipeline
+    parser.add_argument('--archive_dir', type=str, default="/mnt/webdav/PF-SHE/bias_measurements_archive")
+
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
     parser.add_argument('--logdir', type=str, default=".")

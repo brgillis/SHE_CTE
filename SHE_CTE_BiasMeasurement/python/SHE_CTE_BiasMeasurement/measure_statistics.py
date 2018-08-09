@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-08-03"
+__updated__ = "2018-08-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,7 +23,7 @@ __updated__ = "2018-08-03"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301 USA
 
-from os.path import join
+import os
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
@@ -31,12 +31,8 @@ from SHE_PPT.logging import getLogger
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
+from SHE_CTE_PipelineUtility.archive import archive_product
 from astropy.table import Table
-
-
-products.details.init()
-products.shear_estimates.init()
-products.shear_bias_stats.init()
 
 
 def measure_statistics_from_args(args):
@@ -53,12 +49,12 @@ def measure_statistics_from_args(args):
 
     # Get the details table
 
-    details_table_product = read_xml_product(join(args.workdir, args.details_table))
-    details_table = Table.read(join(args.workdir, details_table_product.get_data_filename()))
+    details_table_product = read_xml_product(os.path.join(args.workdir, args.details_table))
+    details_table = Table.read(os.path.join(args.workdir, details_table_product.get_data_filename()))
 
     # Get the shear estimates product
 
-    shear_estimates_table_product = read_xml_product(join(args.workdir, args.shear_estimates))
+    shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, args.shear_estimates))
 
     # Initialise the output product
 
@@ -77,7 +73,7 @@ def measure_statistics_from_args(args):
                 continue
 
             estimates_table = Table.read(
-                join(args.workdir, estimates_table_filename))
+                os.path.join(args.workdir, estimates_table_filename))
 
             # Calculate statistics
             if not method == "BFD":
@@ -94,7 +90,18 @@ def measure_statistics_from_args(args):
             shear_bias_statistics_product.set_method_statistics(method, None, None)
 
     # Write out the statistics product
-    write_xml_product(shear_bias_statistics_product, join(args.workdir, args.shear_bias_statistics))
+    qualified_statistics_filename = os.path.join(args.workdir, args.shear_bias_statistics)
+    write_xml_product(shear_bias_statistics_product, qualified_statistics_filename)
+
+    # Try to archive the product
+    if args.archive_dir is not None:
+        try:
+            archive_product(product_filename=args.shear_bias_statistics,
+                            archive_dir=args.archive_dir,
+                            workdir=args.workdir)
+        except Exception as e:
+            logger.warn("Failsafe exception block triggered when trying to save statistics product in archive. " +
+                        "Exception was: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')
 

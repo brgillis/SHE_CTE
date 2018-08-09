@@ -17,7 +17,7 @@ from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 import numpy as np
 
 
-__updated__ = "2018-08-06"
+__updated__ = "2018-08-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -45,6 +45,7 @@ class Args(object):
         self.profile = False
         self.shear_bias_statistics = None
         self.shear_bias_measurement = None
+        self.archive_dir = None
 
 
 class TestMeasureStatistics:
