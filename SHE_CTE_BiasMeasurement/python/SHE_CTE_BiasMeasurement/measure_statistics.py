@@ -104,7 +104,9 @@ def measure_statistics_from_args(args):
             statistics_subpath = os.path.split(args.shear_bias_statistics)[0]
 
             # Make the directory to store it in
-            os.mkdir(os.path.join(full_archive_dir, statistics_subpath))
+            full_archive_subdir = os.path.join(full_archive_dir, statistics_subpath)
+            if not os.path.exists(full_archive_subdir):
+                os.makedirs(full_archive_subdir)
 
             # Copy the file to the archive
             qualified_archive_statistics_filename = os.path.join(full_archive_dir, args.shear_bias_statistics)
