@@ -36,6 +36,19 @@ from astropy.table import Table
 
 
 def archive_product(product_filename, archive_dir, workdir):
+    """ Copies an already-written data product to an archive directory.
+
+        Parameters
+        ----------
+        product_filename : string
+            The (unqualified) name of the product to copy
+        archive_dir : string
+            The root of the archive directory (note, the most-specific part of the workdir path (normally "workspace")
+            will be added after this to keep separate runs from conflicting).
+        workdir : string
+            The working directory for this task
+
+    """
 
     # Start by figuring out the subdirectory to store it in, based off of the workdir we're using
     subdir = os.path.split(workdir)[1]
