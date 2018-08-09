@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-07-11"
+__updated__ = "2018-08-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -62,6 +62,9 @@ def defineSpecificProgramOptions():
     # Output data
     parser.add_argument('--shear_bias_statistics', type=str,
                         help='Desired name of the output shear bias statistics data product')
+
+    # Archive directory - only default value can be used in pipeline
+    parser.add_argument('--archive_dir', type=str, default="/mnt/webdav/bias_measurement_archive")
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
