@@ -34,8 +34,8 @@ import numpy as np
 
 bootstrap_threshold = 50
 
-archive_dir_key = "SHE_CTE_MeasureStatistics_archive_dir"
-webdav_archive_key = "SHE_CTE_MeasureStatistics_webdav_archive"
+archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
+webdav_archive_key = "SHE_CTE_MeasureBias_webdav_archive"
 
 
 class MethodStatisticsList(object):
