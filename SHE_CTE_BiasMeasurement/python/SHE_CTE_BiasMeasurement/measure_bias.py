@@ -26,9 +26,9 @@ from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
-from SHE_PPT.pipeline_utility import archive_product, read_config
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
 
 
@@ -135,7 +135,7 @@ def measure_bias_from_args(args):
         archive_dir = args.archive_dir
 
     if webdav_archive_key in pipeline_config:
-        webdav_archive = pipeline_config[webdav_archive_key]
+        webdav_archive = pipeline_config[webdav_archive_key].lower()=="true"
     else:
         webdav_archive = args.webdav_archive
 
