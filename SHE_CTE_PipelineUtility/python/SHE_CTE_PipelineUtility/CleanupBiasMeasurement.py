@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-08-09"
+__updated__ = "2018-08-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,8 +26,10 @@ import os
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.utility import get_arguments_string
+
+from SHE_PPT.pipeline_utility import read_config
+
 
 config_cleanup_key = "SHE_CTE_CleanupBiasMeasurement_cleanup"
 
@@ -86,6 +88,12 @@ def cleanup_bias_measurement_from_args(args):
     """
 
     logger = getLogger(__name__)
+
+    # Move the statistics product to the new name
+    qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
+    qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
+    
+    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     # Read in the pipeline config, which tells us whether to clean up or not
     if args.pipeline_config is None:
@@ -160,12 +168,6 @@ def cleanup_bias_measurement_from_args(args):
                              args.details_table,
                              args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
-
-    # Move the statistics product to the new name
-    qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
-    qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
-
-    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     return
 
