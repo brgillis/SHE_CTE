@@ -132,6 +132,8 @@ def measure_bias_from_args(args):
 
     if archive_dir_key in pipeline_config:
         archive_dir = pipeline_config[archive_dir_key]
+        if archive_dir=="None":
+            archive_dir = None
     else:
         archive_dir = args.archive_dir
         
