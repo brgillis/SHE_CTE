@@ -4,20 +4,8 @@
 
     Unit tests for measuring shear bias statistics.
 """
-from numpy.testing import assert_almost_equal
-from os.path import join
-import pytest
 
-from SHE_PPT import products
-from SHE_PPT.file_io import write_xml_product, read_xml_product,\
-    get_allowed_filename, write_listfile
-from SHE_PPT.math import LinregressStatistics
-
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-import numpy as np
-
-
-__updated__ = "2018-08-09"
+__updated__ = "2018-08-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -32,9 +20,17 @@ __updated__ = "2018-08-09"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from numpy.testing import assert_almost_equal
+from os.path import join
+import pytest
 
-products.shear_bias_stats.init()
-products.shear_bias_measurements.init()
+from SHE_PPT import products
+from SHE_PPT.file_io import write_xml_product, read_xml_product,\
+    get_allowed_filename, write_listfile
+from SHE_PPT.math import LinregressStatistics
+
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+import numpy as np
 
 
 class Args(object):
@@ -46,6 +42,8 @@ class Args(object):
         self.shear_bias_statistics = None
         self.shear_bias_measurement = None
         self.archive_dir = None
+        self.webdav_dir = None
+        self.webdav_archive = False
 
 
 class TestMeasureStatistics:

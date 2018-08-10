@@ -2,12 +2,10 @@
 
     Created 21 June 2018
     
-
-    Executable for measuring necessary statistics on a set of shear
-    measurements.
+    Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2018-08-09"
+__updated__ = "2018-08-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,11 +26,16 @@ import os
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
+from astropy.table import Table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
-from SHE_PPT.pipeline_utility import archive_product
-from astropy.table import Table
+from SHE_PPT.pipeline_utility import archive_product, read_config
+
+
+archive_dir_key = "SHE_CTE_MeasureStatistics_archive_dir"
+webdav_dir_key = "SHE_CTE_MeasureStatistics_webdav_dir"
+webdav_archive_key = "SHE_CTE_MeasureStatistics_webdav_archive"
 
 
 def measure_statistics_from_args(args):
@@ -94,10 +97,42 @@ def measure_statistics_from_args(args):
     write_xml_product(shear_bias_statistics_product, qualified_statistics_filename)
 
     # Try to archive the product
-    if args.archive_dir is not None:
+
+    # First get the pipeline config so we can figure out where to archive it
+    try:
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+                    "Exception was: " + str(e))
+        pipeline_config = {}
+
+    if archive_dir_key in pipeline_config:
+        archive_dir = pipeline_config[archive_dir_key]
+        if archive_dir=="None":
+            archive_dir = None
+    else:
+        archive_dir = args.archive_dir
+        
+    if webdav_dir_key in pipeline_config:
+        webdav_dir = pipeline_config[webdav_dir_key]
+    else:
+        webdav_dir = args.webdav_dir
+
+    if webdav_archive_key in pipeline_config:
+        webdav_archive = pipeline_config[webdav_archive_key].lower()=="true"
+    else:
+        webdav_archive = args.webdav_archive
+
+    # If we're archiving with webdav, determine its mount dir and the full archive directory
+    if webdav_archive and archive_dir is not None:
+        full_archive_dir = os.path.join(webdav_dir, archive_dir)
+    else:
+        full_archive_dir = archive_dir
+
+    if archive_dir is not None:
         try:
             archive_product(product_filename=args.shear_bias_statistics,
-                            archive_dir=args.archive_dir,
+                            archive_dir=full_archive_dir,
                             workdir=args.workdir)
         except Exception as e:
             logger.warn("Failsafe exception block triggered when trying to save statistics product in archive. " +
