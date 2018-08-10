@@ -4,28 +4,13 @@
 
     Primary execution loop for measuring galaxy shapes from an image file.
 """
-
-__updated__ = "2018-08-10"
-
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
-#
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
-# any later version.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
 import os
 
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
@@ -42,6 +27,22 @@ from astropy.io import fits
 import numpy as np
 
 
+__updated__ = "2018-08-10"
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
@@ -53,6 +54,8 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "MomentsML": None,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
+
+methods_key = "SHE_EstimateShear_methods"
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -140,10 +143,17 @@ def estimate_shears_from_args(args, dry_run=False):
 
         method_shear_estimates = {}
 
-        if len(args.methods) == 0:
-            methods = list(estimation_methods.keys())
+        # Check for methods in the pipeline options
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+
+        if methods_key in pipeline_config:
+            methods = pipeline_config[methods_key].split()
         else:
             methods = args.methods
+
+        # If no methods are specified, use all
+        if len(methods) == 0:
+            methods = list(estimation_methods.keys())
 
         for method in methods:
 
