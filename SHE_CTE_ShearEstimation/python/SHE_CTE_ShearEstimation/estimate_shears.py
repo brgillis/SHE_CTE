@@ -55,7 +55,7 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
 
-methods_key = "SHE_EstimateShear_methods"
+methods_key = "SHE_CTE_EstimateShear_methods"
 
 
 def estimate_shears_from_args(args, dry_run=False):
