@@ -22,6 +22,7 @@ __updated__ = "2018-08-10"
 
 import argparse
 import os
+import shutil
 
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
@@ -89,11 +90,8 @@ def cleanup_bias_measurement_from_args(args):
 
     logger = getLogger(__name__)
 
-    # Move the statistics product to the new name
     qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
     qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
-    
-    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     # Read in the pipeline config, which tells us whether to clean up or not
     if args.pipeline_config is None:
@@ -109,7 +107,13 @@ def cleanup_bias_measurement_from_args(args):
     clean_up = pipeline_config[config_cleanup_key]
     if not clean_up.lower() == "true":
         logger.info("Config is set to " + config_cleanup_key + "=" + clean_up + ", so not cleaning up.")
+        
+        # Copy the statistics product to the new name
+        shutil.copy(qualified_stats_in_filename, qualified_stats_out_filename)
         return
+    
+    # Move the statistics product to the new name
+    os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     # If we get here, we are cleaning up
 
