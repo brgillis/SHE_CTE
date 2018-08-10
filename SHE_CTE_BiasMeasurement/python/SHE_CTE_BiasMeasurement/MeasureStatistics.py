@@ -66,9 +66,11 @@ def defineSpecificProgramOptions():
                         help='Desired name of the output shear bias statistics data product')
 
     # Archive directory - only default value can be used in pipeline
-    parser.add_argument('--archive_dir', type=str, default="/mnt/webdav/PF-SHE/bias_measurements_archive")
+    parser.add_argument('--archive_dir', type=str, default=None)
+    
+    parser.add_argument('--webdav_dir', type=str, default="/mnt/webdav",
+                        help="Path of the WebDAV mount.")
 
-    # Archive directory - only default value can be used in pipeline
     parser.add_argument('--webdav_archive', action="store_true",
                         help="If set, will mount/demount webdav for archiving, and workspace will be relative to " +
                         "the webdav mount.")

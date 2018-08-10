@@ -34,6 +34,7 @@ from SHE_PPT.pipeline_utility import archive_product, read_config
 
 
 archive_dir_key = "SHE_CTE_MeasureStatistics_archive_dir"
+webdav_dir_key = "SHE_CTE_MeasureStatistics_webdav_dir"
 webdav_archive_key = "SHE_CTE_MeasureStatistics_webdav_archive"
 
 
@@ -109,6 +110,11 @@ def measure_statistics_from_args(args):
         archive_dir = pipeline_config[archive_dir_key]
     else:
         archive_dir = args.archive_dir
+        
+    if webdav_dir_key in pipeline_config:
+        webdav_dir = pipeline_config[webdav_dir_key]
+    else:
+        webdav_dir = args.webdav_dir
 
     if webdav_archive_key in pipeline_config:
         webdav_archive = pipeline_config[webdav_archive_key].lower()=="true"
@@ -117,8 +123,7 @@ def measure_statistics_from_args(args):
 
     # If we're archiving with webdav, determine its mount dir and the full archive directory
     if webdav_archive and archive_dir is not None:
-        mount_location = "/mnt/euclid-webdav"
-        full_archive_dir = os.path.join(mount_location, archive_dir)
+        full_archive_dir = os.path.join(webdav_dir, archive_dir)
     else:
         full_archive_dir = archive_dir
 
