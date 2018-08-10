@@ -141,7 +141,7 @@ def measure_bias_from_args(args):
 
     # If we're archiving with webdav, determine its mount dir and the full archive directory
     if webdav_archive and archive_dir is not None:
-        mount_location = "/mnt/webdav"
+        mount_location = "/mnt/euclid-webdav"
         full_archive_dir = os.path.join(mount_location, archive_dir)
     else:
         full_archive_dir = archive_dir
