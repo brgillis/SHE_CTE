@@ -64,7 +64,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--archive_dir', type=str, default="/mnt/webdav/PF-SHE/bias_measurements_archive")
 
     # Archive directory - only default value can be used in pipeline
-    parser.add_argument('--webdav_archive', type=str, action="store_true",
+    parser.add_argument('--webdav_archive', action="store_true",
                         help="If set, will mount/demount webdav for archiving, and workspace will be relative to " +
                         "the webdav mount.")
 
