@@ -5,6 +5,8 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
+__updated__ = "2018-08-10"
+
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -19,12 +21,12 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
-from os.path import join
 
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
@@ -41,9 +43,6 @@ from astropy.io import fits
 import numpy as np
 
 
-products.shear_estimates.init()
-
-
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
@@ -55,6 +54,8 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "MomentsML": None,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
+
+methods_key = "SHE_CTE_EstimateShear_methods"
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -98,9 +99,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
         logger.info("Reading " + dry_label + "calibration parameters...")
 
-        calibration_parameters_prod = read_xml_product(join(args.workdir, args.calibration_parameters_product))
+        calibration_parameters_prod = read_xml_product(os.path.join(args.workdir, args.calibration_parameters_product))
         if not isinstance(calibration_parameters_prod, products.calibration_parameters.DpdSheCalibrationParametersProduct):
-            raise ValueError("CalibrationParameters product from " + join(args.workdir, args.calibration_parameters_product)
+            raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
                              + " is invalid type.")
 
     else:
@@ -119,7 +120,7 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Generating shear estimates product...")
 
     # Determine the instance ID to use for the estimates file
-    qualified_stacked_image_data_filename = join(
+    qualified_stacked_image_data_filename = os.path.join(
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
         header = f[0].header
@@ -142,10 +143,17 @@ def estimate_shears_from_args(args, dry_run=False):
 
         method_shear_estimates = {}
 
-        if len(args.methods) == 0:
-            methods = list(estimation_methods.keys())
+        # Check for methods in the pipeline options
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+
+        if methods_key in pipeline_config:
+            methods = pipeline_config[methods_key].split()
         else:
             methods = args.methods
+
+        # If no methods are specified, use all
+        if len(methods) == 0:
+            methods = list(estimation_methods.keys())
 
         for method in methods:
 
@@ -188,7 +196,7 @@ def estimate_shears_from_args(args, dry_run=False):
                     if method_calibration_filename is not None:
 
                         # For now just leave as handle to fits file
-                        calibration_data = fits.open(join(args.workdir, method_calibration_filename))
+                        calibration_data = fits.open(os.path.join(args.workdir, method_calibration_filename))
 
                 shear_estimates_table = estimate_shear(data_stack,
                                                        training_data=training_data,
@@ -238,7 +246,7 @@ def estimate_shears_from_args(args, dry_run=False):
             method_shear_estimates[method] = shear_estimates_table
 
             # Output the shear estimates
-            hdulist.writeto(join(args.workdir, shear_estimates_filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
 
     else:  # Dry run
 
@@ -249,7 +257,7 @@ def estimate_shears_from_args(args, dry_run=False):
             shm_hdu = table_to_hdu(initialise_shear_estimates_table())
             hdulist.append(shm_hdu)
 
-            hdulist.writeto(join(args.workdir, filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, filename), clobber=True)
 
     # If we're not using all methods, don't write unused ones in the product
     for method in estimation_methods:
@@ -257,7 +265,7 @@ def estimate_shears_from_args(args, dry_run=False):
             shear_estimates_prod.set_method_filename(method, None)
 
     write_xml_product(shear_estimates_prod,
-                      join(args.workdir, args.shear_estimates_product))
+                      os.path.join(args.workdir, args.shear_estimates_product))
 
     logger.info("Finished shear estimation.")
 
