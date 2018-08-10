@@ -5,6 +5,8 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
+__updated__ = "2018-08-10"
+
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -38,9 +40,6 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, RE
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from astropy.io import fits
 import numpy as np
-
-
-products.shear_estimates.init()
 
 
 loading_methods = {"KSB": load_control_training_data,
