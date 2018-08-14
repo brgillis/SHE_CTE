@@ -214,8 +214,6 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                                                                 scale=psf_scale),
                                                          badpix=galsim.Image(badpix.transpose(), scale=psf_scale),
                                                          sky_var=float(sky_var),
-                                                         guess_sig_gal=0.5 / psf_scale,
-                                                         guess_sig_PSF=0.2 / psf_scale,
                                                          shear_est=method)
 
         if method == "KSB":
@@ -264,7 +262,7 @@ def inv_var_stack(a, a_err):
 
     inv_a_inv_var_sum = 1. / a_inv_var.sum()
 
-    a_m = (a*a_inv_var).sum() * inv_a_inv_var_sum
+    a_m = (a * a_inv_var).sum() * inv_a_inv_var_sum
 
     a_m_err = sqrt(inv_a_inv_var_sum)
 
