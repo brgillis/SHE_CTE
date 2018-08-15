@@ -50,14 +50,14 @@ ML_estimate_shear = None
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": load_control_training_data,
+                   "LensMC": None,
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
-                      "MomentsML": ML_estimate_shear,
-                      "LensMC": fit_frame_stack,
-                      "BFD": bfd_measure_moments}
+                      "MomentsML": None,
+                      "LensMC": None,
+                      "BFD": None}
 
 methods_key = "SHE_CTE_EstimateShear_methods"
 
