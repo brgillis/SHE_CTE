@@ -21,117 +21,52 @@
 """
 
 from math import sqrt
-import numpy as np
-import pdb
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_PPT.noise import get_var_ADU_per_pixel
-from SHE_PPT.shear_utility import get_g_from_e
+
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
+from SHE_PPT.noise import get_var_ADU_per_pixel
 from SHE_PPT.she_image import SHEImage
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 
-from SHE_BFD_CalculateMoments import bfd
-
-
-
-def get_bfd_moment_calculator(gal_stamp, psf_stamp, sky_var, method_data):
-
-    logger = getLogger(mv.logger_name)
-    logger.debug("Entering get_bfd_moment_calculator")
-    
-    # create wt function - eventually get from method_data
-    wt = bfd.KSigmaWeight(**method_data['WEIGHT'])
-    center = np.array(gal_stamp.data.shape)/2.
-    kdata = bfd.simpleImageTEST(gal_stamp.data,center,psf_stamp.data,\
-                                pixel_scale=gal_stamp.header[scale_label],\
-                                psf_pixel_scale=psf_stamp.header[scale_label],\
-                                convolve_psf_with_pixel=True,\
-                                pixel_noise=np.sqrt(sky_var))
-
-    mc = bfd.MomentCalculator(kdata,wt)
+from SHE_CTE_ShearEstimation import magic_values as mv
+import numpy as np
 
 
+# from SHE_BFD_CalculateMoments import bfd
+# from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
+bfd = None
+get_bfd_info = None
+load_bfd_configuration = None
 
-    logger.debug("Exiting get_bfd_moment_calculator")
-    
-    return mc
+stamp_size=128 # hardcoded for now
+x_buffer = -5
+y_buffer = -5
 
-
-
-def bfd_measure_moments( data_stack, method_data=None, debug=False, *args, **kwargs ):
+def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,debug=False):
+    # not using training data or calibration data yet
 
     logger = getLogger(mv.logger_name)
     logger.debug("Entering measuring BFD moments")
 
-    # check to see if method_data has been given, if None go get 
-    # standard file in SHE_BFD auxdir
-
-    if method_data is None:
-        method_data = bfd_load_method_data('/home/user/Work/Projects/SHE_BFD/SHE_BFD_CalculateMoments/auxdir/bfd.config')
+    # get configuration info
+    config_data = load_bfd_configuration()
     
-    # Get lists of exposures, PSF images, and detection tables
-    data_images = []
-    detection_tables = []
-    bulge_psf_images = []
-    disk_psf_images = []
-    psf_tables = []
-    
-    num_exposures = len(data_stack.exposures)
+    # initialize the table
+    if config_data['isTarget'] == True:
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns= \
+                                                         [setf.bfd_moments,
+                                                          setf.bfd_cov_even,
+                                                          setf.bfd_cov_odd,
+                                                          setf.bfd_pqr])
 
-    for i in range(num_exposures):
-        data_images.append(data_stack.exposures[i].science_image)
-        detection_tables.append(data_stack.exposures[i].detections_table)
-        bulge_psf_images.append(data_stack.exposures[i].bpsf_image)
-        disk_psf_images.append(data_stack.exposures[i].dpsf_image)
-        psf_tables.append(data_stack.exposures[i].psf_table)
- 
-    # Calculate the sky variances
-    sky_vars = []
-    for table_index in range(num_exposures):
-        detections_table = detection_tables[table_index]
-        sky_vars.append(get_var_ADU_per_pixel(pixel_value_ADU=0.,
-                                                sky_level_ADU_per_sq_arcsec=detections_table.meta[detf.m.subtracted_sky_level],
-                                                read_noise_count=detections_table.meta[detf.m.read_noise],
-                                                pixel_scale=data_images[table_index].header[scale_label],
-                                                gain=detections_table.meta[detf.m.gain]))
-
-
-    # Get all unique IDs
-    IDs = None
-    for table_index in range(num_exposures):
-
-        if IDs is None:
-            IDs = set(detection_tables[table_index][detf.ID])
-        else:
-            IDs = set.union(IDs,detection_tables[table_index][detf.ID])
-
-        # Set the ID as an index for each table
-        detection_tables[table_index].add_index(detf.ID)
-        psf_tables[table_index].add_index(pstf.ID)
-
-    if method_data['isTarget'] == True:
-        bfd_moments_table = initialise_shear_estimates_table(detection_tables[0],
-                                                              optional_columns= \
-                                                              [setf.x,
-                                                               setf.y,
-                                                               setf.bfd_moments,
-                                                               setf.bfd_cov_even,
-                                                               setf.bfd_cov_odd,
-                                                               setf.bfd_pqr])
-
-        bfd_moments_table.meta['WT_N'] = method_data['WEIGHT']['N']
-        bfd_moments_table.meta['WT_SIGMA'] = method_data['WEIGHT']['SIGMA']
+        bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
+        bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
         nlost=0
-
     else:
-        bfd_moments_table = initialise_shear_estimates_table(detection_tables[0],
-                                                         optional_columns= \
-                                                         [setf.x,
-                                                          setf.y,
-                                                          setf.bfd_moments,
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns= \
+                                                         [setf.bfd_moments,
                                                           setf.bfd_deriv_moments_dg1,
                                                           setf.bfd_deriv_moments_dg2,
                                                           setf.bfd_deriv_moments_dmu,
@@ -144,158 +79,123 @@ def bfd_measure_moments( data_stack, method_data=None, debug=False, *args, **kwa
                                                           setf.bfd_template_weight,
                                                           setf.bfd_jsuppress])
 
-        bfd_moments_table.meta['WT_N'] = method_data['WEIGHT']['N']
-        bfd_moments_table.meta['WT_SIGMA'] = method_data['WEIGHT']['SIGMA']    
-        # TO DO ADD TEMPLATE SPECIFIC STUFF
-        #bfd_moments_table.meta['TMPL_SNMIN'] = method_data['TEMPLATE']['SNMIN']
-        #bfd_moments_table.meta['TMPL_SIGMA_XY'] = method_data['TEMPLATE']['SIGMA_XY']
-        #bfd_moments_table.meta['TMPL_SIGMA_FLUX'] = method_data['TEMPLATE']['SIGMA_FLUX']
-        #bfd_moments_table.meta['TMPL_SIGMA_STEP'] = method_data['TEMPLATE']['SIGMA_STEP']
-        #bfd_moments_table.meta['TMPL_SIGMA_MAX'] = method_data['TEMPLATE']['SIGMA_MAX']
-        #bfd_moments_table.meta['TMPL_XY_MAX'] = method_data['TEMPLATE']['XY_MAX']
+
+        bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
+        bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']    
+        bfd_moments_table.meta['T_SNMIN'] = config_data['TEMPLATE']['SNMIN']
+        bfd_moments_table.meta['T_SIGXY'] = config_data['TEMPLATE']['SIGMA_XY']
+        bfd_moments_table.meta['T_SIGFLX'] = config_data['TEMPLATE']['SIGMA_FLUX']
+        bfd_moments_table.meta['T_SIGSTP'] = config_data['TEMPLATE']['SIGMA_STEP']
+        bfd_moments_table.meta['T_SIGMAX'] = config_data['TEMPLATE']['SIGMA_MAX']
+        bfd_moments_table.meta['T_XYMAX'] = config_data['TEMPLATE']['XY_MAX']
+
+    # define pixel scales
+    if scale_label in data_stack.stacked_image.header:
+        stacked_gal_scale = data_stack.stacked_image.header[scale_label]
+    else:
+        stacked_gal_scale = 0.1
         
-    row_index = 0
-
-    for ID in IDs:
+    if scale_label in data_stack.exposures[0].detectors[1,1].header:
+        gal_scale = data_stack.exposures[0].detectors[1,1].header[scale_label]
+    else:
+        gal_scale = 0.1
         
-        if debug and row_index>1000:
-            logger.debug("Debug mode enabled, so exiting BFD_measure_moments early")
-            break
-        else:
-            row_index += 1
+    if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
+    else:
+        psf_scale = 0.02
+
+    # Loop over galaxies and get an estimate for each one
+    for row in data_stack.detections_catalogue:
         
-        x = 0
-        y = 0
-        moments = 0
-
-        if method_data['isTarget'] == False:
-            dm_dg1=0
-            dm_dg2=0
-            dm_dmu=0
-            d2m_dg1dg1=0
-            d2m_dg1dg2=0
-            d2m_dg2dg2=0
-            d2m_dg1dmu=0
-            d2m_dg2dmu=0
-            d2m_dmudmu=0
-            jsuppress=0
-            weight=0
-
-        for table_index in range(num_exposures):
-            
-            gal_stamps=[]
-            bulge_psf_stamps=[]
-            disk_psf_stamps=[]
-            sky_var_list=[]
-
-            try:
-                
-                # Get the row for this ID
-                g_row = detection_tables[table_index].loc[ID]
-                p_row = psf_tables[table_index].loc[ID]
-
-                # Get galaxy and PSF stamps
-                gal_stamps.append(data_images[table_index].extract_stamp(g_row[detf.gal_x],
-                                                                         g_row[detf.gal_y],
-                                                                         data_images[table_index].header[stamp_size_label],
-                                                                         keep_header=True))
-
-                bulge_psf_stamps.append(bulge_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                                    p_row[pstf.psf_y],
-                                                                                    bulge_psf_images[table_index].header[stamp_size_label],
-                                                                                    keep_header=True))
-
-                disk_psf_stamps.append(disk_psf_images[table_index].extract_stamp(p_row[pstf.psf_x],
-                                                                                  p_row[pstf.psf_y],
-                                                                                  disk_psf_images[table_index].header[stamp_size_label],
-                                                                                  keep_header=True))
-
-
-                sky_var_list.append(sky_vars[table_index])
-
-            except KeyError as e:
-                if "No matches found for key" in e:
-                    pass # ID isn't present in this table, so just skip it
-                else:
-                    raise
+        gal_id = row[detf.ID]
+        gal_x_world = row[detf.gal_x_world]
+        gal_y_world = row[detf.gal_y_world]
         
-        # will try to stack stamps eventually ,for now use 1st
-        #stacked_stamp = make_stacked_stamp(gal_stamps,psf_stamps,sky_var_list)
+        # Get a stack of the galaxy images
+        gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
+                                                         y_world=gal_y_world,
+                                                         width=stamp_size,
+                                                         x_buffer=x_buffer,
+                                                         y_buffer=y_buffer)
+        
+        # If there's no data for this galaxy, don't add it to the catalogue at all
+        if gal_stamp_stack.is_empty():
+            continue
 
-        bfd_mc = get_bfd_moment_calculator(gal_stamps[0], bulge_psf_stamps[0], sky_var_list[0], method_data)
+        # Get stacks of the psf images
+        bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id,
+                                                                        make_stacked_psf=True,)
 
-        if method_data['isTarget'] == True:
-            xyshift,error,msg=bfd_mc.recenter()
+        # pull out images, sky variance, and wcs
+        stacked_gal_stamp = gal_stamp_stack.stacked_image
+        stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+        stacked_disk_psf_stamp = disk_psf_stack.stacked_image
 
-            if error:
+        stacked_gal_image=stacked_gal_stamp.data
+        stacked_psf_image=stacked_bulge_psf_stamp.data
+        # FIX? what are units?
+        sky_var = float(np.square(stacked_gal_stamp.noisemap.transpose()).mean())  # Galsim requires single float here
+        # setup WCS with world and pixel coord of fixed point (nominal gal center)
+        uvgal=(0.,0.) # define center as 0,0 (gal_x_world,gal_y_world) 
+        xygal = np.array(stacked_gal_stamp.world2pix(gal_x_world,gal_y_world)) 
+        transformation_matrix=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1]) 
+        duv_dxy=np.array( [ [transformation_matrix[0,0],transformation_matrix[0,1]],
+                            [transformation_matrix[1,0],transformation_matrix[1,1]] ] )
+
+        wcs=bfd.WCS(duv_dxy,xyref=xygal,uvref=uvgal)
+
+        bfd_info = get_bfd_info(stacked_gal_image,
+                                stacked_psf_image,
+                                stacked_gal_scale,
+                                psf_scale,
+                                sky_var, 
+                                gal_id,
+                                wcs,
+                                config_data)
+
+        if config_data['isTarget']==True:
+            if bfd_info.lost:
                 nlost+=1
             else:
-
-                x=xyshift[0]
-                y=xyshift[1]
-                galmoment=bfd_mc.get_moment(0,0)
-                galcov = bfd_mc.get_covariance()
-                moments=np.append(galmoment.even,galmoment.odd)
                 cov_even=[]
                 for i in range(5):
-                    cov_even=np.append(cov_even,galcov[0][i,i:5])
+                    cov_even=np.append(cov_even,bfd_info.cov_even[i,i:5])
 
-                cov_odd=np.append(galcov[1][0,0:2],galcov[1][1,1:2])
-
-
+                cov_odd=np.append(bfd_info.cov_odd[0,0:2],bfd_info.cov_odd[1,1:2])
+                bfd_info.x+=gal_x_world
+                bfd_info.y+=gal_y_world
                 # Add this row to the estimates table
-                bfd_moments_table.add_row({ setf.ID : ID,
-                                            setf.bfd_moments : moments,
-                                            setf.x : x,
-                                            setf.y : y,
+                bfd_moments_table.add_row({ setf.ID : gal_id,
+                                            setf.bfd_moments :bfd_info.m,
+                                            setf.x_world : bfd_info.x,
+                                            setf.y_world : bfd_info.y,
                                             setf.bfd_cov_even : cov_even,
-                                            setf.bfd_cov_odd : cov_odd}
-                                      )
+                                            setf.bfd_cov_odd : cov_odd})
 
         else:
-            print("TEMPLATES TO DO")
-            t=mc.make_template(**method_data['TEMPLATES'])
-            for tmpl in t:
-                moments.append(np.append(bfd_moments.even,bfd_moments.odd))
-                dm_dg1.append(np.append(bfd))
-                #etc
-                
-        if method_data['isTarget'] == True:
+            if bfd_info.template_lost==False:
+                for i, tmpl in enumerate(bfd_info.templates):
+                    bfd_info.get_template(i)
+                    bfd_moments_table.add_row({setf.ID:ID,
+                                               setf.x_world:bfd_info.x,
+                                               setf.y_world:bfd_info.y,
+                                               setf.bfd_moments:bfd_info.m,
+                                               setf.bfd_dm_dg1:bfd_info.dm_dg1,
+                                               setf.bfd_dm_dg2:bfd_info.dm_dg2,
+                                               setf.bfd_dm_dmu:bfd_info.dm_dmu,
+                                               setf.bfd_d2m_dg1_dg1:bfd_info.d2m_dg1dg1,
+                                               setf.bfd_d2m_dg1_dg2:bfd_info.d2m_dg1dg2,
+                                               setf.bfd_d2m_dg2_dg2:bfd_info.d2m_dg2dg2,
+                                               setf.bfd_d2m_dg1_dmu:bfd_info.d2m_dg1dmu,
+                                               setf.bfd_d2m_dg2_dmu:bfd_info.d2m_dg2dmu,
+                                               setf.bfd_d2m_dmu_dmu:bfd_info.d2m_dmudmu,
+                                               setf.bfd_jsuppression:bfd_info.jsuppression,
+                                               setf.bfd_weight:bfd_info.weight})
+        if config_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
 
     logger.debug("Exiting BFD_measure_moments")
 
     return bfd_moments_table # No MCMC chains for this method
 
-def bfd_load_method_data(method_data_filename):
-    
-    # set up dictionary structure with defaults
-    method_data={'isTarget': True,
-                 'WEIGHT':{'N':4,
-                           'SIGMA':3.5},
-                 'TEMPLATE':{}
-             }
-
-    # read in configuration file
-    lines = [line.rstrip('\n') for line in open(method_data_filename)]
-
-    # loop through configuration file to add parameters
-    for l in lines:
-        param, val = l.split(" ")
-
-        if param.find('isTarget') != -1:
-            if val=='True':
-                method_data['isTarget']==True
-            elif val=='False':
-                method_data['isTarget']==False
-            else:
-                raise Exception("isTarget must be True or False")
-
-        if param.find('WT') != -1:
-            method_data['WEIGHT'][param.split("_")[1]]=np.float(val)
-        
-        if param.find('TMPL') != -1:
-            raise Exception("Need to setup template info")
-
-
-    return method_data

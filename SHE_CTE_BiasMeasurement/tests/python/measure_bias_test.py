@@ -4,20 +4,8 @@
 
     Unit tests for measuring shear bias statistics.
 """
-from numpy.testing import assert_almost_equal
-from os.path import join
 
-import pytest
-
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-from SHE_PPT import products
-from SHE_PPT.file_io import write_xml_product, read_xml_product,\
-    get_allowed_filename, write_listfile
-from SHE_PPT.math import LinregressStatistics
-import numpy as np
-
-
-__updated__ = "2018-06-25"
+__updated__ = "2018-08-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -32,9 +20,17 @@ __updated__ = "2018-06-25"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from numpy.testing import assert_almost_equal
+from os.path import join
+import pytest
 
-products.shear_bias_stats.init()
-products.shear_bias_measurements.init()
+from SHE_PPT import products
+from SHE_PPT.file_io import write_xml_product, read_xml_product,\
+    get_allowed_filename, write_listfile
+from SHE_PPT.math import LinregressStatistics
+
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+import numpy as np
 
 
 class Args(object):
@@ -45,6 +41,9 @@ class Args(object):
         self.profile = False
         self.shear_bias_statistics = None
         self.shear_bias_measurement = None
+        self.archive_dir = None
+        self.webdav_dir = None
+        self.webdav_archive = False
 
 
 class TestMeasureStatistics:
@@ -134,14 +133,14 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("test_shear_bias_stats_0", str(i), extension=".xml")
-            filename_1 = get_allowed_filename("test_shear_bias_stats_1", str(i), extension=".xml")
+            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension=".xml", subdir=None)
+            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None)
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
 
             shear_bias_statistics_filenames_0.append(filename_0)
-            shear_bias_statistics_filenames_1.append(filename_1)
+            shear_bias_statistics_filenames_1.append([filename_1, ])  # We should also be able to read a length-1 tuple
             if i % 2 == 0:
                 shear_bias_statistics_filenames_01.append(filename_0)
             else:

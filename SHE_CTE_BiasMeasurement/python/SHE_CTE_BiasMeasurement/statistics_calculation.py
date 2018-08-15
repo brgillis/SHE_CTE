@@ -6,7 +6,7 @@
 """
 from numpy.testing.utils import assert_allclose
 
-__updated__ = "2018-06-25"
+__updated__ = "2018-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,7 +25,7 @@ from astropy import table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT.logging import getLogger
-from SHE_PPT.math import get_linregress_statistics
+from SHE_PPT.math import get_linregress_statistics, LinregressStatistics
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
@@ -84,11 +84,16 @@ def compress_details_and_measurements(combined_table):
             for i in range(num_good_rows):
                 data[name][i] = good_rows[i][name]
 
+        # Check we have a non-zero number of good values
+        if num_good_rows == 0:
+            continue
+
         # Check all real values are close. If not, we shouldn't be grouping
         assert_allclose(data[datf.g1], data[datf.g1][0])
         assert_allclose(data[datf.g2], data[datf.g2][0])
 
-        # Calculate weighted means of the measurements
+        # Calculate unweighted means of the measurements but retain full weight
+        # Must be unweighted to retain benefits of shape noise cancellation
         g1_weight = data[setf.g1_err]**-2
         g2_weight = data[setf.g2_err]**-2
 
@@ -98,11 +103,11 @@ def compress_details_and_measurements(combined_table):
         if total_g1_weight <= 0 or total_g2_weight <= 0:
             raise ValueError("Bad weights in combining shear measurements.")
 
-        mean_g1 = np.sum(data[setf.g1] * g1_weight) / total_g1_weight
-        mean_g2 = np.sum(data[setf.g2] * g2_weight) / total_g2_weight
+        combined_g1_err = total_g1_weight**-0.5
+        combined_g2_err = total_g2_weight**-0.5
 
-        mean_g1_err = np.sqrt(1 / np.sum(g1_weight))
-        mean_g2_err = np.sqrt(1 / np.sum(g2_weight))
+        mean_g1 = np.mean(data[setf.g1])
+        mean_g2 = np.mean(data[setf.g2])
 
         # Add these to the compressed table
         compressed_table.add_row(vals={datf.group_ID: group_id,
@@ -110,8 +115,8 @@ def compress_details_and_measurements(combined_table):
                                        datf.g2: data[datf.g2][0],
                                        setf.g1: mean_g1,
                                        setf.g2: mean_g2,
-                                       setf.g1_err: mean_g1_err,
-                                       setf.g2_err: mean_g2_err})
+                                       setf.g1_err: combined_g1_err,
+                                       setf.g2_err: combined_g2_err})
 
     return compressed_table
 
@@ -133,6 +138,18 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
     logger.debug('# Entering SHE_CTE_MeasureStatistics calculate_shear_bias_statistics()')
     logger.debug('#')
 
+    # If there are no rows in the estimates table, exit early will an empty statistics object
+    if len(estimates_table) == 0:
+        g1_stats = LinregressStatistics()
+        g2_stats = LinregressStatistics()
+        for stats in g1_stats, g2_stats:
+            stats.w = 0
+            stats.xm = 0
+            stats.x2m = 0
+            stats.ym = 0
+            stats.xym = 0
+        return g1_stats, g2_stats
+
     # Create a combined table, joined on galaxy ID
     if setf.ID != datf.ID:
         details_table.rename_column(datf.ID, setf.ID)
@@ -147,9 +164,9 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
     bias_stats = []
     for g_est_colname, g_err_colname, g_true_colname in ((setf.g1, setf.g1_err, datf.g1,),
                                                          (setf.g2, setf.g2_err, datf.g2,),):
-        lx = combined_table[g_true_colname].data
-        ly = combined_table[g_est_colname].data
-        ly_err = combined_table[g_err_colname].data
+        lx = compressed_table[g_true_colname].data
+        ly = compressed_table[g_est_colname].data
+        ly_err = compressed_table[g_err_colname].data
 
         bias_stats.append(get_linregress_statistics(lx, ly, ly_err))
 
