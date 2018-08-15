@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2018-08-10"
+__updated__ = "2018-08-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -39,6 +39,7 @@ from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from astropy.io import fits
 import numpy as np
 
@@ -51,7 +52,7 @@ loading_methods = {"KSB": load_control_training_data,
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
-                      "MomentsML": None,
+                      "MomentsML": ML_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
 
