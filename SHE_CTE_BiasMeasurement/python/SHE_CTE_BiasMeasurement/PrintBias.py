@@ -90,7 +90,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_PrintBias mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_PrintBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6 SHE_CTE_PrintBias",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
