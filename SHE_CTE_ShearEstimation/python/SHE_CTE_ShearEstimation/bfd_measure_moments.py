@@ -47,7 +47,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
 
     # get configuration info
     config_data = load_bfd_configuration()
-    
+#    config_data = load_bfd_configuration(mode='training')
     # initialize the table
     if config_data['isTarget'] == True:
         bfd_moments_table = initialise_bfd_moments_table(optional_columns= \
@@ -77,12 +77,12 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']    
-        bfd_moments_table.meta['T_SNMIN'] = config_data['TEMPLATE']['SNMIN']
-        bfd_moments_table.meta['T_SIGXY'] = config_data['TEMPLATE']['SIGMA_XY']
-        bfd_moments_table.meta['T_SIGFLX'] = config_data['TEMPLATE']['SIGMA_FLUX']
-        bfd_moments_table.meta['T_SIGSTP'] = config_data['TEMPLATE']['SIGMA_STEP']
-        bfd_moments_table.meta['T_SIGMAX'] = config_data['TEMPLATE']['SIGMA_MAX']
-        bfd_moments_table.meta['T_XYMAX'] = config_data['TEMPLATE']['XY_MAX']
+        bfd_moments_table.meta['T_SNMIN'] = config_data['TEMPLATE']['TMPL_SN_MIN']
+        bfd_moments_table.meta['T_SIGXY'] = config_data['TEMPLATE']['TMPL_SIGMA_XY']
+        bfd_moments_table.meta['T_SIGFLX'] = config_data['TEMPLATE']['TMPL_SIGMA_FLUX']
+        bfd_moments_table.meta['T_SIGSTP'] = config_data['TEMPLATE']['TMPL_SIGMA_STEP']
+        bfd_moments_table.meta['T_SIGMAX'] = config_data['TEMPLATE']['TMPL_SIGMA_MAX']
+        bfd_moments_table.meta['T_XYMAX'] = config_data['TEMPLATE']['TMPL_XY_MAX']
 
     # define pixel scales
     if scale_label in data_stack.stacked_image.header:
@@ -99,7 +99,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
         psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
         psf_scale = 0.02
-
+    cnt=0
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
         
@@ -134,7 +134,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
         # setup WCS with world and pixel coord of fixed point (nominal gal center)
         uvgal=(0.,0.) # define center as 0,0 (gal_x_world,gal_y_world) 
         xygal = np.array(stacked_gal_stamp.world2pix(gal_x_world,gal_y_world)) 
-        transformation_matrix=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1]) 
+        transformation_matrix=stacked_gal_stamp.get_pix2world_transformation(xygal[0],xygal[1])*3600. 
         duv_dxy=np.array( [ [transformation_matrix[0,0],transformation_matrix[0,1]],
                             [transformation_matrix[1,0],transformation_matrix[1,1]] ] )
 
@@ -169,24 +169,26 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
                                             setf.bfd_cov_odd : cov_odd})
 
         else:
-            if bfd_info.template_lost==False:
+
+            if (bfd_info.template_lost==False) & (cnt < 220):
                 for i, tmpl in enumerate(bfd_info.templates):
                     bfd_info.get_template(i)
-                    bfd_moments_table.add_row({setf.ID:ID,
-                                               setf.x_world:bfd_info.x,
-                                               setf.y_world:bfd_info.y,
+                    bfd_moments_table.add_row({setf.ID:gal_id,
+                                               setf.x_world:0.0,
+                                               setf.y_world:0.0,
                                                setf.bfd_moments:bfd_info.m,
-                                               setf.bfd_dm_dg1:bfd_info.dm_dg1,
-                                               setf.bfd_dm_dg2:bfd_info.dm_dg2,
-                                               setf.bfd_dm_dmu:bfd_info.dm_dmu,
-                                               setf.bfd_d2m_dg1_dg1:bfd_info.d2m_dg1dg1,
-                                               setf.bfd_d2m_dg1_dg2:bfd_info.d2m_dg1dg2,
-                                               setf.bfd_d2m_dg2_dg2:bfd_info.d2m_dg2dg2,
-                                               setf.bfd_d2m_dg1_dmu:bfd_info.d2m_dg1dmu,
-                                               setf.bfd_d2m_dg2_dmu:bfd_info.d2m_dg2dmu,
-                                               setf.bfd_d2m_dmu_dmu:bfd_info.d2m_dmudmu,
-                                               setf.bfd_jsuppression:bfd_info.jsuppression,
-                                               setf.bfd_weight:bfd_info.weight})
+                                               setf.bfd_deriv_moments_dg1:bfd_info.dm_dg1,
+                                               setf.bfd_deriv_moments_dg2:bfd_info.dm_dg2,
+                                               setf.bfd_deriv_moments_dmu:bfd_info.dm_dmu,
+                                               setf.bfd_2ndderiv_moments_dg1dg1:bfd_info.d2m_dg1dg1,
+                                               setf.bfd_2ndderiv_moments_dg1dg2:bfd_info.d2m_dg1dg2,
+                                               setf.bfd_2ndderiv_moments_dg2dg2:bfd_info.d2m_dg2dg2,
+                                               setf.bfd_2ndderiv_moments_dg1dmu:bfd_info.d2m_dg1dmu,
+                                               setf.bfd_2ndderiv_moments_dg2dmu:bfd_info.d2m_dg2dmu,
+                                               setf.bfd_2ndderiv_moments_dmudmu:bfd_info.d2m_dmudmu,
+                                               setf.bfd_jsuppress:bfd_info.jsuppression,
+                                               setf.bfd_template_weight:bfd_info.weight})
+        cnt+=1
         if config_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
 
