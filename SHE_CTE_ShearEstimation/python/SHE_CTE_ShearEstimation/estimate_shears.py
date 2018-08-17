@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2018-08-15"
+__updated__ = "2018-08-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,25 +26,22 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
-from astropy.io import fits
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_PPT.pipeline_utility import read_config
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+from astropy.io import fits
 import numpy as np
-
-
-# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-ML_estimate_shear = None
 
 
 loading_methods = {"KSB": load_control_training_data,
