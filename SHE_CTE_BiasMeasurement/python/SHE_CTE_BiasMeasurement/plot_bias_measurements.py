@@ -23,9 +23,9 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
+import matplotlib
 
 from astropy.table import Table
-import matplotlib
 import matplotlib.pyplot as pyplot
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as Spline
@@ -49,7 +49,7 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
-x_values = {"P": [0.8, 0.9, 1.0, 1.1, 1.2],
+x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
             "S": [8.0608794667689825, 9.0670343062718768, 10.073467500059127,
                   11.07982970368346,  12.086264012414167],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
