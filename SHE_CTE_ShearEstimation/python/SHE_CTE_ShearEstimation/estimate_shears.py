@@ -147,6 +147,9 @@ def estimate_shears_from_args(args, dry_run=False):
         # Check for methods in the pipeline options
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
+        if pipeline_config is None:
+            pipeline_config = {}
+
         if methods_key in pipeline_config:
             methods = pipeline_config[methods_key].split()
         else:
