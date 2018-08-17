@@ -100,7 +100,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6 SHE_CTE_MeasureStatistics",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.2 SHE_CTE_MeasureStatistics",
                                     store_true=["profile", "debug", "webdav_archive"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
