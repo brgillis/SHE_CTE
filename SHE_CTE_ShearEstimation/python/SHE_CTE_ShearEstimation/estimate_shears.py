@@ -38,7 +38,7 @@ from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+# from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from astropy.io import fits
 import numpy as np
@@ -47,13 +47,13 @@ import numpy as np
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": load_control_training_data,
+                   "LensMC": None,
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       "MomentsML": ML_estimate_shear,
-                      "LensMC": fit_frame_stack,
+                      "LensMC": None,
                       "BFD": None}
 
 methods_key = "SHE_CTE_EstimateShear_methods"
