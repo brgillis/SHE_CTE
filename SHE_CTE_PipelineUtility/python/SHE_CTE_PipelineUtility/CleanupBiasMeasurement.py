@@ -142,7 +142,7 @@ def cleanup_bias_measurement_from_args(args):
         if hasattr(p, "get_all_filenames"):
             data_filenames = p.get_all_filenames()
             for data_filename in data_filenames:
-                if data_filename is not None and data_filename != "default_filename.fits":
+                if data_filename is not None and data_filename != "default_filename.fits" and data_filename != "":
                     remove_file(os.path.join(args.workdir, data_filename))
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
