@@ -1,8 +1,60 @@
 Changelog for SHE_CTE Common Testing Environment
 
-Changes from v0.2 to v0.6
+Changes from v0.4 to v0.6.3
 =========================
-TODO: Fill in changelog
+
+API Changes
+-----------
+
+- Executables now allow input for a "pipeline_config" file
+- MeasureStatistics and MeasureBias now allow input to specify archiving location
+- New SHE_CTE_PrintBias executable to print bias measurements
+- New SHE_CTE_PlotBias executable to plot bias measurements for sensitivity testing
+
+Dependency Changes
+------------------
+
+- Now depends on SHE_PPT version 0.8
+- No longer depends on SHE_MomentsML (included in this repo temporarily)
+- TODO: Resolve BFD dependency
+- Now depends on SHE_LensMC version 2.4
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+- Fixed high failure rate for control methods
+- Miscellaneous untracked bugs
+
+New Features
+------------
+
+- Added interfaces for training data for control methods and LensMC
+- SHE_CTE_MeasureBias now uses bootstrapping to estimate errors
+- SHE_CTE_MeasureBias can now search for statistics files on its own
+
+New Config Features
+-------------------
+
+- Configuration can now be passed to all executables via a "pipeline_config" file. Allowed arguments to it are:
+
+  - SHE_CTE_CleanupBiasMeasurement_cleanup
+
+  - SHE_CTE_EstimateShear_methods
+
+  - SHE_CTE_MeasureBias_archive_dir
+  - SHE_CTE_MeasureBias_webdav_archive
+  - SHE_CTE_MeasureBias_webdav_dir
+
+  - SHE_CTE_MeasureStatistics_archive_dir
+  - SHE_CTE_MeasureStatistics_webdav_archive
+  - SHE_CTE_MeasureStatistics_webdav_dir
+
+
+Miscellaneous
+-------------
 
 Changes from v0.2 to v0.4
 =========================
@@ -31,7 +83,7 @@ Bug Fixes
 New Features
 ------------
 
-New config features
+New Config Features
 -------------------
 
 
@@ -71,7 +123,7 @@ New Features
 - Control methods now interface properly with expected format for estimate_shear
 - Control methods now use mask and segmentation map information as well
 
-New config features
+New Config Features
 -------------------
 
 
