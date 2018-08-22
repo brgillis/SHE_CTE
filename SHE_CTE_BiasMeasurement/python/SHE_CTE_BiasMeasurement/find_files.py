@@ -21,6 +21,7 @@ __updated__ = "2018-08-22"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
+from SHE_PPT.logging import getLogger
 
 shear_statistics_filename = "shear_bias_statistics.xml"
 
@@ -28,6 +29,10 @@ shear_statistics_filename = "shear_bias_statistics.xml"
 def recursive_find_files(base_dir=".", required_filename=shear_statistics_filename, endpoint=True):
     """Search recursively through the provided directory to find any files matching the desired filename.
     """
+    
+    logger = getLogger(__name__)
+    
+    logger.debug("Entering recursive_find_files with base_dir = "+base_dir)
 
     # Silently remove trailing slash from base_dir if present
     if base_dir[-1] == "/":
@@ -56,8 +61,12 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
 
     # If we're at the endpoint, remove the base dir from all files in the list
     if endpoint:
+        logger.debug("At endpoint of recursive_find_files, so cleaning up base_dir from filenames ("+
+                     str(files_found)+")")
         for i in range(len(files_found)):
             files_found[i] = files_found[i].replace(base_dir + "/", "")
+    
+    logger.debug("Entering recursive_find_files with files found: " + str(files_found))
 
     # Return the list of files found
     return files_found
