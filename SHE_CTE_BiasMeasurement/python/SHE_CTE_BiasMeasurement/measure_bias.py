@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-08-20"
+__updated__ = "2018-08-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,14 +22,13 @@ __updated__ = "2018-08-20"
 
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
 from SHE_PPT.pipeline_utility import archive_product, read_config
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 import numpy as np
 
 
@@ -131,6 +130,8 @@ def measure_bias_from_args(args):
     # First get the pipeline config so we can figure out where to archive it
     try:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        if pipeline_config is None:
+            pipeline_config = {}
     except Exception as e:
         logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
