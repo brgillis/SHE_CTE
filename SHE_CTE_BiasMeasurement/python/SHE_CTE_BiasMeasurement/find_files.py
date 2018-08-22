@@ -5,7 +5,7 @@
     Functions to help find archived shear statistics files
 """
 
-__updated__ = "2018-08-20"
+__updated__ = "2018-08-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -46,7 +46,7 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
         if os.path.isfile(qualified_name):
             if file_or_dir == required_filename:
                 # It does, so add it to the list
-                files_found.append(file_or_dir)
+                files_found.append(qualified_name)
         # If it's a directory, search through it for files
         if os.path.isdir(qualified_name):
             more_files_found = recursive_find_files(qualified_name, required_filename, endpoint=False)
