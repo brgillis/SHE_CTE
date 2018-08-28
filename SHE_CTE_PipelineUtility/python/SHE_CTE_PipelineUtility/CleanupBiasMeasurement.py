@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-08-10"
+__updated__ = "2018-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -27,9 +27,8 @@ import shutil
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 from SHE_PPT.pipeline_utility import read_config
+from SHE_PPT.utility import get_arguments_string
 
 
 config_cleanup_key = "SHE_CTE_CleanupBiasMeasurement_cleanup"
@@ -107,17 +106,20 @@ def cleanup_bias_measurement_from_args(args):
     clean_up = pipeline_config[config_cleanup_key]
     if not clean_up.lower() == "true":
         logger.info("Config is set to " + config_cleanup_key + "=" + clean_up + ", so not cleaning up.")
-        
+
         # Copy the statistics product to the new name
         shutil.copy(qualified_stats_in_filename, qualified_stats_out_filename)
         return
-    
+
     # Move the statistics product to the new name
     os.rename(qualified_stats_in_filename, qualified_stats_out_filename)
 
     # If we get here, we are cleaning up
 
     def remove_file(qualified_filename):
+        if qualified_filename[-1] == "/":
+            logger.warn("Attempted to remove directory " + qualified_filename)
+            return
         if not os.path.exists(qualified_filename):
             logger.warn("Expected file '" + qualified_filename + "' does not exist.")
             return
@@ -125,6 +127,10 @@ def cleanup_bias_measurement_from_args(args):
         return
 
     def remove_product(qualified_filename):
+
+        if qualified_filename[-1] == "/":
+            logger.warn("Attempted to remove directory " + qualified_filename)
+            return
 
         # Load the product
         if not os.path.exists(qualified_filename):
@@ -136,7 +142,7 @@ def cleanup_bias_measurement_from_args(args):
         if hasattr(p, "get_all_filenames"):
             data_filenames = p.get_all_filenames()
             for data_filename in data_filenames:
-                if data_filename is not None and data_filename != "default_filename.fits":
+                if data_filename is not None and data_filename != "default_filename.fits" and data_filename != "":
                     remove_file(os.path.join(args.workdir, data_filename))
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")

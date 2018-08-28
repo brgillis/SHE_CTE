@@ -21,15 +21,15 @@
 import argparse
 from os.path import join
 
-from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product
-
 from astropy.table import Table
 import matplotlib
-import matplotlib.pyplot as pyplot
-import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as Spline
 from scipy.optimize import fsolve
+
+from SHE_PPT import products
+from SHE_PPT.file_io import read_xml_product
+import matplotlib.pyplot as pyplot
+import numpy as np
 
 
 products.shear_bias_measurements.init()
@@ -49,9 +49,8 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
-x_values = {"P": [0.8, 0.9, 1.0, 1.1, 1.2],
-            "S": [8.0608794667689825, 9.0670343062718768, 10.073467500059127,
-                  11.07982970368346,  12.086264012414167],
+x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "S": [324.4, 325.05, 325.7, 326.52,  327.],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
             }
@@ -112,7 +111,7 @@ def plot_bias_measurements_from_args(args):
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
             all_bias_measurements[tag] = read_xml_product(join(root_data_folder, args.data_folder_head + tag +
-                                                               "/she_measure_bias/shear_bias_measurements.xml"))
+                                                               "/shear_bias_measurements.xml"))
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -295,18 +294,18 @@ def plot_bias_measurements_from_args(args):
                 # Get the data we saved before
                 method_data = all_methods_data[method]
 
-                ax.plot(method_data["y1"], method_data["y2"],
+                ax.plot(method_data["y1"]-method_data["y1"][2], method_data["y2"]-method_data["y2"][2],
                         color=method_colors[method], marker='o', linestyle='None')
 
                 # Calculate and plot an interpolating spline
-                y1_spline = Spline(method_data["x"], method_data["y1"])
-                y2_spline = Spline(method_data["x"], method_data["y2"])
+                y1_spline = Spline(method_data["x"], method_data["y1"]-method_data["y1"][2])
+                y2_spline = Spline(method_data["x"], method_data["y2"]-method_data["y2"][2])
 
                 if "_err" not in measurement_key:
                     def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
                 else:
-                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"])
-                    y2_o_spline = Spline(method_data["x"], method_data["y1_o"])
+                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"]-method_data["y1_o"][2])
+                    y2_o_spline = Spline(method_data["x"], method_data["y2_o"]-method_data["y2_o"][2])
 
                     def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
                                              * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)

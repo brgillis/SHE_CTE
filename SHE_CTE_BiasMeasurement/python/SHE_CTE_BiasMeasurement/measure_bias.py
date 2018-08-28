@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-08-10"
+__updated__ = "2018-08-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,12 +22,12 @@ __updated__ = "2018-08-10"
 
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
 
@@ -62,7 +62,12 @@ def measure_bias_from_args(args):
     logger.debug("Entering measure_bias_from_args.")
 
     # Get a list of input files
-    shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
+
+    if args.shear_bias_statistics is None or args.shear_bias_statistics == "None":
+        # Working in recovery mode, so search within the workdir to find the files
+        shear_statistics_files = recursive_find_files(args.workdir)
+    else:
+        shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
 
     # Load in statistics from each file
     method_shear_statistics_lists = {}
@@ -125,6 +130,8 @@ def measure_bias_from_args(args):
     # First get the pipeline config so we can figure out where to archive it
     try:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        if pipeline_config is None:
+            pipeline_config = {}
     except Exception as e:
         logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
@@ -132,18 +139,18 @@ def measure_bias_from_args(args):
 
     if archive_dir_key in pipeline_config:
         archive_dir = pipeline_config[archive_dir_key]
-        if archive_dir=="None":
+        if archive_dir == "None":
             archive_dir = None
     else:
         archive_dir = args.archive_dir
-        
+
     if webdav_dir_key in pipeline_config:
         webdav_dir = pipeline_config[webdav_dir_key]
     else:
         webdav_dir = args.webdav_dir
 
     if webdav_archive_key in pipeline_config:
-        webdav_archive = pipeline_config[webdav_archive_key].lower()=="true"
+        webdav_archive = pipeline_config[webdav_archive_key].lower() == "true"
     else:
         webdav_archive = args.webdav_archive
 
