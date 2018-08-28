@@ -22,6 +22,10 @@
 
 from math import sqrt
 import numpy as np
+import subprocess
+import pdb
+
+from ElementsKernel.Auxiliary import getAuxiliaryPath
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.noise import get_var_ADU_per_pixel
@@ -194,5 +198,25 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
 
     logger.debug("Exiting BFD_measure_moments")
 
+
     return bfd_moments_table # No MCMC chains for this method
 
+def bfd_perform_integration(targetfile, templatefile=None):
+
+    logger = getLogger(mv.logger_name)
+    logger.debug("Entering BFD integration")
+
+    if templatefile is None:
+        templatefile=getAuxiliaryPath("templates_placeholder.fits")
+
+    sn1=5
+    sn2=100
+
+    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)]
+    returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    logger.debug(returncode.stdout)
+    logger.debug(returncode.stderr)
+
+    logger.debug("Exiting BFD integration")
+    
+    return

@@ -35,7 +35,7 @@ from SHE_PPT.utility import hash_any
 from astropy.io import fits
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
@@ -251,6 +251,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
             # Output the shear estimates
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
+
+            if method == 'BFD':
+                bfd_perform_integration(shear_estimates_filename)
 
     else:  # Dry run
 
