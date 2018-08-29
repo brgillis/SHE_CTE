@@ -23,7 +23,7 @@ from os.path import join
 
 from astropy.table import Table
 import matplotlib
-from scipy.interpolate import InterpolatedUnivariateSpline as Spline
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
 
 from SHE_PPT import products
@@ -31,6 +31,8 @@ from SHE_PPT.file_io import read_xml_product
 import matplotlib.pyplot as pyplot
 import numpy as np
 
+def Spline(*args,**kwargs):
+    return InterpolatedUnivariateSpline(*args,k=1,**kwargs)
 
 products.shear_bias_measurements.init()
 
@@ -55,8 +57,8 @@ x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
                   0.27099491059570091, 0.30241731263684996],
             }
 
-x_ranges = {"P": (0.75, 1.25),
-            "S": (7.5, 12.5),
+x_ranges = {"P": (0.975, 1.025),
+            "S": (324,327.4),
             "E": (0.170, 0.315)}
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
@@ -323,7 +325,7 @@ def plot_bias_measurements_from_args(args):
                 ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
                         label=label)
 
-                if "_err" not in measurement_key:
+                if False and "_err" not in measurement_key:
 
                     # Now try to solve for where it intersects the target lines
                     limit_label_base = method + "_" + measurement_key
@@ -352,18 +354,18 @@ def plot_bias_measurements_from_args(args):
             target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
 
             xlim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
-            ax.set_xlim(xlim)
+            # ax.set_xlim(xlim)
             # ax.set_xscale('symlog',linthreshx=target_factor*base_target)
             ylim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
-            ax.set_ylim(ylim)
+            # ax.set_ylim(ylim)
             # ax.set_yscale('symlog',linthreshy=target_factor*base_target)
 
             ax.plot(base_target * np.cos(theta_vals), base_target *
                     np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
             ax.plot(20 * base_target * np.cos(theta_vals), 20 * base_target *
                     np.sin(theta_vals), label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
-            ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
+            # ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+            # ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
 
             # Show the legend
             ax.legend(loc="lower right", numpoints=1)
@@ -381,49 +383,51 @@ def plot_bias_measurements_from_args(args):
                 fig.show()
             else:
                 pyplot.close()
+                
+        if False:
 
-        # Make plots of the fractional limits for each method
-
-        # Set up the figure
-        fig = pyplot.figure()
-        fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
-
-        ax = fig.add_subplot(1, 1, 1)
-        ax.set_xlabel("Method", fontsize=fontsize)
-        ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels[testing_data_key], fontsize=fontsize)
-        ax.set_yscale("log", nonposy="clip")
-        ax.set_ylim(1e-4, 1e0)
-
-        xticks = list(range(len(args.methods)))
-        ax.set_xticks(xticks)
-        xticklabels = []
-        for method in args.methods:
-            if "_big" not in method:
-                xticklabels.append(method)
-            else:
-                xticklabels.append("Big " + method.replace("_big", ""))
-        ax.set_xticklabels(xticklabels)
-
-        for measurement_key in ("m", "c"):
-            for target_key in ("high", "base"):
-
-                limits = []
-                for method in args.methods:
-                    limits.append(fractional_limits[method + "_" + measurement_key + "_" + target_key])
-
-                ax.scatter(xticks, limits, label=measurement_key + " " + target_labels[target_key],
-                           marker=target_shapes[target_key], color=measurement_colors[measurement_key],
-                           s=256)
-
-        ax.legend(loc="upper right", scatterpoints=1)
-
-        # Save and show it
-        output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                               testing_data_key + "_fractional_limits." + args.output_format)
-        pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-        if not args.hide:
-            fig.show()
-        else:
-            pyplot.close()
+            # Make plots of the fractional limits for each method
+    
+            # Set up the figure
+            fig = pyplot.figure()
+            fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+    
+            ax = fig.add_subplot(1, 1, 1)
+            ax.set_xlabel("Method", fontsize=fontsize)
+            ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels[testing_data_key], fontsize=fontsize)
+            ax.set_yscale("log", nonposy="clip")
+            ax.set_ylim(1e-4, 1e0)
+    
+            xticks = list(range(len(args.methods)))
+            ax.set_xticks(xticks)
+            xticklabels = []
+            for method in args.methods:
+                if "_big" not in method:
+                    xticklabels.append(method)
+                else:
+                    xticklabels.append("Big " + method.replace("_big", ""))
+            ax.set_xticklabels(xticklabels)
+    
+            for measurement_key in ("m", "c"):
+                for target_key in ("high", "base"):
+    
+                    limits = []
+                    for method in args.methods:
+                        limits.append(fractional_limits[method + "_" + measurement_key + "_" + target_key])
+    
+                    ax.scatter(xticks, limits, label=measurement_key + " " + target_labels[target_key],
+                               marker=target_shapes[target_key], color=measurement_colors[measurement_key],
+                               s=256)
+    
+            ax.legend(loc="upper right", scatterpoints=1)
+    
+            # Save and show it
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                   testing_data_key + "_fractional_limits." + args.output_format)
+            pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+#         if not args.hide:
+#             fig.show()
+#         else:
+#             pyplot.close()
 
     return
