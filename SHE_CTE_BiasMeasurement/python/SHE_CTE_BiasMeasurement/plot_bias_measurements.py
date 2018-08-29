@@ -19,6 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+from copy import deepcopy
 from os.path import join
 
 from astropy.table import Table
@@ -30,6 +31,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 import matplotlib.pyplot as pyplot
 import numpy as np
+
 
 def Spline(*args,**kwargs):
     return InterpolatedUnivariateSpline(*args,k=1,**kwargs)
@@ -57,9 +59,9 @@ x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
                   0.27099491059570091, 0.30241731263684996],
             }
 
-x_ranges = {"P": (0.975, 1.025),
-            "S": (324,327.4),
-            "E": (0.170, 0.315)}
+x_ranges = {"P": [0.975, 1.025],
+            "S": [324,327.4],
+            "E": [0.170, 0.315]}
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
                         "S": {"m": 32, "c": 20},
@@ -146,6 +148,8 @@ def plot_bias_measurements_from_args(args):
             ax = fig.add_subplot(1, 1, 1)
             ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
             ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
+
+            xlim = deepcopy(x_ranges[testing_data_key])
 
             all_methods_data = {}
 
@@ -249,8 +253,6 @@ def plot_bias_measurements_from_args(args):
             else:
                 target = c_target
 
-            xlim = x_ranges[testing_data_key]
-
             ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
             ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
             ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
@@ -284,11 +286,14 @@ def plot_bias_measurements_from_args(args):
             ax.set_xlabel(r"$\Delta " + measurement_key_1.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
             ax.set_ylabel(r"$\Delta " + measurement_key_2.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
-            # Plot the target line
             if("m" in measurement_key):
                 base_target = m_target
             else:
                 base_target = c_target
+                
+            target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
+            xlim = [-1.1* base_target, 1.1 * base_target]
+            ylim = [-1.1 * base_target, 1.1 * base_target]
 
             # Plot points for each method
             for method in args.methods:
@@ -298,10 +303,20 @@ def plot_bias_measurements_from_args(args):
 
                 ax.plot(method_data["y1"]-method_data["y1"][2], method_data["y2"]-method_data["y2"][2],
                         color=method_colors[method], marker='o', linestyle='None')
+                
+                xvals = method_data["y1"]-method_data["y1"][2]
+                yvals = method_data["y2"]-method_data["y2"][2]
+                
+                if 1.1*np.abs(xvals).max()>xlim[1]:
+                    xlim[0] = -1.1*np.abs(xvals).max()
+                    xlim[1] = 1.1*np.abs(xvals).max()
+                if 1.1*np.abs(yvals).max()>ylim[1]:
+                    ylim[0] = -1.1*np.abs(yvals).max()
+                    ylim[1] = 1.1*np.abs(yvals).max()
 
                 # Calculate and plot an interpolating spline
-                y1_spline = Spline(method_data["x"], method_data["y1"]-method_data["y1"][2])
-                y2_spline = Spline(method_data["x"], method_data["y2"]-method_data["y2"][2])
+                y1_spline = Spline(method_data["x"], xvals)
+                y2_spline = Spline(method_data["x"], yvals)
 
                 if "_err" not in measurement_key:
                     def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
@@ -351,14 +366,8 @@ def plot_bias_measurements_from_args(args):
 
             theta_vals = np.linspace(0, 2 * np.pi, 360)
 
-            target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
-
-            xlim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
-            # ax.set_xlim(xlim)
-            # ax.set_xscale('symlog',linthreshx=target_factor*base_target)
-            ylim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
-            # ax.set_ylim(ylim)
-            # ax.set_yscale('symlog',linthreshy=target_factor*base_target)
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
 
             ax.plot(base_target * np.cos(theta_vals), base_target *
                     np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
