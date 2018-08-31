@@ -42,7 +42,7 @@ products.shear_bias_measurements.init()
 # matplotlib.rcParams['pdf.use14corefonts'] = True
 # matplotlib.rcParams['text.usetex'] = True
 
-testing_data_labels = {"P": "PSF Size",
+testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level",
                        "E": "P(e)"}
 
@@ -253,11 +253,11 @@ def plot_bias_measurements_from_args(args):
             else:
                 target = c_target
 
-            ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
-            ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
-            ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+#             ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
+#             ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
+#             ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
+#             ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
+#             ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
 
             # Set the limits and scale
             ax.set_xlim(xlim)
@@ -373,8 +373,8 @@ def plot_bias_measurements_from_args(args):
                     np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
             ax.plot(20 * base_target * np.cos(theta_vals), 20 * base_target *
                     np.sin(theta_vals), label=None, color="k", linestyle="dotted")
-            # ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
-            # ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
+            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+            ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
 
             # Show the legend
             ax.legend(loc="lower right", numpoints=1)
