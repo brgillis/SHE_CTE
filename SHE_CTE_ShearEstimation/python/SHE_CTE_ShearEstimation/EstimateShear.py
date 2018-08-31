@@ -20,12 +20,11 @@
 
 import argparse
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -131,7 +130,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_EstimateShear mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.2 SHE_CTE_EstimateShear",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.6 SHE_CTE_EstimateShear",
                                     store_true=["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
