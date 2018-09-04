@@ -198,7 +198,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.6 SHE_CTE_CleanupBiasMeasurement",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.7 SHE_CTE_CleanupBiasMeasurement",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

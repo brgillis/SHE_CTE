@@ -130,7 +130,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_EstimateShear mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.6 SHE_CTE_EstimateShear",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.7 SHE_CTE_EstimateShear",
                                     store_true=["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
