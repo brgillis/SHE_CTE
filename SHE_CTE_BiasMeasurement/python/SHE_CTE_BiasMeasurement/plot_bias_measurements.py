@@ -63,6 +63,10 @@ psf_sizes = [3.4650847911834717,3.4410696029663086,3.437717914581299,3.438889026
 psf_e1s = [-0.026677351839757016,-0.015707015526647293,-0.01078109071149982,-0.005838585294871197,0.005233986604431368]
 psf_e2s = [-0.00133671593078985,-0.0021742508792400757,-0.0025054379672887783,-0.0028106944785056443,-0.0033976166026231545]
 
+psf_properties = {"R":("PSF Size (pixels)",psf_sizes),
+                  "E1":("PSF $e_1$",psf_e1s),
+                  "E2":("PSF $e_2$",psf_e2s)}
+
 x_ranges = {"P": [0.975, 1.025],
             "S": [324,327.4],
             "E": [0.170, 0.315]}
@@ -201,9 +205,13 @@ def plot_bias_measurements_from_args(args):
                 if "_err" in measurement_key:
                     y_vals = (np.abs(y1_o_vals) * y1_vals + np.abs(y2_o_vals)
                               * y2_vals) / np.sqrt(y1_o_vals**2 + y2_o_vals**2)
+                    y1_errs = None
+                    y2_errs = None
                     y_errs = None
                 else:
                     y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                    y1_errs = y1_o_vals
+                    y2_errs = y2_o_vals
                     y_errs = (np.abs(y1_vals) * y1_o_vals + np.abs(y2_vals)
                               * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
 
@@ -245,7 +253,9 @@ def plot_bias_measurements_from_args(args):
                                "y": y_vals,
                                "y_err": y_errs,
                                "y1": y1_vals,
+                               "y1_err":y1_errs,
                                "y2": y2_vals,
+                               "y2_err":y2_errs,
                                "y1_o": y1_o_vals,
                                "y2_o": y2_o_vals,
                                }
@@ -279,6 +289,51 @@ def plot_bias_measurements_from_args(args):
                 fig.show()
             else:
                 pyplot.close()
+                
+            # For the PSF, also plot against each other property
+            if testing_data_key=="P" and (measurement_key_template=="mDIM" or
+                                          measurement_key_template=="cDIM"):
+                
+                for prop_key in psf_properties:
+                
+                    for index in (1,2):
+    
+                        # Set up the figure
+                        fig = pyplot.figure()
+                        fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+            
+                        ax = fig.add_subplot(1, 1, 1)
+                        ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
+                        ax.set_ylabel("$m_"+str(index)+"$", fontsize=fontsize)
+                        
+                        # Plot the values and error bars
+                        
+                        x_spline_vals = np.linspace(np.min(psf_properties[prop_key][1]),
+                                                    np.max(psf_properties[prop_key][1]), 100)
+                        
+                        for method in args.methods:
+                            ax.plot(psf_properties[prop_key][1],
+                                    all_methods_data[method]["y"+str(index)],
+                                    color=method_colors[method], marker='o')
+                            
+                            ax.errorbar(psf_properties[prop_key][1],
+                                        all_methods_data[method]["y"+str(index)],
+                                        all_methods_data[method]["y"+str(index)+"_err"],
+                                        color=method_colors[method], linestyle='None')
+                            
+                        
+    
+                        # Save and show it
+                        output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                               testing_data_key + "_" + measurement_key + str(index) + "_" + 
+                                               prop_key + "." + args.output_format)
+                        pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                        if not args.hide:
+                            fig.show()
+                        else:
+                            pyplot.close()
+                    
+                    
 
             # Now plot dim 1 v dim 2
 
