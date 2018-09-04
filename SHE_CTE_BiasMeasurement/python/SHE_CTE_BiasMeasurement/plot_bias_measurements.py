@@ -63,7 +63,7 @@ psf_sizes = [3.4650847911834717,3.4410696029663086,3.437717914581299,3.438889026
 psf_e1s = [-0.026677351839757016,-0.015707015526647293,-0.01078109071149982,-0.005838585294871197,0.005233986604431368]
 psf_e2s = [-0.00133671593078985,-0.0021742508792400757,-0.0025054379672887783,-0.0028106944785056443,-0.0033976166026231545]
 
-psf_properties = {"R":("PSF Size (pixels)",psf_sizes),
+psf_properties = {"R":("PSF R (pixels)",psf_sizes),
                   "E1":("PSF $e_1$",psf_e1s),
                   "E2":("PSF $e_2$",psf_e2s)}
 
@@ -139,7 +139,7 @@ def plot_bias_measurements_from_args(args):
 
     # Plot the biases and errors for each measurement
     for testing_data_key in testing_data_labels:
-
+    
         fractional_limits = {}
 
         for measurement_key_template in measurement_key_templates:
@@ -304,7 +304,7 @@ def plot_bias_measurements_from_args(args):
             
                         ax = fig.add_subplot(1, 1, 1)
                         ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
-                        ax.set_ylabel("$m_"+str(index)+"$", fontsize=fontsize)
+                        ax.set_ylabel("$"+measurement_key+"_"+str(index)+"$", fontsize=fontsize)
                         
                         # Plot the values and error bars
                         
@@ -321,9 +321,32 @@ def plot_bias_measurements_from_args(args):
                                         all_methods_data[method]["y"+str(index)+"_err"],
                                         color=method_colors[method], linestyle='None')
                             
-                        
-    
+                            # Plot expected values
+                            if measurement_key_template=="mDIM" and prop_key=="R":
+                                r2_diff = 1-np.array(psf_sizes)**2/psf_sizes[2]**2
+                                ex_m0 = r2_diff * 0.2/0.3 # Typical ratio of psf size to galaxy size
+                                ex_m = (1+ex_m0)*(1+all_methods_data[method]["y"+str(index)][2])-1
+                                
+                                ax.plot(psf_sizes, ex_m,
+                                        color=method_colors[method], marker='.',linestyle='dashed')
+                            
+                            if measurement_key_template=="cDIM" and prop_key=="E1" and index==1:
+                                e1_diff = np.array(psf_e1s) - psf_e1s[2]
+                                ex_c1 = e1_diff*0.5 + all_methods_data[method]["y1"][2]
+                                
+                                ax.plot(psf_e1s, ex_c1,
+                                        color=method_colors[method], marker='.',linestyle='dashed')
+                            
+                            if measurement_key_template=="cDIM" and prop_key=="E2" and index==2:
+                                e2_diff = np.array(psf_e2s) - psf_e2s[2] 
+                                ex_c2 = e2_diff*0.5 + all_methods_data[method]["y2"][2]
+                                
+                                ax.plot(psf_e2s, ex_c2,
+                                        color=method_colors[method], marker='.',linestyle='dashed')
+                            
                         # Save and show it
+                        
+                        ax.legend(loc="lower right", numpoints=1)
                         output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                                testing_data_key + "_" + measurement_key + str(index) + "_" + 
                                                prop_key + "." + args.output_format)
