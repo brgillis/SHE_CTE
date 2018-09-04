@@ -314,7 +314,7 @@ def plot_bias_measurements_from_args(args):
                         for method in args.methods:
                             ax.plot(psf_properties[prop_key][1],
                                     all_methods_data[method]["y"+str(index)],
-                                    color=method_colors[method], marker='o')
+                                    color=method_colors[method], marker='o', label=method)
                             
                             ax.errorbar(psf_properties[prop_key][1],
                                         all_methods_data[method]["y"+str(index)],
@@ -328,21 +328,24 @@ def plot_bias_measurements_from_args(args):
                                 ex_m = (1+ex_m0)*(1+all_methods_data[method]["y"+str(index)][2])-1
                                 
                                 ax.plot(psf_sizes, ex_m,
-                                        color=method_colors[method], marker='.',linestyle='dashed')
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
                             
                             if measurement_key_template=="cDIM" and prop_key=="E1" and index==1:
                                 e1_diff = np.array(psf_e1s) - psf_e1s[2]
                                 ex_c1 = e1_diff*0.5 + all_methods_data[method]["y1"][2]
                                 
                                 ax.plot(psf_e1s, ex_c1,
-                                        color=method_colors[method], marker='.',linestyle='dashed')
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
                             
                             if measurement_key_template=="cDIM" and prop_key=="E2" and index==2:
                                 e2_diff = np.array(psf_e2s) - psf_e2s[2] 
                                 ex_c2 = e2_diff*0.5 + all_methods_data[method]["y2"][2]
                                 
                                 ax.plot(psf_e2s, ex_c2,
-                                        color=method_colors[method], marker='.',linestyle='dashed')
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
                             
                         # Save and show it
                         
