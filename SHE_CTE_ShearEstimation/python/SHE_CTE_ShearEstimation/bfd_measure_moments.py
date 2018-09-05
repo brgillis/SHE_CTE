@@ -207,10 +207,10 @@ def bfd_perform_integration(targetfile, templatefile=None):
     logger.debug("Entering BFD integration")
 
     if templatefile is None:
-        templatefile=getAuxiliaryPath("templates_placeholder.fits")
+        templatefile=getAuxiliaryPath("templateall.fits")
 
     sn1=5
-    sn2=100
+    sn2=25
 
     call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
