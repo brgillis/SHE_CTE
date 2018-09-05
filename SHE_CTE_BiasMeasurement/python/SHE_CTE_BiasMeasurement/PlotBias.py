@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2018-07-20"
+__updated__ = "2018-08-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,11 +23,10 @@ __updated__ = "2018-07-20"
 import argparse
 import os
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 import numpy as np
 
 
@@ -50,7 +49,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input Data
-    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS"],
+    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML"],
                         help='Methods to plot bias measurements for.')
     parser.add_argument('--root_data_folder', default="../",
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
