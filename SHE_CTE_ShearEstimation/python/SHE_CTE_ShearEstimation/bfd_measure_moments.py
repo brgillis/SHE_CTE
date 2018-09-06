@@ -23,7 +23,6 @@
 from math import sqrt
 import numpy as np
 import subprocess
-import pdb
 
 from ElementsKernel.Auxiliary import getAuxiliaryPath
 
@@ -209,11 +208,12 @@ def bfd_perform_integration(targetfile, templatefile=None):
     if templatefile is None:
         templatefile=getAuxiliaryPath("templateall.fits")
 
-    sn1=5
-    sn2=25
+    sn1=8
+    sn2=30
 
     call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+
     logger.debug(returncode.stdout)
     logger.debug(returncode.stderr)
 

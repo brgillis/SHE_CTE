@@ -253,7 +253,7 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
 
             if method == 'BFD':
-                bfd_perform_integration(shear_estimates_filename)
+                bfd_perform_integration(os.path.join(args.workdir,shear_estimates_filename))
 
     else:  # Dry run
 
