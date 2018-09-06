@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2018-08-03"
+__updated__ = "2018-08-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,7 +23,7 @@ __updated__ = "2018-08-03"
 import os
 
 from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product
+from SHE_PPT.file_io import read_xml_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.ksb_training import tf as kttf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
@@ -49,7 +49,7 @@ class ControlTraining(object):
             self.e2_var = 0.
         else:
             # Read in the training data product
-            qualified_training_product_filename = os.path.join(workdir, training_product_filename)
+            qualified_training_product_filename = find_file(training_product_filename, path=workdir)
             p = read_xml_product(qualified_training_product_filename)
 
             # Read the table stored in the data container of the product

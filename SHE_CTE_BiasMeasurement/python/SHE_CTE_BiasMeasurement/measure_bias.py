@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-07-30"
+__updated__ = "2018-08-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,21 +20,23 @@ __updated__ = "2018-07-30"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from os.path import join
+import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-
+from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
+
 
 bootstrap_threshold = 50
 
-products.shear_bias_stats.init()
-products.shear_bias_measurements.init()
+archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
+webdav_dir_key = "SHE_CTE_MeasureBias_webdav_dir"
+webdav_archive_key = "SHE_CTE_MeasureBias_webdav_archive"
 
 
 class MethodStatisticsList(object):
@@ -60,7 +62,12 @@ def measure_bias_from_args(args):
     logger.debug("Entering measure_bias_from_args.")
 
     # Get a list of input files
-    shear_statistics_files = read_listfile(join(args.workdir, args.shear_bias_statistics))
+
+    if args.shear_bias_statistics is None or args.shear_bias_statistics == "None":
+        # Working in recovery mode, so search within the workdir to find the files
+        shear_statistics_files = recursive_find_files(args.workdir)
+    else:
+        shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
 
     # Load in statistics from each file
     method_shear_statistics_lists = {}
@@ -76,7 +83,7 @@ def measure_bias_from_args(args):
             else:
                 raise ValueError("Unexpected format of shear statistics listfile.")
 
-        shear_statistics_prod = read_xml_product(join(args.workdir, shear_statistics_file))
+        shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
 
         for method in mv.estimation_methods:
             method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
@@ -135,7 +142,51 @@ def measure_bias_from_args(args):
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 
-    write_xml_product(bias_measurement_prod, join(args.workdir, args.shear_bias_measurements))
+    write_xml_product(bias_measurement_prod, os.path.join(args.workdir, args.shear_bias_measurements))
+
+    # Try to archive the product
+
+    # First get the pipeline config so we can figure out where to archive it
+    try:
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        if pipeline_config is None:
+            pipeline_config = {}
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+                    "Exception was: " + str(e))
+        pipeline_config = {}
+
+    if archive_dir_key in pipeline_config:
+        archive_dir = pipeline_config[archive_dir_key]
+        if archive_dir == "None":
+            archive_dir = None
+    else:
+        archive_dir = args.archive_dir
+
+    if webdav_dir_key in pipeline_config:
+        webdav_dir = pipeline_config[webdav_dir_key]
+    else:
+        webdav_dir = args.webdav_dir
+
+    if webdav_archive_key in pipeline_config:
+        webdav_archive = pipeline_config[webdav_archive_key].lower() == "true"
+    else:
+        webdav_archive = args.webdav_archive
+
+    # If we're archiving with webdav, determine its mount dir and the full archive directory
+    if webdav_archive and archive_dir is not None:
+        full_archive_dir = os.path.join(webdav_dir, archive_dir)
+    else:
+        full_archive_dir = archive_dir
+
+    if archive_dir is not None:
+        try:
+            archive_product(product_filename=args.shear_bias_measurements,
+                            archive_dir=full_archive_dir,
+                            workdir=args.workdir)
+        except Exception as e:
+            logger.warn("Failsafe exception block triggered when trying to save bias product in archive. " +
+                        "Exception was: " + str(e))
 
     logger.debug("Exiting measure_bias_from_args.")
 

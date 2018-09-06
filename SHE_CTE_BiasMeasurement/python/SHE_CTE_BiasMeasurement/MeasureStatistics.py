@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-07-11"
+__updated__ = "2018-08-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -44,8 +44,7 @@ def defineSpecificProgramOptions():
     logger = getLogger(mv.logger_name)
 
     logger.debug('#')
-    logger.debug(
-        '# Entering SHE_CTE_MeasureStatistics defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_MeasureStatistics defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -59,9 +58,22 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_estimates', type=str,
                         help="Shear estimates data product")
 
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
     # Output data
     parser.add_argument('--shear_bias_statistics', type=str,
                         help='Desired name of the output shear bias statistics data product')
+
+    # Archive directory - only default value can be used in pipeline
+    parser.add_argument('--archive_dir', type=str, default=None)
+    
+    parser.add_argument('--webdav_dir', type=str, default="/mnt/webdav",
+                        help="Path of the WebDAV mount.")
+
+    parser.add_argument('--webdav_archive', action="store_true",
+                        help="If set, will mount/demount webdav for archiving, and workspace will be relative to " +
+                        "the webdav mount.")
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
@@ -89,7 +101,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureStatistics",
-                                    store_true=["profile", "debug"])
+                                    store_true=["profile", "debug", "webdav_archive"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 

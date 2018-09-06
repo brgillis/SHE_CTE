@@ -19,18 +19,24 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+from copy import deepcopy
 from os.path import join
-
-from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product
 
 from astropy.table import Table
 import matplotlib
-import matplotlib.pyplot as pyplot
-import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline as Spline
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
 
+from SHE_PPT import products
+from SHE_PPT.file_io import read_xml_product
+import matplotlib.pyplot as pyplot
+import numpy as np
+
+psf_gal_size_ratio = (0.2/0.3)**2
+
+
+def Spline(*args,**kwargs):
+    return InterpolatedUnivariateSpline(*args,k=1,**kwargs)
 
 products.shear_bias_measurements.init()
 
@@ -38,7 +44,7 @@ products.shear_bias_measurements.init()
 # matplotlib.rcParams['pdf.use14corefonts'] = True
 # matplotlib.rcParams['text.usetex'] = True
 
-testing_data_labels = {"P": "PSF Size",
+testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level",
                        "E": "P(e)"}
 
@@ -49,16 +55,23 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
-x_values = {"P": [0.8, 0.9, 1.0, 1.1, 1.2],
-            "S": [8.0608794667689825, 9.0670343062718768, 10.073467500059127,
-                  11.07982970368346,  12.086264012414167],
+x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "S": [324.4, 325.05, 325.7, 326.52,  327.],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
             }
 
-x_ranges = {"P": (0.75, 1.25),
-            "S": (7.5, 12.5),
-            "E": (0.170, 0.315)}
+psf_sizes = [3.4650847911834717,3.4410696029663086,3.437717914581299,3.4388890266418457,3.457798719406128]
+psf_e1s = [-0.026677351839757016,-0.015707015526647293,-0.01078109071149982,-0.005838585294871197,0.005233986604431368]
+psf_e2s = [-0.00133671593078985,-0.0021742508792400757,-0.0025054379672887783,-0.0028106944785056443,-0.0033976166026231545]
+
+psf_properties = {"R":("PSF R (pixels)",psf_sizes),
+                  "E1":("PSF $e_1$",psf_e1s),
+                  "E2":("PSF $e_2$",psf_e2s)}
+
+x_ranges = {"P": [0.975, 1.025],
+            "S": [324,327.4],
+            "E": [0.170, 0.315]}
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
                         "S": {"m": 32, "c": 20},
@@ -112,7 +125,7 @@ def plot_bias_measurements_from_args(args):
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
             all_bias_measurements[tag] = read_xml_product(join(root_data_folder, args.data_folder_head + tag +
-                                                               "/she_measure_bias/shear_bias_measurements.xml"))
+                                                               "/shear_bias_measurements.xml"))
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -128,7 +141,7 @@ def plot_bias_measurements_from_args(args):
 
     # Plot the biases and errors for each measurement
     for testing_data_key in testing_data_labels:
-
+    
         fractional_limits = {}
 
         for measurement_key_template in measurement_key_templates:
@@ -145,6 +158,8 @@ def plot_bias_measurements_from_args(args):
             ax = fig.add_subplot(1, 1, 1)
             ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
             ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
+
+            xlim = deepcopy(x_ranges[testing_data_key])
 
             all_methods_data = {}
 
@@ -192,9 +207,13 @@ def plot_bias_measurements_from_args(args):
                 if "_err" in measurement_key:
                     y_vals = (np.abs(y1_o_vals) * y1_vals + np.abs(y2_o_vals)
                               * y2_vals) / np.sqrt(y1_o_vals**2 + y2_o_vals**2)
+                    y1_errs = None
+                    y2_errs = None
                     y_errs = None
                 else:
                     y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                    y1_errs = y1_o_vals
+                    y2_errs = y2_o_vals
                     y_errs = (np.abs(y1_vals) * y1_o_vals + np.abs(y2_vals)
                               * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
 
@@ -236,7 +255,9 @@ def plot_bias_measurements_from_args(args):
                                "y": y_vals,
                                "y_err": y_errs,
                                "y1": y1_vals,
+                               "y1_err":y1_errs,
                                "y2": y2_vals,
+                               "y2_err":y2_errs,
                                "y1_o": y1_o_vals,
                                "y2_o": y2_o_vals,
                                }
@@ -248,13 +269,11 @@ def plot_bias_measurements_from_args(args):
             else:
                 target = c_target
 
-            xlim = x_ranges[testing_data_key]
-
-            ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
-            ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
-            ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+#             ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
+#             ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
+#             ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
+#             ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
+#             ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
 
             # Set the limits and scale
             ax.set_xlim(xlim)
@@ -272,6 +291,77 @@ def plot_bias_measurements_from_args(args):
                 fig.show()
             else:
                 pyplot.close()
+                
+            # For the PSF, also plot against each other property
+            if testing_data_key=="P" and (measurement_key_template=="mDIM" or
+                                          measurement_key_template=="cDIM"):
+                
+                for prop_key in psf_properties:
+                
+                    for index in (1,2):
+    
+                        # Set up the figure
+                        fig = pyplot.figure()
+                        fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+            
+                        ax = fig.add_subplot(1, 1, 1)
+                        ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
+                        ax.set_ylabel("$"+measurement_key+"_"+str(index)+"$", fontsize=fontsize)
+                        
+                        # Plot the values and error bars
+                        
+                        x_spline_vals = np.linspace(np.min(psf_properties[prop_key][1]),
+                                                    np.max(psf_properties[prop_key][1]), 100)
+                        
+                        for method in args.methods:
+                            ax.plot(psf_properties[prop_key][1],
+                                    all_methods_data[method]["y"+str(index)],
+                                    color=method_colors[method], marker='o', label=method)
+                            
+                            ax.errorbar(psf_properties[prop_key][1],
+                                        all_methods_data[method]["y"+str(index)],
+                                        all_methods_data[method]["y"+str(index)+"_err"],
+                                        color=method_colors[method], linestyle='None')
+                            
+                            # Plot expected values
+                            if measurement_key_template=="mDIM" and prop_key=="R":
+                                r2_diff = 1-np.array(psf_sizes)**2/psf_sizes[2]**2
+                                ex_m0 = r2_diff * psf_gal_size_ratio
+                                ex_m = (1+ex_m0)*(1+all_methods_data[method]["y"+str(index)][2])-1
+                                
+                                ax.plot(psf_sizes, ex_m,
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
+                            
+                            if measurement_key_template=="cDIM" and prop_key=="E1" and index==1:
+                                e1_diff = np.array(psf_e1s) - psf_e1s[2]
+                                ex_c1 = e1_diff*psf_gal_size_ratio + all_methods_data[method]["y1"][2]
+                                
+                                ax.plot(psf_e1s, ex_c1,
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
+                            
+                            if measurement_key_template=="cDIM" and prop_key=="E2" and index==2:
+                                e2_diff = np.array(psf_e2s) - psf_e2s[2] 
+                                ex_c2 = e2_diff*psf_gal_size_ratio + all_methods_data[method]["y2"][2]
+                                
+                                ax.plot(psf_e2s, ex_c2,
+                                        color=method_colors[method], marker='.',linestyle='dashed',
+                                        label="Ex. " + method)
+                            
+                        # Save and show it
+                        
+                        ax.legend(loc="lower right", numpoints=1)
+                        output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                               testing_data_key + "_" + measurement_key + str(index) + "_" + 
+                                               prop_key + "." + args.output_format)
+                        pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                        if not args.hide:
+                            fig.show()
+                        else:
+                            pyplot.close()
+                    
+                    
 
             # Now plot dim 1 v dim 2
 
@@ -283,11 +373,14 @@ def plot_bias_measurements_from_args(args):
             ax.set_xlabel(r"$\Delta " + measurement_key_1.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
             ax.set_ylabel(r"$\Delta " + measurement_key_2.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
-            # Plot the target line
             if("m" in measurement_key):
                 base_target = m_target
             else:
                 base_target = c_target
+                
+            target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
+            xlim = [-1.1* base_target, 1.1 * base_target]
+            ylim = [-1.1 * base_target, 1.1 * base_target]
 
             # Plot points for each method
             for method in args.methods:
@@ -295,18 +388,28 @@ def plot_bias_measurements_from_args(args):
                 # Get the data we saved before
                 method_data = all_methods_data[method]
 
-                ax.plot(method_data["y1"], method_data["y2"],
+                ax.plot(method_data["y1"]-method_data["y1"][2], method_data["y2"]-method_data["y2"][2],
                         color=method_colors[method], marker='o', linestyle='None')
+                
+                xvals = method_data["y1"]-method_data["y1"][2]
+                yvals = method_data["y2"]-method_data["y2"][2]
+                
+                if 1.1*np.abs(xvals).max()>xlim[1]:
+                    xlim[0] = -1.1*np.abs(xvals).max()
+                    xlim[1] = 1.1*np.abs(xvals).max()
+                if 1.1*np.abs(yvals).max()>ylim[1]:
+                    ylim[0] = -1.1*np.abs(yvals).max()
+                    ylim[1] = 1.1*np.abs(yvals).max()
 
                 # Calculate and plot an interpolating spline
-                y1_spline = Spline(method_data["x"], method_data["y1"])
-                y2_spline = Spline(method_data["x"], method_data["y2"])
+                y1_spline = Spline(method_data["x"], xvals)
+                y2_spline = Spline(method_data["x"], yvals)
 
                 if "_err" not in measurement_key:
                     def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
                 else:
-                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"])
-                    y2_o_spline = Spline(method_data["x"], method_data["y1_o"])
+                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"]-method_data["y1_o"][2])
+                    y2_o_spline = Spline(method_data["x"], method_data["y2_o"]-method_data["y2_o"][2])
 
                     def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
                                              * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
@@ -324,7 +427,7 @@ def plot_bias_measurements_from_args(args):
                 ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
                         label=label)
 
-                if "_err" not in measurement_key:
+                if False and "_err" not in measurement_key:
 
                     # Now try to solve for where it intersects the target lines
                     limit_label_base = method + "_" + measurement_key
@@ -350,14 +453,8 @@ def plot_bias_measurements_from_args(args):
 
             theta_vals = np.linspace(0, 2 * np.pi, 360)
 
-            target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
-
-            xlim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
             ax.set_xlim(xlim)
-            # ax.set_xscale('symlog',linthreshx=target_factor*base_target)
-            ylim = (-20 * target_factor * base_target, 20 * target_factor * base_target)
             ax.set_ylim(ylim)
-            # ax.set_yscale('symlog',linthreshy=target_factor*base_target)
 
             ax.plot(base_target * np.cos(theta_vals), base_target *
                     np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
@@ -382,49 +479,51 @@ def plot_bias_measurements_from_args(args):
                 fig.show()
             else:
                 pyplot.close()
+                
+        if False:
 
-        # Make plots of the fractional limits for each method
-
-        # Set up the figure
-        fig = pyplot.figure()
-        fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
-
-        ax = fig.add_subplot(1, 1, 1)
-        ax.set_xlabel("Method", fontsize=fontsize)
-        ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels[testing_data_key], fontsize=fontsize)
-        ax.set_yscale("log", nonposy="clip")
-        ax.set_ylim(1e-4, 1e0)
-
-        xticks = list(range(len(args.methods)))
-        ax.set_xticks(xticks)
-        xticklabels = []
-        for method in args.methods:
-            if "_big" not in method:
-                xticklabels.append(method)
-            else:
-                xticklabels.append("Big " + method.replace("_big", ""))
-        ax.set_xticklabels(xticklabels)
-
-        for measurement_key in ("m", "c"):
-            for target_key in ("high", "base"):
-
-                limits = []
-                for method in args.methods:
-                    limits.append(fractional_limits[method + "_" + measurement_key + "_" + target_key])
-
-                ax.scatter(xticks, limits, label=measurement_key + " " + target_labels[target_key],
-                           marker=target_shapes[target_key], color=measurement_colors[measurement_key],
-                           s=256)
-
-        ax.legend(loc="upper right", scatterpoints=1)
-
-        # Save and show it
-        output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                               testing_data_key + "_fractional_limits." + args.output_format)
-        pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-        if not args.hide:
-            fig.show()
-        else:
-            pyplot.close()
+            # Make plots of the fractional limits for each method
+    
+            # Set up the figure
+            fig = pyplot.figure()
+            fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+    
+            ax = fig.add_subplot(1, 1, 1)
+            ax.set_xlabel("Method", fontsize=fontsize)
+            ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels[testing_data_key], fontsize=fontsize)
+            ax.set_yscale("log", nonposy="clip")
+            ax.set_ylim(1e-4, 1e0)
+    
+            xticks = list(range(len(args.methods)))
+            ax.set_xticks(xticks)
+            xticklabels = []
+            for method in args.methods:
+                if "_big" not in method:
+                    xticklabels.append(method)
+                else:
+                    xticklabels.append("Big " + method.replace("_big", ""))
+            ax.set_xticklabels(xticklabels)
+    
+            for measurement_key in ("m", "c"):
+                for target_key in ("high", "base"):
+    
+                    limits = []
+                    for method in args.methods:
+                        limits.append(fractional_limits[method + "_" + measurement_key + "_" + target_key])
+    
+                    ax.scatter(xticks, limits, label=measurement_key + " " + target_labels[target_key],
+                               marker=target_shapes[target_key], color=measurement_colors[measurement_key],
+                               s=256)
+    
+            ax.legend(loc="upper right", scatterpoints=1)
+    
+            # Save and show it
+            output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                   testing_data_key + "_fractional_limits." + args.output_format)
+            pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+#         if not args.hide:
+#             fig.show()
+#         else:
+#             pyplot.close()
 
     return
