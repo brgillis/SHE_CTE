@@ -32,6 +32,8 @@ from SHE_PPT.file_io import read_xml_product
 import matplotlib.pyplot as pyplot
 import numpy as np
 
+psf_gal_size_ratio = (0.2/0.3)**2
+
 
 def Spline(*args,**kwargs):
     return InterpolatedUnivariateSpline(*args,k=1,**kwargs)
@@ -324,7 +326,7 @@ def plot_bias_measurements_from_args(args):
                             # Plot expected values
                             if measurement_key_template=="mDIM" and prop_key=="R":
                                 r2_diff = 1-np.array(psf_sizes)**2/psf_sizes[2]**2
-                                ex_m0 = r2_diff * 0.2/0.3 # Typical ratio of psf size to galaxy size
+                                ex_m0 = r2_diff * psf_gal_size_ratio
                                 ex_m = (1+ex_m0)*(1+all_methods_data[method]["y"+str(index)][2])-1
                                 
                                 ax.plot(psf_sizes, ex_m,
@@ -333,7 +335,7 @@ def plot_bias_measurements_from_args(args):
                             
                             if measurement_key_template=="cDIM" and prop_key=="E1" and index==1:
                                 e1_diff = np.array(psf_e1s) - psf_e1s[2]
-                                ex_c1 = e1_diff*0.5 + all_methods_data[method]["y1"][2]
+                                ex_c1 = e1_diff*psf_gal_size_ratio + all_methods_data[method]["y1"][2]
                                 
                                 ax.plot(psf_e1s, ex_c1,
                                         color=method_colors[method], marker='.',linestyle='dashed',
@@ -341,7 +343,7 @@ def plot_bias_measurements_from_args(args):
                             
                             if measurement_key_template=="cDIM" and prop_key=="E2" and index==2:
                                 e2_diff = np.array(psf_e2s) - psf_e2s[2] 
-                                ex_c2 = e2_diff*0.5 + all_methods_data[method]["y2"][2]
+                                ex_c2 = e2_diff*psf_gal_size_ratio + all_methods_data[method]["y2"][2]
                                 
                                 ax.plot(psf_e2s, ex_c2,
                                         color=method_colors[method], marker='.',linestyle='dashed',
