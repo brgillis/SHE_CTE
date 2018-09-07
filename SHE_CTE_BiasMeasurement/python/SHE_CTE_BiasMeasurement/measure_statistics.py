@@ -86,17 +86,11 @@ def measure_statistics_from_args(args):
             if not method == "BFD":
                 shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
             else:
-                continue  # FIXME
+                shear_bias_statistics=calculate_bfd_shear_bias_statistics(estimates_table, details_table)
 
             # Save these in the data product
             shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
 
-        # Calculate statistics
-        # if BFD use BFD statistics calculator, otherwise use standard    
-        if method=="BFD"
-            shear_bias_statistics=calculate_bfd_shear_bias_statistics(estimates_table, details_table)
-        else:
-            shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
 
         except Exception as e:
 

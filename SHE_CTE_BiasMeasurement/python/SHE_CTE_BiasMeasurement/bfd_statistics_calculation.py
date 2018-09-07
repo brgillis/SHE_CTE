@@ -8,10 +8,11 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.math import get_linregress_statistics, LinregressStatistics, BFDSumStatistics, get_bfd_sum_statistics
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
+from SHE_PPT.table_formats.bfd_moments import tf as bfdf
 from astropy import table
 from numpy.testing.utils import assert_allclose
 
-from SHE_BFD.bfdutil import bfd_pqrs
+from SHE_BFD_CalculateMoments.bfd import bfd_pqrs
 from SHE_CTE_BiasMeasurement import magic_values as mv
 import numpy as np
 
@@ -70,16 +71,17 @@ def calculate_bfd_shear_bias_statistics(estimates_table, details_table):
     # Create a combined table, joined on galaxy ID
     if setf.ID != datf.ID:
         details_table.rename_column(datf.ID, setf.ID)
-    combined_table = table.join(estimates_table, details_table, keys=setf.ID)
+    combined_table = table.join(estimates_table, details_table, keys=setf.ID,metadata_conflicts='silent')
     if setf.ID != datf.ID:
         details_table.rename_column(setf.ID, datf.ID)
 
     # Get stats for file
     # start a bfd_pqrs instance
-    pqr = bfd_pqrs(pqr=combined_table[bfd_pqr].data)
-    sums = pqr.get_sums(g1true=datf.g1, g2true=datf.g2)
+
+    pqr = bfd_pqrs(pqr=combined_table[bfdf.bfd_pqr])
+    sums = pqr.get_sums(g1_true=combined_table[datf.g1], g2_true=combined_table[datf.g2])
     bfd_stats = get_bfd_sum_statistics(sums)
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics calculate_shear_bias_statistics()')
 
-    return bfd_stats
+    return bfd_stats,None # MuST return as tuple to fit with other methods
