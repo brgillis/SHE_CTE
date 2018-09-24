@@ -42,7 +42,7 @@ def measure_statistics_from_args(args):
     """Workhorse function for measuring necessary statistics to calculate shear estimation bias.
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureStatistics measure_statistics_from_args()')

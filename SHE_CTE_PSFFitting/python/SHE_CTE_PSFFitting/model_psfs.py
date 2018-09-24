@@ -45,7 +45,7 @@ def model_psfs(args, dry_run = False):
         Mock run of PSF Fitting.
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     # Load in the files in turn to make sure there aren't any issues with them.
 

@@ -58,7 +58,7 @@ def measure_bias_from_args(args):
     @return None
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering measure_bias_from_args.")
 
     # Get a list of input files

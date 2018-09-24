@@ -49,7 +49,7 @@ def make_mock_analysis_data(args, dry_run=False):
         Dry-run of generating mock analysis data, creating only dummy files.
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     
     # Set up mock output in the correct format
     

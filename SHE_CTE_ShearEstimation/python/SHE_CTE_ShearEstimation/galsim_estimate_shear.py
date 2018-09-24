@@ -56,13 +56,13 @@ class ShearEstimate(object):
 
 @run_only_once
 def log_no_galaxy_scale():
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.warn("Cannot find pixel scale in image header. Using default value of " + str(default_galaxy_scale))
 
 
 @run_only_once
 def log_no_psf_scale():
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.warn("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
 
 
@@ -121,7 +121,7 @@ def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir,
 
 def get_KSB_shear_estimate(galsim_shear_estimate, scale):
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering get_KSB_shear_estimate")
 
     g1 = galsim_shear_estimate.corrected_g1
@@ -146,7 +146,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate, scale):
 
 def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering get_REGAUSS_shear_estimate")
 
     e1 = galsim_shear_estimate.corrected_e1
@@ -172,7 +172,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
 
 def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering get_shear_estimate")
 
     # Subtract off the background from the galaxy
@@ -252,7 +252,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
 def inv_var_stack(a, a_err):
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering inv_var_stack")
 
     if a is None:
@@ -273,7 +273,7 @@ def inv_var_stack(a, a_err):
 
 def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
 
     shear_estimates_table = initialise_shear_estimates_table()
