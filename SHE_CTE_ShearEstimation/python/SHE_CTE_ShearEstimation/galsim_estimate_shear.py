@@ -428,6 +428,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                        setf.y_world: stack_y_world,
                                        })
 
+    logger.info("Finished estimating shear.")
+
     logger.debug("Exiting GS_estimate_shear")
 
     return shear_estimates_table
