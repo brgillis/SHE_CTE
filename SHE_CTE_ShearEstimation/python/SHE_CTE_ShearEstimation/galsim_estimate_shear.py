@@ -300,8 +300,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             break
         else:
             row_index += 1
-            if (row_index - 1) % 10 == 0:
+            if (row_index - 1) % 100 == 0:
                 logger.info("Calculating shear for galaxy " + str(row_index - 1))
+            else:
+                logger.debug("Calculating shear for galaxy " + str(row_index - 1))
 
         gal_id = row[detf.ID]
         gal_x_world = row[detf.gal_x_world]
