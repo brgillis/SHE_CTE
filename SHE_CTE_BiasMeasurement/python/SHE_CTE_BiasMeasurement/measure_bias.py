@@ -32,7 +32,7 @@ from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
 
 
-bootstrap_threshold = 50
+bootstrap_threshold = 10
 
 archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
 webdav_dir_key = "SHE_CTE_MeasureBias_webdav_dir"
