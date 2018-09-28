@@ -47,7 +47,7 @@ y_buffer = -5
 def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,debug=False):
     # not using training data or calibration data yet
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering measuring BFD moments")
 
     # get configuration info

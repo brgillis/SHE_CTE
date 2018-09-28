@@ -132,7 +132,7 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
         Table containing true galaxy details
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureStatistics calculate_shear_bias_statistics()')

@@ -35,7 +35,7 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
@@ -88,7 +88,7 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')

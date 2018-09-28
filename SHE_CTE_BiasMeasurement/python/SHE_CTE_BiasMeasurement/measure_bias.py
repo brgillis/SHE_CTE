@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-08-22"
+__updated__ = "2018-09-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -32,7 +32,7 @@ from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
 
 
-bootstrap_threshold = 50
+bootstrap_threshold = 10
 
 archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
 webdav_dir_key = "SHE_CTE_MeasureBias_webdav_dir"
@@ -58,7 +58,7 @@ def measure_bias_from_args(args):
     @return None
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering measure_bias_from_args.")
 
     # Get a list of input files
@@ -99,6 +99,9 @@ def measure_bias_from_args(args):
 
         if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
+            if method=="LensMC":
+                for stats in method_shear_statistics_lists[method].g1_statistics_list:
+                    stats.w = 1
             g1_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
 
@@ -111,6 +114,9 @@ def measure_bias_from_args(args):
 
         if len(method_shear_statistics_lists[method].g2_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
+            if method=="LensMC":
+                for stats in method_shear_statistics_lists[method].g2_statistics_list:
+                    stats.w = 1
             g2_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
 

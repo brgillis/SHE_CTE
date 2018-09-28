@@ -40,7 +40,7 @@ class ControlTraining(object):
 
     def __init__(self, training_product_filename=None, workdir="."):
 
-        logger = getLogger(mv.logger_name)
+        logger = getLogger(__name__)
         logger.debug("Entering ControlTraining __init__")
 
         if training_product_filename is None or training_product_filename == "None":
