@@ -12,7 +12,7 @@ from SHE_PPT.table_formats.bfd_moments import tf as bfdf
 from astropy import table
 from numpy.testing.utils import assert_allclose
 
-from SHE_BFD_CalculateMoments.bfd import bfd_pqrs
+from SHE_BFD_CalculateMoments.bfd import BfdPqrs
 from SHE_CTE_BiasMeasurement import magic_values as mv
 import numpy as np
 
@@ -78,7 +78,7 @@ def calculate_bfd_shear_bias_statistics(estimates_table, details_table):
     # Get stats for file
     # start a bfd_pqrs instance
 
-    pqr = bfd_pqrs(pqr=combined_table[bfdf.bfd_pqr])
+    pqr = BfdPqrs(pqr=combined_table[bfdf.bfd_pqr])
     sums = pqr.get_sums(g1_true=combined_table[datf.g1], g2_true=combined_table[datf.g2])
     bfd_stats = get_bfd_sum_statistics(sums)
 
