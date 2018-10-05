@@ -58,7 +58,7 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
     if other_shear_estimates_tables is None:
         other_shear_estimates_tables = []
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering validate_shear_estimates")
 
     # Compare primary table to all others
@@ -81,7 +81,7 @@ def cross_validate_shear(args, dry_run = False):
         Main function for shear validation.
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     if dry_run:
         dry_label = " dry"

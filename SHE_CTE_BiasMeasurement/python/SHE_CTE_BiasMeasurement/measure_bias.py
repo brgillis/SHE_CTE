@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-08-22"
+__updated__ = "2018-10-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,13 +22,14 @@ __updated__ = "2018-08-22"
 
 import os
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 import numpy as np
 
 bootstrap_threshold = 50
@@ -57,7 +58,7 @@ def measure_bias_from_args(args):
     @return None
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
     logger.debug("Entering measure_bias_from_args.")
 
     # Get a list of input files
@@ -82,7 +83,11 @@ def measure_bias_from_args(args):
             else:
                 raise ValueError("Unexpected format of shear statistics listfile.")
 
-        shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
+        try:
+            shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
+        except EOFError:
+            logger.warn("File " + os.path.join(args.workdir, shear_statistics_file) + " seems to be corrupted.")
+            continue
 
         for method in mv.estimation_methods:
 

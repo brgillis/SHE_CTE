@@ -69,7 +69,7 @@ def estimate_shears_from_args(args, dry_run=False):
     @return None
     """
 
-    logger = getLogger(mv.logger_name)
+    logger = getLogger(__name__)
 
     logger.debug("Entering estimate_shears_from_args")
 
