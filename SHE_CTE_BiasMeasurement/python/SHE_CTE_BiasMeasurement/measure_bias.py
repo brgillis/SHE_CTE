@@ -101,7 +101,8 @@ def measure_bias_from_args(args):
                     method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
             else:
                 # get info for BFD method
-                method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics)
+                if method_shear_statistics is not None:
+                    method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics)
                 
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
