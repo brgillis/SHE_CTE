@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-10-03"
+__updated__ = "2018-10-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,6 +20,7 @@ __updated__ = "2018-10-03"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from _pickle import UnpicklingError
 import os
 
 from SHE_PPT import products
@@ -86,8 +87,9 @@ def measure_bias_from_args(args):
 
         try:
             shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
-        except EOFError:
-            logger.warn("File " + os.path.join(args.workdir, shear_statistics_file) + " seems to be corrupted.")
+        except (EOFError, UnpicklingError) as e:
+            logger.warn("File " + os.path.join(args.workdir, shear_statistics_file) + " seems to be corrupted: " +
+                        str(e))
             continue
 
         for method in mv.estimation_methods:
