@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2018-08-29"
+__updated__ = "2018-08-31"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -49,7 +49,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input Data
-    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML"],
+    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML", "LensMC"],
                         help='Methods to plot bias measurements for.')
     parser.add_argument('--root_data_folder', default="../",
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
@@ -91,7 +91,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_PlotBias mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_PlotBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.8 SHE_CTE_PlotBias",
                                     store_true=["profile", "debug", "hide"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
