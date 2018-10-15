@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-10-03"
+__updated__ = "2018-10-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,15 +22,15 @@ __updated__ = "2018-10-03"
 
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 import numpy as np
+
 
 bootstrap_threshold = 50
 
@@ -47,6 +47,7 @@ class MethodStatisticsList(object):
         self.g1_statistics_list = []
         self.g2_statistics_list = []
         self.bfd_statistics_list = []
+
 
 def measure_bias_from_args(args):
     """
@@ -103,7 +104,7 @@ def measure_bias_from_args(args):
                 # get info for BFD method
                 if method_shear_statistics is not None:
                     method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics)
-                
+
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
 
