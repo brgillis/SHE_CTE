@@ -106,6 +106,9 @@ def measure_bias_from_args(args):
 
         if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
+            if method == "LensMC":
+                for stats in method_shear_statistics_lists[method].g1_statistics_list:
+                    stats.w = 1
             g1_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
 
@@ -118,6 +121,9 @@ def measure_bias_from_args(args):
 
         if len(method_shear_statistics_lists[method].g2_statistics_list) >= bootstrap_threshold:
             # We have enough data to calculate bootstrap errors
+            if method == "LensMC":
+                for stats in method_shear_statistics_lists[method].g2_statistics_list:
+                    stats.w = 1
             g2_bias_measurements = calculate_bootstrap_bias_measurements(
                 method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
 
