@@ -394,7 +394,7 @@ def plot_bias_measurements_from_args(args):
                             ax.legend(loc="lower right", numpoints=1)
                             output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                                    testing_data_key + "_" + measurement_key + str(index) + "_" +
-                                                   prop_key + "." + args.output_format)
+                                                   prop_key + calibration_label + "." + args.output_format)
                             pyplot.savefig(output_filename, format=args.output_format,
                                            bbox_inches="tight", pad_inches=0.05)
                             if not args.hide:
