@@ -244,6 +244,10 @@ def plot_bias_measurements_from_args(args):
                         y1_errs = None
                         y2_errs = None
                         y_errs = None
+                    elif calibration_label == "_normed":
+                        y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                        pass
+                        # Carry over errors from previoius run, on unnormed data
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
