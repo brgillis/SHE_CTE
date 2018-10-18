@@ -207,7 +207,7 @@ def plot_bias_measurements_from_args(args):
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements["Ep0"].get_method_bias_measurements(method))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 
