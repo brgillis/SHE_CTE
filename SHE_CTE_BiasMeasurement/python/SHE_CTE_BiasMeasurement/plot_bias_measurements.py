@@ -289,18 +289,17 @@ def plot_bias_measurements_from_args(args):
                             label=label)
 
                     # Save this data for the next plot if not norming
-                    if not calibration_label == "_normed":
-                        method_data = {"x": x_vals,
-                                       "y": y_vals,
-                                       "y_err": y_errs,
-                                       "y1": y1_vals,
-                                       "y1_err": y1_errs,
-                                       "y2": y2_vals,
-                                       "y2_err": y2_errs,
-                                       "y1_o": y1_o_vals,
-                                       "y2_o": y2_o_vals,
-                                       }
-                        all_methods_data[method] = method_data
+                    method_data = {"x": x_vals,
+                                   "y": y_vals,
+                                   "y_err": y_errs,
+                                   "y1": y1_vals,
+                                   "y1_err": y1_errs,
+                                   "y2": y2_vals,
+                                   "y2_err": y2_errs,
+                                   "y1_o": y1_o_vals,
+                                   "y2_o": y2_o_vals,
+                                   }
+                    all_methods_data[(method, calibration_label)] = method_data
 
                 # Plot the target line
                 if "m" in measurement_key:
@@ -347,7 +346,10 @@ def plot_bias_measurements_from_args(args):
 
                             ax = fig.add_subplot(1, 1, 1)
                             ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
-                            ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
+                            if calibration_label == "_normed":
+                                ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
+                            else:
+                                ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
 
                             # Plot the values and error bars
 
@@ -356,19 +358,20 @@ def plot_bias_measurements_from_args(args):
 
                             for method in args.methods:
                                 ax.plot(psf_properties[prop_key][1],
-                                        all_methods_data[method]["y" + str(index)],
+                                        all_methods_data[(method, calibration_label)]["y" + str(index)],
                                         color=method_colors[method], marker='o', label=method)
 
                                 ax.errorbar(psf_properties[prop_key][1],
-                                            all_methods_data[method]["y" + str(index)],
-                                            all_methods_data[method]["y" + str(index) + "_err"],
+                                            all_methods_data[(method, calibration_label)]["y" + str(index)],
+                                            all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"],
                                             color=method_colors[method], linestyle='None')
 
                                 # Plot expected values
                                 if measurement_key_template == "mDIM" and prop_key == "R":
                                     r2_diff = 1 - np.array(psf_sizes)**2 / psf_sizes[2]**2
                                     ex_m0 = r2_diff * psf_gal_size_ratio
-                                    ex_m = (1 + ex_m0) * (1 + all_methods_data[method]["y" + str(index)][2]) - 1
+                                    ex_m = (1 + ex_m0) * \
+                                        (1 + all_methods_data[(method, calibration_label)]["y" + str(index)][2]) - 1
 
                                     ax.plot(psf_sizes, ex_m,
                                             color=method_colors[method], marker='.', linestyle='dashed',
@@ -376,7 +379,8 @@ def plot_bias_measurements_from_args(args):
 
                                 if measurement_key_template == "cDIM" and prop_key == "E1" and index == 1:
                                     e1_diff = np.array(psf_e1s) - psf_e1s[2]
-                                    ex_c1 = e1_diff * psf_gal_size_ratio + all_methods_data[method]["y1"][2]
+                                    ex_c1 = e1_diff * psf_gal_size_ratio + \
+                                        all_methods_data[(method, calibration_label)]["y1"][2]
 
                                     ax.plot(psf_e1s, ex_c1,
                                             color=method_colors[method], marker='.', linestyle='dashed',
@@ -384,7 +388,8 @@ def plot_bias_measurements_from_args(args):
 
                                 if measurement_key_template == "cDIM" and prop_key == "E2" and index == 2:
                                     e2_diff = np.array(psf_e2s) - psf_e2s[2]
-                                    ex_c2 = e2_diff * psf_gal_size_ratio + all_methods_data[method]["y2"][2]
+                                    ex_c2 = e2_diff * psf_gal_size_ratio + \
+                                        all_methods_data[(method, calibration_label)]["y2"][2]
 
                                     ax.plot(psf_e2s, ex_c2,
                                             color=method_colors[method], marker='.', linestyle='dashed',
@@ -426,7 +431,7 @@ def plot_bias_measurements_from_args(args):
             for method in args.methods:
 
                 # Get the data we saved before
-                method_data = all_methods_data[method]
+                method_data = all_methods_data[(method, "")]
 
                 ax.plot(method_data["y1"] - method_data["y1"][2], method_data["y2"] - method_data["y2"][2],
                         color=method_colors[method], marker='o', linestyle='None')
