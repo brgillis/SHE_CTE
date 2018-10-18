@@ -317,7 +317,8 @@ def plot_bias_measurements_from_args(args):
                 # Set the limits and scale
                 ax.set_xlim(xlim)
                 # ax.set_ylim(y_range) # FIXME - uncomment once we know about what the range will be
-                ax.set_yscale("log", nonposy="clip")
+                if not calibration_label == "_normed":
+                    ax.set_yscale("log", nonposy="clip")
 
                 # Show the legend
                 ax.legend(loc="lower right", numpoints=1)
