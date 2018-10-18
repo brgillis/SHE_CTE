@@ -152,6 +152,8 @@ def plot_bias_measurements_from_args(args):
 
         for measurement_key_template in measurement_key_templates:
 
+            all_methods_data = {}
+
             for calibration_label in calibration_labels:
 
                 # Don't do a normed plot for errors
@@ -170,13 +172,11 @@ def plot_bias_measurements_from_args(args):
                 ax = fig.add_subplot(1, 1, 1)
                 ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
                 if calibration_label == "_normed":
-                    ax.set_ylabel(r"$\delta" + measurement_key + "$", fontsize=fontsize)
+                    ax.set_ylabel(r"$\delta " + measurement_key + "$", fontsize=fontsize)
                 else:
                     ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
                 xlim = deepcopy(x_ranges[testing_data_key])
-
-                all_methods_data = {}
 
                 # Plot points for each method
                 for method in args.methods:
