@@ -19,14 +19,13 @@
     You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to    
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 """
-
+import pdb
 from math import sqrt
-import numpy as np
 import subprocess
-
 from ElementsKernel.Auxiliary import getAuxiliaryPath
-
-
+from SHE_BFD_CalculateMoments import bfd
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.noise import get_var_ADU_per_pixel
@@ -34,16 +33,11 @@ from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
+import numpy as np
 
-from SHE_CTE_ShearEstimation import magic_values as mv
-
-
-
-# from SHE_BFD_CalculateMoments import bfd
-# from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
-bfd = None
-get_bfd_info = None
-load_bfd_configuration = None
+#bfd = None
+#get_bfd_info = None
+#load_bfd_configuration = None
 
 stamp_size=128 # hardcoded for now
 x_buffer = -5
@@ -213,7 +207,7 @@ def bfd_perform_integration(targetfile, templatefile=None):
     logger.debug("Entering BFD integration")
 
     if templatefile is None:
-        templatefile=getAuxiliaryPath("templateall.fits")
+        templatefile=getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
     sn1=8
     sn2=30
