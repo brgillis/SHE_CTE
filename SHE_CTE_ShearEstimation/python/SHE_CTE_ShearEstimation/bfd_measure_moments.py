@@ -47,7 +47,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
     # not using training data or calibration data yet
 
     logger = getLogger(__name__)
-    logger.debug("Entering measuring BFD moments")
+    logger.info("Entering measuring BFD moments")
 
     # get configuration info
     config_data = load_bfd_configuration()
@@ -174,7 +174,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
 
         else:
 
-            if (bfd_info.template_lost==False) & (cnt < 220):
+            if (bfd_info.template_lost==False) & (cnt < 200):
                 for i, tmpl in enumerate(bfd_info.templates):
                     bfd_info.get_template(i)
                     bfd_moments_table.add_row({setf.ID:gal_id,
@@ -196,7 +196,7 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
         if config_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
 
-    logger.debug("Exiting BFD_measure_moments")
+    logger.info("Exiting BFD_measure_moments")
 
 
     return bfd_moments_table # No MCMC chains for this method
@@ -204,20 +204,20 @@ def bfd_measure_moments( data_stack, training_data, calibration_data, workdir,de
 def bfd_perform_integration(targetfile, templatefile=None):
 
     logger = getLogger(mv.logger_name)
-    logger.debug("Entering BFD integration")
+    logger.info("Entering BFD integration")
 
     if templatefile is None:
         templatefile=getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
     sn1=8
-    sn2=30
-
-    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)]
+    sn2=50
+    nthreads=1
+    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2),"nThreads",str(nthreads)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
-    logger.debug(returncode.stdout)
-    logger.debug(returncode.stderr)
+    logger.info(returncode.stdout)
+    logger.info(returncode.stderr)
 
-    logger.debug("Exiting BFD integration")
+    logger.info("Exiting BFD integration")
     
     return
