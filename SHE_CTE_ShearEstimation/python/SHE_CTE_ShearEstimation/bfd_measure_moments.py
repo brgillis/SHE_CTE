@@ -210,9 +210,12 @@ def bfd_perform_integration(targetfile, templatefile=None):
         templatefile=getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
     sn1=8
-    sn2=50
+    sn2=35
+    sn3=100
+    nfactor1=1.
+    nfactor2=10.
     nthreads=1
-    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2),"nThreads",str(nthreads)]
+    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
     logger.info(returncode.stdout)
