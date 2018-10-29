@@ -34,7 +34,7 @@ from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf a
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 import numpy as np
-
+import pdb
 
 #bfd = None
 #get_bfd_info = None
@@ -90,17 +90,17 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
 
     # define pixel scales
     if scale_label in data_stack.stacked_image.header:
-        stacked_gal_scale = data_stack.stacked_image.header[scale_label]
+        stacked_gal_scale = data_stack.stacked_image.header[scale_label]*3600
     else:
         stacked_gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].detectors[1, 1].header:
-        gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]
+        gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]*3600
     else:
         gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
-        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]*3600
     else:
         psf_scale = 0.02
     cnt = 0
