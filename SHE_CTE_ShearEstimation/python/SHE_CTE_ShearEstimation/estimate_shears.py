@@ -5,7 +5,8 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2018-08-31"
+__updated__ = "2018-10-15"
+
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,13 +20,13 @@ __updated__ = "2018-08-31"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
+import pdb
 import os
 
 from astropy.io import fits
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
@@ -41,6 +42,7 @@ from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
+
 import numpy as np
 
 
@@ -54,7 +56,7 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       "MomentsML": ML_estimate_shear,
                       "LensMC": fit_frame_stack,
-                      "BFD": None}
+                      "BFD": bfd_measure_moments}
 
 methods_key = "SHE_CTE_EstimateShear_methods"
 
@@ -251,6 +253,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
             # Output the shear estimates
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
+
+            if method == 'BFD':
+                bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
 
     else:  # Dry run
 

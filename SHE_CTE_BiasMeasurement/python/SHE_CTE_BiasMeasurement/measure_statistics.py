@@ -5,7 +5,7 @@
     Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2018-08-10"
+__updated__ = "2018-10-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,15 +22,17 @@ __updated__ = "2018-08-10"
 # Boston, MA 02110-1301 USA
 
 import os
+from os.path import join
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.bfd_statistics_calculation import calculate_bfd_shear_bias_statistics
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from astropy.table import Table
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config
+from astropy.table import Table
+from astropy.table import Table
 
 
 archive_dir_key = "SHE_CTE_MeasureStatistics_archive_dir"
@@ -82,7 +84,7 @@ def measure_statistics_from_args(args):
             if not method == "BFD":
                 shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
             else:
-                continue  # FIXME
+                shear_bias_statistics = calculate_bfd_shear_bias_statistics(estimates_table, details_table)
 
             # Save these in the data product
             shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
@@ -108,18 +110,18 @@ def measure_statistics_from_args(args):
 
     if archive_dir_key in pipeline_config:
         archive_dir = pipeline_config[archive_dir_key]
-        if archive_dir=="None":
+        if archive_dir == "None":
             archive_dir = None
     else:
         archive_dir = args.archive_dir
-        
+
     if webdav_dir_key in pipeline_config:
         webdav_dir = pipeline_config[webdav_dir_key]
     else:
         webdav_dir = args.webdav_dir
 
     if webdav_archive_key in pipeline_config:
-        webdav_archive = pipeline_config[webdav_archive_key].lower()=="true"
+        webdav_archive = pipeline_config[webdav_archive_key].lower() == "true"
     else:
         webdav_archive = args.webdav_archive
 
