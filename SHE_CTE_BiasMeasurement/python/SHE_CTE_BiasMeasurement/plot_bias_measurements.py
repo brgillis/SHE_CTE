@@ -71,7 +71,7 @@ psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
                   "E2": (r"PSF $e_2$", psf_e2s)}
 
 x_ranges = {"P": [0.975, 1.025],
-            "S": [324, 327.4],
+            "S": [45.50, 45.92],
             "E": [0.170, 0.315]}
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
