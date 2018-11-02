@@ -148,6 +148,9 @@ def plot_bias_measurements_from_args(args):
         fractional_limits = {}
 
         for measurement_key_template in measurement_key_templates:
+            
+            if not args.plot_error and "_err" in measurement_key_template:
+                continue
 
             all_methods_data = {}
 
@@ -243,7 +246,6 @@ def plot_bias_measurements_from_args(args):
                         y_errs = None
                     elif calibration_label == "_normed":
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
-                        pass
                         # Carry over errors from previoius run, on unnormed data
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
@@ -253,7 +255,7 @@ def plot_bias_measurements_from_args(args):
                                   * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
 
                     # Plot the values (and optionally error bars)
-                    if "_err" not in measurement_key:
+                    if not "_err" in measurement_key:
                         ax.errorbar(x_vals, y_vals, y_errs, color=method_colors[method], linestyle='None')
                     else:
                         y1_vals *= err_factor
@@ -265,7 +267,7 @@ def plot_bias_measurements_from_args(args):
                     y1_spline = Spline(x_vals, y1_vals)
                     y2_spline = Spline(x_vals, y2_vals)
 
-                    if "_err" not in measurement_key:
+                    if not "_err" in measurement_key:
                         def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
                     else:
                         y1_o_spline = Spline(x_vals, y1_o_vals)
@@ -285,18 +287,19 @@ def plot_bias_measurements_from_args(args):
                     ax.plot(x_spline_vals, y_spline_vals, color=method_colors[method], marker='None',
                             label=label)
 
-                    # Save this data for the next plot if not norming
-                    method_data = {"x": x_vals,
-                                   "y": y_vals,
-                                   "y_err": y_errs,
-                                   "y1": y1_vals,
-                                   "y1_err": y1_errs,
-                                   "y2": y2_vals,
-                                   "y2_err": y2_errs,
-                                   "y1_o": y1_o_vals,
-                                   "y2_o": y2_o_vals,
-                                   }
-                    all_methods_data[(method, calibration_label)] = method_data
+                    # Save this data for the next plot if not showing errors
+                    if not "_err" in measurement_key:
+                        method_data = {"x": x_vals,
+                                       "y": y_vals,
+                                       "y_err": y_errs,
+                                       "y1": y1_vals,
+                                       "y1_err": y1_errs,
+                                       "y2": y2_vals,
+                                       "y2_err": y2_errs,
+                                       "y1_o": y1_o_vals,
+                                       "y2_o": y2_o_vals,
+                                       }
+                        all_methods_data[(method, calibration_label)] = method_data
 
                 # Plot the target line
                 if "m" in measurement_key:
@@ -334,6 +337,11 @@ def plot_bias_measurements_from_args(args):
                                                 measurement_key_template == "cDIM"):
 
                     for prop_key in psf_properties:
+                        
+                        # Only plot m versus R2 and c versus E
+                        if (("m" in measurement_key_template and "E" in prop_key) or
+                            ("c" in measurement_key_template and "R" in prop_key)):
+                            continue 
 
                         for index in (1, 2):
 
