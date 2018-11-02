@@ -45,7 +45,7 @@ products.shear_bias_measurements.init()
 
 testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level",
-                       "E": "P(e)"}
+                       "E": r"$\sigma(e)$"}
 
 tag_template = "Ep0Pp0Sp0"
 
@@ -55,7 +55,7 @@ measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
 x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
-            "S": [324.4, 325.05, 325.7, 326.52,  327.],
+            "S": [45.52, 45.61, 45.71, 45.80,  45.90],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
             }
@@ -66,9 +66,9 @@ psf_e1s = [-0.026677351839757016, -0.015707015526647293, -
 psf_e2s = [-0.00133671593078985, -0.0021742508792400757, -
            0.0025054379672887783, -0.0028106944785056443, -0.0033976166026231545]
 
-psf_properties = {"R": ("PSF R (pixels)", psf_sizes),
-                  "E1": ("PSF $e_1$", psf_e1s),
-                  "E2": ("PSF $e_2$", psf_e2s)}
+psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
+                  "E1": (r"PSF $e_1$", psf_e1s),
+                  "E2": (r"PSF $e_2$", psf_e2s)}
 
 x_ranges = {"P": [0.975, 1.025],
             "S": [324, 327.4],
@@ -369,14 +369,14 @@ def plot_bias_measurements_from_args(args):
                                         method_label = "Ex. " + method
                                     else:
                                         method_label = "Expected"
-                                    if measurement_key_template == "mDIM" and prop_key == "R":
+                                    if measurement_key_template == "mDIM" and prop_key == "R2":
                                         r2_diff = 1 - np.array(psf_sizes)**2 / psf_sizes[2]**2
                                         ex_m0 = r2_diff * psf_gal_size_ratio
                                         ex_m = (1 + ex_m0) * \
                                             (1 + all_methods_data[(method, calibration_label)]
                                              ["y" + str(index)][2]) - 1
 
-                                        ax.plot(psf_sizes, ex_m,
+                                        ax.plot(np.square(psf_sizes), ex_m,
                                                 color=method_colors[method], marker='.', linestyle='dotted',
                                                 label=method_label)
 
