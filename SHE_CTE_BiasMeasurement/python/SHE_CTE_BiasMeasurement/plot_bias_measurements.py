@@ -18,19 +18,16 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 from copy import deepcopy
 from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
-import matplotlib
-
-from astropy.table import Table
-import matplotlib.pyplot as pyplot
-import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
+
+import matplotlib.pyplot as pyplot
+import numpy as np
 
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
