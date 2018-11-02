@@ -260,12 +260,14 @@ def plot_bias_measurements_from_args(args):
 
                     # Plot the values (and optionally error bars)
                     if not "_err" in measurement_key:
-                        ax.errorbar(x_vals, y_vals, y_errs, color=method_colors[method], linestyle='None')
+                        if do_fig:
+                            ax.errorbar(x_vals, y_vals, y_errs, color=method_colors[method], linestyle='None')
                     else:
                         y1_vals *= err_factor
                         y2_vals *= err_factor
                         y_vals *= err_factor
-                    ax.plot(x_vals, y_vals, color=method_colors[method], marker='o', linestyle='None')
+                    if do_fig:
+                        ax.plot(x_vals, y_vals, color=method_colors[method], marker='o', linestyle='None')
 
                     # Calculate and plot an interpolating spline
                     y1_spline = Spline(x_vals, y1_vals)
