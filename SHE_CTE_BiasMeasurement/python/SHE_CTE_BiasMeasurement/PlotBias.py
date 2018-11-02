@@ -65,6 +65,10 @@ def defineSpecificProgramOptions():
                         help="If set, will not display plots when they are generated.")
     parser.add_argument('--plot_error', action="store_true",
                         help="If set, will also plot errors for all parameters.")
+    parser.add_argument('--normed_only', action="store_true",
+                        help="If set, will only show normed plots.")
+    parser.add_argument('--unnormed_only', action="store_true",
+                        help="If set, will only show unnormed plots.")
 
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
@@ -95,7 +99,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_PlotBias",
-                                    store_true=["profile", "debug", "hide", "plot_error"])
+                                    store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 

@@ -156,9 +156,12 @@ def plot_bias_measurements_from_args(args):
 
             for calibration_label in calibration_labels:
 
-                # Don't do a normed plot for errors
-                if "_err" in measurement_key_template and calibration_label == "_normed":
+                # Don't do a normed plot for errors or if disabled
+                if ("_err" in measurement_key_template or args.unnormed_only) and calibration_label == "_normed":
                     continue
+                
+                # We can't fully skip unnormed plots, but we still won't plot them
+                do_fig = (not args.normed_only) or calibration_label == "_normed"
 
                 # Plot regularly for dim = 0
                 measurement_key = measurement_key_template.replace("DIM", "")
@@ -166,15 +169,16 @@ def plot_bias_measurements_from_args(args):
                 measurement_key_2 = measurement_key_template.replace("DIM", "2")
 
                 # Set up the figure
-                fig = pyplot.figure()
-                fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
-
-                ax = fig.add_subplot(1, 1, 1)
-                ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
-                if calibration_label == "_normed":
-                    ax.set_ylabel(r"$\Delta " + measurement_key + "$", fontsize=fontsize)
-                else:
-                    ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
+                if do_fig:
+                    fig = pyplot.figure()
+                    fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+    
+                    ax = fig.add_subplot(1, 1, 1)
+                    ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
+                    if calibration_label == "_normed":
+                        ax.set_ylabel(r"$\Delta " + measurement_key + "$", fontsize=fontsize)
+                    else:
+                        ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
                 xlim = deepcopy(x_ranges[testing_data_key])
 
@@ -284,8 +288,9 @@ def plot_bias_measurements_from_args(args):
                     else:
                         label = "Big " + method.replace("_big", "")
 
-                    ax.plot(x_spline_vals, y_spline_vals, color=method_colors[method], marker='None',
-                            label=label)
+                    if do_fig:
+                        ax.plot(x_spline_vals, y_spline_vals, color=method_colors[method], marker='None',
+                                label=label)
 
                     # Save this data for the next plot if not showing errors
                     if not "_err" in measurement_key:
@@ -306,35 +311,37 @@ def plot_bias_measurements_from_args(args):
                     target = m_target
                 else:
                     target = c_target
+                    
+                if do_fig:
 
-    #             ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
-    #             ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
-    #             ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
-    #             ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
-    #             ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+    #                 ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
+    #                 ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
+    #                 ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
+    #                 ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
+    #                 ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
 
-                # Set the limits and scale
-                ax.set_xlim(xlim)
-                # ax.set_ylim(y_range) # FIXME - uncomment once we know about what the range will be
-                if not calibration_label == "_normed":
-                    ax.set_yscale("log", nonposy="clip")
+                    # Set the limits and scale
+                    ax.set_xlim(xlim)
+                    # ax.set_ylim(y_range) # FIXME - uncomment once we know about what the range will be
+                    if not calibration_label == "_normed":
+                        ax.set_yscale("log", nonposy="clip")
+    
+                    # Show the legend
+                    ax.legend(loc="lower right", numpoints=1)
 
-                # Show the legend
-                ax.legend(loc="lower right", numpoints=1)
-
-                # Save and show it
-                output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                       testing_data_key + "_" + measurement_key + calibration_label + "." +
-                                       args.output_format)
-                pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-                if not args.hide:
-                    fig.show()
-                else:
-                    pyplot.close()
+                    # Save and show it
+                    output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                           testing_data_key + "_" + measurement_key + calibration_label + "." +
+                                           args.output_format)
+                    pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                    if not args.hide:
+                        fig.show()
+                    else:
+                        pyplot.close()
 
                 # For the PSF, also plot against each other property
                 if testing_data_key == "P" and (measurement_key_template == "mDIM" or
-                                                measurement_key_template == "cDIM"):
+                                                measurement_key_template == "cDIM") and do_fig:
 
                     for prop_key in psf_properties:
                         
@@ -421,120 +428,122 @@ def plot_bias_measurements_from_args(args):
 
             # Now plot dim 1 v dim 2
 
-            # Set up the figure
-            fig = pyplot.figure()
-            fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+            if not args.unnormed_only:
 
-            ax = fig.add_subplot(1, 1, 1)
-            ax.set_xlabel(r"$\Delta " + measurement_key_1.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
-            ax.set_ylabel(r"$\Delta " + measurement_key_2.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
-
-            if("m" in measurement_key):
-                base_target = m_target
-            else:
-                base_target = c_target
-
-            target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
-            xlim = [-1.1 * base_target, 1.1 * base_target]
-            ylim = [-1.1 * base_target, 1.1 * base_target]
-
-            # Plot points for each method
-            for method in args.methods:
-
-                # Get the data we saved before
-                method_data = all_methods_data[(method, "")]
-
-                ax.plot(method_data["y1"] - method_data["y1"][2], method_data["y2"] - method_data["y2"][2],
-                        color=method_colors[method], marker='o', linestyle='None')
-
-                xvals = method_data["y1"] - method_data["y1"][2]
-                yvals = method_data["y2"] - method_data["y2"][2]
-
-                if 1.1 * np.abs(xvals).max() > xlim[1]:
-                    xlim[0] = -1.1 * np.abs(xvals).max()
-                    xlim[1] = 1.1 * np.abs(xvals).max()
-                if 1.1 * np.abs(yvals).max() > ylim[1]:
-                    ylim[0] = -1.1 * np.abs(yvals).max()
-                    ylim[1] = 1.1 * np.abs(yvals).max()
-
-                # Calculate and plot an interpolating spline
-                y1_spline = Spline(method_data["x"], xvals)
-                y2_spline = Spline(method_data["x"], yvals)
-
-                if "_err" not in measurement_key:
-                    def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                # Set up the figure
+                fig = pyplot.figure()
+                fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+    
+                ax = fig.add_subplot(1, 1, 1)
+                ax.set_xlabel(r"$\Delta " + measurement_key_1.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
+                ax.set_ylabel(r"$\Delta " + measurement_key_2.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
+    
+                if("m" in measurement_key):
+                    base_target = m_target
                 else:
-                    y1_o_spline = Spline(method_data["x"], method_data["y1_o"] - method_data["y1_o"][2])
-                    y2_o_spline = Spline(method_data["x"], method_data["y2_o"] - method_data["y2_o"][2])
-
-                    def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
-                                             * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
-
-                x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
-
-                y1_spline_vals = y1_spline(x_spline_vals)
-                y2_spline_vals = y2_spline(x_spline_vals)
-
-                if "_big" not in method:
-                    label = method
+                    base_target = c_target
+    
+                target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
+                xlim = [-1.1 * base_target, 1.1 * base_target]
+                ylim = [-1.1 * base_target, 1.1 * base_target]
+    
+                # Plot points for each method
+                for method in args.methods:
+    
+                    # Get the data we saved before
+                    method_data = all_methods_data[(method, "")]
+    
+                    ax.plot(method_data["y1"] - method_data["y1"][2], method_data["y2"] - method_data["y2"][2],
+                            color=method_colors[method], marker='o', linestyle='None')
+    
+                    xvals = method_data["y1"] - method_data["y1"][2]
+                    yvals = method_data["y2"] - method_data["y2"][2]
+    
+                    if 1.1 * np.abs(xvals).max() > xlim[1]:
+                        xlim[0] = -1.1 * np.abs(xvals).max()
+                        xlim[1] = 1.1 * np.abs(xvals).max()
+                    if 1.1 * np.abs(yvals).max() > ylim[1]:
+                        ylim[0] = -1.1 * np.abs(yvals).max()
+                        ylim[1] = 1.1 * np.abs(yvals).max()
+    
+                    # Calculate and plot an interpolating spline
+                    y1_spline = Spline(method_data["x"], xvals)
+                    y2_spline = Spline(method_data["x"], yvals)
+    
+                    if "_err" not in measurement_key:
+                        def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
+                    else:
+                        y1_o_spline = Spline(method_data["x"], method_data["y1_o"] - method_data["y1_o"][2])
+                        y2_o_spline = Spline(method_data["x"], method_data["y2_o"] - method_data["y2_o"][2])
+    
+                        def y_spline(x): return (np.abs(y1_spline(x)) * y1_o_spline(x) + np.abs(y2_spline(x))
+                                                 * y1_o_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
+    
+                    x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
+    
+                    y1_spline_vals = y1_spline(x_spline_vals)
+                    y2_spline_vals = y2_spline(x_spline_vals)
+    
+                    if "_big" not in method:
+                        label = method
+                    else:
+                        label = "Big " + method.replace("_big", "")
+    
+                    ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
+                            label=label)
+    
+                    if False and "_err" not in measurement_key:
+    
+                        # Now try to solve for where it intersects the target lines
+                        limit_label_base = method + "_" + measurement_key
+    
+                        for (target, target_key) in ((base_target, "base"), (20 * base_target, "high")):
+    
+                            limit_label = limit_label_base + "_" + target_key
+                            intersections = {}
+    
+                            for (i, side_label) in ((1, "low"), (3, "high")):
+                                guess = method_data["x"][2] + target / (method_data["y"][i] -
+                                                                        method_data["y"][2]) * (method_data["x"][i] -
+                                                                                                method_data["x"][2])
+                                intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
+    
+                            fractional_limits[limit_label] = (
+                                (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
+    
+                        print(("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
+                               method + " for " + measurement_key + ": " +
+                               str(fractional_limits[limit_label_base + "_base"]) + ",\t" +
+                               str(fractional_limits[limit_label_base + "_high"])))
+    
+                theta_vals = np.linspace(0, 2 * np.pi, 360)
+    
+                ax.set_xlim(xlim)
+                ax.set_ylim(ylim)
+    
+                ax.plot(base_target * np.cos(theta_vals), base_target *
+                        np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
+                ax.plot(20 * base_target * np.cos(theta_vals), 20 * base_target *
+                        np.sin(theta_vals), label=None, color="k", linestyle="dotted")
+                ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+                ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
+    
+                # Show the legend
+                ax.legend(loc="lower right", numpoints=1)
+    
+                # Label it
+                ax.text(0.05, 0.95, testing_data_labels[testing_data_key],
+                        horizontalalignment='left', verticalalignment='top', transform=ax.transAxes,
+                        fontsize=text_size)
+    
+                # Save and show it
+                output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                       testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
+                pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                if not args.hide:
+                    fig.show()
                 else:
-                    label = "Big " + method.replace("_big", "")
-
-                ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
-                        label=label)
-
-                if False and "_err" not in measurement_key:
-
-                    # Now try to solve for where it intersects the target lines
-                    limit_label_base = method + "_" + measurement_key
-
-                    for (target, target_key) in ((base_target, "base"), (20 * base_target, "high")):
-
-                        limit_label = limit_label_base + "_" + target_key
-                        intersections = {}
-
-                        for (i, side_label) in ((1, "low"), (3, "high")):
-                            guess = method_data["x"][2] + target / (method_data["y"][i] -
-                                                                    method_data["y"][2]) * (method_data["x"][i] -
-                                                                                            method_data["x"][2])
-                            intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
-
-                        fractional_limits[limit_label] = (
-                            (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
-
-                    print(("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
-                           method + " for " + measurement_key + ": " +
-                           str(fractional_limits[limit_label_base + "_base"]) + ",\t" +
-                           str(fractional_limits[limit_label_base + "_high"])))
-
-            theta_vals = np.linspace(0, 2 * np.pi, 360)
-
-            ax.set_xlim(xlim)
-            ax.set_ylim(ylim)
-
-            ax.plot(base_target * np.cos(theta_vals), base_target *
-                    np.sin(theta_vals), label=None, color="k", linestyle="dashed",)
-            ax.plot(20 * base_target * np.cos(theta_vals), 20 * base_target *
-                    np.sin(theta_vals), label=None, color="k", linestyle="dotted")
-            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
-            ax.plot([0, 0], ylim, label=None, color="k", linestyle="solid")
-
-            # Show the legend
-            ax.legend(loc="lower right", numpoints=1)
-
-            # Label it
-            ax.text(0.05, 0.95, testing_data_labels[testing_data_key],
-                    horizontalalignment='left', verticalalignment='top', transform=ax.transAxes,
-                    fontsize=text_size)
-
-            # Save and show it
-            output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                   testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
-            pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-            if not args.hide:
-                fig.show()
-            else:
-                pyplot.close()
+                    pyplot.close()
 
         if False:
 
