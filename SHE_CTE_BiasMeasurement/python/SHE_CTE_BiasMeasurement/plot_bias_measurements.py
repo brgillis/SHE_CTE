@@ -367,7 +367,7 @@ def plot_bias_measurements_from_args(args):
                                 if prop_key == "R2":
                                     prop_label = r"$R^2$"
                                 else:
-                                    prop_label = prop_key.lower()0000
+                                    prop_label = prop_key.lower()
                                 ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) +
                                               "$ (relative to " + prop_label +
                                               "=%1.4f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
