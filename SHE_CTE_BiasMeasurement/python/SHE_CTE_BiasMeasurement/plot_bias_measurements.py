@@ -354,7 +354,7 @@ def plot_bias_measurements_from_args(args):
 
                         for index in (1, 2):
 
-                            if ("E" in prop_key) and (index not in prop_key):
+                            if ("E" in prop_key) and (str(index) not in prop_key):
                                 continue
 
                             # Set up the figure
