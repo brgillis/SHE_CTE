@@ -344,6 +344,58 @@ def plot_bias_measurements_from_args(args):
                     else:
                         pyplot.close()
 
+                    # Plot individual indices as well
+                    for index in (1, 2):
+
+                        # Set up the figure
+                        fig = pyplot.figure()
+                        fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+
+                        ax = fig.add_subplot(1, 1, 1)
+                        ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
+                        if calibration_label == "_normed":
+                            ax.set_ylabel(r"$\Delta " + measurement_key + "$ (relative to " +
+                                          testing_data_labels_no_units[testing_data_key] +
+                                          "=%2.2f)" % x_values[testing_data_key][2], fontsize=fontsize)
+                        else:
+                            ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
+
+                        # Plot the values and error bars
+
+                        x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
+
+                        for method in args.methods:
+                            ax.plot(x_vals,
+                                    all_methods_data[(method, calibration_label)]["y" + str(index)],
+                                    color=method_colors[method], marker='o', label=method)
+
+                            ax.errorbar(x_vals,
+                                        all_methods_data[(method, calibration_label)]["y" + str(index)],
+                                        all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"],
+                                        color=method_colors[method], linestyle='None')
+
+                        # Plot zero and limits
+                        xlim = deepcopy(ax.get_xlim())
+                        ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
+                        ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
+                        ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
+                        ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
+                        ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+                        ax.set_xlim(xlim)
+
+                        # Save and show it
+
+                        ax.legend(loc="lower right", numpoints=1)
+                        output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                               testing_data_key + "_" + measurement_key + str(index) +
+                                               calibration_label + "." + args.output_format)
+                        pyplot.savefig(output_filename, format=args.output_format,
+                                       bbox_inches="tight", pad_inches=0.05)
+                        if not args.hide:
+                            fig.show()
+                        else:
+                            pyplot.close()
+
                 # For the PSF, also plot against each other property
                 if testing_data_key == "P" and (measurement_key_template == "mDIM" or
                                                 measurement_key_template == "cDIM") and do_fig:
