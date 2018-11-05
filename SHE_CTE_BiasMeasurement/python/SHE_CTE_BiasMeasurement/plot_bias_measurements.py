@@ -366,7 +366,7 @@ def plot_bias_measurements_from_args(args):
                             if calibration_label == "_normed":
                                 ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) +
                                               "$ (relative to " + prop_key.lower() +
-                                              "=%0.00f)" % psf_properties[prop_key][2], fontsize=fontsize)
+                                              "=%0.00f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
                             else:
                                 ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
 
