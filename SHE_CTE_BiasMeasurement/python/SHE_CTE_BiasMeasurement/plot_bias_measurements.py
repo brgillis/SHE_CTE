@@ -43,7 +43,7 @@ products.shear_bias_measurements.init()
 # matplotlib.rcParams['text.usetex'] = True
 
 testing_data_labels = {"P": "PSF Defocus",
-                       "S": "Sky Level",
+                       "S": "Sky Level (ADU/pixel)",
                        "E": r"$\sigma(e)$"}
 
 tag_template = "Ep0Pp0Sp0"
