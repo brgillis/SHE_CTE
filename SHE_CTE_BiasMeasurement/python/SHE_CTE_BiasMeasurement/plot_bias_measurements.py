@@ -322,9 +322,10 @@ def plot_bias_measurements_from_args(args):
                 if do_fig:
 
                     ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
-                    ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
                     ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
-                    ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
+                    if not calibration_label == "_normed":
+                        ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
+                        ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
                     ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
 
                     # Set the limits and scale
