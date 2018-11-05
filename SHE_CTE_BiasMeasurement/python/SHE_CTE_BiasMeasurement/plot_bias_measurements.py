@@ -428,11 +428,13 @@ def plot_bias_measurements_from_args(args):
                                                 label=method_label)
 
                             # Plot zero and limits
+                            xlim = deepcopy(ax.get_xlim())
                             ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
                             ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
                             ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
                             ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
                             ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
+                            ax.set_xlim(xlim)
 
                             # Save and show it
 
