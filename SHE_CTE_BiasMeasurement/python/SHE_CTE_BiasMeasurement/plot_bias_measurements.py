@@ -46,6 +46,10 @@ testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level (ADU/pixel)",
                        "E": r"$\sigma(e)$"}
 
+testing_data_labels_no_units = {"P": "PSF Defocus",
+                                "S": "Sky Level",
+                                "E": r"$\sigma(e)$"}
+
 tag_template = "Ep0Pp0Sp0"
 
 testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
@@ -175,8 +179,9 @@ def plot_bias_measurements_from_args(args):
                     ax = fig.add_subplot(1, 1, 1)
                     ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
                     if calibration_label == "_normed":
-                        ax.set_ylabel(r"$\Delta " + measurement_key +
-                                      "$ (relative to X=%2.2f)" % x_values[testing_data_key][2], fontsize=fontsize)
+                        ax.set_ylabel(r"$\Delta " + measurement_key + "$ (relative to " +
+                                      testing_data_labels_no_units[testing_data_key] +
+                                      "=%2.2f)" % x_values[testing_data_key][2], fontsize=fontsize)
                     else:
                         ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
@@ -522,7 +527,7 @@ def plot_bias_measurements_from_args(args):
                             fractional_limits[limit_label] = (
                                 (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
 
-                        print(("Fraction limit on " + testing_data_labels[testing_data_key] + " for method " +
+                        print(("Fraction limit on " + testing_data_labels_no_units[testing_data_key] + " for method " +
                                method + " for " + measurement_key + ": " +
                                str(fractional_limits[limit_label_base + "_base"]) + ",\t" +
                                str(fractional_limits[limit_label_base + "_high"])))
@@ -543,7 +548,7 @@ def plot_bias_measurements_from_args(args):
                 ax.legend(loc="lower right", numpoints=1)
 
                 # Label it
-                ax.text(0.05, 0.95, testing_data_labels[testing_data_key],
+                ax.text(0.05, 0.95, testing_data_labels_no_units[testing_data_key],
                         horizontalalignment='left', verticalalignment='top', transform=ax.transAxes,
                         fontsize=text_size)
 
@@ -566,7 +571,7 @@ def plot_bias_measurements_from_args(args):
 
             ax = fig.add_subplot(1, 1, 1)
             ax.set_xlabel("Method", fontsize=fontsize)
-            ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels[testing_data_key], fontsize=fontsize)
+            ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels_no_units[testing_data_key], fontsize=fontsize)
             ax.set_yscale("log", nonposy="clip")
             ax.set_ylim(1e-4, 1e0)
 
