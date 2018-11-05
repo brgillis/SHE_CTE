@@ -176,7 +176,7 @@ def plot_bias_measurements_from_args(args):
                     ax.set_xlabel(testing_data_labels[testing_data_key], fontsize=fontsize)
                     if calibration_label == "_normed":
                         ax.set_ylabel(r"$\Delta " + measurement_key +
-                                      "$ (relative to X=%0.00f)" % x_values[testing_data_key][2], fontsize=fontsize)
+                                      "$ (relative to X=%00.00f)" % x_values[testing_data_key][2], fontsize=fontsize)
                     else:
                         ax.set_ylabel("$" + measurement_key.replace("_err", r"_{\rm err}") + "$", fontsize=fontsize)
 
@@ -370,7 +370,7 @@ def plot_bias_measurements_from_args(args):
                                     prop_label = prop_key.lower()
                                 ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) +
                                               "$ (relative to " + prop_label +
-                                              "=%0.0000f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
+                                              "=%00.0000f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
                             else:
                                 ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
 
