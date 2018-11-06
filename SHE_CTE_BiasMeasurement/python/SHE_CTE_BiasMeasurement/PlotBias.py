@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2018-08-31"
+__updated__ = "2018-11-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,10 +23,11 @@ __updated__ = "2018-08-31"
 import argparse
 import os
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
 import numpy as np
 
 
@@ -62,6 +63,12 @@ def defineSpecificProgramOptions():
                         help="File format (and extension) of created images.")
     parser.add_argument('--hide', action="store_true",
                         help="If set, will not display plots when they are generated.")
+    parser.add_argument('--plot_error', action="store_true",
+                        help="If set, will also plot errors for all parameters.")
+    parser.add_argument('--normed_only', action="store_true",
+                        help="If set, will only show normed plots.")
+    parser.add_argument('--unnormed_only', action="store_true",
+                        help="If set, will only show unnormed plots.")
 
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
@@ -92,7 +99,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.9 SHE_CTE_PlotBias",
-                                    store_true=["profile", "debug", "hide"])
+                                    store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 

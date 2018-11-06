@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-09-27"
+__updated__ = "2018-10-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,6 +20,7 @@ __updated__ = "2018-09-27"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from _pickle import UnpicklingError
 import os
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -27,12 +28,12 @@ from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements
+from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config
 import numpy as np
 
 
-bootstrap_threshold = 10
+bootstrap_threshold = 50
 
 archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
 webdav_dir_key = "SHE_CTE_MeasureBias_webdav_dir"
@@ -46,6 +47,7 @@ class MethodStatisticsList(object):
     def __init__(self):
         self.g1_statistics_list = []
         self.g2_statistics_list = []
+        self.bfd_statistics_list = []
 
 
 def measure_bias_from_args(args):
@@ -83,49 +85,69 @@ def measure_bias_from_args(args):
             else:
                 raise ValueError("Unexpected format of shear statistics listfile.")
 
-        shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
+        try:
+            shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
+        except (EOFError, UnpicklingError) as e:
+            logger.warn("File " + os.path.join(args.workdir, shear_statistics_file) + " seems to be corrupted: " +
+                        str(e))
+            continue
 
         for method in mv.estimation_methods:
+
             method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
-            if method_shear_statistics[0] is not None:
-                method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
-            if method_shear_statistics[1] is not None:
-                method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
+
+            if not method == "BFD":
+                # get info for method if not BFD
+                if method_shear_statistics[0] is not None:
+                    method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
+                if method_shear_statistics[1] is not None:
+                    method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
+            else:
+                # get info for BFD method
+                if method_shear_statistics is not None:
+                    method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics)
 
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
 
     for method in mv.estimation_methods:
 
-        if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
-            # We have enough data to calculate bootstrap errors
-            if method=="LensMC":
-                for stats in method_shear_statistics_lists[method].g1_statistics_list:
-                    stats.w = 1
-            g1_bias_measurements = calculate_bootstrap_bias_measurements(
-                method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
+        if not method == "BFD":
+            # do bias measurement for all methods but BFD
+            if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
+                # We have enough data to calculate bootstrap errors
+                g1_bias_measurements = calculate_bootstrap_bias_measurements(
+                    method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
 
-        elif len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
-            # Not enough for bootstrap errors - calculate simply
-            g1_bias_measurements = BiasMeasurements(
-                combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+            elif len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
+                # Not enough for bootstrap errors - calculate simply
+                g1_bias_measurements = BiasMeasurements(
+                    combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
+            else:
+                g1_bias_measurements = None
+
+            if len(method_shear_statistics_lists[method].g2_statistics_list) >= bootstrap_threshold:
+                # We have enough data to calculate bootstrap errors
+                g2_bias_measurements = calculate_bootstrap_bias_measurements(
+                    method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
+
+            elif len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
+                # Not enough for bootstrap errors - calculate simply
+                g2_bias_measurements = BiasMeasurements(
+                    combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
+            else:
+                g2_bias_measurements = None
+
         else:
-            g1_bias_measurements = None
-
-        if len(method_shear_statistics_lists[method].g2_statistics_list) >= bootstrap_threshold:
-            # We have enough data to calculate bootstrap errors
-            if method=="LensMC":
-                for stats in method_shear_statistics_lists[method].g2_statistics_list:
-                    stats.w = 1
-            g2_bias_measurements = calculate_bootstrap_bias_measurements(
-                method_shear_statistics_lists[method].g2_statistics_list, seed=args.bootstrap_seed)
-
-        elif len(method_shear_statistics_lists[method].g2_statistics_list) > 0:
-            # Not enough for bootstrap errors - calculate simply
-            g2_bias_measurements = BiasMeasurements(
-                combine_linregress_statistics(method_shear_statistics_lists[method].g2_statistics_list))
-        else:
-            g2_bias_measurements = None
+            # do bias measurement for BFD
+            if len(method_shear_statistics_lists[method].bfd_statistics_list) > 0:
+                g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                    method_shear_statistics_lists[method].bfd_statistics_list, do_g1=True))
+                g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                    method_shear_statistics_lists[method].bfd_statistics_list, do_g1=False))
+            else:
+                g1_bias_measurements = None
+                g2_bias_measurements = None
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 
