@@ -156,7 +156,10 @@ def plot_psf_sensitivity_from_args(args):
 
         for testing_data_key in testing_data_labels:
 
-            tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
+            if testing_variant == "p0":
+                tag = "Pp0"
+            else:
+                tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
             read_bias_measurements(tag)
 
     # Plot the biases and errors for each measurement
@@ -215,7 +218,10 @@ def plot_psf_sensitivity_from_args(args):
 
                         # Get the tag for this variant
                         testing_variant = testing_variant_labels[i]
-                        tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
+                        if testing_variant == "p0":
+                            tag = "Pp0"
+                        else:
+                            tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
 
                         # Set the x value
                         lx.append(x_values[testing_data_key][i] + method_offsets[method] *
