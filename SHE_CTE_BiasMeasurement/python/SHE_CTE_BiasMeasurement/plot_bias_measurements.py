@@ -1,9 +1,11 @@
-""" @file measurement_extraction.py
+""" @file plot_bias_measurements.py
 
     Created 26 Apr 2017
 
     Main function to plot bias measurements.
 """
+
+__updated__ = "2018-11-07"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -35,12 +37,6 @@ psf_gal_size_ratio = (0.2 / 0.3)**2
 def Spline(*args, **kwargs):
     return InterpolatedUnivariateSpline(*args, k=1, **kwargs)
 
-
-products.shear_bias_measurements.init()
-
-# matplotlib.rcParams['ps.useafm'] = True
-# matplotlib.rcParams['pdf.use14corefonts'] = True
-# matplotlib.rcParams['text.usetex'] = True
 
 testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level (ADU/pixel)",
