@@ -1,4 +1,4 @@
-""" @file plot_bias_measurements.py
+""" @file plot_psf_sensitivity.py
 
     Created 26 Apr 2017
 
@@ -39,25 +39,32 @@ def Spline(*args, **kwargs):
 
 
 testing_data_labels = {"P": "PSF Defocus",
-                       "S": "Sky Level (ADU/pixel)",
-                       "E": r"$\sigma(e)$"}
+                       "L": "PSF Equivalent Defocus (varying size)",
+                       "U": "PSF Defocus (constant size)",
+                       "S": "PSF Equivalent Defocus (varying shape)",
+                       "R": "PSF Defocus (constant shape)",
+                       "X": "PSF Defocus (constant size and shape)", }
 
 testing_data_labels_no_units = {"P": "PSF Defocus",
-                                "S": "Sky Level",
-                                "E": r"$\sigma(e)$"}
+                                "L": "PSF Equivalent Defocus (varying size)",
+                                "U": "PSF Defocus (constant size)",
+                                "S": "PSF Equivalent Defocus (varying shape)",
+                                "R": "PSF Defocus (constant shape)",
+                                "X": "PSF Defocus (constant size and shape)", }
 
-tag_template = "Ep0Pp0Sp0"
+filename_tags = {"P": "psf_defocus",
+                 "L": "psf_size",
+                 "U": "psf_defocus_same_size",
+                 "S": "psf_shape",
+                 "R": "psf_defocus_same_shape",
+                 "X": "psf_defocus_same_size_same_shape", }
+
+tag_template = "Pp0"
 
 testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
-
-x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
-            "S": [45.52, 45.61, 45.71, 45.80,  45.90],
-            "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
-                  0.27099491059570091, 0.30241731263684996],
-            }
 
 psf_sizes = [3.4650847911834717, 3.4410696029663086, 3.437717914581299, 3.4388890266418457, 3.457798719406128]
 psf_e1s = [-0.026677351839757016, -0.015707015526647293, -
@@ -65,17 +72,32 @@ psf_e1s = [-0.026677351839757016, -0.015707015526647293, -
 psf_e2s = [-0.00133671593078985, -0.0021742508792400757, -
            0.0025054379672887783, -0.0028106944785056443, -0.0033976166026231545]
 
+x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "L": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "U": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "S": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "R": [0.98, 0.998, 1.0, 1.002, 1.02],
+            "X": [0.98, 0.998, 1.0, 1.002, 1.02],
+            }
+
 psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
                   "E1": (r"PSF $e_1$", psf_e1s),
                   "E2": (r"PSF $e_2$", psf_e2s)}
 
 x_ranges = {"P": [0.975, 1.025],
-            "S": [45.50, 45.92],
-            "E": [0.170, 0.315]}
+            "L": [0.975, 1.025],
+            "U": [0.975, 1.025],
+            "S": [0.975, 1.025],
+            "R": [0.975, 1.025],
+            "X": [0.975, 1.025], }
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
-                        "S": {"m": 32, "c": 20},
-                        "E": {"m": 24,  "c": 32}, }
+                        "L": {"m": 64, "c": 32},
+                        "U": {"m": 64, "c": 32},
+                        "S": {"m": 64, "c": 32},
+                        "R": {"m": 64, "c": 32},
+                        "X": {"m": 64, "c": 32},
+                        }
 
 y_range = (1e-6, 5e-1)
 
@@ -110,7 +132,7 @@ fontsize = 12
 text_size = 18
 
 
-def plot_bias_measurements_from_args(args):
+def plot_psf_sensitivity_from_args(args):
     """ @TODO main docstring
     """
 
@@ -132,14 +154,13 @@ def plot_bias_measurements_from_args(args):
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
 
-        e_tag = tag_template.replace("Ep0", "E" + testing_variant)
-        read_bias_measurements(e_tag)
+        for testing_data_key in testing_data_labels:
 
-        p_tag = tag_template.replace("Pp0", "P" + testing_variant)
-        read_bias_measurements(p_tag)
-
-        s_tag = tag_template.replace("Sp0", "S" + testing_variant)
-        read_bias_measurements(s_tag)
+            if testing_variant == "p0":
+                tag = "Pp0"
+            else:
+                tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
+            read_bias_measurements(tag)
 
     # Plot the biases and errors for each measurement
     for testing_data_key in testing_data_labels:
@@ -197,7 +218,10 @@ def plot_bias_measurements_from_args(args):
 
                         # Get the tag for this variant
                         testing_variant = testing_variant_labels[i]
-                        tag = tag_template.replace(testing_data_key + "p0", testing_data_key + testing_variant)
+                        if testing_variant == "p0":
+                            tag = "Pp0"
+                        else:
+                            tag = tag_template.replace("Pp0", testing_data_key + testing_variant)
 
                         # Set the x value
                         lx.append(x_values[testing_data_key][i] + method_offsets[method] *
@@ -251,7 +275,7 @@ def plot_bias_measurements_from_args(args):
                         y_errs = None
                     elif calibration_label == "_normed":
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
-                        # Carry over errors from previoius run, on unnormed data
+                        # Carry over errors from previous run, on unnormed data
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
@@ -332,8 +356,8 @@ def plot_bias_measurements_from_args(args):
 
                     # Save and show it
                     output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                           testing_data_key + "_" + measurement_key + calibration_label + "." +
-                                           args.output_format)
+                                           filename_tags[testing_data_key] + "_" + measurement_key +
+                                           calibration_label + "." + args.output_format)
                     pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
                     if not args.hide:
                         fig.show()
@@ -383,7 +407,7 @@ def plot_bias_measurements_from_args(args):
 
                         ax.legend(loc="lower right", numpoints=1)
                         output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                               testing_data_key + "_" + measurement_key + str(index) +
+                                               filename_tags[testing_data_key] + "_" + measurement_key + str(index) +
                                                calibration_label + "." + args.output_format)
                         pyplot.savefig(output_filename, format=args.output_format,
                                        bbox_inches="tight", pad_inches=0.05)
@@ -393,8 +417,7 @@ def plot_bias_measurements_from_args(args):
                             pyplot.close()
 
                 # For the PSF, also plot against each other property
-                if testing_data_key == "P" and (measurement_key_template == "mDIM" or
-                                                measurement_key_template == "cDIM") and do_fig:
+                if do_fig:
 
                     for prop_key in psf_properties:
 
@@ -488,8 +511,9 @@ def plot_bias_measurements_from_args(args):
 
                             ax.legend(loc="lower right", numpoints=1)
                             output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                                   testing_data_key + "_" + measurement_key + str(index) + "_" +
-                                                   prop_key + calibration_label + "." + args.output_format)
+                                                   filename_tags[testing_data_key] + "_" + measurement_key +
+                                                   str(index) + "_" + prop_key + calibration_label + "." +
+                                                   args.output_format)
                             pyplot.savefig(output_filename, format=args.output_format,
                                            bbox_inches="tight", pad_inches=0.05)
                             if not args.hide:
@@ -609,7 +633,8 @@ def plot_bias_measurements_from_args(args):
 
                 # Save and show it
                 output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                       testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
+                                       filename_tags[testing_data_key] + "_" + measurement_key + "_2D." +
+                                       args.output_format)
                 pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
                 if not args.hide:
                     fig.show()
@@ -655,7 +680,7 @@ def plot_bias_measurements_from_args(args):
 
             # Save and show it
             output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                   testing_data_key + "_fractional_limits." + args.output_format)
+                                   filename_tags[testing_data_key] + "_fractional_limits." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
 #         if not args.hide:
 #             fig.show()
