@@ -22,7 +22,7 @@ __updated__ = "2018-11-07"
 
 import argparse
 
-from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
+from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
@@ -106,7 +106,7 @@ def mainMethod(args):
                          "args": args, },
                         filename="plot_bias_measurements.prof")
     else:
-        plot_bias_measurements_from_args(args)
+        plot_psf_sensitivity_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_PlotPsfSensitivity mainMethod()')
 
