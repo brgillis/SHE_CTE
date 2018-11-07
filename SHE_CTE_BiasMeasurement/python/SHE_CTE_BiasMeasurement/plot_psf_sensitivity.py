@@ -39,16 +39,16 @@ def Spline(*args, **kwargs):
 
 
 testing_data_labels = {"P": "PSF Defocus",
-                       "L": "PSF $R^2$",
+                       "L": "PSF Equivalent Defocus (varying size)",
                        "U": "PSF Defocus (constant size)",
-                       "S": "PSF Shape ($e_1$ shown)",
+                       "S": "PSF Equivalent Defocus (varying shape)",
                        "R": "PSF Defocus (constant shape)",
                        "X": "PSF Defocus (constant size and shape)", }
 
 testing_data_labels_no_units = {"P": "PSF Defocus",
-                                "L": "PSF $R^2$ (pixels^2)",
+                                "L": "PSF Equivalent Defocus (varying size)",
                                 "U": "PSF Defocus (constant size)",
-                                "S": "PSF Shape ($e_1$ shown)",
+                                "S": "PSF Equivalent Defocus (varying shape)",
                                 "R": "PSF Defocus (constant shape)",
                                 "X": "PSF Defocus (constant size and shape)", }
 
@@ -73,9 +73,9 @@ psf_e2s = [-0.00133671593078985, -0.0021742508792400757, -
            0.0025054379672887783, -0.0028106944785056443, -0.0033976166026231545]
 
 x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
-            "L": np.square(psf_sizes),
+            "L": [0.98, 0.998, 1.0, 1.002, 1.02],
             "U": [0.98, 0.998, 1.0, 1.002, 1.02],
-            "S": psf_e1s,
+            "S": [0.98, 0.998, 1.0, 1.002, 1.02],
             "R": [0.98, 0.998, 1.0, 1.002, 1.02],
             "X": [0.98, 0.998, 1.0, 1.002, 1.02],
             }
@@ -85,9 +85,9 @@ psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
                   "E2": (r"PSF $e_2$", psf_e2s)}
 
 x_ranges = {"P": [0.975, 1.025],
-            "L": [3.435**2, 3.467**2],
+            "L": [0.975, 1.025],
             "U": [0.975, 1.025],
-            "S": [-0.028, 0.007],
+            "S": [0.975, 1.025],
             "R": [0.975, 1.025],
             "X": [0.975, 1.025], }
 
@@ -417,8 +417,7 @@ def plot_psf_sensitivity_from_args(args):
                             pyplot.close()
 
                 # For the PSF, also plot against each other property
-                if testing_data_key == "P" and (measurement_key_template == "mDIM" or
-                                                measurement_key_template == "cDIM") and do_fig:
+                if do_fig:
 
                     for prop_key in psf_properties:
 
