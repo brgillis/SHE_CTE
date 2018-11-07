@@ -52,6 +52,13 @@ testing_data_labels_no_units = {"P": "PSF Defocus",
                                 "R": "PSF Defocus (constant shape)",
                                 "X": "PSF Defocus (constant size and shape)", }
 
+filename_tags = {"P": "psf_defocus",
+                 "L": "psf_size",
+                 "U": "psf_defocus_same_size",
+                 "S": "psf_shape",
+                 "R": "psf_defocus_same_shape",
+                 "X": "psf_defocus_same_size_same_shape", }
+
 tag_template = "Pp0"
 
 testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
@@ -343,8 +350,8 @@ def plot_psf_sensitivity_from_args(args):
 
                     # Save and show it
                     output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                           testing_data_key + "_" + measurement_key + calibration_label + "." +
-                                           args.output_format)
+                                           filename_tags[testing_data_key] + "_" + measurement_key +
+                                           calibration_label + "." + args.output_format)
                     pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
                     if not args.hide:
                         fig.show()
@@ -394,7 +401,7 @@ def plot_psf_sensitivity_from_args(args):
 
                         ax.legend(loc="lower right", numpoints=1)
                         output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                               testing_data_key + "_" + measurement_key + str(index) +
+                                               filename_tags[testing_data_key] + "_" + measurement_key + str(index) +
                                                calibration_label + "." + args.output_format)
                         pyplot.savefig(output_filename, format=args.output_format,
                                        bbox_inches="tight", pad_inches=0.05)
@@ -499,8 +506,9 @@ def plot_psf_sensitivity_from_args(args):
 
                             ax.legend(loc="lower right", numpoints=1)
                             output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                                   testing_data_key + "_" + measurement_key + str(index) + "_" +
-                                                   prop_key + calibration_label + "." + args.output_format)
+                                                   filename_tags[testing_data_key] + "_" + measurement_key +
+                                                   str(index) + "_" + prop_key + calibration_label + "." +
+                                                   args.output_format)
                             pyplot.savefig(output_filename, format=args.output_format,
                                            bbox_inches="tight", pad_inches=0.05)
                             if not args.hide:
@@ -620,7 +628,8 @@ def plot_psf_sensitivity_from_args(args):
 
                 # Save and show it
                 output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                       testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
+                                       filename_tags[testing_data_key] + "_" + measurement_key + "_2D." +
+                                       args.output_format)
                 pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
                 if not args.hide:
                     fig.show()
@@ -666,7 +675,7 @@ def plot_psf_sensitivity_from_args(args):
 
             # Save and show it
             output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                   testing_data_key + "_fractional_limits." + args.output_format)
+                                   filename_tags[testing_data_key] + "_fractional_limits." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
 #         if not args.hide:
 #             fig.show()
