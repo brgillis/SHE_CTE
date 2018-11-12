@@ -180,7 +180,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
 
-    gal_sigs = [0.5, 1.0, 2.0, 5.0, 10.0]
+    gal_sigs = [5.0, 2.0, 0.5, 10.0]
 
     for gal_sig in gal_sigs:
 
