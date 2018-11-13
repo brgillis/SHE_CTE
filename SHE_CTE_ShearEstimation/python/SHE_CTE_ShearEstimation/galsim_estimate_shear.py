@@ -359,8 +359,9 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
 
-        # Note the galaxy scale in the stamp's header
+        # Note the galaxy scale and gain in the stamp's header
         stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+        stacked_gal_stamp.header[gain_label] = data_stack.stacked_image.header[gain_label]
 
         shear_estimate = get_shear_estimate(stacked_gal_stamp,
                                             stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
