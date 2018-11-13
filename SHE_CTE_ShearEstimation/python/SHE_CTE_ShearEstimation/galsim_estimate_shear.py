@@ -24,7 +24,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label
+from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
@@ -52,6 +52,15 @@ class ShearEstimate(object):
         self.snr = snr
         self.x = x
         self.y = y
+
+
+snr_cutoff = 15
+downweight_error = 0.5
+downweight_power = 4
+
+
+def downweight_error(snr):
+    return downweight_error / (1 + (snr / snr_cutoff)**downweight_power)
 
 
 @run_only_once
@@ -135,7 +144,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate, scale):
                                    galsim_shear_estimate.corrected_g2,
                                    galsim_shear_estimate.corrected_shape_err,
                                    galsim_shear_estimate.moments_sigma * scale,
-                                   galsim_shear_estimate.moments_amp,
+                                   -1,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
 
@@ -161,7 +170,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
 
     shear_estimate = ShearEstimate(g1, g2, gerr,
                                    galsim_shear_estimate.moments_sigma * scale,
-                                   galsim_shear_estimate.moments_amp,
+                                   -1,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
 
@@ -200,6 +209,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                 resampled_gal_stamp_size = 50
             else:
                 continue
+
+    # Calculate the galaxy's S/N
+    a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
+    gain = gal_stamp.header[gain_label]
+    signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
+                                                            (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
@@ -241,6 +256,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                             ((resampled_gal_stamp.shape[0] / 2 - shear_estimate.x) * psf_scale / gal_scale))
         shear_estimate.y = (gal_stamp.shape[1] / 2 -
                             ((resampled_gal_stamp.shape[1] / 2 - shear_estimate.y) * psf_scale / gal_scale))
+
+        # Set the proper snr for the estimate, and use it to downweight as appropriate
+        shear_estimate.snr = signal_to_noise
+        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + downweight_error(signal_to_noise))
 
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
