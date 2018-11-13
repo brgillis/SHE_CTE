@@ -59,7 +59,7 @@ downweight_error = 0.5
 downweight_power = 4
 
 
-def downweight_error(snr):
+def get_downweight_error(snr):
     return downweight_error / (1 + (snr / snr_cutoff)**downweight_power)
 
 
@@ -259,7 +259,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
         # Set the proper snr for the estimate, and use it to downweight as appropriate
         shear_estimate.snr = signal_to_noise
-        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + downweight_error(signal_to_noise))
+        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + get_downweight_error(signal_to_noise))
 
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
