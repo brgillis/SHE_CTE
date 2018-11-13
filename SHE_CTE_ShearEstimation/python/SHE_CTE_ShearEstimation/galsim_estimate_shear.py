@@ -199,7 +199,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                                      (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
                                                  guess_sig=gal_sig,)
 
-            resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
+            resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale /
+                                           psf_scale)    # Calculate the galaxy's S/N
+            a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
+            gain = gal_stamp.header[gain_label]
+            signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
+                                                                    (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
             break
         except RuntimeError as e:
             if ("HSM Error" not in str(e)):
@@ -207,14 +212,9 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
             elif gal_sig == 10.0:
                 # If it fails, it's probably because the galaxy is small, so a small size will suffice
                 resampled_gal_stamp_size = 50
+                signal_to_noise = 0
             else:
                 continue
-
-    # Calculate the galaxy's S/N
-    a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
-    gain = gal_stamp.header[gain_label]
-    signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
-                                                            (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
