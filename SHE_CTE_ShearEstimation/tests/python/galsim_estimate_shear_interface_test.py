@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2018-08-06"
+__updated__ = "2018-11-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,7 +20,9 @@ __updated__ = "2018-08-06"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from copy import deepcopy
 from os.path import join
+
 
 from SHE_PPT.file_io import read_pickled_product, find_file
 from SHE_PPT.table_formats.shear_estimates import tf as setf
@@ -53,6 +55,7 @@ class TestCase:
         
         # Read in the test data
         she_frame = read_pickled_product(find_file(she_frame_location))
+        original_she_frame = deepcopy(she_frame)
         ksb_training_data= read_pickled_product(find_file(ksb_training_location))
         
         ksb_cat = KSB_estimate_shear(she_frame,
@@ -67,6 +70,9 @@ class TestCase:
                 if not (g>-1 and g<1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
                 
+        # Check that the input data isn't changed by the method
+        assert she_frame==original_she_frame
+                
         return
 
     def test_regauss(self):
@@ -75,6 +81,7 @@ class TestCase:
         
         # Read in the test data
         she_frame = read_pickled_product(find_file(she_frame_location))
+        original_she_frame = deepcopy(she_frame)
         regauss_training_data= read_pickled_product(find_file(regauss_training_location))
         
         regauss_cat = REGAUSS_estimate_shear(she_frame,
@@ -88,5 +95,8 @@ class TestCase:
                 g = row[colname]
                 if not (g>-1 and g<1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
+                
+        # Check that the input data isn't changed by the method
+        assert she_frame==original_she_frame
                 
         return
