@@ -5,7 +5,7 @@
     Main program for plotting PSF sensitivity
 """
 
-__updated__ = "2018-11-07"
+__updated__ = "2018-11-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,9 +22,10 @@ __updated__ = "2018-11-07"
 
 import argparse
 
-from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 
 
 def defineSpecificProgramOptions():
@@ -94,7 +95,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_PlotPsfSensitivity mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_PlotPsfSensitivity",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_PlotPsfSensitivity",
                                     store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -102,7 +103,7 @@ def mainMethod(args):
     if args.profile:
         import cProfile
         cProfile.runctx("plot_bias_measurements_from_args(args)", {},
-                        {"plot_bias_measurements_from_args": plot_bias_measurements_from_args,
+                        {"plot_bias_measurements_from_args": plot_psf_sensitivity_from_args,
                          "args": args, },
                         filename="plot_bias_measurements.prof")
     else:

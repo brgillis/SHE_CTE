@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2018-11-02"
+__updated__ = "2018-11-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -98,7 +98,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_PlotBias mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_PlotBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_PlotBias",
                                     store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

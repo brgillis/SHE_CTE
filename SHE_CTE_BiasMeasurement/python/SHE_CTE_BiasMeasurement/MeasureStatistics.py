@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-08-31"
+__updated__ = "2018-11-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,10 +25,11 @@ __updated__ = "2018-08-31"
 
 import argparse
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
 
 
 def defineSpecificProgramOptions():
@@ -99,7 +100,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.5 SHE_CTE_MeasureStatistics",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_MeasureStatistics",
                                     store_true=["profile", "debug", "webdav_archive"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
