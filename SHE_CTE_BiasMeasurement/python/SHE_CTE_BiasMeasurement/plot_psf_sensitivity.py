@@ -4,8 +4,19 @@
 
     Main function to plot bias measurements.
 """
+from copy import deepcopy
+from os.path import join
 
-__updated__ = "2018-11-07"
+from SHE_CTE_BiasMeasurement.plot_bias_measurements import testing_data_labels
+from SHE_PPT import products
+from SHE_PPT.file_io import read_xml_product
+import matplotlib.pyplot as pyplot
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import fsolve
+
+
+__updated__ = "2018-11-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,16 +31,6 @@ __updated__ = "2018-11-07"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from copy import deepcopy
-from os.path import join
-
-from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product
-import matplotlib.pyplot as pyplot
-import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import fsolve
-
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
 
@@ -39,18 +40,20 @@ def Spline(*args, **kwargs):
 
 
 testing_data_labels = {"P": "PSF Defocus",
-                       "L": "PSF Equivalent Defocus (varying size)",
-                       "U": "PSF Defocus (constant size)",
-                       "S": "PSF Equivalent Defocus (varying shape)",
-                       "R": "PSF Defocus (constant shape)",
-                       "X": "PSF Defocus (constant size and shape)", }
+                       "L": "PSF Equivalent Defocus",
+                       "U": "PSF Defocus",
+                       "S": "PSF Equivalent Defocus",
+                       "R": "PSF Defocus",
+                       "X": "PSF Defocus", }
 
-testing_data_labels_no_units = {"P": "PSF Defocus",
-                                "L": "PSF Equivalent Defocus (varying size)",
-                                "U": "PSF Defocus (constant size)",
-                                "S": "PSF Equivalent Defocus (varying shape)",
-                                "R": "PSF Defocus (constant shape)",
-                                "X": "PSF Defocus (constant size and shape)", }
+testing_data_labels_no_units = testing_data_labels
+
+titles = {"P": "Varying Defocus",
+          "L": "Varying Size",
+          "U": "Varying Defocus, Size Kept Constant",
+          "S": "Varying Shape",
+          "R": "Varying Defocus, Shape Kept Constant",
+          "X": "Varying Defocus, Size and Shape Kept Constant", }
 
 filename_tags = {"P": "psf_defocus",
                  "L": "psf_size",
@@ -341,6 +344,8 @@ def plot_psf_sensitivity_from_args(args):
 
                 if do_fig:
 
+                    pyplot.title(titles[testing_data_key])
+
                     ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
                     ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
                     ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
@@ -394,8 +399,12 @@ def plot_psf_sensitivity_from_args(args):
                                         all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"],
                                         color=method_colors[method], linestyle='None')
 
+                        # Write the title
+                        pyplot.title(titles[testing_data_key])
+
                         # Plot zero and limits
                         xlim = deepcopy(ax.get_xlim())
+
                         ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
                         ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
                         ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
@@ -436,17 +445,25 @@ def plot_psf_sensitivity_from_args(args):
                             fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
                             ax = fig.add_subplot(1, 1, 1)
-                            ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
-                            if calibration_label == "_normed":
-                                if prop_key == "R2":
+                            if prop_key == "R2":
+                                if testing_data_key in ("U", "S", "X"):
+                                    prop_label = r"Equivalent PSF $R^2$"
+                                else:
                                     prop_label = r"$R^2$"
+                                prop_label_short = r"$R^2$"
+                            else:
+                                if testing_data_key in ("L", "R", "X"):
+                                    prop_label = "Equivalent PSF " + prop_key.lower()
                                 else:
                                     prop_label = prop_key.lower()
+                                prop_label_short = prop_key.lower()
+                            if calibration_label == "_normed":
                                 ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) +
-                                              "$ (relative to " + prop_label +
+                                              "$ (relative to " + prop_label_short +
                                               "=%1.4f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
                             else:
                                 ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
+                            ax.set_xlabel(prop_label, fontsize=fontsize)
 
                             # Plot the values and error bars
 
@@ -454,14 +471,34 @@ def plot_psf_sensitivity_from_args(args):
                                                         np.max(psf_properties[prop_key][1]), 100)
 
                             for method in args.methods:
-                                ax.plot(psf_properties[prop_key][1],
-                                        all_methods_data[(method, calibration_label)]["y" + str(index)],
-                                        color=method_colors[method], marker='o', label=method)
+                                # If plotting against R2 and varying size, we'll want to sort first
+                                if prop_key == "R2":
+                                    x_y_ye_zip = zip(psf_properties[prop_key][1],
+                                                     all_methods_data[(method, calibration_label)]["y" + str(index)],
+                                                     all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"])
 
-                                ax.errorbar(psf_properties[prop_key][1],
+                                    sorted_x_y_ye_zip = sorted(x_y_ye_zip, key=lambda tup: tup[0])
+
+                                    x, y, y_err = zip(*sorted_x_y_ye_zip)
+
+                                if prop_key == "R2" and testing_data_key == "S":
+
+                                    ax.plot(x, y,
+                                            color=method_colors[method], marker='o', label=method)
+
+                                    ax.errorbar(x, y, y_err,
+                                                color=method_colors[method], linestyle='None')
+
+                                else:
+                                    ax.plot(psf_properties[prop_key][1],
                                             all_methods_data[(method, calibration_label)]["y" + str(index)],
-                                            all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"],
-                                            color=method_colors[method], linestyle='None')
+                                            color=method_colors[method], marker='o', label=method)
+
+                                    ax.errorbar(psf_properties[prop_key][1],
+                                                all_methods_data[(method, calibration_label)]["y" + str(index)],
+                                                all_methods_data[(method, calibration_label)
+                                                                 ]["y" + str(index) + "_err"],
+                                                color=method_colors[method], linestyle='None')
 
                                 # Plot expected values
                                 if calibration_label == "" or method_colors[method] == "k":
@@ -469,18 +506,22 @@ def plot_psf_sensitivity_from_args(args):
                                         method_label = "Ex. " + method
                                     else:
                                         method_label = "Expected"
-                                    if measurement_key_template == "mDIM" and prop_key == "R2":
-                                        r2_diff = 1 - np.array(psf_sizes)**2 / psf_sizes[2]**2
+                                    if (measurement_key_template == "mDIM" and prop_key == "R2" and
+                                        (testing_data_key == "P" or testing_data_key == "L" or
+                                         testing_data_key == "R")):
+                                        r2_diff = 1 - np.array(x) / psf_sizes[2]**2
                                         ex_m0 = r2_diff * psf_gal_size_ratio
                                         ex_m = (1 + ex_m0) * \
                                             (1 + all_methods_data[(method, calibration_label)]
                                              ["y" + str(index)][2]) - 1
 
-                                        ax.plot(np.square(psf_sizes), ex_m,
+                                        ax.plot(x, ex_m,
                                                 color=method_colors[method], marker='.', linestyle='dotted',
                                                 label=method_label)
 
-                                    if measurement_key_template == "cDIM" and prop_key == "E1" and index == 1:
+                                    if (measurement_key_template == "cDIM" and prop_key == "E1" and index == 1 and
+                                        (testing_data_key == "P" or testing_data_key == "U" or
+                                         testing_data_key == "S")):
                                         e1_diff = np.array(psf_e1s) - psf_e1s[2]
                                         ex_c1 = e1_diff * psf_gal_size_ratio + \
                                             all_methods_data[(method, calibration_label)]["y1"][2]
@@ -489,7 +530,9 @@ def plot_psf_sensitivity_from_args(args):
                                                 color=method_colors[method], marker='.', linestyle='dotted',
                                                 label=method_label)
 
-                                    if measurement_key_template == "cDIM" and prop_key == "E2" and index == 2:
+                                    if (measurement_key_template == "cDIM" and prop_key == "E2" and index == 2 and
+                                        (testing_data_key == "P" or testing_data_key == "U" or
+                                         testing_data_key == "S")):
                                         e2_diff = np.array(psf_e2s) - psf_e2s[2]
                                         ex_c2 = e2_diff * psf_gal_size_ratio + \
                                             all_methods_data[(method, calibration_label)]["y2"][2]
@@ -497,6 +540,9 @@ def plot_psf_sensitivity_from_args(args):
                                         ax.plot(psf_e2s, ex_c2,
                                                 color=method_colors[method], marker='.', linestyle='dotted',
                                                 label=method_label)
+
+                            # Write the title
+                            pyplot.title(titles[testing_data_key])
 
                             # Plot zero and limits
                             xlim = deepcopy(ax.get_xlim())
@@ -611,6 +657,10 @@ def plot_psf_sensitivity_from_args(args):
                                str(fractional_limits[limit_label_base + "_base"]) + ",\t" +
                                str(fractional_limits[limit_label_base + "_high"])))
 
+                # Write the title
+                pyplot.title(titles[testing_data_key])
+
+                # Draw limit circles
                 theta_vals = np.linspace(0, 2 * np.pi, 360)
 
                 ax.set_xlim(xlim)
@@ -648,6 +698,9 @@ def plot_psf_sensitivity_from_args(args):
             # Set up the figure
             fig = pyplot.figure()
             fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+
+            # Write the title
+            pyplot.title(titles[testing_data_key])
 
             ax = fig.add_subplot(1, 1, 1)
             ax.set_xlabel("Method", fontsize=fontsize)
