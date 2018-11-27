@@ -18,13 +18,13 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from SHE_PPT.magic_values import scale_label, gain_label
+from SHE_PPT.she_image import SHEImage
 import galsim
 import pytest
 
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
                                                            get_shear_estimate)
-from SHE_PPT.magic_values import scale_label
-from SHE_PPT.she_image import SHEImage
 import numpy as np
 
 
@@ -129,6 +129,7 @@ class TestCase:
                                      mask=np.zeros_like(observed_gal_image.array.transpose(), dtype=np.int8),
                                      segmentation_map=np.ones_like(observed_gal_image.array.transpose(), dtype=np.int8))
                 gal_stamp.header[scale_label] = observed_gal_image.scale
+                gal_stamp.header[gain_label] = 1.0
 
                 # Get the shear estimate
                 shear_estimate = get_shear_estimate(gal_stamp,
