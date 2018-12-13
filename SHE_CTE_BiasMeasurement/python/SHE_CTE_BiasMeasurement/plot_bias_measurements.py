@@ -321,7 +321,7 @@ def plot_bias_measurements_from_args(args):
 
                 if do_fig:
 
-                    pyplot.title(titles[testing_data_key]))
+                    pyplot.title(titles[testing_data_key])
 
                     ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
                     ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
@@ -353,7 +353,7 @@ def plot_bias_measurements_from_args(args):
                         fig = pyplot.figure()
 
                         pyplot.title(titles[testing_data_key])
-                                     
+
                         fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
                         ax = fig.add_subplot(1, 1, 1)
@@ -420,7 +420,7 @@ def plot_bias_measurements_from_args(args):
                             # Set up the figure
 
                             pyplot.title(titles[testing_data_key])
-                                         
+
                             fig = pyplot.figure()
                             fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
@@ -517,7 +517,7 @@ def plot_bias_measurements_from_args(args):
                 fig = pyplot.figure()
 
                 pyplot.title(titles[testing_data_key])
-                             
+
                 fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
                 ax = fig.add_subplot(1, 1, 1)
@@ -639,7 +639,7 @@ def plot_bias_measurements_from_args(args):
             fig = pyplot.figure()
 
             pyplot.title(titles[testing_data_key])
-                         
+
             fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
             ax = fig.add_subplot(1, 1, 1)
