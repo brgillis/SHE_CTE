@@ -51,6 +51,7 @@ class TestCase:
                 ss_data /= ss_data.sum()
 
                 ss_image = SHEImage(ss_data)
+                ss_image.add_default_header()
                 ss_image.header[scale_label] = 1. / ss_factor
 
                 # Try rebinning it
@@ -113,6 +114,7 @@ class TestCase:
         psf.drawImage(ss_psf_image, use_true_center=False)
 
         psf_stamp = SHEImage(ss_psf_image.array.transpose())
+        psf_stamp.add_default_header()
         psf_stamp.header[scale_label] = ss_psf_image.scale
 
         for method in "KSB", "REGAUSS":

@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2018-11-16"
+__updated__ = "2018-12-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,20 +22,21 @@ __updated__ = "2018-11-16"
 
 from copy import deepcopy
 from os.path import join
-import pytest
 import time
+
+from SHE_PPT.file_io import read_pickled_product, find_file
+from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.shear_estimates import tf as setf
+import pytest
 
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-from SHE_PPT.file_io import read_pickled_product, find_file
-from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
 
 
-she_frame_location = "AUX/SHE_PPT/test_she_frame_stack_simple.bin"
+she_frame_location = "WEB/test_data_stack.bin"
 ksb_training_location = "AUX/SHE_PPT/test_KSB_training_data.bin"
 regauss_training_location = "AUX/SHE_PPT/test_REGAUSS_training_data.bin"
 
