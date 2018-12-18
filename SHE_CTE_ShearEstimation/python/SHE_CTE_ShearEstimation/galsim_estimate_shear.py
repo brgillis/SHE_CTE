@@ -20,9 +20,6 @@
 
 from math import sqrt
 
-import galsim
-
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
@@ -30,6 +27,9 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
+import galsim
+
+from SHE_CTE_ShearEstimation import magic_values as mv
 import numpy as np
 
 
@@ -83,6 +83,9 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
         log_no_galaxy_scale()
         in_scale = default_galaxy_scale
 
+    # Add a default background map if necessary
+    initial_image.add_default_background_map()
+    
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
@@ -112,6 +115,7 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
         resampled_image = SHEImage(resampled_gs_image.array)
 
+    resampled_image.add_default_header()
     resampled_image.header[scale_label] = resampled_scale
 
     return resampled_image
@@ -221,6 +225,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
+    supersampled_badpix.add_default_header()
     supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
@@ -356,8 +361,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         # Get the shear estimate from the stacked image
 
         stacked_gal_stamp = gal_stamp_stack.stacked_image
+        stacked_gal_stamp.add_default_header()
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+        stacked_bulge_psf_stamp.add_default_header()
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+        stacked_disk_psf_stamp.add_default_header()
 
         # Note the galaxy scale and gain in the stamp's header
         stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
