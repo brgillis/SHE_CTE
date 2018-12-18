@@ -131,6 +131,7 @@ class TestCase:
                                      mask=np.zeros_like(observed_gal_image.array.transpose(), dtype=np.int8),
                                      segmentation_map=np.ones_like(observed_gal_image.array.transpose(), dtype=np.int8))
                 gal_stamp.add_default_header()
+                gal_stamp.add_default_background_map()
                 gal_stamp.header[scale_label] = observed_gal_image.scale
                 gal_stamp.header[gain_label] = 1.0
 
