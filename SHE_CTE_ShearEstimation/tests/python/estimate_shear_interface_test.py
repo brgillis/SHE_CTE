@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2018-12-18"
+__updated__ = "2019-01-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -36,7 +36,7 @@ from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
-she_frame_location = "WEB/test_data_stack.bin"
+she_frame_location = "WEB/SHE_PPT/test_data_stack.bin"
 ksb_training_location = "AUX/SHE_PPT/test_KSB_training_data.bin"
 regauss_training_location = "AUX/SHE_PPT/test_REGAUSS_training_data.bin"
 
