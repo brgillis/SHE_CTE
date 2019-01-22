@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2018-10-15"
+__updated__ = "2018-12-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,20 +20,21 @@ __updated__ = "2018-10-15"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from _pickle import UnpicklingError
 import os
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from _pickle import UnpicklingError
 import numpy as np
 
 
-bootstrap_threshold = 50
+bootstrap_threshold = 2
 
 archive_dir_key = "SHE_CTE_MeasureBias_archive_dir"
 webdav_dir_key = "SHE_CTE_MeasureBias_webdav_dir"

@@ -1,11 +1,11 @@
-""" @file PlotBias.py
+""" @file PlotPsf.py
 
-    Created 19 July 2018
+    Created 7 November 2018
 
-    Main program for plotting bias sensitivity
+    Main program for plotting PSF sensitivity
 """
 
-__updated__ = "2019-01-22"
+__updated__ = "2018-11-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,14 +21,11 @@ __updated__ = "2019-01-22"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
-import os
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
-import numpy as np
+from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 
 
 def defineSpecificProgramOptions():
@@ -43,7 +40,7 @@ def defineSpecificProgramOptions():
     logger = getLogger(__name__)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_PlotBias defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_PlotPsfSensitivity defineSpecificProgramOptions()')
     logger.debug('#')
 
     # Set up the command-line arguments
@@ -77,7 +74,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--workdir', type=str, default="/home/user/Work/workspace")
     parser.add_argument('--logdir', type=str, default="logs")
 
-    logger.debug('# Exiting SHE_CTE_PlotBias defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_PlotPsfSensitivity defineSpecificProgramOptions()')
 
     return parser
 
@@ -95,10 +92,10 @@ def mainMethod(args):
     logger = getLogger(__name__)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_PlotBias mainMethod()')
+    logger.debug('# Entering SHE_CTE_PlotPsfSensitivity mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.9 SHE_CTE_PlotBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_PlotPsfSensitivity",
                                     store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -106,13 +103,13 @@ def mainMethod(args):
     if args.profile:
         import cProfile
         cProfile.runctx("plot_bias_measurements_from_args(args)", {},
-                        {"plot_bias_measurements_from_args": plot_bias_measurements_from_args,
+                        {"plot_bias_measurements_from_args": plot_psf_sensitivity_from_args,
                          "args": args, },
                         filename="plot_bias_measurements.prof")
     else:
-        plot_bias_measurements_from_args(args)
+        plot_psf_sensitivity_from_args(args)
 
-    logger.debug('# Exiting SHE_CTE_PlotBias mainMethod()')
+    logger.debug('# Exiting SHE_CTE_PlotPsfSensitivity mainMethod()')
 
     return
 

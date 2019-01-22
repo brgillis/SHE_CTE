@@ -21,7 +21,7 @@
 from math import sqrt
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label
+from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
@@ -54,6 +54,15 @@ class ShearEstimate(object):
         self.y = y
 
 
+snr_cutoff = 15
+downweight_error = 0.5
+downweight_power = 4
+
+
+def get_downweight_error(snr):
+    return downweight_error / (1 + (snr / snr_cutoff)**downweight_power)
+
+
 @run_only_once
 def log_no_galaxy_scale():
     logger = getLogger(__name__)
@@ -74,6 +83,9 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
         log_no_galaxy_scale()
         in_scale = default_galaxy_scale
 
+    # Add a default background map if necessary
+    initial_image.add_default_background_map()
+    
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
@@ -103,6 +115,7 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
         resampled_image = SHEImage(resampled_gs_image.array)
 
+    resampled_image.add_default_header()
     resampled_image.header[scale_label] = resampled_scale
 
     return resampled_image
@@ -135,7 +148,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate, scale):
                                    galsim_shear_estimate.corrected_g2,
                                    galsim_shear_estimate.corrected_shape_err,
                                    galsim_shear_estimate.moments_sigma * scale,
-                                   galsim_shear_estimate.moments_amp,
+                                   -1,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
 
@@ -161,7 +174,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
 
     shear_estimate = ShearEstimate(g1, g2, gerr,
                                    galsim_shear_estimate.moments_sigma * scale,
-                                   galsim_shear_estimate.moments_amp,
+                                   -1,
                                    galsim_shear_estimate.moments_centroid.x,
                                    galsim_shear_estimate.moments_centroid.y)
 
@@ -179,25 +192,40 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
-    try:
-        gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(bkg_subtracted_gal_stamp_data.transpose(), scale=psf_scale),
-                                             badpix=galsim.Image(
-                                                 (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
-                                             guess_sig=0.5 / gal_scale,)
 
-        resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale / psf_scale)
-    except RuntimeError as e:
-        if ("HSM Error" not in str(e)):
-            raise
-        else:
-            # If it fails, it's probably because the galaxy is small, so a small size will suffice
-            resampled_gal_stamp_size = 50
+    gal_sigs = [5.0, 2.0, 0.5, 10.0]
+
+    for gal_sig in gal_sigs:
+
+        try:
+            gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(bkg_subtracted_gal_stamp_data.transpose(), scale=psf_scale),
+                                                 badpix=galsim.Image(
+                                                     (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
+                                                 guess_sig=gal_sig,)
+
+            resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale /
+                                           psf_scale)    # Calculate the galaxy's S/N
+            a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
+            gain = gal_stamp.header[gain_label]
+            signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
+                                                                    (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
+            break
+        except RuntimeError as e:
+            if ("HSM Error" not in str(e)):
+                raise
+            elif gal_sig == 10.0:
+                # If it fails, it's probably because the galaxy is small, so a small size will suffice
+                resampled_gal_stamp_size = 50
+                signal_to_noise = 0
+            else:
+                continue
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
 
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
+    supersampled_badpix.add_default_header()
     supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
@@ -214,7 +242,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                                                                                 scale=psf_scale),
                                                          badpix=galsim.Image(badpix.transpose(), scale=psf_scale),
                                                          sky_var=float(sky_var),
-                                                         shear_est=method)
+                                                         shear_est=method,
+                                                         guess_sig_gal=gal_sig * gal_scale / psf_scale)
 
         if method == "KSB":
 
@@ -233,9 +262,14 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         shear_estimate.y = (gal_stamp.shape[1] / 2 -
                             ((resampled_gal_stamp.shape[1] / 2 - shear_estimate.y) * psf_scale / gal_scale))
 
+        # Set the proper snr for the estimate, and use it to downweight as appropriate
+        shear_estimate.snr = signal_to_noise
+        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + get_downweight_error(signal_to_noise))
+
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
             raise
+
         logger.debug(str(e))
         shear_estimate = ShearEstimate(np.NaN,
                                        np.NaN,
@@ -327,11 +361,15 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         # Get the shear estimate from the stacked image
 
         stacked_gal_stamp = gal_stamp_stack.stacked_image
+        stacked_gal_stamp.add_default_header()
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
+        stacked_bulge_psf_stamp.add_default_header()
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
+        stacked_disk_psf_stamp.add_default_header()
 
-        # Note the galaxy scale in the stamp's header
+        # Note the galaxy scale and gain in the stamp's header
         stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+        stacked_gal_stamp.header[gain_label] = data_stack.exposures[0].detectors[1, 1].header[gain_label]
 
         shear_estimate = get_shear_estimate(stacked_gal_stamp,
                                             stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
@@ -374,6 +412,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                 if gal_stamp is None:
                     continue
                 gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+                gal_stamp.header[gain_label] = data_stack.stacked_image.header[gain_label]
                 bulge_psf_stamp = bulge_psf_stack.exposures[x]
                 disk_psf_stamp = disk_psf_stack.exposures[x]
 

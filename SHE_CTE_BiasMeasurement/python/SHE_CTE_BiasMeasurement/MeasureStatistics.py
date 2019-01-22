@@ -7,7 +7,7 @@
     measurements.
 """
 
-__updated__ = "2018-11-06"
+__updated__ = "2019-01-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #

@@ -22,7 +22,7 @@ __updated__ = "2018-10-15"
 
 from math import sqrt
 import subprocess
-from ElementsKernel.Auxiliary import getAuxiliaryPath
+from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
 from SHE_BFD_CalculateMoments import bfd
 from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
 from SHE_CTE_ShearEstimation import magic_values as mv
@@ -215,7 +215,7 @@ def bfd_perform_integration(targetfile, templatefile=None):
     nfactor1=1.
     nfactor2=10.
     nthreads=1
-    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads)]
+    call=["E-Run","SHE_BFD", "0.3","boostTest","--targetFile", targetfile, "--templateFile", templatefile, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads),"--seed",str(12345)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
     logger.info(returncode.stdout)
