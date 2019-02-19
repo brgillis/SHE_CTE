@@ -20,6 +20,9 @@
 
 from math import sqrt
 
+import galsim
+
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
@@ -27,9 +30,6 @@ from SHE_PPT.shear_utility import get_g_from_e
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
-import galsim
-
-from SHE_CTE_ShearEstimation import magic_values as mv
 import numpy as np
 
 
@@ -48,6 +48,9 @@ class ShearEstimate(object):
         self.g1 = g1
         self.g2 = g2
         self.gerr = gerr
+        self.g1_err = gerr
+        self.g2_err = gerr
+        self.g1g2_covar = 0
         self.re = re
         self.snr = snr
         self.x = x
@@ -85,7 +88,7 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
     # Add a default background map if necessary
     initial_image.add_default_background_map()
-    
+
     bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
@@ -183,6 +186,79 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
     return shear_estimate
 
 
+def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
+    """ Corrects (in-place) a shear_estimate object for the shear and rotation information contained within the
+        provided stamp's wcs. 
+    """
+    from scipy.optimize import minimize
+
+    # Since we have to solve for the pre-wcs shear, we get the world2pix decomposition and work backwards
+    _scale, w2p_shear, w2p_theta, _w2p_flip = stamp.get_world2pix_decomposition()
+
+    # Set up the shear as a matrix
+    g_pix_polar = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
+
+    # We first have to rotate into the proper frame
+    sintheta = w2p_theta.sin()
+    costheta = w2p_theta.cos()
+
+    # Calculate the rotation matrix directly for testing purposes
+    test_p2w_rotation_matrix = stamp.get_pix2world_rotation(shear_estimate.x, shear_estimate.y)
+
+    # Get the reverse rotation matrix
+    p2w_rotation_matrix = np.matrix([[costheta, sintheta], [-sintheta, costheta]])
+
+    double_p2w_rotation_matrix = p2w_rotation_matrix @ p2w_rotation_matrix  # 2x2 so it's commutative
+    g_world_polar = double_p2w_rotation_matrix @ g_pix_polar
+
+    # TODO: Update errors from the WCS shear
+
+    # Update errors from the WCS rotation
+    covar_pix = np.matrix([[shear_estimate.g1_err**2, shear_estimate.g1g2_covar],
+                           [shear_estimate.g1g2_covar, shear_estimate.g2_err**2]])
+    covar_world = double_p2w_rotation_matrix @ covar_pix @ double_p2w_rotation_matrix.transpose()
+
+    # Update error and covar values in the shear_estimate object
+    shear_estimate.g1_err = np.sqrt(covar_world[0, 0])
+    shear_estimate.g2_err = np.sqrt(covar_world[1, 1])
+    shear_estimate.g1g2_covar = covar_world[0, 1]
+
+    # Second, we have to correct for the shear. It's necessary to do this by solving for the pre-WCS shear
+
+    rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
+
+    def get_shear_adding_diff(g):
+        g1 = g[0]
+        g2 = g[1]
+        try:
+            res_shear = w2p_shear + galsim.Shear(g1=g1, g2=g2)
+            dist2 = (rot_est_shear.g1 - res_shear.g1)**2 + (rot_est_shear.g2 - res_shear.g2)**2
+        except ValueError as e:
+            if not "Requested shear exceeds 1" in str(e):
+                raise
+            # Requested a too-high shear value, so return an appropriately high distance
+            dist2 = (w2p_shear.g1 + g1 - rot_est_shear.g1)**2 + (w2p_shear.g2 + g2 - rot_est_shear.g2)**2
+        return dist2
+
+    fitting_result = minimize(get_shear_adding_diff, np.array((0, 0)))
+
+    # If we can't find a solution, return NaN shear
+    if not fitting_result.success:
+        shear_estimate.g1 = np.NaN
+        shear_estimate.g2 = np.NaN
+        shear_estimate.gerr = np.inf
+        shear_estimate.g1_err = np.inf
+        shear_estimate.g2_err = np.inf
+        shear_estimate.g1g2_covar = np.inf
+
+        return
+    else:
+        shear_estimate.g1 = fitting_result.x[0]
+        shear_estimate.g2 = fitting_result.x[1]
+
+    return
+
+
 def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
 
     logger = getLogger(__name__)
@@ -256,15 +332,20 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
         else:
             raise RuntimeError("Invalid shear estimation method for GalSim: " + str(method))
 
+        # Set the S/N of the estimate
+        shear_estimate.snr = signal_to_noise
+
+        # Adjust the error to apply custom downweighting of low-S/N galaxies
+        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + get_downweight_error(signal_to_noise))
+
         # Correct the shear estimate for x and y from resampled stamp
         shear_estimate.x = (gal_stamp.shape[0] / 2 -
                             ((resampled_gal_stamp.shape[0] / 2 - shear_estimate.x) * psf_scale / gal_scale))
         shear_estimate.y = (gal_stamp.shape[1] / 2 -
                             ((resampled_gal_stamp.shape[1] / 2 - shear_estimate.y) * psf_scale / gal_scale))
 
-        # Set the proper snr for the estimate, and use it to downweight as appropriate
-        shear_estimate.snr = signal_to_noise
-        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + get_downweight_error(signal_to_noise))
+        # Correct the estimate for WCS shear and rotation
+        correct_for_wcs_shear_and_rotation(shear_estimate, gal_stamp)
 
     except RuntimeError as e:
         if ("HSM Error" not in str(e)):
@@ -362,8 +443,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
 
         stacked_gal_stamp = gal_stamp_stack.stacked_image
         stacked_gal_stamp.add_default_header()
+
         stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
         stacked_bulge_psf_stamp.add_default_header()
+
         stacked_disk_psf_stamp = disk_psf_stack.stacked_image
         stacked_disk_psf_stamp.add_default_header()
 
@@ -371,42 +454,38 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
         stacked_gal_stamp.header[gain_label] = data_stack.exposures[0].detectors[1, 1].header[gain_label]
 
-        shear_estimate = get_shear_estimate(stacked_gal_stamp,
-                                            stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
-                                            gal_scale=stacked_gal_scale,
-                                            psf_scale=psf_scale,
-                                            ID=gal_id,
-                                            method=method)
+        stack_shear_estimate = get_shear_estimate(stacked_gal_stamp,
+                                                  stacked_bulge_psf_stamp,  # FIXME Handle colour gradients
+                                                  gal_scale=stacked_gal_scale,
+                                                  psf_scale=psf_scale,
+                                                  ID=gal_id,
+                                                  method=method)
 
-        stack_g_pix = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
-        stack_re = shear_estimate.re
-        stack_snr = shear_estimate.snr
+        stack_re = stack_shear_estimate.re
+        stack_snr = stack_shear_estimate.snr
 
         # Get world coordinates
 
-        stack_x_world, stack_y_world = stacked_gal_stamp.pix2world(shear_estimate.x, shear_estimate.y)
-
-        # Need to convert g1/g2 and errors to -ra/dec coordinates
-        stack_rotation_matrix = stacked_gal_stamp.get_pix2world_rotation(shear_estimate.x, shear_estimate.y)
-        stack_double_rotation_matrix = stack_rotation_matrix @ stack_rotation_matrix  # 2x2 so it's commutative
-        stack_g_world = stack_double_rotation_matrix @ stack_g_pix
-
-        stack_covar_pix = np.matrix([[shear_estimate.gerr, 0], [0, shear_estimate.gerr]])
-        stack_covar_world = stack_double_rotation_matrix @ stack_covar_pix @ stack_double_rotation_matrix.transpose()
+        stack_x_world, stack_y_world = stacked_gal_stamp.pix2world(stack_shear_estimate.x, stack_shear_estimate.y)
 
         if get_exposure_estimates:
 
+            num_exposures = len(data_stack.exposures)
+
             # Get estimates for each exposure
 
-            g1s = []
-            g2s = []
-            gerrs = []
-            res = []
-            snrs = []
-            x_worlds = []
-            y_worlds = []
+            g1s = np.zeros(num_exposures)
+            g2s = np.zeros(num_exposures)
+            gerrs = np.zeros(num_exposures)
+            g1_errs = np.zeros(num_exposures)
+            g2_errs = np.zeros(num_exposures)
+            g1g2_covars = np.zeros(num_exposures)
+            res = np.zeros(num_exposures)
+            snrs = np.zeros(num_exposures)
+            x_worlds = np.zeros(num_exposures)
+            y_worlds = np.zeros(num_exposures)
 
-            for x in range(len(data_stack.exposures)):
+            for x in range(num_exposures):
 
                 gal_stamp = gal_stamp_stack.exposures[x]
                 if gal_stamp is None:
@@ -423,29 +502,20 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                     ID=gal_id,
                                                     method=method)
 
-                g_pix = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
+                correct_for_wcs_shear_and_rotation(shear_estimate, gal_stamp)
 
-                # Need to convert g1/g2 and errors to -ra/dec coordinates
-                rotation_matrix = gal_stamp.get_pix2world_rotation(shear_estimate.x, shear_estimate.y)
-                g_world = rotation_matrix @ (rotation_matrix @ g_pix)
+                g1s[x] = shear_estimate.g1
+                g2s[x] = shear_estimate.g2
+                gerrs[x] = shear_estimate.gerr
+                g1_errs[x] = shear_estimate.g1_err
+                g2_errs[x] = shear_estimate.g2_err
+                g1g2_covars[x] = shear_estimate.g1g2_covar
+                res[x] = shear_estimate.re
+                snrs[x] = shear_estimate.snr
 
-                g1s.append(g_world[0])
-                g2s.append(g_world[1])
-                gerrs.append(shear_estimate.gerr)
-                res.append(shear_estimate.re)
-                snrs.append(shear_estimate.snr)
-
-                x_world, y_world = gal_stamp.pix2world(shear_estimate.x, shear_estimate.y)
-                x_worlds.append(x_world)
-                y_worlds.append(y_world)
-
-            g1s = np.array(g1s)
-            g2s = np.array(g2s)
-            gerrs = np.array(gerrs)
-            res = np.array(res)
-            snrs = np.array(snrs)
-            x_worlds = np.array(x_worlds)
-            y_worlds = np.array(y_worlds)
+                exp_x_world, exp_y_world = gal_stamp.pix2world(shear_estimate.x, shear_estimate.y)
+                x_worlds.append(exp_x_world)
+                y_worlds.append(exp_y_world)
 
             g1, gerr = inv_var_stack(g1s, gerrs)
             g2, _ = inv_var_stack(g2s, gerrs)
@@ -456,13 +526,13 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
 
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({setf.ID: gal_id,
-                                       setf.g1: stack_g_world[0],
-                                       setf.g2: stack_g_world[1],
-                                       setf.g1_err: np.sqrt(stack_covar_world[0, 0] ** 2 + training_data.e1_var),
-                                       setf.g2_err: np.sqrt(stack_covar_world[1, 1] ** 2 + training_data.e2_var),
-                                       setf.g1g2_covar: stack_covar_world[0, 1],
-                                       setf.re: stack_re,
-                                       setf.snr: stack_snr,
+                                       setf.g1: stack_shear_estimate.g1,
+                                       setf.g2: stack_shear_estimate.g2,
+                                       setf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
+                                       setf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
+                                       setf.g1g2_covar: stack_shear_estimate.g1g2_covar,
+                                       setf.re: stack_shear_estimate.re,
+                                       setf.snr: stack_shear_estimate.snr,
                                        setf.x_world: stack_x_world,
                                        setf.y_world: stack_y_world,
                                        })

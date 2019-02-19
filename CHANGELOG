@@ -18,6 +18,8 @@ Bug Fixes
 New Features
 ------------
 
+- KSB and REGAUSS methods now properly correct for WCS shear and rotation
+
 New Config Features
 -------------------
 
