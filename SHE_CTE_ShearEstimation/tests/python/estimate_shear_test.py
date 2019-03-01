@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from copy import deepcopy
+import gc
 import pytest
 
 import galsim
@@ -25,6 +27,7 @@ import galsim
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
                                                            get_shear_estimate, ShearEstimate,
                                                            correct_for_wcs_shear_and_rotation)
+from SHE_PPT import flags
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from astropy.io import fits
@@ -36,6 +39,63 @@ class TestCase:
 
 
     """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """ Set up a default galaxy stamp and PSF stamp for testing.
+        """
+
+        self.sky_var = 0
+        self.bkg_level = 1000
+        self.psf_pixel_scale = 0.02
+        self.gal_pixel_scale = 0.10
+
+        self.xs = 100
+        self.ys = 100
+
+        self.psf_xs = 250
+        self.psf_ys = 250
+
+        self.g1 = 0
+        self.g2 = 0
+
+        self.gal_ID = 4
+
+        # Set up the galaxy profile we'll be using
+        self.base_gal = galsim.Sersic(n=1, half_light_radius=0.5)
+
+        # Set up the psf we'll be using and a subsampled image of it
+        self.psf = galsim.Airy(lam_over_diam=0.2)
+
+        self.ss_psf_image = galsim.Image(self.psf_xs, self.psf_ys, scale=self.psf_pixel_scale)
+        self.psf.drawImage(self.ss_psf_image, use_true_center=False)
+
+        self.bkg_image = galsim.Image(self.xs, self.ys, scale=self.gal_pixel_scale) + self.bkg_level
+
+        self.psf_stamp = SHEImage(self.ss_psf_image.array.transpose())
+        self.psf_stamp.add_default_header()
+        self.psf_stamp.header[scale_label] = self.ss_psf_image.scale
+
+        # Draw the default galaxy
+        self.observed_gal = galsim.Convolve([self.base_gal.shear(g1=self.g1, g2=self.g2), self.psf])
+        self.observed_gal_image = galsim.Image(self.xs, self.ys, scale=self.gal_pixel_scale)
+        self.observed_gal.drawImage(self.observed_gal_image, use_true_center=False)
+
+        self.observed_gal_image += self.bkg_image
+
+        self.gal_stamp = SHEImage(self.observed_gal_image.array.transpose(),
+                                  mask=np.zeros_like(self.observed_gal_image.array.transpose(), dtype=np.int8),
+                                  segmentation_map=self.gal_ID * np.ones_like(
+                                  self.observed_gal_image.array.transpose(), dtype=np.int8),
+                                  background_map=self.bkg_image.array.transpose(),
+                                  noisemap=0.0001 * np.ones_like(
+                                      self.observed_gal_image.array.transpose(), dtype=float),
+                                  header=fits.Header())
+        self.gal_stamp.add_default_header()
+        self.gal_stamp.header[scale_label] = self.observed_gal_image.scale
+        self.gal_stamp.header[gain_label] = 1.0
+
+        return
 
     def test_get_resampled_image(self):
 
@@ -105,54 +165,111 @@ class TestCase:
 
     def test_get_shear_estimate(self):
 
-        sky_var = 0
-
-        # Set up the galaxy profile we'll be using
-        base_gal = galsim.Sersic(n=1, half_light_radius=0.5)
-
-        # Set up the psf we'll be using and a subsampled image of it
-        psf = galsim.Airy(lam_over_diam=0.2)
-
-        ss_psf_image = galsim.Image(250, 250, scale=0.02)
-        psf.drawImage(ss_psf_image, use_true_center=False)
-
-        psf_stamp = SHEImage(ss_psf_image.array.transpose())
-        psf_stamp.add_default_header()
-        psf_stamp.header[scale_label] = ss_psf_image.scale
-
         for method in "KSB", "REGAUSS":
             for g1, g2 in ((0., 0.),
                            (0.1, 0.),
                            (0., -0.1)):
 
                 # Draw the galaxy
-                observed_gal = galsim.Convolve([base_gal.shear(g1=g1, g2=g2), psf])
-                observed_gal_image = galsim.Image(100, 100, scale=0.10)
+                observed_gal = galsim.Convolve([self.base_gal.shear(g1=g1, g2=g2), self.psf])
+                observed_gal_image = galsim.Image(self.xs, self.ys, scale=self.gal_pixel_scale)
                 observed_gal.drawImage(observed_gal_image, use_true_center=False)
 
-                ap_header = fits.Header()
+                observed_gal_image += self.bkg_image
+
                 gal_stamp = SHEImage(observed_gal_image.array.transpose(),
                                      mask=np.zeros_like(observed_gal_image.array.transpose(), dtype=np.int8),
-                                     segmentation_map=np.ones_like(
+                                     segmentation_map=self.gal_ID * np.ones_like(
                                          observed_gal_image.array.transpose(), dtype=np.int8),
-                                     header=ap_header)
+                                     background_map=self.bkg_image.array.transpose(),
+                                     noisemap=0.0001 * np.ones_like(
+                                         observed_gal_image.array.transpose(), dtype=float),
+                                     header=fits.Header())
                 gal_stamp.add_default_header()
-                gal_stamp.add_default_background_map()
-                gal_stamp.add_default_noisemap()
-                gal_stamp.header[scale_label] = observed_gal_image.scale
+                gal_stamp.header[scale_label] = self.observed_gal_image.scale
                 gal_stamp.header[gain_label] = 1.0
 
                 # Get the shear estimate
                 shear_estimate = get_shear_estimate(gal_stamp,
-                                                    psf_stamp,
-                                                    gal_scale=0.10,
-                                                    psf_scale=0.02,
+                                                    self.psf_stamp,
+                                                    gal_scale=self.gal_pixel_scale,
+                                                    psf_scale=self.psf_pixel_scale,
                                                     method=method,
                                                     ID=1)
                 est_g1, est_g2 = shear_estimate.g1, shear_estimate.g2
 
+                if shear_estimate.flags & flags.failure_flags:
+                    raise RuntimeError("Error in shear estimate: " + bin(shear_estimate.flags))
+
                 assert np.isclose(est_g1, g1, rtol=0.2, atol=0.01)
                 assert np.isclose(est_g2, g2, rtol=0.2, atol=0.01)
+
+    def test_shear_estimate_flags(self):
+        """Test proper flagging by forcing failure conditions and then checking output flags.
+        """
+
+        # Test both methods equivalently
+        for method in ("KSB", "REGAUSS"):
+
+            for (attr, corrupt_flag, missing_flag) in (("_data", flags.flag_corrupt_science_image,
+                                                        flags.flag_no_science_image),
+                                                       ("mask", flags.flag_corrupt_mask,
+                                                        flags.flag_no_mask),
+                                                       ("background_map", flags.flag_corrupt_background_map,
+                                                        flags.flag_no_background_map),
+                                                       ("noisemap", flags.flag_corrupt_noisemap,
+                                                        flags.flag_no_noisemap),
+                                                       ("segmentation_map", flags.flag_corrupt_segmentation_map,
+                                                        flags.flag_no_segmentation_map),
+                                                       ):
+
+                # Test corrupt failure
+                gal_stamp = deepcopy(self.gal_stamp)
+                for bad_val in (np.nan, np.inf, -2):
+                    image = getattr(gal_stamp, attr)
+                    try:
+                        image[self.xs // 2, self.ys // 2] = bad_val
+                    except ValueError as e:
+                        # For the integer maps, ignore failures on assigning NaN
+                        if "cannot convert float NaN to integer" in str(e):
+                            continue
+                        else:
+                            raise
+                    except OverflowError as e:
+                        # For the integer maps, ignore failures on assigning inf
+                        if "cannot convert float infinity to integer" in str(e):
+                            continue
+                        else:
+                            raise
+
+                    shear_estimate = get_shear_estimate(gal_stamp,
+                                                        self.psf_stamp,
+                                                        gal_scale=self.gal_pixel_scale,
+                                                        psf_scale=self.psf_pixel_scale,
+                                                        method=method,
+                                                        ID=1)
+
+                    if not shear_estimate.flags & corrupt_flag:
+                        raise RuntimeError("Failed to raise flag " + bin(corrupt_flag) + " when expected " +
+                                           "for method " + method + ".")
+
+                # Test missing failure
+                setattr(gal_stamp, attr, None)
+                shear_estimate = get_shear_estimate(gal_stamp,
+                                                    self.psf_stamp,
+                                                    gal_scale=self.gal_pixel_scale,
+                                                    psf_scale=self.psf_pixel_scale,
+                                                    method=method,
+                                                    ID=1)
+
+                if not shear_estimate.flags & missing_flag:
+                    raise RuntimeError("Failed to raise flag " + bin(missing_flag) + " when expected " +
+                                       "for method " + method + ".")
+
+                del gal_stamp
+                gc.collect()
+
+        return
 
     def test_correct_wcs_shear(self):
         """ Tests of the calculations for correcting for a WCS shear.
