@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-02-21"
+__updated__ = "2019-03-07"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -30,8 +30,10 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, RE
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT import mdb
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
+                             read_listfile)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
@@ -81,6 +83,18 @@ def estimate_shears_from_args(args, dry_run=False):
         dry_label = " mock dry"
     else:
         dry_label = ""
+
+    # Load in the MDB
+    if args.mdb is None:
+        logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+    elif args.mdb[-5:] == ".json":
+        mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
+        mdb.init(mdb_files=mdb_files, path=args.workdir)
+    elif args.mdb[-4:] == ".xml":
+        mdb.init(mdb_files=args.mdb, path=args.workdir)
+    else:
+        logger.warn("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
+                    ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
     logger.info("Reading " + dry_label + "data images...")
 
