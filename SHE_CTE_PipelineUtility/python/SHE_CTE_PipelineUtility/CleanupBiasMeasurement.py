@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2018-08-31"
+__updated__ = "2019-03-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -198,7 +198,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.6.7 SHE_CTE_CleanupBiasMeasurement",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_CleanupBiasMeasurement",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
