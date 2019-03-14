@@ -173,7 +173,7 @@ def object_id_merge_from_args(args):
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
     logger.info("Output listfile of object ID list products to " + args.object_ids)
 
-    logger.debug('# Entering object_id_split_from_args normally')
+    logger.debug('# Entering object_id_merge_from_args normally')
 
     return
 
