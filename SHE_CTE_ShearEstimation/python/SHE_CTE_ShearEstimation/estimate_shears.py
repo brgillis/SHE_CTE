@@ -37,7 +37,7 @@ from astropy.io import fits
 import pdb
 
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
@@ -49,7 +49,7 @@ loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": None,
-                   "BFD": None}
+                   "BFD": bfd_load_training_data}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
@@ -173,7 +173,7 @@ def estimate_shears_from_args(args, dry_run=False):
             shear_estimates_filename = shear_estimates_prod.get_method_filename(method)
 
             hdulist = fits.HDUList()
-
+            
             try:
 
                 # Check we've supplied a method for it
@@ -190,7 +190,8 @@ def estimate_shears_from_args(args, dry_run=False):
                             raise ValueError(
                                 "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
-
+                    if method == "BFD":
+                        bfd_training_data=training_data
                 else:
                     training_data = None
 
@@ -204,7 +205,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                         # For now just leave as handle to fits file
                         calibration_data = fits.open(os.path.join(args.workdir, method_calibration_filename))
-
+                
                 shear_estimates_table = estimate_shear(data_stack,
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
@@ -252,12 +253,12 @@ def estimate_shears_from_args(args, dry_run=False):
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
             method_shear_estimates[method] = shear_estimates_table
-
+            
             # Output the shear estimates
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
-
+            
             if method == 'BFD':
-                bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                bfd_perform_integration(target_file=os.path.join(args.workdir, shear_estimates_filename),template_file=bfd_training_data)
 
     else:  # Dry run
 
