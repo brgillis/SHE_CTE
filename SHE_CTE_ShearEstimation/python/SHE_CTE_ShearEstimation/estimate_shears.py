@@ -42,7 +42,7 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
 import numpy as np
-
+import copy
 
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
@@ -83,7 +83,7 @@ def estimate_shears_from_args(args, dry_run=False):
         dry_label = ""
 
     logger.info("Reading " + dry_label + "data images...")
-    # or does it make more sense to subselect the detections_tables here and loop like normal?
+
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                     seg_listfile_filename=args.segmentation_images,
                                     stacked_image_product_filename=args.stacked_image,
@@ -93,6 +93,26 @@ def estimate_shears_from_args(args, dry_run=False):
                                     workdir=args.workdir,
                                     clean_detections=True,
                                     apply_sc3_fix=False)
+
+    # if given a list of object ids then create data_stack with pruned detections_catalogue 
+    if args.object_ids is not None:
+        logger.info("Pruning list of galaxy objects to loop over")
+        # read in ID list
+        qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
+        object_ids_list_product = read_xml_product(qualified_object_ids_filename)
+        id_list = object_ids_list_product.get_id_list()
+        
+        # create a back up of full detections_catalog
+        data_stack.detections_catalogue_backup = copy.deepcopy(data_stack.detections_catalogue)
+
+        # loop over detections_catalog and make list of indices not in our object_id list
+        list_ids_not_to_use=[]
+        for ind, row in enumerate(data_stack.detections_catalogue):
+            if row[detf.ID] not in id_list:
+                list_ids_not_to_use.append(ind)
+         
+        data_stack.detections_catalogue.remove_rows(list_ids_not_to_use)
+        logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
 
@@ -208,8 +228,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
                                                        workdir=args.workdir,
-                                                       debug=args.debug,
-                                                       iter_galids=args.galaxy_ids_torun)
+                                                       debug=args.debug)
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
