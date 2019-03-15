@@ -83,7 +83,7 @@ def estimate_shears_from_args(args, dry_run=False):
         dry_label = ""
 
     logger.info("Reading " + dry_label + "data images...")
-
+    # or does it make more sense to subselect the detections_tables here and loop like normal?
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                     seg_listfile_filename=args.segmentation_images,
                                     stacked_image_product_filename=args.stacked_image,
@@ -203,12 +203,13 @@ def estimate_shears_from_args(args, dry_run=False):
 
                         # For now just leave as handle to fits file
                         calibration_data = fits.open(os.path.join(args.workdir, method_calibration_filename))
-
+                # need to add ids to iterate over
                 shear_estimates_table = estimate_shear(data_stack,
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
                                                        workdir=args.workdir,
-                                                       debug=args.debug)
+                                                       debug=args.debug,
+                                                       iter_galids=args.galaxy_ids_torun)
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +

@@ -550,7 +550,7 @@ def inv_var_stack(a, a_err):
     return a_m, a_m_err
 
 
-def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
+def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False,iter_galids=-1):
 
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
@@ -569,6 +569,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         log_no_psf_scale()
         psf_scale = default_psf_scale
 
+    # can i index data_stack with galaxy ids ???
+    #data_stack.detections_catalogue=data_stack.detections_catalogue[galids]
     row_index = 0
 
     # Loop over galaxies and get an estimate for each one
