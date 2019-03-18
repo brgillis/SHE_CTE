@@ -5,7 +5,7 @@
     Merge point executable for merging up batches into objects.
 """
 
-__updated__ = "2019-03-15"
+__updated__ = "2019-03-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,19 +26,16 @@ import os
 
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
-                             get_allowed_filename, find_file)
+                             get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
-from SHE_PPT.products import object_id_list, detections
-from SHE_PPT.table_formats.detections import tf as detf
+from SHE_PPT.products import object_id_list, shear_estimates
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
-import numpy as np
 
 
 config_batch_size_key = "SHE_CTE_ObjectIdSplit_batch_size"
-default_batch_size = 256
 
 logger = getLogger(__name__)
 
@@ -59,10 +56,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input arguments
-    parser.add_argument('--detections_tables', type=str)
-
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
+    parser.add_argument('--shear_estimates_tables', type=str)
 
     # Output arguments
     parser.add_argument('--object_ids', type=str)
@@ -85,93 +79,47 @@ def object_id_merge_from_args(args):
 
     logger.debug('# Entering object_id_merge_from_args(args)')
 
-    # Read in the pipeline configuration if present
-    if args.pipeline_config is None or args.pipeline_config == "None":
-        logger.warn("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
-        batch_size = default_batch_size
-    else:
-        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+    # Read in each shear tables and add the IDs in it to a global set
+    ids = set()
 
-        # Check for the cleanup key
-        if config_batch_size_key not in pipeline_config:
-            logger.info("Key " + config_batch_size_key + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default batch size of " + str(default_batch_size))
-            batch_size = default_batch_size
-        else:
-            batch_size = int(pipeline_config[config_batch_size_key])
-            if batch_size < 0:
-                raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
-            logger.info("Using batch size of: " + str(batch_size))
+    shear_estimates_table_product_filenames = read_listfile(os.path.join(args.workdir, args.shear_tables))
 
-    # Read in each detections table and add the IDs in it to a global set
-    all_ids = set()
-
-    detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
-
-    for tile_detections_table_product_filename in detections_table_product_filenames:
+    for shear_estimates_table_product_filename in shear_estimates_table_product_filenames:
 
         # Read in the product and get the filename of the table
 
-        tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
-                                                                      tile_detections_table_product_filename))
+        shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, shear_estimates_table_product_filename))
 
-        if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
-            raise TypeError("Detections product is of invalid type: ")
+        if not isinstance(shear_estimates_table_product, shear_estimates.dpdMerFinalCatalog):
+            raise TypeError("Shear product is of invalid type: ")
 
-        tile_detections_table_filename = tile_detections_table_product.get_data_filename()
+        shear_estimates_table_filename = shear_estimates_table_product.get_data_filename()
 
         # Read in the table
 
-        tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
+        shear_estimates_table = Table.read(os.path.join(args.workdir, shear_estimates_table_filename))
 
-        if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
-            raise TypeError("Input detections table is of invalid format.")
+        if not is_in_format(shear_estimates_table, setf, verbose=True, ignore_metadata=True):
+            raise TypeError("Input shear estimates table is of invalid format.")
 
         # Get the ID list from it and add it to the set
-        all_ids.update(tile_detections_table[detf.ID].data)
+        ids.update(shear_estimates_table[setf.ID].data)
 
-    # Convert IDs to a numpy array for easier handling
-    all_ids_array = np.array(list(all_ids))
-    num_ids = len(all_ids_array)
+    # Get a filename
+    id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
+                                                    instance_id='merged',
+                                                    extension=".xml",
+                                                    release="00.07",
+                                                    subdir="data",
+                                                    processing_function="SHE")
 
-    # If batch size is zero, use all IDs in one batch
-    if batch_size == 0:
-        batch_size = num_ids
-
-    num_batches = int(math.ceil(num_ids / batch_size))
-    id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
-                                   num_batches - 1, endpoint=True, dtype=int)
-
-    id_arrays = np.split(all_ids_array, id_split_indices)
-
-    # Perform some quick sanity checks
-    assert len(id_arrays) == num_batches
-    assert len(id_arrays[0]) == batch_size or num_batches == 1
-    assert len(id_arrays[-1]) <= batch_size
-
-    # Start outputting the ID lists for each batch
-
-    # Keep a list of all product filenames
-    id_list_product_filename_list = []
-
-    for i in range(num_batches):
-
-        # Get a filename for this batch and store it in the list
-        batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
-                                                              instance_id=str(i),
-                                                              extension=".xml",
-                                                              release="00.07",
-                                                              subdir="data",
-                                                              processing_function="SHE")
-        id_list_product_filename_list.append(batch_id_list_product_filename)
-
-        # Create and save the product
-        batch_id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
-        write_xml_product(batch_id_list_product, os.path.join(args.workdir, batch_id_list_product_filename))
+    # Create and save the product
+    id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=ids)
+    write_xml_product(id_list_product, os.path.join(args.workdir, id_list_product_filename))
 
     # Output the listfile
-    write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
-    logger.info("Output listfile of object ID list products to " + args.object_ids)
+    write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename)
+    logger.info("Output merged listfile of object ID list products to " + args.object_ids)
 
     logger.debug('# Entering object_id_merge_from_args normally')
 
