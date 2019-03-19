@@ -5,7 +5,7 @@
     Merge point executable for merging up batches into objects.
 """
 
-__updated__ = "2019-03-18"
+__updated__ = "2019-03-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -35,6 +35,8 @@ from astropy.table import Table
 
 
 logger = getLogger(__name__)
+
+methods = ("KSB", "REGAUSS", "LensMC", "BFD", "MomentsML")
 
 
 def defineSpecificProgramOptions():
@@ -76,8 +78,10 @@ def object_id_merge_from_args(args):
 
     logger.debug('# Entering object_id_merge_from_args(args)')
 
-    # Read in each shear tables and add the IDs in it to a global set
-    ids = set()
+    # Read in each shear tables and add the IDs in it to a global set for each method
+    ids = dict.fromkeys(methods)
+    for method in methods:
+        ids[method] = set()
 
     shear_estimates_table_product_filenames = read_listfile(os.path.join(args.workdir, args.input_shear_estimates_listfile))
 
@@ -90,20 +94,22 @@ def object_id_merge_from_args(args):
         if not isinstance(shear_estimates_table_product, shear_estimates.dpdShearMeasurement):
             raise TypeError("Shear product is of invalid type: ")
 
-        shear_estimates_table_filename = shear_estimates_table_product.get_data_filename()
+        # Loop over methods and read in the table
 
-        # Read in the table
+        for method in methods:
 
-        shear_estimates_table = Table.read(os.path.join(args.workdir, shear_estimates_table_filename))
+            shear_estimates_method_table_filename = shear_estimates_table_product.get_method_filename(method)
 
-        if not is_in_format(shear_estimates_table, setf, verbose=True, ignore_metadata=True):
-            raise TypeError("Input shear estimates table is of invalid format.")
+            shear_estimates_method_table = Table.read(os.path.join(args.workdir, shear_estimates_method_table_filename))
 
-        # Get the ID list from it and add it to the set
-        ids.update(shear_estimates_table[setf.ID].data)
+            if not is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
+
+            # Get the ID list from it and add it to the set
+            ids[method].update(shear_estimates_method_table[setf.ID].data)
 
     # Get a filename
-    shear_estimates_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
+    shear_estimates_product_filename = get_allowed_filename(type_name="SHE-EST-LIST",
                                                             instance_id='merged',
                                                             extension=".xml",
                                                             release="00.07",
