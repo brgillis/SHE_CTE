@@ -21,7 +21,6 @@ __updated__ = "2019-03-18"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
-import math
 import os
 
 from SHE_PPT.file_io import (read_listfile, write_listfile,
@@ -34,8 +33,6 @@ from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
 
-
-config_batch_size_key = "SHE_CTE_ObjectIdSplit_batch_size"
 
 logger = getLogger(__name__)
 
@@ -56,10 +53,10 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input arguments
-    parser.add_argument('--shear_estimates_tables', type=str)
+    parser.add_argument('--input_shear_estimates_listfile', type=str)
 
     # Output arguments
-    parser.add_argument('--object_ids', type=str)
+    parser.add_argument('--output_shear_estimates', type=str)
 
     # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
@@ -68,7 +65,7 @@ def defineSpecificProgramOptions():
                         help="Set to enable debugging protocols")
     parser.add_argument('--profile', action='store_true')
 
-    logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_ObjectIdMerge defineSpecificProgramOptions()')
 
     return parser
 
@@ -82,7 +79,7 @@ def object_id_merge_from_args(args):
     # Read in each shear tables and add the IDs in it to a global set
     ids = set()
 
-    shear_estimates_table_product_filenames = read_listfile(os.path.join(args.workdir, args.shear_tables))
+    shear_estimates_table_product_filenames = read_listfile(os.path.join(args.workdir, args.input_shear_estimates_listfile))
 
     for shear_estimates_table_product_filename in shear_estimates_table_product_filenames:
 
@@ -90,7 +87,7 @@ def object_id_merge_from_args(args):
 
         shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, shear_estimates_table_product_filename))
 
-        if not isinstance(shear_estimates_table_product, shear_estimates.dpdMerFinalCatalog):
+        if not isinstance(shear_estimates_table_product, shear_estimates.dpdShearMeasurement):
             raise TypeError("Shear product is of invalid type: ")
 
         shear_estimates_table_filename = shear_estimates_table_product.get_data_filename()
@@ -106,20 +103,16 @@ def object_id_merge_from_args(args):
         ids.update(shear_estimates_table[setf.ID].data)
 
     # Get a filename
-    id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
-                                                    instance_id='merged',
-                                                    extension=".xml",
-                                                    release="00.07",
-                                                    subdir="data",
-                                                    processing_function="SHE")
+    shear_estimates_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
+                                                            instance_id='merged',
+                                                            extension=".xml",
+                                                            release="00.07",
+                                                            subdir="data",
+                                                            processing_function="SHE")
 
     # Create and save the product
-    id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=ids)
-    write_xml_product(id_list_product, os.path.join(args.workdir, id_list_product_filename))
-
-    # Output the listfile
-    write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename)
-    logger.info("Output merged listfile of object ID list products to " + args.object_ids)
+    shear_object_list_product = object_id_list.create_dpd_she_object_id_list(id_list=ids)
+    write_xml_product(shear_object_list_product, os.path.join(args.workdir, shear_estimates_product_filename))
 
     logger.debug('# Entering object_id_merge_from_args normally')
 
