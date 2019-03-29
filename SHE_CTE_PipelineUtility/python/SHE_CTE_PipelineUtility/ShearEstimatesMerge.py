@@ -1,8 +1,9 @@
-""" @file ObjectIdMerge.py
+""" @file ShearEstimatesMerge.py
 
     Created 14 Mar 2019
 
-    Merge point executable for merging up batches into objects.
+    Merge point executable for the split of shear estimation over object ID, merging into a single output product
+    per Field of View.
 """
 
 __updated__ = "2019-03-29"
