@@ -70,6 +70,8 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--detections_tables', type=str,
                         help='.json listfile containing filenames of detections table products.')
+    parser.add_argument('--object_ids', type=str,
+                        help='XML dataproduct that contains within it a list of object ids to loop over')
 
     parser.add_argument('--bfd_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for BFD training data.')

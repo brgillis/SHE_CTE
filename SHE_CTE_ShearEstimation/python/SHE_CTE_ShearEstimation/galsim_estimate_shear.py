@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-03-01"
+__updated__ = "2019-03-29"
 
 from copy import deepcopy
 from math import sqrt
@@ -569,6 +569,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
         log_no_psf_scale()
         psf_scale = default_psf_scale
 
+    # can i index data_stack with galaxy ids ???
+    # data_stack.detections_catalogue=data_stack.detections_catalogue[galids]
     row_index = 0
 
     # Loop over galaxies and get an estimate for each one
