@@ -24,7 +24,7 @@ import argparse
 import os
 
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_listfile, write_listfile,
+from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
@@ -32,7 +32,6 @@ from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy import table
-from astropy.table import Table
 
 
 logger = getLogger(__name__)
@@ -125,7 +124,7 @@ def shear_estimates_merge_from_args(args):
                     logger.debug("No shear estimates available for method: " + method)
                     continue
 
-                shear_estimates_method_table = Table.read(os.path.join(
+                shear_estimates_method_table = table.Table.read(os.path.join(
                     args.workdir, shear_estimates_method_table_filename))
 
                 if not is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True):
