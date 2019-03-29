@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-02-21"
+__updated__ = "2019-03-29"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -20,6 +20,7 @@ __updated__ = "2019-02-21"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+import copy
 import os
 import pdb
 
@@ -42,7 +43,7 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
 import numpy as np
-import copy
+
 
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
@@ -94,23 +95,23 @@ def estimate_shears_from_args(args, dry_run=False):
                                     clean_detections=True,
                                     apply_sc3_fix=False)
 
-    # if given a list of object ids then create data_stack with pruned detections_catalogue 
-    if args.object_ids is not None:
+    # if given a list of object ids then create data_stack with pruned detections_catalogue
+    if args.object_ids is not None and args.object_ids != "None":
         logger.info("Pruning list of galaxy objects to loop over")
         # read in ID list
         qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
         object_ids_list_product = read_xml_product(qualified_object_ids_filename)
         id_list = object_ids_list_product.get_id_list()
-        
+
         # create a back up of full detections_catalog
         data_stack.detections_catalogue_backup = copy.deepcopy(data_stack.detections_catalogue)
 
         # loop over detections_catalog and make list of indices not in our object_id list
-        list_ids_not_to_use=[]
+        list_ids_not_to_use = []
         for ind, row in enumerate(data_stack.detections_catalogue):
             if row[detf.ID] not in id_list:
                 list_ids_not_to_use.append(ind)
-         
+
         data_stack.detections_catalogue.remove_rows(list_ids_not_to_use)
         logger.info("Finished pruning list of galaxy objects to loop over")
 
