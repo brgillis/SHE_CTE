@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-03-14"
+__updated__ = "2019-03-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -74,7 +74,7 @@ def defineSpecificProgramOptions():
                         help="Set to enable debugging protocols")
     parser.add_argument('--profile', action='store_true')
 
-    logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_ObjectIdSplit defineSpecificProgramOptions()')
 
     return parser
 
@@ -106,6 +106,8 @@ def object_id_split_from_args(args):
     # Read in each detections table and add the IDs in it to a global set
     all_ids = set()
 
+    logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
+
     detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
 
     for tile_detections_table_product_filename in detections_table_product_filenames:
@@ -116,7 +118,7 @@ def object_id_split_from_args(args):
                                                                       tile_detections_table_product_filename))
 
         if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
-            raise TypeError("Detections product is of invalid type: ")
+            raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
 
         tile_detections_table_filename = tile_detections_table_product.get_data_filename()
 
@@ -130,6 +132,8 @@ def object_id_split_from_args(args):
         # Get the ID list from it and add it to the set
         all_ids.update(tile_detections_table[detf.ID].data)
 
+    logger.info("Finished reading in IDs from detections table.")
+
     # Convert IDs to a numpy array for easier handling
     all_ids_array = np.array(list(all_ids))
     num_ids = len(all_ids_array)
@@ -139,6 +143,9 @@ def object_id_split_from_args(args):
         batch_size = num_ids
 
     num_batches = int(math.ceil(num_ids / batch_size))
+
+    logger.info("Splitting IDs into " + str(num_batches) + " batches of size " + str(batch_size) + ".")
+
     id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
                                    num_batches - 1, endpoint=True, dtype=int)
 
@@ -154,7 +161,11 @@ def object_id_split_from_args(args):
     # Keep a list of all product filenames
     id_list_product_filename_list = []
 
+    logger.info("Writing ID lists into products.")
+
     for i in range(num_batches):
+
+        logger.debug("Writing ID list #" + str(i) + " to product.")
 
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
@@ -169,11 +180,13 @@ def object_id_split_from_args(args):
         batch_id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
         write_xml_product(batch_id_list_product, os.path.join(args.workdir, batch_id_list_product_filename))
 
+        logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
+
     # Output the listfile
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
-    logger.info("Output listfile of object ID list products to " + args.object_ids)
+    logger.info("Finished writing listfile of object ID list products to " + args.object_ids)
 
-    logger.debug('# Entering object_id_split_from_args normally')
+    logger.debug('# Exiting object_id_split_from_args normally')
 
     return
 
