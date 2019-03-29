@@ -50,7 +50,7 @@ def defineSpecificProgramOptions():
     """
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ObjectIdMerge defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -68,13 +68,13 @@ def defineSpecificProgramOptions():
                         help="Set to enable debugging protocols")
     parser.add_argument('--profile', action='store_true')
 
-    logger.debug('# Exiting SHE_CTE_ObjectIdMerge defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
 
     return parser
 
 
-def object_id_merge_from_args(args):
-    """ Core function for implementing a merge of object ID
+def shear_estimates_merge_from_args(args):
+    """ Core function for implementing a merge of shear estimates tables
     """
 
     logger.debug('# Entering object_id_merge_from_args(args)')
@@ -202,10 +202,10 @@ def mainMethod(args):
     """
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ObjectIdMerge mainMethod()')
+    logger.debug('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ObjectIdMerge",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ShearEstimatesMerge",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -214,17 +214,17 @@ def mainMethod(args):
 
         if args.profile:
             import cProfile
-            cProfile.runctx("object_id_merge_from_args(args)", {},
-                            {"object_id_merge_from_args": object_id_merge_from_args,
+            cProfile.runctx("shear_estimates_merge_from_args(args)", {},
+                            {"shear_estimates_merge_from_args": shear_estimates_merge_from_args,
                              "args": args, },
-                            filename="object_id_merge.prof")
+                            filename="shear_estimates_merge.prof")
         else:
-            object_id_merge_from_args(args)
+            shear_estimates_merge_from_args(args)
     except Exception as e:
         # logger.warn("Failsafe exception block triggered with exception: " + str(e))
         raise
 
-    logger.debug('# Exiting SHE_CTE_ObjectIdMerge mainMethod()')
+    logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')
 
     return
 
