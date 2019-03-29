@@ -103,7 +103,7 @@ def shear_estimates_merge_from_args(args):
             shear_estimates_table_product = read_xml_product(
                 os.path.join(args.workdir, shear_estimates_table_product_filename))
 
-            if not isinstance(shear_estimates_table_product, shear_estimates.dpdShearMeasurement):
+            if not isinstance(shear_estimates_table_product, products.shear_estimates.dpdShearMeasurement):
                 raise TypeError("Shear product is of invalid type: " + type(shear_estimates_table_product))
 
         except Exception as e:
@@ -129,7 +129,7 @@ def shear_estimates_merge_from_args(args):
                 if not is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True):
                     raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
 
-                # Get the ID list from it and add it to the set
+                # Append the table to the list of tables
                 shear_estimates_tables[method].append(shear_estimates_method_table)
 
                 if len(shear_estimates_method_table) > 0:
