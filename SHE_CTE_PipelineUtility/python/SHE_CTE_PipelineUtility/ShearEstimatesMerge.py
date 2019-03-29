@@ -77,13 +77,15 @@ def shear_estimates_merge_from_args(args):
     """ Core function for implementing a merge of shear estimates tables
     """
 
-    logger.debug('# Entering object_id_merge_from_args(args)')
+    logger.debug('# Entering shear_estimates_merge_from_args(args)')
 
     # Keep a list of all shear estimates tables for each method
     shear_estimates_tables = dict.fromkeys(methods)
     for method in methods:
         # Start with an empty list of the tables
         shear_estimates_tables[method] = []
+
+    logger.info("Loading shear estimates from files listed in: " + args.input_shear_estimates_listfile)
 
     shear_estimates_table_product_filenames = read_listfile(
         os.path.join(args.workdir, args.input_shear_estimates_listfile))
@@ -140,8 +142,14 @@ def shear_estimates_merge_from_args(args):
                 logger.warn("Failsafe block encountered exception: " + str(e))
                 continue
 
+            logger.debug("Finished loading shear estimates from file: " + shear_estimates_table_product_filename)
+
     if not at_least_one_good_estimates_table:
         raise RuntimeError("Not able to load any shear estimates tables successfully.")
+
+    logger.info("Finished loading shear estimates from files listed in: " + args.input_shear_estimates_listfile)
+
+    logger.info("Combining shear estimates tables.")
 
     # Combine the shear estimates tables for each method and output them
 
@@ -174,11 +182,16 @@ def shear_estimates_merge_from_args(args):
                                                                    combined_shear_estimates_table_filename),
                                                       format="fits")
 
+        logger.info("Combined shear estimates for method " + method +
+                    " output to: " + combined_shear_estimates_table_filename)
+
     # Save the product
     write_xml_product(combined_shear_estimates_product, os.path.join(args.workdir,
                                                                      args.output_shear_estimates))
 
-    logger.debug('# Exiting object_id_merge_from_args normally')
+    logger.info("Combined shear estimates product output to: " + args.output_shear_estimates)
+
+    logger.debug('# Exiting shear_estimates_merge_from_args normally')
 
     return
 
