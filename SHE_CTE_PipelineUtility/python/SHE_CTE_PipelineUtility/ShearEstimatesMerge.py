@@ -174,17 +174,9 @@ def shear_estimates_merge_from_args(args):
                                                                    combined_shear_estimates_table_filename),
                                                       format="fits")
 
-    # Get a filename for the output product
-    combined_shear_estimates_product_filename = get_allowed_filename(type_name="SHEAR-EST",
-                                                                     instance_id='MERGED',
-                                                                     extension=".xml",
-                                                                     release="00.07",
-                                                                     subdir="data",
-                                                                     processing_function="SHE")
-
     # Save the product
     write_xml_product(combined_shear_estimates_product, os.path.join(args.workdir,
-                                                                     combined_shear_estimates_product_filename))
+                                                                     args.output_shear_estimates))
 
     logger.debug('# Exiting object_id_merge_from_args normally')
 
