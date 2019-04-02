@@ -20,12 +20,11 @@
 
 import argparse
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -71,6 +70,8 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--detections_tables', type=str,
                         help='.json listfile containing filenames of detections table products.')
+    parser.add_argument('--object_ids', type=str,
+                        help='XML dataproduct that contains within it a list of object ids to loop over')
 
     parser.add_argument('--bfd_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for BFD training data.')
@@ -86,6 +87,9 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--regauss_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for REGAUSS training data.')
+
+    parser.add_argument('--mdb', type=str, default=None,  # Use default to allow simple running with default values
+                        help='Mission Database .xml file')
 
     parser.add_argument('--galaxy_population_priors_table', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='.json listfile containing filenames of detections table products.')

@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2018-12-18"
+__updated__ = "2019-03-29"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -20,11 +20,21 @@ __updated__ = "2018-12-18"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+import copy
 import os
+import pdb
 
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT import mdb
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename)
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
+                             read_listfile)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
@@ -34,14 +44,7 @@ from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_tab
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
-import pdb
 
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -83,6 +86,18 @@ def estimate_shears_from_args(args, dry_run=False):
     else:
         dry_label = ""
 
+    # Load in the MDB
+    if args.mdb is None:
+        logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+    elif args.mdb[-5:] == ".json":
+        mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
+        mdb.init(mdb_files=mdb_files, path=args.workdir)
+    elif args.mdb[-4:] == ".xml":
+        mdb.init(mdb_files=args.mdb, path=args.workdir)
+    else:
+        logger.warn("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
+                    ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
+
     logger.info("Reading " + dry_label + "data images...")
 
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
@@ -94,6 +109,26 @@ def estimate_shears_from_args(args, dry_run=False):
                                     workdir=args.workdir,
                                     clean_detections=True,
                                     apply_sc3_fix=False)
+
+    # if given a list of object ids then create data_stack with pruned detections_catalogue
+    if args.object_ids is not None and args.object_ids != "None":
+        logger.info("Pruning list of galaxy objects to loop over")
+        # read in ID list
+        qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
+        object_ids_list_product = read_xml_product(qualified_object_ids_filename)
+        id_list = object_ids_list_product.get_id_list()
+
+        # create a back up of full detections_catalog
+        data_stack.detections_catalogue_backup = copy.deepcopy(data_stack.detections_catalogue)
+
+        # loop over detections_catalog and make list of indices not in our object_id list
+        list_ids_not_to_use = []
+        for ind, row in enumerate(data_stack.detections_catalogue):
+            if row[detf.ID] not in id_list:
+                list_ids_not_to_use.append(ind)
+
+        data_stack.detections_catalogue.remove_rows(list_ids_not_to_use)
+        logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
 
@@ -205,7 +240,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
                         # For now just leave as handle to fits file
                         calibration_data = fits.open(os.path.join(args.workdir, method_calibration_filename))
-                
+
+                # need to add ids to iterate over
+
                 shear_estimates_table = estimate_shear(data_stack,
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
@@ -245,6 +282,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    setf.g1_err: 1e99,
                                                    setf.g2_err: 1e99,
                                                    setf.g1g2_covar: np.NaN,
+                                                   setf.fitclass: 2,
                                                    setf.re: np.NaN,
                                                    setf.snr: np.NaN,
                                                    setf.x_world: data_stack.detections_catalogue[detf.gal_x_world][r],
