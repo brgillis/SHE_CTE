@@ -156,7 +156,11 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                                 sky_var,
                                 gal_id,
                                 wcs,
-                                config_data)
+                                config_data,
+                                seg_map=None,
+                                flag_map=None,
+                                bkgd_map=None,
+                                do_bkgd_sub=True)
 
         if config_data['isTarget'] == True:
             if bfd_info.lost:
