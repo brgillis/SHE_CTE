@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-04-09"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -260,7 +260,6 @@ def estimate_shears_from_args(args, dry_run=False):
                                                           "Invalid implementation:" in str(e)):
                     logger.warn(str(e))
                 else:
-                    raise
                     logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
