@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-04-09"
 
 from copy import deepcopy
 from math import sqrt
@@ -261,7 +261,26 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
 
     # Second, we have to correct for the shear. It's necessary to do this by solving for the pre-WCS shear
 
-    rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
+    try:
+
+        rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
+
+    except ValueError as e:
+
+        if not "Requested shear exceeds 1" in str(e):
+            raise
+
+        # Shear is greater than 1, so note this in the flags
+        shear_estimate.g1 = np.NaN
+        shear_estimate.g2 = np.NaN
+        shear_estimate.gerr = np.inf
+        shear_estimate.g1_err = np.inf
+        shear_estimate.g2_err = np.inf
+        shear_estimate.g1g2_covar = np.inf
+
+        shear_estimate.flags |= flags.flag_too_large_shear
+
+        return
 
     def get_shear_adding_diff(g):
         g1 = g[0]
@@ -286,6 +305,8 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
         shear_estimate.g1_err = np.inf
         shear_estimate.g2_err = np.inf
         shear_estimate.g1g2_covar = np.inf
+
+        shear_estimate.flags |= flags.flag_cannot_correct_distortion
 
         return
     else:
