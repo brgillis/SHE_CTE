@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-04-09"
+__updated__ = "2019-04-16"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -22,9 +22,7 @@ __updated__ = "2019-04-09"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 import copy
 import os
-import pdb
 
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
@@ -36,7 +34,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
@@ -58,8 +56,6 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "MomentsML": ML_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
-
-methods_key = "SHE_CTE_EstimateShear_methods"
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -187,13 +183,13 @@ def estimate_shears_from_args(args, dry_run=False):
         if pipeline_config is None:
             pipeline_config = {}
 
-        if methods_key in pipeline_config:
-            methods = pipeline_config[methods_key].split()
-        else:
+        # Use methods specified in the command-line first
+        if args.methods is not None and len(args.methods) > 0:
             methods = args.methods
-
-        # If no methods are specified, use all
-        if len(methods) == 0:
+        elif ConfigKeys.ES_METHODS.value in pipeline_config:
+            methods = pipeline_config[ConfigKeys.ES_METHODS.value].split()
+        else:
+            # Default to using all methods
             methods = list(estimation_methods.keys())
 
         for method in methods:

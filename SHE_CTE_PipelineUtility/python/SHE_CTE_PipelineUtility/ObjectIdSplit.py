@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-04-16"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,7 +28,7 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
+from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.products import object_id_list, detections
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
@@ -36,8 +36,6 @@ from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
 import numpy as np
 
-
-config_batch_size_key = "SHE_CTE_ObjectIdSplit_batch_size"
 default_batch_size = 256
 
 logger = getLogger(__name__)
@@ -93,12 +91,12 @@ def object_id_split_from_args(args):
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
         # Check for the cleanup key
-        if config_batch_size_key not in pipeline_config:
-            logger.info("Key " + config_batch_size_key + " not found in pipeline config " + args.pipeline_config + ". " +
+        if ConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
+            logger.info("Key " + ConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default batch size of " + str(default_batch_size))
             batch_size = default_batch_size
         else:
-            batch_size = int(pipeline_config[config_batch_size_key])
+            batch_size = int(pipeline_config[ConfigKeys.OID_BATCH_SIZE.value])
             if batch_size < 0:
                 raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
             logger.info("Using batch size of: " + str(batch_size))

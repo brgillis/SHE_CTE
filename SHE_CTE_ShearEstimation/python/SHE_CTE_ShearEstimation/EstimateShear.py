@@ -102,7 +102,7 @@ def defineSpecificProgramOptions():
 
     # Optional input arguments (cannot be used in pipeline)
 
-    parser.add_argument('--methods', type=str, nargs='*', default=[],
+    parser.add_argument('--methods', type=str, nargs='*', default=None,
                         help='Which shear estimation methods to apply. If not specified, all will be run.')
 
     # Output arguments
