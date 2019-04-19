@@ -29,6 +29,7 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file_in_path)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
@@ -82,20 +83,13 @@ def model_psfs(args, dry_run=False):
 
         aocs_time_series_products = None
 
-    # PSFCalibration products
+    # PSFCalibration product
 
-    if args.psf_calibration_product is not None:
+    psf_calibration_product = get_conditional_product(args.psf_calibration_product, args.workdir)
 
-        logger.info("Reading mock" + dry_label + " PSF calibration product...")
-
-        psf_calibration_product = read_xml_product(join(args.workdir, args.psf_calibration_product))
-
-        if not isinstance(psf_calibration_product, products.psf_calibration.DpdShePSFCalibrationProduct):
-            raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
-
-    else:
-
-        psf_calibration_product = None
+    if psf_calibration_product is not None and not isinstance(psf_calibration_product,
+                                                              products.psf_calibration.DpdShePSFCalibrationProduct):
+        raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
 
     logger.info("Reading mock" + dry_label + " PSF field param products...")
 
@@ -110,12 +104,12 @@ def model_psfs(args, dry_run=False):
 
         psf_field_params.append(psf_field_param_product)
 
-    # If given a list of object ids then create frame_stack with pruned detections_catalogue
-    if args.object_ids is not None and args.object_ids != "None":
+    # Object ID list
+
+    object_ids_list_product = get_conditional_product(args.object_ids, args.workdir)
+
+    if object_ids_list_product is not None:
         logger.info("Pruning list of galaxy objects to loop over")
-        # read in ID list
-        qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
-        object_ids_list_product = read_xml_product(qualified_object_ids_filename)
         id_list = object_ids_list_product.get_id_list()
 
         # create a back up of full detections_catalog
