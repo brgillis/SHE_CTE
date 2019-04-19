@@ -89,6 +89,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--regauss_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for REGAUSS training data.')
 
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
     parser.add_argument('--mdb', type=str, default=None,  # Use default to allow simple running with default values
                         help='Mission Database .xml file')
 
@@ -97,9 +100,6 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--calibration_parameters_product', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Filename of calibration parameters product (XML data product).')
-
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
 
     # Optional input arguments (cannot be used in pipeline)
 
