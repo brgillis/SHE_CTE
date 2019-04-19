@@ -24,6 +24,7 @@ from ElementsKernel.Logging import getLogger
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_CTE_PSFFitting.fit_psfs import fit_psfs
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -91,6 +92,11 @@ def mainMethod(args):
     logger.debug('#')
     logger.debug('# Entering SHE_CTE_FitPSFs mainMethod()')
     logger.debug('#')
+
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_FitPSFs",
+                                    store_true=["profile", "dry_run"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
 
     dry_run = args.dry_run or force_dry_run
 
