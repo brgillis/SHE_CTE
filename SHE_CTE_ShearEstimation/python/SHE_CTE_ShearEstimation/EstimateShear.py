@@ -70,6 +70,7 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--detections_tables', type=str,
                         help='.json listfile containing filenames of detections table products.')
+
     parser.add_argument('--object_ids', type=str,
                         help='XML dataproduct that contains within it a list of object ids to loop over')
 
