@@ -61,7 +61,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--psf_calibration_product', type=str, default=None,  # Allowing to use without for SC4
                         help='Filename for PSF calibration data product (.json listfile)')
     parser.add_argument('--psf_field_params', type=str,
-                        help='Filename for PSF field parameters (.json listfile).')
+                        help='Filename for PSF field parameters (.json listfile)')
     parser.add_argument('--object_ids', type=str,
                         help='XML dataproduct that contains within it a list of object ids to loop over')
     parser.add_argument('--mdb', type=str, default=None,
