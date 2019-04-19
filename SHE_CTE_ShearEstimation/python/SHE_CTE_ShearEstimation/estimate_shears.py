@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-04-16"
+__updated__ = "2019-04-19"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -34,7 +34,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ConfigKeys, read_config
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
@@ -48,7 +48,7 @@ import numpy as np
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": None,
+                   "LensMC": load_control_training_data,
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
@@ -106,11 +106,11 @@ def estimate_shears_from_args(args, dry_run=False):
                                     apply_sc3_fix=False)
 
     # if given a list of object ids then create data_stack with pruned detections_catalogue
-    if args.object_ids is not None and args.object_ids != "None":
+
+    object_ids_list_product = get_conditional_product(args.object_ids, args.workdir)
+
+    if object_ids_list_product is not None:
         logger.info("Pruning list of galaxy objects to loop over")
-        # read in ID list
-        qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
-        object_ids_list_product = read_xml_product(qualified_object_ids_filename)
         id_list = object_ids_list_product.get_id_list()
 
         # create a back up of full detections_catalog
@@ -126,18 +126,11 @@ def estimate_shears_from_args(args, dry_run=False):
         logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
-
-    if args.calibration_parameters_product is not None:
-
-        logger.info("Reading " + dry_label + "calibration parameters...")
-
-        calibration_parameters_prod = read_xml_product(os.path.join(args.workdir, args.calibration_parameters_product))
-        if not isinstance(calibration_parameters_prod, products.calibration_parameters.DpdSheCalibrationParametersProduct):
-            raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                             + " is invalid type.")
-
-    else:
-        calibration_parameters_prod = None
+    calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
+    if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
+                                                                  products.calibration_parameters.DpdSheCalibrationParametersProduct):
+        raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
+                         + " is invalid type.")
 
     # Set up method data filenames
 
@@ -179,9 +172,6 @@ def estimate_shears_from_args(args, dry_run=False):
 
         # Check for methods in the pipeline options
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
-
-        if pipeline_config is None:
-            pipeline_config = {}
 
         # Use methods specified in the command-line first
         if args.methods is not None and len(args.methods) > 0:
