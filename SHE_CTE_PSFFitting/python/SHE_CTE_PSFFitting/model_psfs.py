@@ -53,7 +53,7 @@ def model_psfs(args, dry_run=False):
     # Data images
 
     if dry_run:
-        dry_label = "_dry"
+        dry_label = "-dry"
     else:
         dry_label = ""
 
