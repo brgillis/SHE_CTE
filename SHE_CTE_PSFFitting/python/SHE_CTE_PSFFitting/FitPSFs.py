@@ -44,29 +44,32 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Option for profiling
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
-    parser.add_argument('--dry_run', action = 'store_true',
-                        help = 'Dry run (no data processed).')
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
+    parser.add_argument('--dry_run', action='store_true',
+                        help='Dry run (no data processed).')
 
     # Input filenames
-    parser.add_argument('--data_images', type = str,
-                        help = 'Filename for list of data images (.json listfile)')
-    parser.add_argument('--detections_tables', type = str,
-                        help = 'Filename for list of detections tables (.json listfile)')
-    parser.add_argument('--aocs_time_series_products', type = str, default = None,  # Allowing to use without for SC4
-                        help = 'Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('--psf_calibration_product', type = str, default = None,  # Allowing to use without for SC4
-                        help = 'Filename for PSF calibration data product (.json listfile)')
+    parser.add_argument('--data_images', type=str,
+                        help='Filename for list of data images (.json listfile)')
+    parser.add_argument('--detections_tables', type=str,
+                        help='Filename for list of detections tables (.json listfile)')
+    parser.add_argument('--aocs_time_series_products', type=str, default=None,  # Allowing to use without for SC4
+                        help='Filename for list of AOCS data series data products (.json listfile)')
+    parser.add_argument('--psf_calibration_product', type=str, default=None,  # Allowing to use without for SC4
+                        help='Filename for PSF calibration data product (.xml data product)')
+    parser.add_argument('--segmentation_images', type=str, default=None,
+                        help='Filename for the list of segmentation maps (.json listfile)')
+    parser.add_argument('--mdb', type=str, default=None,
+                        help='Filename for the Mission Database (MDB) file to use as input')
 
     # Output filenames
-    parser.add_argument('--psf_field_params', type = str,
-                        help = 'Desired filename for output PSF field parameters listfile.')
+    parser.add_argument('--psf_field_params', type=str,
+                        help='Desired filename for output PSF field parameters listfile.')
 
     # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
-
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
 
     logger.debug('Exiting SHE_CTE_FitPSFs defineSpecificProgramOptions()')
 
@@ -94,16 +97,17 @@ def mainMethod(args):
     if args.profile:
         import cProfile
         cProfile.runctx("fit_psfs(args,dry_run=dry_run)", {},
-                        {"fit_psfs":fit_psfs,
-                         "args":args,
-                         "dry_run":dry_run, },
-                        filename = "fit_psfs.prof")
+                        {"fit_psfs": fit_psfs,
+                         "args": args,
+                         "dry_run": dry_run, },
+                        filename="fit_psfs.prof")
     else:
-        fit_psfs(args, dry_run = dry_run)
+        fit_psfs(args, dry_run=dry_run)
 
     logger.debug('Exiting SHE_CTE_FitPSFs mainMethod()')
 
     return
+
 
 def main():
     """
@@ -118,6 +122,7 @@ def main():
     mainMethod(args)
 
     return
+
 
 if __name__ == "__main__":
     main()
