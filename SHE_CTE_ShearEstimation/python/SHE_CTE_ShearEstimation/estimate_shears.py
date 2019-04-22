@@ -152,14 +152,17 @@ def estimate_shears_from_args(args, dry_run=False):
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
         header = f[0].header
         if ppt_mv.model_hash_label in header:
-            estimates_instance_id = header[ppt_mv.model_hash_label][0:ppt_mv.short_instance_id_maxlen]
+            estimates_instance_id = header[ppt_mv.model_hash_label]
         elif ppt_mv.field_id_label in header:
-            estimates_instance_id = header[ppt_mv.field_id_label][0:ppt_mv.short_instance_id_maxlen]
+            estimates_instance_id = str(header[ppt_mv.field_id_label])
         else:
-            logger.warn("Cannot determine proper instance ID for filenames. Using hash of stacked image header.")
-            estimates_instance_id = hash_any(header, format="base64", max_length=ppt_mv.short_instance_id_maxlen)
-        # Fix banned characters in the instance_id
+            logger.warn("Cannot determine proper instance ID for filenames. Using hash of image header.")
+            estimates_instance_id = hash_any(header, format="base64")
+
+        # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
+        estimates_instance_id = os.getpid() + "-" + estimates_instance_id
+        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen]
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
