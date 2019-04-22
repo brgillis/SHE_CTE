@@ -649,7 +649,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                 stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
             else:
                 stacked_gal_stamp.header[scale_label] = default_galaxy_scale
-            stacked_gal_stamp.header[gain_label] = data_stack.exposures[0].detectors[1, 1].header[gain_label]
+            stacked_gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
 
             try:
                 stack_shear_estimate = get_shear_estimate(stacked_gal_stamp,
