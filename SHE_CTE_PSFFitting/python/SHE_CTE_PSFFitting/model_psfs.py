@@ -151,9 +151,10 @@ def model_psfs(args, dry_run=False):
     filenames = []
     psf_tables = []
     for x in range(num_exposures):
-        filename = get_allowed_filename("PSF" + dry_label, str(x),
-                                        version=SHE_CTE.__version__)
-        filenames.append(filename)
+        data_filename = get_allowed_filename("PSF" + dry_label,
+                                             str(os.getpid()) + "-" + str(x),
+                                             extension=".fits",
+                                             version=SHE_CTE.__version__)
 
         hdulist = fits.HDUList([fits.PrimaryHDU()])  # Start with an empty primary HDU
 
@@ -173,7 +174,16 @@ def model_psfs(args, dry_run=False):
         psf_tables[x].add_index(pstf.ID)  # Allow it to be indexed by galaxy ID
 
         # Write out the table
-        hdulist.writeto(join(args.workdir, filename), clobber=True)
+        hdulist.writeto(join(args.workdir, data_filename), clobber=True)
+
+        # Write the data product
+        product_filename = get_allowed_filename("PSF-P" + dry_label,
+                                                str(os.getpid()) + "-" + str(x),
+                                                extension=".xml",
+                                                version=SHE_CTE.__version__)
+        product = products.psf_image.create_psf_image_product(filename=data_filename)
+        write_xml_product(product, product_filename)
+        filenames.append(product_filename)
 
     logger.info("Base files for PSF data set up.")
 
