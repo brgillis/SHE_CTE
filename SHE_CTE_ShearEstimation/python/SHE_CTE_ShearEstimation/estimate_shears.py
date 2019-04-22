@@ -273,7 +273,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    setf.g1_err: 1e99,
                                                    setf.g2_err: 1e99,
                                                    setf.g1g2_covar: np.NaN,
-                                                   setf.fitclass: 2,
+                                                   setf.fit_class: 2,
                                                    setf.re: np.NaN,
                                                    setf.snr: np.NaN,
                                                    setf.x_world: data_stack.detections_catalogue[detf.gal_x_world][r],
