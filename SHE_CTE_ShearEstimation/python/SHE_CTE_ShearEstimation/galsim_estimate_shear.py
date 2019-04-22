@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-04-09"
+__updated__ = "2019-04-22"
 
 from copy import deepcopy
 from math import sqrt
@@ -27,6 +27,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import flags
+from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
@@ -447,7 +448,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
             resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale /
                                            psf_scale)    # Calculate the galaxy's S/N
             a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
-            gain = gal_stamp.header[gain_label]
+            gain = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
             signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
                                                                     (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
             break
@@ -695,7 +696,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                     if gal_stamp is None:
                         continue
                     gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
-                    gal_stamp.header[gain_label] = data_stack.stacked_image.header[gain_label]
+                    gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
                     bulge_psf_stamp = bulge_psf_stack.exposures[x]
                     disk_psf_stamp = disk_psf_stack.exposures[x]
 
