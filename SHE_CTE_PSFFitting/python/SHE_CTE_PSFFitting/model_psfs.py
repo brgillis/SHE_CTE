@@ -182,7 +182,7 @@ def model_psfs(args, dry_run=False):
                                                 extension=".xml",
                                                 version=SHE_CTE.__version__)
         product = products.psf_image.create_psf_image_product(filename=data_filename)
-        write_xml_product(product, product_filename)
+        write_xml_product(product, join(args.workdir, product_filename))
         filenames.append(product_filename)
 
     logger.info("Base files for PSF data set up.")
