@@ -393,9 +393,13 @@ def check_data_quality(gal_stamp, psf_stamp):
 
         # Check for corrupt data by checking that all data are valid
 
+        if corrupt_flag == flags.flag_corrupt_segmentation_map:
+            min_value = -1
+        else:
+            min_value = 0
+
         good_data = a.ravel()[ravelled_antimask]
-        if ((good_data.sum() == 0) or (good_data.dtype not in (np.int8, np.int16, np.int32, np.int64) and (good_data < 0).any()) or
-                (good_data.dtype in (np.int8, np.int16, np.int32, np.int64) and (good_data < -1).any())):
+        if ((good_data.sum() == 0) or (good_data < min_value).any()):
             flag |= corrupt_flag
             continue
 
