@@ -440,7 +440,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
             gal_stamp.add_default_segmentation_map(force=True)
 
     # Subtract off the background from the galaxy
-    bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
+    if stacked:
+        bkg_subtracted_gal_stamp_data = gal_stamp.data
+    else:
+        bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
 
@@ -468,7 +471,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
             if str(e) == "HSM Error: Error: too many iterations in adaptive moments\n":
 
                 # Flag an error if we're on the last guess_sigma we're trying
-                if gal_sig == 10.0:
+                if gal_sig == gal_sigs[-1]:
 
                     # The galaxy is probably too small in this case, so flag that
                     shear_estimate = deepcopy(error_shear_estimate)
