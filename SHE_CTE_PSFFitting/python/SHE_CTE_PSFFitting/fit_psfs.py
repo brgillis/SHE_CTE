@@ -62,10 +62,13 @@ def fit_psfs(args, dry_run=False):
     logger.info("Reading mock" + dry_label + " data images and detections tables...")
 
     frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
+                                     seg_listfile_filename=args.segmentation_images,
                                      detections_listfile_filename=args.detections_tables,
                                      workdir=args.workdir,
                                      clean_detections=True,
-                                     apply_sc3_fix=True)
+                                     apply_sc3_fix=True,
+                                     memmap=True,
+                                     mode='denywrite')
 
     # AocsTimeSeries products
 
