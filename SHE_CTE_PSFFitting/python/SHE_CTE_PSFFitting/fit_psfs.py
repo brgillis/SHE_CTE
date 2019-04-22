@@ -22,6 +22,7 @@ from copy import deepcopy
 import os
 from os.path import join
 
+import SHE_CTE
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
@@ -104,7 +105,8 @@ def fit_psfs(args, dry_run=False):
 
     for i in range(len(frame_stack.exposures)):
 
-        field_param_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml")
+        field_param_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml",
+                                                    version=SHE_CTE.__version__)
         field_param_filenames.append(field_param_filename)
 
         field_param_product = products.psf_field_params.create_dpd_she_psf_field_params()

@@ -22,6 +22,7 @@ from copy import deepcopy
 import os
 from os.path import join
 
+import SHE_CTE
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
@@ -150,7 +151,8 @@ def model_psfs(args, dry_run=False):
     filenames = []
     psf_tables = []
     for x in range(num_exposures):
-        filename = get_allowed_filename("PSF" + dry_label, str(x))
+        filename = get_allowed_filename("PSF" + dry_label, str(x),
+                                        version=SHE_CTE.__version__)
         filenames.append(filename)
 
         hdulist = fits.HDUList([fits.PrimaryHDU()])  # Start with an empty primary HDU

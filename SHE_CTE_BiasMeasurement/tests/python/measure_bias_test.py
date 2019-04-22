@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2018-12-18"
+__updated__ = "2019-04-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,16 +20,16 @@ __updated__ = "2018-12-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from numpy.testing import assert_almost_equal
 from os.path import join
+import pytest
 
+import SHE_CTE
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 from SHE_PPT import products
 from SHE_PPT.file_io import write_xml_product, read_xml_product,\
     get_allowed_filename, write_listfile
 from SHE_PPT.math import LinregressStatistics
-from numpy.testing import assert_almost_equal
-import pytest
-
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 import numpy as np
 
 
@@ -134,8 +134,10 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension=".xml", subdir=None)
-            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None)
+            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension=".xml", subdir=None,
+                                              version=SHE_CTE.__version__)
+            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None,
+                                              version=SHE_CTE.__version__)
 
             write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
             write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))

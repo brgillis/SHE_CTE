@@ -23,6 +23,7 @@ __updated__ = "2019-04-22"
 import copy
 import os
 
+import SHE_CTE
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
@@ -161,11 +162,16 @@ def estimate_shears_from_args(args, dry_run=False):
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
-        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id),
-        KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id),
-        LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id),
-        MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id),
-        REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id))
+        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
+                                          version=SHE_CTE.__version__),
+        KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
+                                          version=SHE_CTE.__version__),
+        LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id,
+                                             version=SHE_CTE.__version__),
+        MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id,
+                                                version=SHE_CTE.__version__),
+        REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id,
+                                              version=SHE_CTE.__version__))
 
     if not dry_run:
 
