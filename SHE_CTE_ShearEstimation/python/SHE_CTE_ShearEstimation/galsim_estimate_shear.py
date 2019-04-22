@@ -477,7 +477,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
     supersampled_badpix.add_default_header()
-    supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    if scale_label in gal_stamp.header:
+        supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    else:
+        supersampled_badpix.header[scale_label] = default_galaxy_scale
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
 
@@ -641,7 +644,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             stacked_disk_psf_stamp.add_default_header()
 
             # Note the galaxy scale and gain in the stamp's header
-            stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+            if scale_label in data_stack.stacked_image.header:
+                stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+            else:
+                stacked_gal_stamp.header[scale_label] = default_galaxy_scale
             stacked_gal_stamp.header[gain_label] = data_stack.exposures[0].detectors[1, 1].header[gain_label]
 
             try:
