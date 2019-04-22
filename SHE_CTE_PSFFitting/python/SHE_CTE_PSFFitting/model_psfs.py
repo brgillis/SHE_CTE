@@ -230,7 +230,8 @@ def model_psfs(args, dry_run=False):
 
                 # Append these to the proper file
 
-                f = fits.open(join(args.workdir, filenames[x]), mode='append')
+                p = read_xml_product(join(args.workdir, filenames[x]))
+                f = fits.open(join(args.workdir, p.get_data_filename()), memmap=True, mode='append')
 
                 f.append(bpsf_hdu)
                 f.append(dpsf_hdu)
@@ -264,7 +265,8 @@ def model_psfs(args, dry_run=False):
 
         psf_table = psf_tables[x]
 
-        f = fits.open(join(args.workdir, filenames[x]), memmap=True, mode='update')
+        p = read_xml_product(join(args.workdir, filenames[x]))
+        f = fits.open(join(args.workdir, p.get_data_filename()), memmap=True, mode='update')
         out_table = f[1].data
 
         out_table[pstf.bulge_index] = psf_table[pstf.bulge_index]
