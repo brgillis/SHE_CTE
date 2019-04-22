@@ -99,7 +99,7 @@ def estimate_shears_from_args(args, dry_run=False):
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                     seg_listfile_filename=args.segmentation_images,
                                     stacked_image_product_filename=args.stacked_image,
-                                    stacked_seg_filename=args.stacked_segmentation_image,
+                                    stacked_seg_product_filename=args.stacked_segmentation_image,
                                     psf_listfile_filename=args.psf_images_and_tables,
                                     detections_listfile_filename=args.detections_tables,
                                     workdir=args.workdir,
