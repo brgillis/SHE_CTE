@@ -317,7 +317,7 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
     return
 
 
-def check_data_quality(gal_stamp, psf_stamp):
+def check_data_quality(gal_stamp, psf_stamp, stacked=False):
     """ Checks the galaxy and PSF stamps for any data quality issues, and returns an
         appropriate set of flags.
     """
@@ -377,7 +377,13 @@ def check_data_quality(gal_stamp, psf_stamp):
         flag |= flags.flag_insufficient_data
 
     # Check for missing or corrupt data
-    for (a, missing_flag, corrupt_flag) in ((gal_stamp.data, flags.flag_no_science_image,
+
+    if stacked:
+        data = gal_stamp.data + gal_stamp.background_map
+    else:
+        data = gal_stamp.data
+
+    for (a, missing_flag, corrupt_flag) in ((data, flags.flag_no_science_image,
                                              flags.flag_corrupt_science_image),
                                             (gal_stamp.background_map, flags.flag_no_background_map,
                                              flags.flag_corrupt_background_map),
@@ -410,13 +416,13 @@ def check_data_quality(gal_stamp, psf_stamp):
     return flag
 
 
-def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
+def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, stacked=False):
 
     logger = getLogger(__name__)
     logger.debug("Entering get_shear_estimate")
 
     # Check that there aren't any obvious issues with the data
-    data_quality_flags = check_data_quality(gal_stamp, psf_stamp)
+    data_quality_flags = check_data_quality(gal_stamp, psf_stamp, stacked=stacked)
 
     # If we hit any failure flags, return now with an error
     if data_quality_flags & flags.failure_flags:
@@ -661,7 +667,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                           gal_scale=stacked_gal_scale,
                                                           psf_scale=psf_scale,
                                                           ID=gal_id,
-                                                          method=method)
+                                                          method=method,
+                                                          stacked=True)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
                 stack_shear_estimate = deepcopy(error_shear_estimate)
