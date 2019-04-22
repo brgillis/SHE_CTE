@@ -468,7 +468,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
 
         except RuntimeError as e:
 
-            if str(e) == "HSM Error: Error: too many iterations in adaptive moments\n":
+            if "HSM Error" in str(e):
 
                 # Flag an error if we're on the last guess_sigma we're trying
                 if gal_sig == gal_sigs[-1]:
@@ -484,6 +484,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
                     return shear_estimate
                 else:
                     continue
+            else:
+                raise
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
