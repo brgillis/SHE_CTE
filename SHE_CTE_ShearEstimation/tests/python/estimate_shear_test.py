@@ -28,6 +28,7 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, 
                                                            get_shear_estimate, ShearEstimate,
                                                            correct_for_wcs_shear_and_rotation)
 from SHE_PPT import flags
+from SHE_PPT import mdb
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from astropy.io import fits
@@ -44,6 +45,8 @@ class TestCase:
     def setup(self):
         """ Set up a default galaxy stamp and PSF stamp for testing.
         """
+
+        mdb.init(mdb_files=find_file("WEB/SHE_PPT/sample_mdb.xml"))
 
         self.sky_var = 0
         self.bkg_level = 1000
