@@ -20,11 +20,11 @@
 
 import argparse
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
+import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -62,7 +62,7 @@ def defineSpecificProgramOptions():
 
     # Archive directory
     parser.add_argument('--archive_dir', type=str, default=None)
-    
+
     parser.add_argument('--webdav_dir', type=str, default="/mnt/webdav",
                         help="Path of the WebDAV mount.")
 
@@ -95,7 +95,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_MeasureBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MeasureBias",
                                     store_true=["profile", "debug", "webdav_archive"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

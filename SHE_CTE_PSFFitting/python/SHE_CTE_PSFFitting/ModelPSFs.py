@@ -21,6 +21,7 @@
 import argparse
 
 from ElementsKernel.Logging import getLogger
+import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_CTE_PSFFitting.model_psfs import model_psfs
@@ -97,7 +98,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ModelPSFs mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ModelPSFs",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ModelPSFs",
                                     store_true=["profile", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -107,7 +108,7 @@ def mainMethod(args):
     if args.profile:
         import cProfile
         cProfile.runctx("model_psfs(args,dry_run=dry_run)", {},
-                        {"model_psfs": fit_psfs,
+                        {"model_psfs": model_psfs,
                          "args": args,
                          "dry_run": dry_run, },
                         filename="model_psfs.prof")

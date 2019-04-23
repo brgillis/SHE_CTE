@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2019-04-16"
+__updated__ = "2019-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 
+import SHE_CTE
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
@@ -195,7 +196,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_CleanupBiasMeasurement",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CleanupBiasMeasurement",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

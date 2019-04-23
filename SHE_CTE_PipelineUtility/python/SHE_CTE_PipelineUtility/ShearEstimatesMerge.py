@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -211,7 +211,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ShearEstimatesMerge",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ShearEstimatesMerge",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
