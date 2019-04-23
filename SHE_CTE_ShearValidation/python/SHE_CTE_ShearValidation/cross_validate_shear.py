@@ -108,7 +108,7 @@ def cross_validate_shear(args, dry_run=False):
 
         filename = shear_estimates_prod.get_method_filename(method)
 
-        if filename is not None:
+        if filename is not None and filename is not "None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, setfs[method]):
                 raise ValueError("Shear estimates table from " +
