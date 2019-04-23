@@ -31,6 +31,7 @@ from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
+from SHE_PPt.file_io import find_file
 from astropy.io import fits
 import numpy as np
 
