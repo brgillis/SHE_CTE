@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2019-01-09"
+__updated__ = "2019-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,17 +22,16 @@ __updated__ = "2019-01-09"
 
 from copy import deepcopy
 from os.path import join
-import time
-
-from SHE_PPT.file_io import read_pickled_product, find_file
-from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 import pytest
+import time
 
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+from SHE_PPT.file_io import read_pickled_product, find_file
+from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 import numpy as np
 
 
@@ -54,6 +53,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_ksb(self):
         """Test that the interface for the KSB method works properly.
         """
@@ -80,6 +80,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_regauss(self):
         """Test that the interface for the REGAUSS method works properly.
         """
@@ -106,7 +107,7 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip(reason="Duplicated from SHE_LensMC")
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_lensmc(self):
         """Test that the interface for the LensMC method works properly.
         """
@@ -158,7 +159,7 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip(reason="Errors are known issue to be addressed")
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_momentsml(self):
         """Test that the interface for the MomentsML method works properly.
         """
@@ -184,6 +185,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_bfd(self):
         """Test that the interface for the BFD method works properly.
         """
