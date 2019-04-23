@@ -55,6 +55,10 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
         sets everything to "pass".
     """
 
+    # Skip if we don't have the primary table
+    if primary_shear_estimates_table is None:
+        return
+
     if other_shear_estimates_tables is None:
         other_shear_estimates_tables = []
 
@@ -115,6 +119,8 @@ def cross_validate_shear(args, dry_run=False):
                                  join(args.workdir, filename) + " is in invalid format.")
         else:
             shear_estimates_table = None
+            if method == args.primary_method:
+                logger.warn("Primary shear estimates file is not available.")
 
         if method == args.primary_method:
             primary_shear_estimates_table = shear_estimates_table
@@ -151,16 +157,18 @@ def cross_validate_shear(args, dry_run=False):
 
     logger.info("Generating" + dry_label + " validated shear estimates...")
 
-    validated_shear_estimates_filename = get_allowed_filename("VAL_SHM", "0", ".fits",
-                                                              version=SHE_CTE.__version__)
+    if primary_shear_estimates_table is None:
+        validated_shear_estimates_filename = None
+    else:
+        validated_shear_estimates_filename = get_allowed_filename("VAL_SHM", "0", ".fits",
+                                                                  version=SHE_CTE.__version__)
+        primary_shear_estimates_table.write(validated_shear_estimates_filename)
 
     validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
         validated_shear_estimates_filename)
 
     write_xml_product(validated_shear_estimates_prod,
                       join(args.workdir, args.cross_validated_shear_estimates_product))
-
-    primary_shear_estimates_table.write(validated_shear_estimates_filename)
 
     logger.info("Finished" + dry_label + " shear validation.")
 
