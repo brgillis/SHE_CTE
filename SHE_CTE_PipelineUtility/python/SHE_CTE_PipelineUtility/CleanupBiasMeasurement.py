@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2019-04-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,12 +24,13 @@ import argparse
 import os
 import shutil
 
-import SHE_CTE
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
 
 
 def defineSpecificProgramOptions():

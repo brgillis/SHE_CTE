@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2019-04-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,11 +23,12 @@ __updated__ = "2019-04-23"
 import argparse
 import os
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
 import numpy as np
 
 
