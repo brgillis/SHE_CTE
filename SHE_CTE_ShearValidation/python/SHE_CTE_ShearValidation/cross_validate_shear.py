@@ -21,6 +21,8 @@
 import math
 from os.path import join
 
+import SHE_CTE
+from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              get_allowed_filename)
@@ -30,9 +32,6 @@ from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from astropy.io import fits
 from astropy.table import Table
-
-import SHE_CTE
-from SHE_CTE_ShearValidation import magic_values as mv
 import numpy as np
 
 
@@ -163,7 +162,7 @@ def cross_validate_shear(args, dry_run=False):
     else:
         validated_shear_estimates_filename = get_allowed_filename("VAL-SHM", "0", ".fits",
                                                                   version=SHE_CTE.__version__)
-        primary_shear_estimates_table.write(validated_shear_estimates_filename)
+        primary_shear_estimates_table.write(join(args.workdir, validated_shear_estimates_filename))
 
     validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
         validated_shear_estimates_filename)
