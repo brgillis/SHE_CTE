@@ -40,12 +40,8 @@ SHE_CTE/data/EUC_SHE_GST-WGT-SCI-D2_BUKRTILMXZI3ADHVZ_20190429T165754.9Z_01.07.f
 SHE_CTE/data/EUC_SHE_GST-WGT-SCI-D3_BUKRTILMXZI3ADHVZ_20190429T165754.9Z_01.07.fits
 SHE_CTE/data/EUC_SHE_GST-WGT-SCI-D4_BUKRTILMXZI3ADHVZ_20190429T165754.9Z_01.07.fits
 SHE_CTE/data/EUC_SHE_GST-WGT-STACK_BUKRTILMXZI3ADHVZ_20190429T165757.9Z_01.07.fits
-SHE_CTE/data/mock_ksb_training_product.xml
-SHE_CTE/data/mock_lensmc_training_product.xml
-SHE_CTE/data/mock_regauss_training_product.xml
 SHE_CTE/data/psf_images_and_tables.json
 SHE_CTE/data/segmentation_images.json
-SHE_CTE/data/SensitivityEp0Pp0Sp0NanoTemplate.conf
 SHE_CTE/data/shear_bias_measurements_sim0.xml
 SHE_CTE/data/shear_bias_statistics.xml
 SHE_CTE/data/shear_estimates_product.xml
