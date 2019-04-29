@@ -20,7 +20,7 @@ __updated__ = "2019-04-29"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from os.path import join
+import os
 import time
 
 from SHE_PPT import mdb
@@ -70,7 +70,7 @@ class TestCase:
         
         # Get the workdir based on where the data images listfile is
         self.workdir = os.path.split(self.qualified_data_images_filename)[0].replace("/data","")
-        self.logdir = join(self.workdir, "logs")
+        self.logdir = os.path.join(self.workdir, "logs")
 
         # Read in the test data
         self.data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images_filename,
