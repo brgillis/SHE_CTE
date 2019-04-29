@@ -29,6 +29,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 import pytest
 
+from ElementsServices.DataSync import downloadTestData, localTestFile
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
