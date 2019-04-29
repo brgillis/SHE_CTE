@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-04-29"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -23,17 +23,11 @@ __updated__ = "2019-04-22"
 import copy
 import os
 
-import SHE_CTE
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile)
+                             read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
@@ -43,6 +37,13 @@ from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_tab
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
+
+import SHE_CTE
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -85,6 +86,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+        mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
