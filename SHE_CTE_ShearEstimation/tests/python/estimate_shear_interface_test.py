@@ -113,7 +113,7 @@ class TestCase:
 
         regauss_training_data = read_pickled_product(find_file(regauss_training_location))
 
-        regauss_cat = REGAUSS_estimate_shear(self.she_frame,
+        regauss_cat = REGAUSS_estimate_shear(self.data_stack,
                                              training_data=regauss_training_data,
                                              calibration_data=None,
                                              workdir=self.workdir)
