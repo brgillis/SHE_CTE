@@ -33,7 +33,7 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile)
+                             read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
@@ -85,6 +85,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+        mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
