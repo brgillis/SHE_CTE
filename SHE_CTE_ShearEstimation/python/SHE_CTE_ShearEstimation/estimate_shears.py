@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-05-01"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -287,7 +287,10 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
 
             if method == 'BFD':
-                bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                try:
+                    bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                except Exception as e:
+                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
     else:  # Dry run
 
