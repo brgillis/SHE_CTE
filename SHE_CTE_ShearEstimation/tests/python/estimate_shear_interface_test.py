@@ -64,7 +64,7 @@ class TestCase:
         # Download the MDB from WebDAV
         downloadTestData("testdata/sync.conf", "testdata/test_mdb.txt")
         mdb.init(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml"))
-        assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: SHE_PPT/sample_mdb.xml"
+        assert os.path.isfile(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml")), f"Cannot find file: SHE_PPT/sample_mdb.xml"
         
         # Download the data stack files from WebDAV
         downloadTestData("testdata/sync.conf", "testdata/test_data_stack.txt")
