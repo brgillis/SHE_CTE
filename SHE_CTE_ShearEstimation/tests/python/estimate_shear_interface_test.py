@@ -72,7 +72,8 @@ class TestCase:
         assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
         
         # Get the workdir based on where the data images listfile is
-        self.workdir = os.path.split(self.qualified_data_images_filename)[0].replace("/data","")
+        self.workdir, datadir = os.path.split(os.path.split(self.qualified_data_images_filename)[0])
+        assert datadir=="data", f"Data directory is not as expected in {self.qualified_data_images_filename}"
         self.logdir = os.path.join(self.workdir, "logs")
 
         # Read in the test data
