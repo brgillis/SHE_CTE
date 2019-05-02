@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-04-29"
+__updated__ = "2019-05-01"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -23,6 +23,12 @@ __updated__ = "2019-04-29"
 import copy
 import os
 
+import SHE_CTE
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -37,13 +43,6 @@ from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_tab
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -289,7 +288,10 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
 
             if method == 'BFD':
-                bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                try:
+                    bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                except Exception as e:
+                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
     else:  # Dry run
 
