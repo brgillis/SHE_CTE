@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2019-04-29"
+__updated__ = "2019-05-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -64,13 +64,16 @@ class TestCase:
         # Download the MDB from WebDAV
         downloadTestData("testdata/sync.conf", "testdata/test_mdb.txt")
         mdb.init(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml"))
+        assert os.path.isfile(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml")), f"Cannot find file: SHE_PPT/sample_mdb.xml"
         
         # Download the data stack files from WebDAV
         downloadTestData("testdata/sync.conf", "testdata/test_data_stack.txt")
         self.qualified_data_images_filename = localTestFile(test_data_location, "SHE_CTE/data/data_images.json")
+        assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
         
         # Get the workdir based on where the data images listfile is
-        self.workdir = os.path.split(self.qualified_data_images_filename)[0].replace("/data","")
+        self.workdir, datadir = os.path.split(os.path.split(self.qualified_data_images_filename)[0])
+        assert datadir=="data", f"Data directory is not as expected in {self.qualified_data_images_filename}"
         self.logdir = os.path.join(self.workdir, "logs")
 
         # Read in the test data
