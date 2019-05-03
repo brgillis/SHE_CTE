@@ -653,6 +653,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             stacked_gal_stamp = gal_stamp_stack.stacked_image
             stacked_gal_stamp.add_default_header()
 
+            # Make sure the wcs is correct
+            stacked_gal_stamp.wcs = data_stack.stacked_image.wcs
+            stacked_gal_stamp.galsim_wcs = data_stack.stacked_image.galsim_wcs
+
             stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
             stacked_bulge_psf_stamp.add_default_header()
 
@@ -714,6 +718,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                         continue
                     gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
                     gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+
+                    # Make sure the wcs is correct
+                    gal_stamp.wcs = gal_stamp.parent_image.wcs
+                    gal_stamp.galsim_wcs = gal_stamp.parent_image.galsim_wcs
+
                     bulge_psf_stamp = bulge_psf_stack.exposures[x]
                     disk_psf_stamp = disk_psf_stack.exposures[x]
 
