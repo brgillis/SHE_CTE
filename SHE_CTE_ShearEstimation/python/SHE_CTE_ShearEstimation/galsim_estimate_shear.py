@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-05-03"
 
 from copy import deepcopy
 from math import sqrt
@@ -676,6 +676,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                           stacked=True)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
+                logger.warn("Per-galaxy failsafe block triggered with exception: " + str(e))
                 stack_shear_estimate = deepcopy(error_shear_estimate)
                 stack_shear_estimate.flags |= flags.flag_unclassified_failure
 
