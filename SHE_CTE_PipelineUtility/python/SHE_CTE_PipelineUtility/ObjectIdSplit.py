@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2019-05-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -38,7 +38,7 @@ from astropy.table import Table
 import numpy as np
 
 
-default_batch_size = 256
+default_batch_size = 64
 
 logger = getLogger(__name__)
 
