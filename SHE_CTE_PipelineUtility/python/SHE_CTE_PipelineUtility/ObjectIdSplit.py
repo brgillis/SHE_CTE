@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-05-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,11 +24,12 @@ import argparse
 import math
 import os
 
+import SHE_CTE
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
+from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.products import object_id_list, detections
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
@@ -37,8 +38,7 @@ from astropy.table import Table
 import numpy as np
 
 
-config_batch_size_key = "SHE_CTE_ObjectIdSplit_batch_size"
-default_batch_size = 256
+default_batch_size = 64
 
 logger = getLogger(__name__)
 
@@ -93,12 +93,12 @@ def object_id_split_from_args(args):
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
         # Check for the cleanup key
-        if config_batch_size_key not in pipeline_config:
-            logger.info("Key " + config_batch_size_key + " not found in pipeline config " + args.pipeline_config + ". " +
+        if ConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
+            logger.info("Key " + ConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default batch size of " + str(default_batch_size))
             batch_size = default_batch_size
         else:
-            batch_size = int(pipeline_config[config_batch_size_key])
+            batch_size = int(pipeline_config[ConfigKeys.OID_BATCH_SIZE.value])
             if batch_size < 0:
                 raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
             logger.info("Using batch size of: " + str(batch_size))
@@ -171,7 +171,7 @@ def object_id_split_from_args(args):
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
                                                               instance_id=str(i),
                                                               extension=".xml",
-                                                              release="00.07",
+                                                              version=SHE_CTE.__version__,
                                                               subdir="data",
                                                               processing_function="SHE")
         id_list_product_filename_list.append(batch_id_list_product_filename)
@@ -205,7 +205,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ObjectIdSplit mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ObjectIdSplit",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ObjectIdSplit",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

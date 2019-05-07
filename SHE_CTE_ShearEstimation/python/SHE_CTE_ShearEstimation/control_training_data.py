@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2018-08-14"
+__updated__ = "2019-04-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,14 +22,14 @@ __updated__ = "2018-08-14"
 
 import os
 
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, find_file
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.table_formats.ksb_training import tf as kttf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
-
-from SHE_CTE_ShearEstimation import magic_values as mv
 from astropy.table import Table
 import numpy as np
 
@@ -43,15 +43,13 @@ class ControlTraining(object):
         logger = getLogger(__name__)
         logger.debug("Entering ControlTraining __init__")
 
-        if training_product_filename is None or training_product_filename == "None":
+        p = get_conditional_product(training_product_filename, workdir)
+
+        if p is None:
             logger.warn("No training data provided; using default shape noise of 0.")
             self.e1_var = 0.
             self.e2_var = 0.
         else:
-            # Read in the training data product
-            qualified_training_product_filename = find_file(training_product_filename, path=workdir)
-            p = read_xml_product(qualified_training_product_filename)
-
             # Read the table stored in the data container of the product
             training_data_filename = p.get_data_filename()
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-05-03"
 
 from copy import deepcopy
 from math import sqrt
@@ -27,6 +27,7 @@ import galsim
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import flags
+from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
@@ -261,7 +262,26 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
 
     # Second, we have to correct for the shear. It's necessary to do this by solving for the pre-WCS shear
 
-    rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
+    try:
+
+        rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
+
+    except ValueError as e:
+
+        if not "Requested shear exceeds 1" in str(e):
+            raise
+
+        # Shear is greater than 1, so note this in the flags
+        shear_estimate.g1 = np.NaN
+        shear_estimate.g2 = np.NaN
+        shear_estimate.gerr = np.inf
+        shear_estimate.g1_err = np.inf
+        shear_estimate.g2_err = np.inf
+        shear_estimate.g1g2_covar = np.inf
+
+        shear_estimate.flags |= flags.flag_too_large_shear
+
+        return
 
     def get_shear_adding_diff(g):
         g1 = g[0]
@@ -287,6 +307,8 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
         shear_estimate.g2_err = np.inf
         shear_estimate.g1g2_covar = np.inf
 
+        shear_estimate.flags |= flags.flag_cannot_correct_distortion
+
         return
     else:
         shear_estimate.g1 = fitting_result.x[0]
@@ -295,7 +317,7 @@ def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
     return
 
 
-def check_data_quality(gal_stamp, psf_stamp):
+def check_data_quality(gal_stamp, psf_stamp, stacked=False):
     """ Checks the galaxy and PSF stamps for any data quality issues, and returns an
         appropriate set of flags.
     """
@@ -355,7 +377,13 @@ def check_data_quality(gal_stamp, psf_stamp):
         flag |= flags.flag_insufficient_data
 
     # Check for missing or corrupt data
-    for (a, missing_flag, corrupt_flag) in ((gal_stamp.data, flags.flag_no_science_image,
+
+    if stacked:
+        data = gal_stamp.data + gal_stamp.background_map
+    else:
+        data = gal_stamp.data
+
+    for (a, missing_flag, corrupt_flag) in ((data, flags.flag_no_science_image,
                                              flags.flag_corrupt_science_image),
                                             (gal_stamp.background_map, flags.flag_no_background_map,
                                              flags.flag_corrupt_background_map),
@@ -371,9 +399,13 @@ def check_data_quality(gal_stamp, psf_stamp):
 
         # Check for corrupt data by checking that all data are valid
 
+        if corrupt_flag == flags.flag_corrupt_segmentation_map:
+            min_value = -1
+        else:
+            min_value = 0
+
         good_data = a.ravel()[ravelled_antimask]
-        if ((good_data.sum() == 0) or (good_data.dtype not in (np.int8, np.int16, np.int32, np.int64) and (good_data < 0).any()) or
-                (good_data.dtype in (np.int8, np.int16, np.int32, np.int64) and (good_data < -1).any())):
+        if ((good_data.sum() == 0) or (good_data < min_value).any()):
             flag |= corrupt_flag
             continue
 
@@ -384,13 +416,13 @@ def check_data_quality(gal_stamp, psf_stamp):
     return flag
 
 
-def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
+def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, stacked=False):
 
     logger = getLogger(__name__)
     logger.debug("Entering get_shear_estimate")
 
     # Check that there aren't any obvious issues with the data
-    data_quality_flags = check_data_quality(gal_stamp, psf_stamp)
+    data_quality_flags = check_data_quality(gal_stamp, psf_stamp, stacked=stacked)
 
     # If we hit any failure flags, return now with an error
     if data_quality_flags & flags.failure_flags:
@@ -408,7 +440,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
             gal_stamp.add_default_segmentation_map(force=True)
 
     # Subtract off the background from the galaxy
-    bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
+    if stacked:
+        bkg_subtracted_gal_stamp_data = gal_stamp.data
+    else:
+        bkg_subtracted_gal_stamp_data = gal_stamp.data - gal_stamp.background_map
 
     # Estimate the size of the galaxy, so we can figure out how big we need to make the resampled stamp
 
@@ -426,17 +461,17 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
             resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale /
                                            psf_scale)    # Calculate the galaxy's S/N
             a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
-            gain = gal_stamp.header[gain_label]
+            gain = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
             signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
                                                                     (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
             break
 
         except RuntimeError as e:
 
-            if str(e) == "HSM Error: Error: too many iterations in adaptive moments\n":
+            if "HSM Error" in str(e):
 
                 # Flag an error if we're on the last guess_sigma we're trying
-                if gal_sig == 10.0:
+                if gal_sig == gal_sigs[-1]:
 
                     # The galaxy is probably too small in this case, so flag that
                     shear_estimate = deepcopy(error_shear_estimate)
@@ -449,6 +484,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
                     return shear_estimate
                 else:
                     continue
+            else:
+                raise
 
     # Get a resampled galaxy stamp
     resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
@@ -456,7 +493,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method):
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
     supersampled_badpix.add_default_header()
-    supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    if scale_label in gal_stamp.header:
+        supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    else:
+        supersampled_badpix.header[scale_label] = default_galaxy_scale
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
 
@@ -613,6 +653,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             stacked_gal_stamp = gal_stamp_stack.stacked_image
             stacked_gal_stamp.add_default_header()
 
+            # Make sure the wcs is correct
+            stacked_gal_stamp.wcs = data_stack.stacked_image.wcs
+            stacked_gal_stamp.galsim_wcs = data_stack.stacked_image.galsim_wcs
+
             stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
             stacked_bulge_psf_stamp.add_default_header()
 
@@ -620,8 +664,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             stacked_disk_psf_stamp.add_default_header()
 
             # Note the galaxy scale and gain in the stamp's header
-            stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
-            stacked_gal_stamp.header[gain_label] = data_stack.exposures[0].detectors[1, 1].header[gain_label]
+            if scale_label in data_stack.stacked_image.header:
+                stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+            else:
+                stacked_gal_stamp.header[scale_label] = default_galaxy_scale
+            stacked_gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
 
             try:
                 stack_shear_estimate = get_shear_estimate(stacked_gal_stamp,
@@ -629,9 +676,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                           gal_scale=stacked_gal_scale,
                                                           psf_scale=psf_scale,
                                                           ID=gal_id,
-                                                          method=method)
+                                                          method=method,
+                                                          stacked=True)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
+                logger.warn("Per-galaxy failsafe block triggered with exception: " + str(e))
                 stack_shear_estimate = deepcopy(error_shear_estimate)
                 stack_shear_estimate.flags |= flags.flag_unclassified_failure
 
@@ -668,7 +717,12 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                     if gal_stamp is None:
                         continue
                     gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
-                    gal_stamp.header[gain_label] = data_stack.stacked_image.header[gain_label]
+                    gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+
+                    # Make sure the wcs is correct
+                    gal_stamp.wcs = gal_stamp.parent_image.wcs
+                    gal_stamp.galsim_wcs = gal_stamp.parent_image.galsim_wcs
+
                     bulge_psf_stamp = bulge_psf_stack.exposures[x]
                     disk_psf_stamp = disk_psf_stack.exposures[x]
 

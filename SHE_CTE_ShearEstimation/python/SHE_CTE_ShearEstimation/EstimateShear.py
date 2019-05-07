@@ -20,8 +20,8 @@
 
 import argparse
 
+import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
@@ -70,6 +70,7 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--detections_tables', type=str,
                         help='.json listfile containing filenames of detections table products.')
+
     parser.add_argument('--object_ids', type=str,
                         help='XML dataproduct that contains within it a list of object ids to loop over')
 
@@ -88,6 +89,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--regauss_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for REGAUSS training data.')
 
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
     parser.add_argument('--mdb', type=str, default=None,  # Use default to allow simple running with default values
                         help='Mission Database .xml file')
 
@@ -97,12 +101,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--calibration_parameters_product', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Filename of calibration parameters product (XML data product).')
 
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
-
     # Optional input arguments (cannot be used in pipeline)
 
-    parser.add_argument('--methods', type=str, nargs='*', default=[],
+    parser.add_argument('--methods', type=str, nargs='*', default=None,
                         help='Which shear estimation methods to apply. If not specified, all will be run.')
 
     # Output arguments
@@ -135,7 +136,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_EstimateShear mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_EstimateShear",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_EstimateShear",
                                     store_true=["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

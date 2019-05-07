@@ -21,9 +21,11 @@
 import argparse
 
 from ElementsKernel.Logging import getLogger
+import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_CTE_PSFFitting.model_psfs import model_psfs
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -44,31 +46,36 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Option for profiling
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
-    parser.add_argument('--dry_run', action = 'store_true',
-                        help = 'Dry run (no data processed).')
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
+    parser.add_argument('--dry_run', action='store_true',
+                        help='Dry run (no data processed).')
 
     # Input filenames
-    parser.add_argument('--data_images', type = str,
-                        help = 'Filename for list of data images (.json listfile)')
-    parser.add_argument('--detections_tables', type = str,
-                        help = 'Filename for list of detections tables (.json listfile)')
-    parser.add_argument('--aocs_time_series_products', type = str, default = None,  # Allowing to use without for SC4
-                        help = 'Filename for list of AOCS data series data products (.json listfile)')
-    parser.add_argument('--psf_calibration_product', type = str, default = None,  # Allowing to use without for SC4
-                        help = 'Filename for PSF calibration data product (.json listfile)')
-    parser.add_argument('--psf_field_params', type = str,
-                        help = 'Filename for PSF field parameters (.json listfile).')
+    parser.add_argument('--data_images', type=str,
+                        help='Filename for list of data images (.json listfile)')
+    parser.add_argument('--detections_tables', type=str,
+                        help='Filename for list of detections tables (.json listfile)')
+    parser.add_argument('--segmentation_images', type=str, default=None,
+                        help='Filename for the list of segmentation maps (.json listfile)')
+    parser.add_argument('--aocs_time_series_products', type=str, default=None,  # Allowing to use without for SC4
+                        help='Filename for list of AOCS data series data products (.json listfile)')
+    parser.add_argument('--psf_calibration_product', type=str, default=None,  # Allowing to use without for SC4
+                        help='Filename for PSF calibration data product (.json listfile)')
+    parser.add_argument('--psf_field_params', type=str,
+                        help='Filename for PSF field parameters (.json listfile)')
+    parser.add_argument('--object_ids', type=str,
+                        help='XML dataproduct that contains within it a list of object ids to loop over')
+    parser.add_argument('--mdb', type=str, default=None,
+                        help='Filename for the Mission Database (MDB) file to use as input')
 
     # Output filenames
-    parser.add_argument('--psf_images_and_tables', type = str,
-                        help = 'Desired filename for output PSF images and tables fits file.')
+    parser.add_argument('--psf_images_and_tables', type=str,
+                        help='Desired filename for output PSF images and tables fits file.')
 
     # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
-
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
 
     logger.debug('Exiting SHE_CTE_ModelPSFs defineSpecificProgramOptions()')
 
@@ -91,21 +98,27 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ModelPSFs mainMethod()')
     logger.debug('#')
 
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ModelPSFs",
+                                    store_true=["profile", "dry_run"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
+
     dry_run = args.dry_run or force_dry_run
 
     if args.profile:
         import cProfile
         cProfile.runctx("model_psfs(args,dry_run=dry_run)", {},
-                        {"model_psfs":fit_psfs,
-                         "args":args,
-                         "dry_run":dry_run, },
-                        filename = "model_psfs.prof")
+                        {"model_psfs": model_psfs,
+                         "args": args,
+                         "dry_run": dry_run, },
+                        filename="model_psfs.prof")
     else:
-        model_psfs(args, dry_run = dry_run)
+        model_psfs(args, dry_run=dry_run)
 
     logger.debug('Exiting SHE_CTE_ModelPSFs mainMethod()')
 
     return
+
 
 def main():
     """
@@ -120,6 +133,7 @@ def main():
     mainMethod(args)
 
     return
+
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-05-01"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -22,10 +22,10 @@ __updated__ = "2019-03-29"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 import copy
 import os
-import pdb
 
 from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+import SHE_CTE
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
@@ -34,9 +34,9 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile)
+                             read_listfile, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 from SHE_PPT.table_formats.detections import tf as detf
@@ -51,16 +51,15 @@ import numpy as np
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": None,
+                   "LensMC": load_control_training_data,
                    "BFD": bfd_load_training_data}
+
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       "MomentsML": ML_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
-
-methods_key = "SHE_CTE_EstimateShear_methods"
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -89,6 +88,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+        mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
@@ -103,19 +103,20 @@ def estimate_shears_from_args(args, dry_run=False):
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                     seg_listfile_filename=args.segmentation_images,
                                     stacked_image_product_filename=args.stacked_image,
-                                    stacked_seg_filename=args.stacked_segmentation_image,
+                                    stacked_seg_product_filename=args.stacked_segmentation_image,
                                     psf_listfile_filename=args.psf_images_and_tables,
                                     detections_listfile_filename=args.detections_tables,
                                     workdir=args.workdir,
                                     clean_detections=True,
-                                    apply_sc3_fix=False)
+                                    memmap=True,
+                                    mode='denywrite')
 
     # if given a list of object ids then create data_stack with pruned detections_catalogue
-    if args.object_ids is not None and args.object_ids != "None":
+
+    object_ids_list_product = get_conditional_product(args.object_ids, args.workdir)
+
+    if object_ids_list_product is not None:
         logger.info("Pruning list of galaxy objects to loop over")
-        # read in ID list
-        qualified_object_ids_filename = os.path.join(args.workdir, args.object_ids)
-        object_ids_list_product = read_xml_product(qualified_object_ids_filename)
         id_list = object_ids_list_product.get_id_list()
 
         # create a back up of full detections_catalog
@@ -131,18 +132,11 @@ def estimate_shears_from_args(args, dry_run=False):
         logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
-
-    if args.calibration_parameters_product is not None:
-
-        logger.info("Reading " + dry_label + "calibration parameters...")
-
-        calibration_parameters_prod = read_xml_product(os.path.join(args.workdir, args.calibration_parameters_product))
-        if not isinstance(calibration_parameters_prod, products.calibration_parameters.DpdSheCalibrationParametersProduct):
-            raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                             + " is invalid type.")
-
-    else:
-        calibration_parameters_prod = None
+    calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
+    if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
+                                                                  products.calibration_parameters.DpdSheCalibrationParametersProduct):
+        raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
+                         + " is invalid type.")
 
     # Set up method data filenames
 
@@ -162,21 +156,29 @@ def estimate_shears_from_args(args, dry_run=False):
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
         header = f[0].header
         if ppt_mv.model_hash_label in header:
-            estimates_instance_id = header[ppt_mv.model_hash_label][0:ppt_mv.short_instance_id_maxlen]
+            estimates_instance_id = header[ppt_mv.model_hash_label]
         elif ppt_mv.field_id_label in header:
-            estimates_instance_id = header[ppt_mv.field_id_label][0:ppt_mv.short_instance_id_maxlen]
+            estimates_instance_id = str(header[ppt_mv.field_id_label])
         else:
-            logger.warn("Cannot determine proper instance ID for filenames. Using hash of stacked image header.")
-            estimates_instance_id = hash_any(header, format="base64", max_length=ppt_mv.short_instance_id_maxlen)
-        # Fix banned characters in the instance_id
+            logger.warn("Cannot determine proper instance ID for filenames. Using hash of image header.")
+            estimates_instance_id = hash_any(header, format="base64")
+
+        # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
+        estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
+        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen]
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
-        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id),
-        KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id),
-        LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id),
-        MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id),
-        REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id))
+        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
+                                          version=SHE_CTE.__version__),
+        KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
+                                          version=SHE_CTE.__version__),
+        LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id,
+                                             version=SHE_CTE.__version__),
+        MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id,
+                                                version=SHE_CTE.__version__),
+        REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id,
+                                              version=SHE_CTE.__version__))
 
     if not dry_run:
 
@@ -185,16 +187,13 @@ def estimate_shears_from_args(args, dry_run=False):
         # Check for methods in the pipeline options
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
-        if pipeline_config is None:
-            pipeline_config = {}
-
-        if methods_key in pipeline_config:
-            methods = pipeline_config[methods_key].split()
-        else:
+        # Use methods specified in the command-line first
+        if args.methods is not None and len(args.methods) > 0:
             methods = args.methods
-
-        # If no methods are specified, use all
-        if len(methods) == 0:
+        elif ConfigKeys.ES_METHODS.value in pipeline_config:
+            methods = pipeline_config[ConfigKeys.ES_METHODS.value].split()
+        else:
+            # Default to using all methods
             methods = list(estimation_methods.keys())
 
         for method in methods:
@@ -264,7 +263,6 @@ def estimate_shears_from_args(args, dry_run=False):
                                                           "Invalid implementation:" in str(e)):
                     logger.warn(str(e))
                 else:
-                    raise
                     logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
@@ -282,7 +280,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    setf.g1_err: 1e99,
                                                    setf.g2_err: 1e99,
                                                    setf.g1g2_covar: np.NaN,
-                                                   setf.fitclass: 2,
+                                                   setf.fit_class: 2,
                                                    setf.re: np.NaN,
                                                    setf.snr: np.NaN,
                                                    setf.x_world: data_stack.detections_catalogue[detf.gal_x_world][r],
@@ -296,7 +294,10 @@ def estimate_shears_from_args(args, dry_run=False):
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
             
             if method == 'BFD':
-                bfd_perform_integration(target_file=os.path.join(args.workdir, shear_estimates_filename),template_file=bfd_training_data)
+                try:
+                    bfd_perform_integration(target_file=os.path.join(args.workdir, shear_estimates_filename),template_file=bfd_training_data)
+                except Exception as e:
+                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
     else:  # Dry run
 

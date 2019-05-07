@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-03-29"
+__updated__ = "2019-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,6 +24,7 @@ __updated__ = "2019-03-29"
 import argparse
 import os
 
+import SHE_CTE
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
@@ -172,7 +173,7 @@ def shear_estimates_merge_from_args(args):
         combined_shear_estimates_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.upper(),
                                                                        instance_id='MERGED',
                                                                        extension=".fits",
-                                                                       release="00.07",
+                                                                       version=SHE_CTE.__version__,
                                                                        subdir="data",
                                                                        processing_function="SHE")
         combined_shear_estimates_product.set_method_filename(method, combined_shear_estimates_table_filename)
@@ -210,7 +211,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_ShearEstimatesMerge",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ShearEstimatesMerge",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

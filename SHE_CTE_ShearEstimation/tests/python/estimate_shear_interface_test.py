@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2019-01-09"
+__updated__ = "2019-05-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,15 +20,17 @@ __updated__ = "2019-01-09"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from copy import deepcopy
-from os.path import join
+import os
 import time
 
+from SHE_PPT import mdb
 from SHE_PPT.file_io import read_pickled_product, find_file
 from SHE_PPT.logging import getLogger
+from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 import pytest
 
+from ElementsServices.DataSync import downloadTestData, localTestFile
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
@@ -40,6 +42,15 @@ she_frame_location = "WEB/SHE_PPT/test_data_stack.bin"
 ksb_training_location = "AUX/SHE_PPT/test_KSB_training_data.bin"
 regauss_training_location = "AUX/SHE_PPT/test_REGAUSS_training_data.bin"
 
+test_data_location = "/tmp"
+
+data_images_filename="data/data_images.json"
+segmentation_images_filename="data/segmentation_images.json"
+stacked_image_filename="data/stacked_image.xml"
+stacked_segmentation_image_filename="data/stacked_segm_image.xml"
+psf_images_and_tables_filename="data/psf_images_and_tables.json"
+detections_tables_filename="data/detections_tables.json"
+
 
 class TestCase:
     """
@@ -49,21 +60,43 @@ class TestCase:
 
     @pytest.fixture(autouse=True)
     def setup(self, tmpdir):
-        self.workdir = tmpdir.strpath
-        self.logdir = join(tmpdir.strpath, "logs")
+
+        # Download the MDB from WebDAV
+        downloadTestData("testdata/sync.conf", "testdata/test_mdb.txt")
+        mdb.init(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml"))
+        assert os.path.isfile(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml")), f"Cannot find file: SHE_PPT/sample_mdb.xml"
+        
+        # Download the data stack files from WebDAV
+        downloadTestData("testdata/sync.conf", "testdata/test_data_stack.txt")
+        self.qualified_data_images_filename = localTestFile(test_data_location, "SHE_CTE/data/data_images.json")
+        assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
+        
+        # Get the workdir based on where the data images listfile is
+        self.workdir, datadir = os.path.split(os.path.split(self.qualified_data_images_filename)[0])
+        assert datadir=="data", f"Data directory is not as expected in {self.qualified_data_images_filename}"
+        self.logdir = os.path.join(self.workdir, "logs")
+
+        # Read in the test data
+        self.data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images_filename,
+                                             seg_listfile_filename=segmentation_images_filename,
+                                             stacked_image_product_filename=stacked_image_filename,
+                                             stacked_seg_product_filename=stacked_segmentation_image_filename,
+                                             psf_listfile_filename=psf_images_and_tables_filename,
+                                             detections_listfile_filename=detections_tables_filename,
+                                             workdir=self.workdir,
+                                             clean_detections=True,
+                                             memmap=True,
+                                             mode='denywrite')
 
         return
 
     def test_ksb(self):
         """Test that the interface for the KSB method works properly.
         """
-
-        # Read in the test data
-        she_frame = read_pickled_product(find_file(she_frame_location))
-        original_she_frame = deepcopy(she_frame)
+        
         ksb_training_data = read_pickled_product(find_file(ksb_training_location))
 
-        ksb_cat = KSB_estimate_shear(she_frame,
+        ksb_cat = KSB_estimate_shear(self.data_stack,
                                      training_data=ksb_training_data,
                                      calibration_data=None,
                                      workdir=self.workdir)
@@ -75,21 +108,15 @@ class TestCase:
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
 
-        # Check that the input data isn't changed by the method
-        assert she_frame == original_she_frame
-
         return
 
     def test_regauss(self):
         """Test that the interface for the REGAUSS method works properly.
         """
 
-        # Read in the test data
-        she_frame = read_pickled_product(find_file(she_frame_location))
-        original_she_frame = deepcopy(she_frame)
         regauss_training_data = read_pickled_product(find_file(regauss_training_location))
 
-        regauss_cat = REGAUSS_estimate_shear(she_frame,
+        regauss_cat = REGAUSS_estimate_shear(self.data_stack,
                                              training_data=regauss_training_data,
                                              calibration_data=None,
                                              workdir=self.workdir)
@@ -101,12 +128,9 @@ class TestCase:
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
 
-        # Check that the input data isn't changed by the method
-        assert she_frame == original_she_frame
-
         return
 
-    @pytest.mark.skip(reason="Duplicated from SHE_LensMC")
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_lensmc(self):
         """Test that the interface for the LensMC method works properly.
         """
@@ -158,7 +182,7 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip(reason="Errors are known issue to be addressed")
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_momentsml(self):
         """Test that the interface for the MomentsML method works properly.
         """
@@ -184,6 +208,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
     def test_bfd(self):
         """Test that the interface for the BFD method works properly.
         """

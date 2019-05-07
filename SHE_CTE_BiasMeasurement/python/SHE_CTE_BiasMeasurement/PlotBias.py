@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2018-11-22"
+__updated__ = "2019-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,11 +23,11 @@ __updated__ = "2018-11-22"
 import argparse
 import os
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
+import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 import numpy as np
 
 
@@ -98,7 +98,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_PlotBias mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE 0.7 SHE_CTE_PlotBias",
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_PlotBias",
                                     store_true=["profile", "debug", "hide", "plot_error", "normed_only", "unnormed_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)

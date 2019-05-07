@@ -22,25 +22,27 @@ from copy import deepcopy
 import os
 from os.path import join
 
-from astropy.io import fits
-
+import SHE_CTE
 from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
-                             read_pickled_product, write_pickled_product,
+                             read_xml_product, write_xml_product,
                              get_allowed_filename, find_file_in_path)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import initialise_psf_table, tf as pstf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from astropy.io import fits
 import numpy as np
 
 
 test_mode = True
 
-def model_psfs(args, dry_run = False):
+
+def model_psfs(args, dry_run=False):
     """
         Mock run of PSF Fitting.
     """
@@ -52,17 +54,20 @@ def model_psfs(args, dry_run = False):
     # Data images
 
     if dry_run:
-        dry_label = "_dry"
+        dry_label = "-dry"
     else:
         dry_label = ""
 
     logger.info("Reading mock" + dry_label + " data images and detections tables...")
 
-    frame_stack = SHEFrameStack.read(exposure_listfile_filename = args.data_images,
-                                     detections_listfile_filename = args.detections_tables,
-                                     workdir = args.workdir,
-                                     clean_detections = True,
-                                     apply_sc3_fix = True)
+    frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
+                                     seg_listfile_filename=args.segmentation_images,
+                                     detections_listfile_filename=args.detections_tables,
+                                     workdir=args.workdir,
+                                     clean_detections=True,
+                                     apply_sc3_fix=True,
+                                     memmap=True,
+                                     mode='denywrite')
 
     # AocsTimeSeries products
 
@@ -74,7 +79,7 @@ def model_psfs(args, dry_run = False):
         aocs_time_series_products = []
 
         for i, filename in enumerate(aocs_time_series_product_filenames):
-            aocs_time_series_products.append(read_pickled_product(join(args.workdir, filename)))
+            aocs_time_series_products.append(read_xml_product(join(args.workdir, filename)))
             if not isinstance(aocs_time_series_products[i], products.aocs_time_series.DpdSheAocsTimeSeriesProduct):
                 raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
 
@@ -82,20 +87,13 @@ def model_psfs(args, dry_run = False):
 
         aocs_time_series_products = None
 
-    # PSFCalibration products
+    # PSFCalibration product
 
-    if args.psf_calibration_product is not None:
+    psf_calibration_product = get_conditional_product(args.psf_calibration_product, args.workdir)
 
-        logger.info("Reading mock" + dry_label + " PSF calibration product...")
-
-        psf_calibration_product = read_pickled_product(join(args.workdir, args.psf_calibration_product))
-
-        if not isinstance(psf_calibration_product, products.psf_calibration.DpdShePSFCalibrationProduct):
-            raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
-
-    else:
-
-        psf_calibration_product = None
+    if psf_calibration_product is not None and not isinstance(psf_calibration_product,
+                                                              products.psf_calibration.DpdShePSFCalibrationProduct):
+        raise ValueError("PSFCalibration product from " + filename + " is invalid type.")
 
     logger.info("Reading mock" + dry_label + " PSF field param products...")
 
@@ -103,12 +101,32 @@ def model_psfs(args, dry_run = False):
     psf_field_params = []
 
     for filename in psf_field_param_filenames:
-        psf_field_param_product = read_pickled_product(join(args.workdir, filename))
+        psf_field_param_product = read_xml_product(join(args.workdir, filename))
 
         if not isinstance(psf_field_param_product, products.psf_field_params.DpdShePSFFieldParamsProduct):
             raise ValueError("PSFFieldParams product from " + filename + " is invalid type.")
 
         psf_field_params.append(psf_field_param_product)
+
+    # Object ID list
+
+    object_ids_list_product = get_conditional_product(args.object_ids, args.workdir)
+
+    if object_ids_list_product is not None:
+        logger.info("Pruning list of galaxy objects to loop over")
+        id_list = object_ids_list_product.get_id_list()
+
+        # create a back up of full detections_catalog
+        frame_stack.detections_catalogue_backup = deepcopy(frame_stack.detections_catalogue)
+
+        # loop over detections_catalog and make list of indices not in our object_id list
+        list_ids_not_to_use = []
+        for ind, row in enumerate(frame_stack.detections_catalogue):
+            if row[detf.ID] not in id_list:
+                list_ids_not_to_use.append(ind)
+
+        frame_stack.detections_catalogue.remove_rows(list_ids_not_to_use)
+        logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Set up mock output in the correct format
 
@@ -133,17 +151,19 @@ def model_psfs(args, dry_run = False):
     filenames = []
     psf_tables = []
     for x in range(num_exposures):
-        filename = get_allowed_filename("PSF" + dry_label, str(x))
-        filenames.append(filename)
+        data_filename = get_allowed_filename("PSF" + dry_label,
+                                             str(os.getpid()) + "-" + str(x),
+                                             extension=".fits",
+                                             version=SHE_CTE.__version__)
 
         hdulist = fits.HDUList([fits.PrimaryHDU()])  # Start with an empty primary HDU
 
         # Initialize table with null values
         num_rows = len(frame_stack.detections_catalogue)
-        psfc = initialise_psf_table(init_columns = {pstf.ID : frame_stack.detections_catalogue[detf.ID],
-                                                  pstf.template :-1 * np.ones(num_rows, dtype = np.int64),
-                                                  pstf.bulge_index :-1 * np.ones(num_rows, dtype = np.int32),
-                                                  pstf.disk_index :-1 * np.ones(num_rows, dtype = np.int32)})
+        psfc = initialise_psf_table(init_columns={pstf.ID: frame_stack.detections_catalogue[detf.ID],
+                                                  pstf.template: -1 * np.ones(num_rows, dtype=np.int64),
+                                                  pstf.bulge_index: -1 * np.ones(num_rows, dtype=np.int32),
+                                                  pstf.disk_index: -1 * np.ones(num_rows, dtype=np.int32)})
 
         # Add the table to the HDU list
         psfc_hdu = table_to_hdu(psfc)
@@ -154,7 +174,16 @@ def model_psfs(args, dry_run = False):
         psf_tables[x].add_index(pstf.ID)  # Allow it to be indexed by galaxy ID
 
         # Write out the table
-        hdulist.writeto(join(args.workdir, filename), clobber = True)
+        hdulist.writeto(join(args.workdir, data_filename), clobber=True)
+
+        # Write the data product
+        product_filename = get_allowed_filename("PSF-P" + dry_label,
+                                                str(os.getpid()) + "-" + str(x),
+                                                extension=".xml",
+                                                version=SHE_CTE.__version__)
+        product = products.psf_image.create_psf_image_product(filename=data_filename)
+        write_xml_product(product, join(args.workdir, product_filename))
+        filenames.append(product_filename)
 
     logger.info("Base files for PSF data set up.")
 
@@ -168,7 +197,7 @@ def model_psfs(args, dry_run = False):
         gal_id = row[detf.ID]
 
         # Get a stamp just to check if the galaxy is in frame
-        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width = 1)
+        gal_stamp_stack = frame_stack.extract_galaxy_stack(gal_id, width=1)
 
         if gal_stamp_stack.is_empty():
             if test_mode:
@@ -189,19 +218,20 @@ def model_psfs(args, dry_run = False):
                                                        (ppt_mv.stamp_size_label, np.min(np.shape(bpsf_array))),
                                                        (ppt_mv.scale_label, 0.02)))
 
-                bpsf_hdu = fits.ImageHDU(data = bpsf_array,
-                                         header = bulge_psf_header)
+                bpsf_hdu = fits.ImageHDU(data=bpsf_array,
+                                         header=bulge_psf_header)
 
                 disk_psf_header = fits.header.Header(((ppt_mv.extname_label, str(gal_id) + "." + ppt_mv.disk_psf_tag),
-                                                 (ppt_mv.stamp_size_label, np.min(np.shape(dpsf_array))),
-                                                 (ppt_mv.scale_label, 0.02)))
+                                                      (ppt_mv.stamp_size_label, np.min(np.shape(dpsf_array))),
+                                                      (ppt_mv.scale_label, 0.02)))
 
-                dpsf_hdu = fits.ImageHDU(data = dpsf_array,
-                                         header = disk_psf_header)
+                dpsf_hdu = fits.ImageHDU(data=dpsf_array,
+                                         header=disk_psf_header)
 
                 # Append these to the proper file
 
-                f = fits.open(join(args.workdir, filenames[x]), mode = 'append')
+                p = read_xml_product(join(args.workdir, filenames[x]))
+                f = fits.open(join(args.workdir, p.get_data_filename()), memmap=True, mode='append')
 
                 f.append(bpsf_hdu)
                 f.append(dpsf_hdu)
@@ -235,7 +265,8 @@ def model_psfs(args, dry_run = False):
 
         psf_table = psf_tables[x]
 
-        f = fits.open(join(args.workdir, filenames[x]), memmap = True, mode = 'update')
+        p = read_xml_product(join(args.workdir, filenames[x]))
+        f = fits.open(join(args.workdir, p.get_data_filename()), memmap=True, mode='update')
         out_table = f[1].data
 
         out_table[pstf.bulge_index] = psf_table[pstf.bulge_index]
@@ -252,5 +283,3 @@ def model_psfs(args, dry_run = False):
     logger.info("Finished mock" + dry_label + " psf fitting.")
 
     return
-
-
