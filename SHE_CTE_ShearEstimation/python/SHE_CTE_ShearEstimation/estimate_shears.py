@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-05-01"
+__updated__ = "2019-05-08"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -43,6 +43,7 @@ from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_tab
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
+from astropy.table import Table
 import numpy as np
 
 
@@ -116,16 +117,17 @@ def estimate_shears_from_args(args, dry_run=False):
         logger.info("Pruning list of galaxy objects to loop over")
         id_list = object_ids_list_product.get_id_list()
 
-        # create a back up of full detections_catalog
-        data_stack.detections_catalogue_backup = copy.deepcopy(data_stack.detections_catalogue)
+        # Keep the full detections catalogue in a different location
+        data_stack.detections_catalogue_backup = data_stack.detections_catalogue
+
+        rows_to_use = []
 
         # loop over detections_catalog and make list of indices not in our object_id list
-        list_ids_not_to_use = []
-        for ind, row in enumerate(data_stack.detections_catalogue):
-            if row[detf.ID] not in id_list:
-                list_ids_not_to_use.append(ind)
+        for row in data_stack.detections_catalogue:
+            if row[detf.ID] in id_list:
+                rows_to_use.append(row)
 
-        data_stack.detections_catalogue.remove_rows(list_ids_not_to_use)
+        data_stack.detections_catalogue = Table(rows_to_use)
         logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
