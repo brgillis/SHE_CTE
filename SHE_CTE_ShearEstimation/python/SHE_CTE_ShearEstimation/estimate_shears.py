@@ -127,7 +127,12 @@ def estimate_shears_from_args(args, dry_run=False):
             if row[detf.ID] in id_list:
                 rows_to_use.append(row)
 
-        data_stack.detections_catalogue = Table(rows=rows_to_use)
+        data_stack.detections_catalogue = Table(names=data_stack.detections_catalogue_backup.colnames,
+                                                dtype=[data_stack.detections_catalogue_backup.dtype[n] for n in data_stack.detections_catalogue_backup.colnames])
+
+        for row in rows_to_use:
+            data_stack.detections_catalogue.add_row(row)
+
         logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
