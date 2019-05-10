@@ -221,10 +221,33 @@ def match_to_tu_from_args(args):
         shear_table.add_column(Column(best_gal_id, name=gal_index_colname))
 
         # Match to the star and galaxy tables
-        star_matched_tables[method] = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
-        logger.info("Matched " + str(len(star_matched_tables[method])) + " objects to stars.")
-        gal_matched_tables[method] = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
-        logger.info("Matched " + str(len(gal_matched_tables[method])) + " objects to galaxies.")
+
+        star_matched_table = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
+        logger.info("Matched " + str(len(star_matched_table)) + " objects to stars.")
+
+        gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
+        logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
+
+        # Remove extra columns we no longer need
+        star_matched_table.remove_columns([star_index_colname, gal_index_colname])
+        gal_matched_table.remove_columns([star_index_colname, gal_index_colname])
+
+        # Add extra useful columns to the galaxy-matched table for
+        gal_matched_table.add_column(
+            Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
+                   name="Beta_Est_Shear"))
+        gal_matched_table.add_column(
+            Column(np.arctan2(gal_matched_table["gamma2"], gal_matched_table["gamma1"]) * 90 / np.pi,
+                   name="Beta_Input_Shear"))
+        gal_matched_table.add_column(
+            Column(np.where(gal_matched_table["disk_angle"] < -90, gal_matched_table["disk_angle"] + 180,
+                            np.where(gal_matched_table["disk_angle"] > 90, gal_matched_table["disk_angle"] - 180,
+                                     gal_matched_table["disk_angle"])),
+                   name="Beta_Input_Unsheared_Shape"))
+
+        # Add these tables to the dictionaries of tables
+        star_matched_tables[method] = star_matched_table
+        gal_matched_tables[method] = gal_matched_table
 
     # Create output data product
     matched_catalog_product = products.shear_estimates.create_shear_estimates_product()
