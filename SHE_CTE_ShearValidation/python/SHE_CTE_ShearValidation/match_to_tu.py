@@ -247,7 +247,7 @@ def match_to_tu_from_args(args):
         # Write out the HDU list to a file
         logger.debug("Writing output matched catalogs for method " + method + " to " + os.path.join(args.workdir,
                                                                                                     method_filename))
-        hdulist.write(os.path.join(args.workdir, method_filename), clobber=True)
+        hdulist.writeto(os.path.join(args.workdir, method_filename), clobber=True)
 
     # Write the data product
     logger.info("Writing output matched catalog data product to " + os.path.join(args.workdir,
