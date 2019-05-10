@@ -254,7 +254,7 @@ def match_to_tu_from_args(args):
     # Write the data product
     logger.info("Writing output matched catalog data product to " + os.path.join(args.workdir,
                                                                                  args.matched_catalog))
-    file_io.write_xml_product(product=matched_catalog_product, filename=os.path.join(args.workdir,
-                                                                                     args.matched_catalog))
+    file_io.write_xml_product(product=matched_catalog_product, xml_file_name=os.path.join(args.workdir,
+                                                                                          args.matched_catalog))
 
     return
