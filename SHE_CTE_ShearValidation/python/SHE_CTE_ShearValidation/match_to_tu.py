@@ -188,7 +188,7 @@ def match_to_tu_from_args(args):
     for method in methods:
 
         shear_table = shear_tables[method]
-        if shear_table is None:
+        if shear_table is None or shear_table == "None":
             star_matched_tables[method] = None
             gal_matched_tables[method] = None
             continue
@@ -227,8 +227,14 @@ def match_to_tu_from_args(args):
     # Create output data product
     matched_catalog_product = products.shear_estimates.create_shear_estimates_product()
     for method in methods:
+
+        if gal_matched_tables[method] is None:
+            matched_catalog_product.set_method_filename(method, "None")
+            continue
+
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT", instance_id=str(os.getpid()),
                                                        extension=".fits", version=SHE_CTE.__version__, subdir="data",)
+        matched_catalog_product.set_method_filename(method, method_filename)
 
         # Turn each table into an HDU and add it to an HDU list
         hdulist = fits.HDUList()
