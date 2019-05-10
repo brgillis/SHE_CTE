@@ -159,7 +159,7 @@ def match_to_tu_from_args(args):
 
     logger.info("Found " + str(len(overlapping_star_catalog)) + " stars in overlapping region.")
 
-    overlapping_galaxy_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
+    overlapping_galaxy_catalog = select_true_universe_sources(catalog_filenames=galaxy_catalog_filenames,
                                                               ra_range=ra_range,
                                                               dec_range=dec_range,
                                                               path=args.sim_path)
