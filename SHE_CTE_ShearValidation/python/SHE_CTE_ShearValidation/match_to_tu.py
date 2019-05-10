@@ -234,7 +234,8 @@ def match_to_tu_from_args(args):
             matched_catalog_product.set_method_filename(method, "None")
             continue
 
-        method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT", instance_id=str(os.getpid()),
+        method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
+                                                       instance_id=method.upper() + "-" + str(os.getpid()),
                                                        extension=".fits", version=SHE_CTE.__version__, subdir="data",)
         matched_catalog_product.set_method_filename(method, method_filename)
 
