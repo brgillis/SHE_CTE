@@ -109,7 +109,7 @@ def match_to_tu_from_args(args):
 
     for method in methods:
         fn = shear_estimates_product.get_method_filename(method)
-        if fn is None:
+        if fn is None or fn == "None":
             shear_tables[method] = None
             logger.warn("No filename for method " + method + ".")
         else:
@@ -188,7 +188,7 @@ def match_to_tu_from_args(args):
     for method in methods:
 
         shear_table = shear_tables[method]
-        if shear_table is None or shear_table == "None":
+        if shear_table is None:
             star_matched_tables[method] = None
             gal_matched_tables[method] = None
             continue
