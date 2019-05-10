@@ -222,7 +222,9 @@ def match_to_tu_from_args(args):
 
         # Match to the star and galaxy tables
         star_matched_tables[method] = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
+        logger.info("Matched " + str(len(star_matched_tables[method])) + " objects to stars.")
         gal_matched_tables[method] = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
+        logger.info("Matched " + str(len(gal_matched_tables[method])) + " objects to galaxies.")
 
     # Create output data product
     matched_catalog_product = products.shear_estimates.create_shear_estimates_product()
