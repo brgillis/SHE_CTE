@@ -43,7 +43,7 @@ star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
 
-def select_true_universe_sources(catalog_file_names, ra_range, dec_range, path):
+def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
     """ Loads all the True Universe catalog files and selects only those
     sources that fall inside the specified (RA, Dec) region.
 
@@ -51,9 +51,16 @@ def select_true_universe_sources(catalog_file_names, ra_range, dec_range, path):
     # Loop over the True Universe catalog files and select the relevant sources
     merged_catalog = None
 
-    for file_name in catalog_file_names:
+    logger.info("Reading in overlapping sources.")
+
+    for filename in catalog_filenames:
+
+        qualified_filename = file_io.find_file(filename, path=path)
+
+        logger.debug("Reading overlapping sources from " + qualified_filename + ".")
+
         # Load the catalog table
-        catalog = Table.read(file_io.find_file(file_name, path=path), format="fits")
+        catalog = Table.read(qualified_filename, format="fits")
 
         # Get the (RA, Dec) columns
         ra = catalog["ra_mag"] if "ra_mag" in catalog.colnames else catalog["RA"]
@@ -82,19 +89,22 @@ def match_to_tu_from_args(args):
     # them
     qualified_star_catalog_product_filename = file_io.find_file(args.tu_star_catalog,
                                                                 path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe star catalog from " + qualified_star_catalog_product_filename)
+    logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
     star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
     star_catalog_filenames = star_catalog_product.get_data_filenames()
 
     qualified_galaxy_catalog_product_filename = file_io.find_file(args.tu_galaxy_catalog,
                                                                   path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe galaxy catalog from " + qualified_galaxy_catalog_product_filename)
+    logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
     galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
     galaxy_catalog_filenames = galaxy_catalog_product.get_data_filenames()
 
     # Read in the shear estimates data product, and get the filenames of the tables for each method from it.
-    shear_estimates_product = file_io.read_xml_product(file_io.find_file(args.shear_estimates_product,
-                                                                         path=args.workdir))
+    qualified_shear_estimates_product_filename = file_io.find_file(args.shear_estimates_product,
+                                                                   path=args.workdir)
+    logger.info("Reading in Shear Estimates product from " + qualified_shear_estimates_product_filename)
+    shear_estimates_product = file_io.read_xml_product(qualified_shear_estimates_product_filename)
+
     shear_tables = {}
 
     for method in methods:
@@ -103,6 +113,8 @@ def match_to_tu_from_args(args):
             shear_tables[method] = None
             logger.warn("No filename for method " + method + ".")
         else:
+            qualified_filename = os.path.join(args.workdir, fn)
+            logger.debug("Reading in shear estimates table from " + qualified_filename)
             shear_tables[method] = Table.read(os.path.join(args.workdir, fn))
 
     # Determine the ra/dec range covered by the shear estimates file
@@ -129,19 +141,35 @@ def match_to_tu_from_args(args):
     if ra_range[1] < ra_range[0] or dec_range[1] < dec_range[0]:
         raise ValueError("Invalid range")
 
+    # Pad the range by the threshold amount
+    ra_range[0] -= args.match_threshold
+    ra_range[1] += args.match_threshold
+    dec_range[0] -= args.match_threshold
+    dec_range[1] += args.match_threshold
+
+    logger.info("Object range is: ")
+    logger.info("  RA : " + str(ra_range[0]) + " to " + str(ra_range[1]))
+    logger.info("  DEC: " + str(dec_range[0]) + " to " + str(dec_range[1]))
+
     # Read in the star and galaxy catalogs from the overlapping area
-    overlapping_star_catalog = select_true_universe_sources(catalog_file_names=star_catalog_filenames,
+    overlapping_star_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
                                                             ra_range=ra_range,
                                                             dec_range=dec_range,
                                                             path=args.sim_path)
-    overlapping_galaxy_catalog = select_true_universe_sources(catalog_file_names=star_catalog_filenames,
+
+    logger.info("Found " + str(len(overlapping_star_catalog)) + " stars in overlapping region.")
+
+    overlapping_galaxy_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
                                                               ra_range=ra_range,
                                                               dec_range=dec_range,
                                                               path=args.sim_path)
+
+    logger.info("Found " + str(len(overlapping_galaxy_catalog)) + " galaxies in overlapping region.")
+
     # Set up star and galaxy tables for matching
 
     ra_star = overlapping_star_catalog["RA"]
-    dec_star = overlapping_star_catalog["RA"]
+    dec_star = overlapping_star_catalog["DEC"]
     sky_coord_star = SkyCoord(ra=ra_star * units.degree, dec=dec_star * units.degree)
 
     overlapping_star_catalog.add_column(Column(np.arange(len(ra_star)), name=star_index_colname))
@@ -164,6 +192,8 @@ def match_to_tu_from_args(args):
             star_matched_tables[method] = None
             gal_matched_tables[method] = None
             continue
+
+        logger.info("Performing match for method " + method + ".")
 
         ra_se = shear_table[setf.x_world]
         dec_se = shear_table[setf.y_world]
