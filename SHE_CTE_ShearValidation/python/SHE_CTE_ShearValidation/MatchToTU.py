@@ -66,6 +66,8 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
     parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC456/SIM-VIS/vis_science_T11",
                         help="Path to where the SIM data is stored")
+    parser.add_argument('--match_threshold', type=float, default=0.3,
+                        help="Maximum distance allowed for a match in units of arcsec.")
 
     logger.debug('Exiting SHE_CTE_MatchToTU defineSpecificProgramOptions()')
 
