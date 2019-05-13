@@ -265,18 +265,63 @@ def match_to_tu_from_args(args):
         star_matched_table.remove_columns([star_index_colname, gal_index_colname])
         gal_matched_table.remove_columns([star_index_colname, gal_index_colname])
 
-        # Add extra useful columns to the galaxy-matched table for
+        # Add extra useful columns to the galaxy-matched table for analysis
+
+        # Details about estimated shear
+
         gal_matched_table.add_column(
             Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
                    name="Beta_Est_Shear"))
+
+        g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"])
+        gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
+
+        gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
+
+        # Details about the input shear
+
+        g1_in = gal_matched_table["gamma1"]
+        g2_in = gal_matched_table["gamma2"]
+
         gal_matched_table.add_column(
-            Column(np.arctan2(gal_matched_table["gamma2"], gal_matched_table["gamma1"]) * 90 / np.pi,
-                   name="Beta_Input_Shear"))
+            Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
+
         gal_matched_table.add_column(
-            Column(np.where(gal_matched_table["disk_angle"] < -90, gal_matched_table["disk_angle"] + 180,
-                            np.where(gal_matched_table["disk_angle"] > 90, gal_matched_table["disk_angle"] - 180,
-                                     gal_matched_table["disk_angle"])),
-                   name="Beta_Input_Unsheared_Shape"))
+            Column(np.sqrt(g1_in**2 + g2_in**2) * 90 / np.pi, name="Mag_Input_Shear"))
+
+        # Details about the input bulge shape
+
+        bulge_angle = gal_matched_table["bulge_angle"]
+        regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
+                                           np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle)),
+        gal_matched_table.add_column(Column(regularized_bulge_angle,
+                                            name="Beta_Input_Bulge_Unsheared_Shape"))
+
+        bulge_axis_ratio = gal_matched_table["bulge_axis_ratio"]
+        bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
+        gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
+
+        gal_matched_table.add_column(Column(bulge_g_mag * np.cos(disk_angle * np.pi / 90),
+                                            name="G1_Input_Bulge_Unsheared_Shape"))
+        gal_matched_table.add_column(Column(bulge_g_mag * np.sin(disk_angle * np.pi / 90),
+                                            name="G2_Input_Bulge_Unsheared_Shape"))
+
+        # Details about the input disk shape
+
+        disk_angle = gal_matched_table["disk_angle"]
+        regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
+                                          np.where(disk_angle > 90, disk_angle - 180, disk_angle)),
+        gal_matched_table.add_column(Column(regularized_disk_angle,
+                                            name="Beta_Input_Disk_Unsheared_Shape"))
+
+        disk_axis_ratio = gal_matched_table["disk_axis_ratio"]
+        disk_g_mag = (1 - disk_axis_ratio) / (1 + disk_axis_ratio)
+        gal_matched_table.add_column(Column(disk_g_mag, name="Mag_Input_Disk_Unsheared_Shape"))
+
+        gal_matched_table.add_column(Column(disk_g_mag * np.cos(disk_angle * np.pi / 90),
+                                            name="G1_Input_Disk_Unsheared_Shape"))
+        gal_matched_table.add_column(Column(disk_g_mag * np.sin(disk_angle * np.pi / 90),
+                                            name="G2_Input_Disk_Unsheared_Shape"))
 
         # Add these tables to the dictionaries of tables
         star_matched_tables[method] = star_matched_table
