@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-05-10"
+__updated__ = "2019-05-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -165,6 +165,39 @@ def match_to_tu_from_args(args):
                                                               path=args.sim_path)
 
     logger.info("Found " + str(len(overlapping_galaxy_catalog)) + " galaxies in overlapping region.")
+
+    # Remove unused columns in the star table
+
+    overlapping_star_catalog.remove_columns(['H', 'J-H', 'z-H', 'i-H', 'r-H', 'g-H', 'g-G', 'g-BP', 'g-RP', 'V-Ic',
+                                             'mux', 'muy', 'Vr', 'UU', 'VV', 'WW', 'Mv', 'CL', 'Typ', 'Teff', 'logg',
+                                             'Age', 'Mass', 'Mbol', 'Radius', '[Fe/H]', 'l(deg)', 'b(deg)',
+                                             'RA2000.0', 'DEC2000.0', 'Dist', 'x(kpc)', 'y(kpc)', 'z(kpc)', 'Av',
+                                             '[alpha/Fe]', 'Parallax(microarsec)', 'errparallax(micro)', 'Gmag',
+                                             'error_dist(kpc)', 'RA2000(Gaia)', 'DEC2000(Gaia)', 'i', 'ORIGIN',
+                                             'TU_FLUX_Y_NISP', 'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
+                                             'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
+                                             'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
+                                             'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
+                                             'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
+                                             'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
+                                             'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
+                                             'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS', ])
+
+    # Remove unused columns in the galaxy table
+
+    overlapping_galaxy_catalog.remove_columns(['id', 'ra', 'dec', 'ref_mag_r01', 'euclid_nisp_h', 'ext_law', 'ebv',
+                                               'lsfr', 'metallicity', 'lmstellar', 'logf_halpha_ext', 'logf_hbeta_ext',
+                                               'logf_o2_ext', 'logf_o3_ext', 'logf_n2_ext', 'logf_s2_ext',
+                                               'stamp_file_id', 'stamp_index', 'spectra_index', 'Av', 'TU_FLUX_Y_NISP',
+                                               'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
+                                               'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
+                                               'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
+                                               'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
+                                               'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
+                                               'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
+                                               'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
+                                               'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS',
+                                               ])
 
     # Set up star and galaxy tables for matching
 
