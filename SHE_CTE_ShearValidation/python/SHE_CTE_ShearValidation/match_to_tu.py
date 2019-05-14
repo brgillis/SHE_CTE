@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-05-13"
+__updated__ = "2019-05-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -131,12 +131,17 @@ def match_to_tu_from_args(args):
         ra_col = shear_table[setf.x_world]
         dec_col = shear_table[setf.y_world]
 
-        # Check if the range in this method's table sets a new min/max for ra and dec
-        ra_range[0] = np.min((ra_range[0], np.min(ra_col.data)))
-        ra_range[1] = np.max((ra_range[1], np.max(ra_col.data)))
+        flags_col = shear_table[setf.flags]
 
-        dec_range[0] = np.min((dec_range[0], np.min(dec_col.data)))
-        dec_range[1] = np.max((dec_range[1], np.max(dec_col.data)))
+        good_ra_data = ra_col[flags_col == 0]
+        good_dec_data = dec_col[flags_col == 0]
+
+        # Check if the range in this method's table sets a new min/max for ra and dec
+        ra_range[0] = np.min((ra_range[0], np.min(good_ra_data)))
+        ra_range[1] = np.max((ra_range[1], np.max(good_ra_data)))
+
+        dec_range[0] = np.min((dec_range[0], np.min(good_dec_data)))
+        dec_range[1] = np.max((dec_range[1], np.max(good_dec_data)))
 
     if ra_range[1] < ra_range[0] or dec_range[1] < dec_range[0]:
         raise ValueError("Invalid range")
