@@ -136,6 +136,9 @@ def match_to_tu_from_args(args):
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
 
+        if len(good_ra_data) == 0:
+            continue
+
         # Check if the range in this method's table sets a new min/max for ra and dec
         ra_range[0] = np.min((ra_range[0], np.min(good_ra_data)))
         ra_range[1] = np.max((ra_range[1], np.max(good_ra_data)))
