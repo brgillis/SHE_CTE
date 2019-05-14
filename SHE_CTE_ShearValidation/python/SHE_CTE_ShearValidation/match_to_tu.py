@@ -309,9 +309,9 @@ def match_to_tu_from_args(args):
         bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
         gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
 
-        gal_matched_table.add_column(Column(bulge_g_mag * np.cos(disk_angle * np.pi / 90),
+        gal_matched_table.add_column(Column(bulge_g_mag * np.cos(bulge_angle * np.pi / 90),
                                             name="G1_Input_Bulge_Unsheared_Shape"))
-        gal_matched_table.add_column(Column(bulge_g_mag * np.sin(disk_angle * np.pi / 90),
+        gal_matched_table.add_column(Column(bulge_g_mag * np.sin(bulge_angle * np.pi / 90),
                                             name="G2_Input_Bulge_Unsheared_Shape"))
 
         # Details about the input disk shape
