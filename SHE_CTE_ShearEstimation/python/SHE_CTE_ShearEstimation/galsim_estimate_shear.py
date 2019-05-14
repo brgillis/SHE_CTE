@@ -25,7 +25,6 @@ from math import sqrt
 
 import galsim
 
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
