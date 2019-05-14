@@ -36,7 +36,6 @@ from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
 import numpy as np
-from scipy.optimize import minimize
 
 
 stamp_size = 256
