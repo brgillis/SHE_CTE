@@ -301,7 +301,7 @@ def match_to_tu_from_args(args):
 
         bulge_angle = gal_matched_table["bulge_angle"]
         regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
-                                           np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle)),
+                                           np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
         gal_matched_table.add_column(Column(regularized_bulge_angle,
                                             name="Beta_Input_Bulge_Unsheared_Shape"))
 
