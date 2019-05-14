@@ -25,8 +25,7 @@ import pytest
 import galsim
 
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
-                                                           get_shear_estimate, ShearEstimate,
-                                                           correct_for_wcs_shear_and_rotation)
+                                                           get_shear_estimate, ShearEstimate)
 from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.file_io import find_file
