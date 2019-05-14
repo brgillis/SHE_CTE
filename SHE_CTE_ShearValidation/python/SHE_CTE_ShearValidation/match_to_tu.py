@@ -281,7 +281,7 @@ def match_to_tu_from_args(args):
             Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
                    name="Beta_Est_Shear"))
 
-        g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"])
+        g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"]**2)
         gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
 
         gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
