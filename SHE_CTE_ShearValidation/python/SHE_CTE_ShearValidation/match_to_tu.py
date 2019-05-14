@@ -318,7 +318,7 @@ def match_to_tu_from_args(args):
 
         disk_angle = gal_matched_table["disk_angle"]
         regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
-                                          np.where(disk_angle > 90, disk_angle - 180, disk_angle)),
+                                          np.where(disk_angle > 90, disk_angle - 180, disk_angle))
         gal_matched_table.add_column(Column(regularized_disk_angle,
                                             name="Beta_Input_Disk_Unsheared_Shape"))
 
