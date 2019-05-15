@@ -105,7 +105,7 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
         gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
-        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]*3600
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
     else:
         psf_scale = 0.02
     cnt = 0
@@ -157,10 +157,10 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                                 gal_id,
                                 wcs,
                                 config_data,
-                                seg_map=None,
-                                flag_map=None,
-                                bkgd_map=None,
-                                do_bkgd_sub=True)
+                                seg_map=stacked_gal_stamp.segmentation_map,
+                                flag_map=stacked_gal_stamp.mask,
+                                bkgd_map=stacked_gal_stamp.background_map,
+                                do_bkgd_sub=False) # bkgd already sub in stack
 
         if config_data['isTarget'] == True:
             if bfd_info.lost:

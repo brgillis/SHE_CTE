@@ -11,6 +11,7 @@ elements_install_python_modules()
 
 # Instruction for creating a Python executable
 elements_add_python_program(SHE_CTE_CrossValidateShear SHE_CTE_ShearValidation.CrossValidateShear)
+elements_add_python_program(SHE_CTE_MatchToTU SHE_CTE_ShearValidation.MatchToTU)
 
 # Install the configuration files
 elements_install_conf_files()
