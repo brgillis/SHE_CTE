@@ -117,15 +117,25 @@ def fit_psfs(args, dry_run=False):
         field_param_table = initialise_psf_tm_state_table()
         field_param_table.add_row({})  # Add a row of zeros
 
+        qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)
+
         field_param_table.write(join(args.workdir, field_param_table_filename))
+
+        logger.info("Wrote field params table to " + qualified_field_param_table_filename)
 
         # Create and write the data product
         field_param_product = products.psf_field_params.create_dpd_she_psf_field_params()
         field_param_product.set_zernike_mode_filename(field_param_table_filename)
 
-        write_pickled_product(field_param_product, join(args.workdir, field_param_product_filename))
+        qualified_field_param_product_filename = join(args.workdir, field_param_product_filename)
+        write_pickled_product(field_param_product, qualified_field_param_product_filename)
+
+        logger.info("Wrote field params product to " + qualified_field_param_product_filename)
 
     # Write out a listfile of the products
-    write_listfile(join(args.workdir, args.psf_field_params), field_param_product_filenames)
+    qualified_listfile_filename = join(args.workdir, args.psf_field_params)
+    write_listfile(qualified_listfile_filename, field_param_product_filenames)
+
+    logger.info("Wrote field params listfile to " + qualified_listfile_filename)
 
     return
