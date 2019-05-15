@@ -33,6 +33,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
+from SHE_PPT.table_formats.psf_tm_state import initialise_psf_tm_state_table
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from astropy.io import fits
 from astropy.table import Table
@@ -101,18 +102,30 @@ def fit_psfs(args, dry_run=False):
 
     logger.info("Outputting mock" + dry_label + " PSF Field Params...")
 
-    field_param_filenames = []
+    field_param_product_filenames = []
 
     for i in range(len(frame_stack.exposures)):
 
-        field_param_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml",
-                                                    version=SHE_CTE.__version__)
-        field_param_filenames.append(field_param_filename)
+        # Get a filename for the product
+        field_param_product_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml",
+                                                            version=SHE_CTE.__version__)
+        field_param_product_filenames.append(field_param_product_filename)
 
+        # Get a filename for the table and write it out
+        field_param_table_filename = get_allowed_filename("PSF-TelescopeModel", str(i), extension=".fits",
+                                                          version=SHE_CTE.__version__)
+        field_param_table = initialise_psf_tm_state_table()
+        field_param_table.add_row({})  # Add a row of zeros
+
+        field_param_table.write(join(args.workdir, field_param_table_filename))
+
+        # Create and write the data product
         field_param_product = products.psf_field_params.create_dpd_she_psf_field_params()
+        field_param_product.set_zernike_mode_filename(field_param_table_filename)
 
-        write_pickled_product(field_param_product, join(args.workdir, field_param_filename))
+        write_pickled_product(field_param_product, join(args.workdir, field_param_product_filename))
 
-    write_listfile(join(args.workdir, args.psf_field_params), field_param_filenames)
+    # Write out a listfile of the products
+    write_listfile(join(args.workdir, args.psf_field_params), field_param_product_filenames)
 
     return
