@@ -220,7 +220,7 @@ def bfd_perform_integration(target_file=None, template_file=None):
     if template_file is None:
         template_file=getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
-    sn1=8
+    sn1=5
     sn2=35
     sn3=100
     nfactor1=1.
@@ -228,14 +228,22 @@ def bfd_perform_integration(target_file=None, template_file=None):
     nthreads=1
     call=["boostTest","--targetFile", target_file, "--templateFile", template_file, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads),"--seed",str(12345)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-
-    logger.info(returncode.stdout)
-    logger.info(returncode.stderr)
+    stdout=np.str(returncode.stdout)
+    stderr=np.str(returncode.stderr)
+    stdoutsplit=stdout.split("\\n")
+    stderrsplit=stderr.split("\\n")
+    logger.info("BFD Integration STDOUT INFO:")
+    for out in stdoutsplit:
+        logger.info(out)
+    logger.info("BFD Integration STDERR INFO:")
+    for err in stderrsplit:
+        logger.info(err)
 
     logger.debug("Exiting BFD integration")
 
 
     return
+
 
 def bfd_load_training_data(training_data_filename=None, workdir="."):
 
