@@ -1,9 +1,11 @@
-""" @file CrossValidateShear.py
+""" @file MatchToTu.py
 
-    Created 12 Oct 2017
+    Created 10 May 2019
 
-    Executable for cross-validating shear measurements and creating a combined catalogue.
+    Executable for matching the output of the Analysis pipeline to SIM's True Universe catalogs.
 """
+
+__updated__ = "2019-05-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,11 +22,9 @@
 
 import argparse
 
-from ElementsKernel.Logging import getLogger
 import SHE_CTE
-from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_ShearValidation import magic_values as mv
-from SHE_CTE_ShearValidation.cross_validate_shear import cross_validate_shear
+from SHE_CTE_ShearValidation.match_to_tu import match_to_tu_from_args
+from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
 
@@ -40,37 +40,36 @@ def defineSpecificProgramOptions():
     logger = getLogger(__name__)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CrossValidateShear defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_MatchToTU defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
 
-    # Option for profiling
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
-    parser.add_argument('--dry_run', action='store_true',
-                        help='Dry run (no data processed).')
-
     # Input filenames
     parser.add_argument('--shear_estimates_product', type=str,
                         help='Filename for shear estimates data product (XML data product)')
-
-#     parser.add_argument('--shear_validation_statistics_table',type=str, # Disabled until it exists
-#                         help='Filename for table of shear validation statistics.')
+    parser.add_argument('--tu_galaxy_catalog', type=str,
+                        help='Filename for True Universe Galaxy Catalog data product (XML data product)')
+    parser.add_argument('--tu_star_catalog', type=str,
+                        help='Filename for True Universe Star Catalog data product (XML data product)')
 
     # Output filenames
-    parser.add_argument('--cross_validated_shear_estimates_product', type=str,
-                        help='Desired filename for output shear estimates table (multi-HDU fits file).')
+    parser.add_argument('--matched_catalog', type=str,
+                        help='Desired filename for output matched catalog data product (XML data product).')
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
     parser.add_argument('--logdir', type=str, default=".")
 
     # Optional arguments (can't be used with pipeline runner)
-    parser.add_argument('--primary_method', type=str, default="LensMC",
-                        help="Shear measurement method to consider primary, and compare against others.")
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
+    parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC456/SIM-VIS/vis_science_T11",
+                        help="Path to where the SIM data is stored")
+    parser.add_argument('--match_threshold', type=float, default=0.3,
+                        help="Maximum distance allowed for a match in units of arcsec.")
 
-    logger.debug('Exiting SHE_CTE_CrossValidateShear defineSpecificProgramOptions()')
+    logger.debug('Exiting SHE_CTE_MatchToTU defineSpecificProgramOptions()')
 
     return parser
 
@@ -88,27 +87,24 @@ def mainMethod(args):
     logger = getLogger(__name__)
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CrossValidateShear mainMethod()')
+    logger.debug('# Entering SHE_CTE_MatchToTU mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CrossValidateShear",
-                                    store_true=["profile", "debug", "dry_run"])
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MatchToTU",
+                                    store_true=["profile"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    dry_run = args.dry_run or force_dry_run
-
     if args.profile:
         import cProfile
-        cProfile.runctx("cross_validate_shear(args,dry_run=dry_run)", {},
-                        {"cross_validate_shear": cross_validate_shear,
-                         "args": args,
-                         "dry_run": dry_run, },
-                        filename="cross_validate_shear.prof")
+        cProfile.runctx("match_to_tu_from_args(args,dry_run=dry_run)", {},
+                        {"match_to_tu_from_args": match_to_tu_from_args,
+                         "args": args, },
+                        filename="match_to_tu_from_args.prof")
     else:
-        cross_validate_shear(args)
+        match_to_tu_from_args(args)
 
-    logger.debug('Exiting SHE_CTE_CrossValidateShear mainMethod()')
+    logger.debug('Exiting SHE_CTE_MatchToTU mainMethod()')
 
     return
 

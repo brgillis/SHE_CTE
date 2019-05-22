@@ -18,25 +18,23 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-05-14"
 
 from copy import deepcopy
 from math import sqrt
 
 import galsim
 
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
-from SHE_PPT.shear_utility import get_g_from_e
+from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
 import numpy as np
-from scipy.optimize import minimize
 
 
 stamp_size = 256
@@ -222,198 +220,6 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
     logger.debug("Exiting get_REGAUSS_shear_estimate")
 
     return shear_estimate
-
-
-def correct_for_wcs_shear_and_rotation(shear_estimate, stamp):
-    """ Corrects (in-place) a shear_estimate object for the shear and rotation information contained within the
-        provided stamp's wcs. 
-    """
-
-    # Since we have to solve for the pre-wcs shear, we get the world2pix decomposition and work backwards
-    _scale, w2p_shear, w2p_theta, _w2p_flip = stamp.get_world2pix_decomposition()
-
-    # Set up the shear as a matrix
-    g_pix_polar = np.matrix([[shear_estimate.g1], [shear_estimate.g2]])
-
-    # We first have to rotate into the proper frame
-    sintheta = w2p_theta.sin()
-    costheta = w2p_theta.cos()
-
-    # Calculate the rotation matrix directly for testing purposes
-    test_p2w_rotation_matrix = stamp.get_pix2world_rotation(shear_estimate.x, shear_estimate.y)
-
-    # Get the reverse rotation matrix
-    p2w_rotation_matrix = np.matrix([[costheta, sintheta], [-sintheta, costheta]])
-
-    double_p2w_rotation_matrix = p2w_rotation_matrix @ p2w_rotation_matrix  # 2x2 so it's commutative
-    g_world_polar = double_p2w_rotation_matrix @ g_pix_polar
-
-    # TODO: Update errors from the WCS shear
-
-    # Update errors from the WCS rotation
-    covar_pix = np.matrix([[shear_estimate.g1_err**2, shear_estimate.g1g2_covar],
-                           [shear_estimate.g1g2_covar, shear_estimate.g2_err**2]])
-    covar_world = double_p2w_rotation_matrix @ covar_pix @ double_p2w_rotation_matrix.transpose()
-
-    # Update error and covar values in the shear_estimate object
-    shear_estimate.g1_err = np.sqrt(covar_world[0, 0])
-    shear_estimate.g2_err = np.sqrt(covar_world[1, 1])
-    shear_estimate.g1g2_covar = covar_world[0, 1]
-
-    # Second, we have to correct for the shear. It's necessary to do this by solving for the pre-WCS shear
-
-    try:
-
-        rot_est_shear = galsim.Shear(g1=g_world_polar[0, 0], g2=g_world_polar[1, 0])
-
-    except ValueError as e:
-
-        if not "Requested shear exceeds 1" in str(e):
-            raise
-
-        # Shear is greater than 1, so note this in the flags
-        shear_estimate.g1 = np.NaN
-        shear_estimate.g2 = np.NaN
-        shear_estimate.gerr = np.inf
-        shear_estimate.g1_err = np.inf
-        shear_estimate.g2_err = np.inf
-        shear_estimate.g1g2_covar = np.inf
-
-        shear_estimate.flags |= flags.flag_too_large_shear
-
-        return
-
-    def get_shear_adding_diff(g):
-        g1 = g[0]
-        g2 = g[1]
-        try:
-            res_shear = w2p_shear + galsim.Shear(g1=g1, g2=g2)
-            dist2 = (rot_est_shear.g1 - res_shear.g1)**2 + (rot_est_shear.g2 - res_shear.g2)**2
-        except ValueError as e:
-            if not "Requested shear exceeds 1" in str(e):
-                raise
-            # Requested a too-high shear value, so return an appropriately high distance
-            dist2 = (w2p_shear.g1 + g1 - rot_est_shear.g1)**2 + (w2p_shear.g2 + g2 - rot_est_shear.g2)**2
-        return dist2
-
-    fitting_result = minimize(get_shear_adding_diff, np.array((0, 0)))
-
-    # If we can't find a solution, return NaN shear
-    if not fitting_result.success:
-        shear_estimate.g1 = np.NaN
-        shear_estimate.g2 = np.NaN
-        shear_estimate.gerr = np.inf
-        shear_estimate.g1_err = np.inf
-        shear_estimate.g2_err = np.inf
-        shear_estimate.g1g2_covar = np.inf
-
-        shear_estimate.flags |= flags.flag_cannot_correct_distortion
-
-        return
-    else:
-        shear_estimate.g1 = fitting_result.x[0]
-        shear_estimate.g2 = fitting_result.x[1]
-
-    return
-
-
-def check_data_quality(gal_stamp, psf_stamp, stacked=False):
-    """ Checks the galaxy and PSF stamps for any data quality issues, and returns an
-        appropriate set of flags.
-    """
-
-    # Start with a 0 flag that we'll |= (bitwise or-set) to if/when we find issues
-    flag = 0
-
-    # Check for issues with the PSF
-    if psf_stamp is None or psf_stamp.data is None:
-        flag |= flags.flag_no_psf
-
-    good_psf_data = psf_stamp.data.ravel()
-    if (good_psf_data.sum() == 0) or ((good_psf_data < -0.01 * good_psf_data.max()).any()):
-        flag |= flags.flag_corrupt_psf
-
-    # Now check for issues with the galaxy image
-
-    # Check if the mask exists
-    if gal_stamp.mask is None:
-
-        flag |= flags.flag_no_mask
-
-        # Check if we have at least some other data; in which case make mask shaped like it
-        have_some_data = False
-
-        for (a, missing_flag) in ((gal_stamp.data, flags.flag_no_science_image),
-                                  (gal_stamp.background_map, flags.flag_no_background_map),
-                                  (gal_stamp.noisemap, flags.flag_no_noisemap),
-                                  (gal_stamp.segmentation_map, flags.flag_no_segmentation_map),):
-
-            if a is None:
-                flag |= missing_flag
-            else:
-                ravelled_mask = np.zeros_like(a.ravel(), dtype=bool)
-                ravelled_antimask = ~ravelled_mask
-                have_some_data = True
-
-        if not have_some_data:
-            # We don't have any data, so we can't do any further checks; return the flag so far
-            return flag
-
-    else:
-        # Check for any possible corruption issues in the mask
-        if (gal_stamp.mask < 0).any():
-            flag |= flags.flag_corrupt_mask
-
-        ravelled_mask = gal_stamp.boolmask.ravel()
-        ravelled_antimask = ~ravelled_mask
-
-    # Check how much of the data is unmasked, and if we have enough
-    unmasked_count = ravelled_antimask.sum()
-    total_count = len(ravelled_antimask)
-
-    frac_unmasked = float(unmasked_count) / total_count
-
-    if frac_unmasked < 0.25:
-        flag |= flags.flag_insufficient_data
-
-    # Check for missing or corrupt data
-
-    if stacked:
-        data = gal_stamp.data + gal_stamp.background_map
-    else:
-        data = gal_stamp.data
-
-    for (a, missing_flag, corrupt_flag) in ((data, flags.flag_no_science_image,
-                                             flags.flag_corrupt_science_image),
-                                            (gal_stamp.background_map, flags.flag_no_background_map,
-                                             flags.flag_corrupt_background_map),
-                                            (gal_stamp.noisemap, flags.flag_no_noisemap,
-                                             flags.flag_corrupt_noisemap),
-                                            (gal_stamp.segmentation_map, flags.flag_no_segmentation_map,
-                                             flags.flag_corrupt_segmentation_map),):
-
-        # Check for missing data
-        if a is None:
-            flag |= missing_flag
-            continue
-
-        # Check for corrupt data by checking that all data are valid
-
-        if corrupt_flag == flags.flag_corrupt_segmentation_map:
-            min_value = -1
-        else:
-            min_value = 0
-
-        good_data = a.ravel()[ravelled_antimask]
-        if ((good_data.sum() == 0) or (good_data < min_value).any()):
-            flag |= corrupt_flag
-            continue
-
-        if np.isnan(good_data).any() or np.isinf(good_data).any():
-            flag |= corrupt_flag
-            continue
-
-    return flag
 
 
 def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, stacked=False):
@@ -653,6 +459,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
             stacked_gal_stamp = gal_stamp_stack.stacked_image
             stacked_gal_stamp.add_default_header()
 
+            # Make sure the wcs is correct
+            stacked_gal_stamp.wcs = data_stack.stacked_image.wcs
+            stacked_gal_stamp.galsim_wcs = data_stack.stacked_image.galsim_wcs
+
             stacked_bulge_psf_stamp = bulge_psf_stack.stacked_image
             stacked_bulge_psf_stamp.add_default_header()
 
@@ -676,6 +486,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                           stacked=True)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
+                logger.warn("Per-galaxy failsafe block triggered with exception: " + str(e))
                 stack_shear_estimate = deepcopy(error_shear_estimate)
                 stack_shear_estimate.flags |= flags.flag_unclassified_failure
 
@@ -713,6 +524,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                         continue
                     gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
                     gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+
+                    # Make sure the wcs is correct
+                    gal_stamp.wcs = gal_stamp.parent_image.wcs
+                    gal_stamp.galsim_wcs = gal_stamp.parent_image.galsim_wcs
+
                     bulge_psf_stamp = bulge_psf_stack.exposures[x]
                     disk_psf_stamp = disk_psf_stack.exposures[x]
 
