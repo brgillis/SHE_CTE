@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-05-14"
+__updated__ = "2019-05-24"
 
 from copy import deepcopy
 from math import sqrt
@@ -142,15 +142,16 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
     return resampled_image
 
 
-def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
+def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, sim_sc4_fix=False, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, training_data=training_data, method="KSB", workdir=workdir, *args, **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="KSB", workdir=workdir,
+                             sim_sc4_fix=sim_sc4_fix, *args, **kwargs)
 
 
-def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, *args, **kwargs):
+def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, sim_sc4_fix=False, *args, **kwargs):
     # Not using training or calibration data at this stage
-    return GS_estimate_shear(data_stack, training_data=training_data, method="REGAUSS", workdir=workdir, *args,
-                             **kwargs)
+    return GS_estimate_shear(data_stack, training_data=training_data, method="REGAUSS", workdir=workdir,
+                             sim_sc4_fix=sim_sc4_fix, *args, **kwargs)
 
 
 def get_KSB_shear_estimate(galsim_shear_estimate, scale):
@@ -222,7 +223,8 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
     return shear_estimate
 
 
-def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, stacked=False):
+def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, stacked=False,
+                       sim_sc4_fix=False):
 
     logger = getLogger(__name__)
     logger.debug("Entering get_shear_estimate")
@@ -349,7 +351,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
 
         # Correct the estimate for WCS shear and rotation
         try:
-            correct_for_wcs_shear_and_rotation(shear_estimate, gal_stamp)
+            correct_for_wcs_shear_and_rotation(shear_estimate, gal_stamp,
+                                               sim_sc4_fix=sim_sc4_fix)  # TODO - Add sim_sc4_fix here
         except RuntimeError as e:
             # Report the error
             logger.warn(str(e))
@@ -396,7 +399,7 @@ def inv_var_stack(a, a_err):
     return a_m, a_m_err
 
 
-def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
+def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=False, debug=False):
 
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
@@ -483,7 +486,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False):
                                                           psf_scale=psf_scale,
                                                           ID=gal_id,
                                                           method=method,
-                                                          stacked=True)
+                                                          stacked=True,
+                                                          sim_sc4_fix=sim_sc4_fix)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
                 logger.warn("Per-galaxy failsafe block triggered with exception: " + str(e))
