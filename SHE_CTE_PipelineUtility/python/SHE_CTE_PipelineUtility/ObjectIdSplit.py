@@ -185,6 +185,16 @@ def object_id_split_from_args(args):
         subfolder_number = i % 256
         subfolder_name = "data/s" + str(subfolder_number)
 
+        qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
+
+        if not os.path.exists(qualified_subfolder_name):
+            # Can we create it?
+            try:
+                os.mkdir(qualified_subfolder_name)
+            except Exception as e:
+                logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+                raise e
+
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
                                                               instance_id=str(i),
