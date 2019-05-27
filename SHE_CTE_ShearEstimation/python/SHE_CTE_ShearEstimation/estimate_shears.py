@@ -158,6 +158,16 @@ def estimate_shears_from_args(args, dry_run=False):
     subfolder_number = os.getpid() % 256
     subfolder_name = "data/s" + str(subfolder_number)
 
+    qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
+
+    if not os.path.exists(qualified_subfolder_name):
+        # Can we create it?
+        try:
+            os.mkdir(qualified_subfolder_name)
+        except Exception as e:
+            logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+            raise e
+
     # Determine the instance ID to use for the estimates file
     qualified_stacked_image_data_filename = os.path.join(
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
