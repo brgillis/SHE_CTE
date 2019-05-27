@@ -181,12 +181,16 @@ def object_id_split_from_args(args):
 
         logger.debug("Writing ID list #" + str(i) + " to product.")
 
+        # For the filename, we want to set it up in a subfolder so we don't get too many files
+        subfolder_number = i % 256
+        subfolder_name = "data/s" + str(subfolder_number)
+
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
                                                               instance_id=str(i),
                                                               extension=".xml",
                                                               version=SHE_CTE.__version__,
-                                                              subdir="data",
+                                                              subdir=subfolder_name,
                                                               processing_function="SHE")
         id_list_product_filename_list.append(batch_id_list_product_filename)
 
