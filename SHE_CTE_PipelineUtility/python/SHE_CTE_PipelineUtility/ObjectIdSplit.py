@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-05-20"
+__updated__ = "2019-05-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,6 +24,7 @@ import argparse
 import math
 import os
 
+import SHE_CTE
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file)
@@ -34,12 +35,10 @@ from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
-
-import SHE_CTE
 import numpy as np
 
-
 default_batch_size = 20
+default_max_batches = 0
 
 logger = getLogger(__name__)
 
@@ -93,7 +92,7 @@ def object_id_split_from_args(args):
     else:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
-        # Check for the cleanup key
+        # Check for the batch size key
         if ConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
             logger.info("Key " + ConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default batch size of " + str(default_batch_size))
@@ -103,6 +102,17 @@ def object_id_split_from_args(args):
             if batch_size < 0:
                 raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
             logger.info("Using batch size of: " + str(batch_size))
+
+        # Check for the max_batches key
+        if ConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
+            logger.info("Key " + ConfigKeys.OID_MAX_BATCHES.value + " not found in pipeline config " + args.pipeline_config + ". " +
+                        "Using default max batches of " + str(default_max_batches))
+            max_batches = default_max_batches
+        else:
+            max_batches = int(pipeline_config[ConfigKeys.OID_MAX_BATCHES.value])
+            if max_batches < 0:
+                raise ValueError("Invalid max batches: " + str(max_batches) + ". Must be >= 0.")
+            logger.info("Using max batches of: " + str(max_batches))
 
     # Read in each detections table and add the IDs in it to a global set
     all_ids = set()
@@ -145,7 +155,10 @@ def object_id_split_from_args(args):
 
     num_batches = int(math.ceil(num_ids / batch_size))
 
-    logger.info("Splitting IDs into " + str(num_batches) + " batches of size " + str(batch_size) + ".")
+    if max_batches > 0:
+        limited_num_batches = np.min((num_batches, max_batches))
+
+    logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
 
     id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
                                    num_batches - 1, endpoint=True, dtype=int)
@@ -164,16 +177,30 @@ def object_id_split_from_args(args):
 
     logger.info("Writing ID lists into products.")
 
-    for i in range(num_batches):
+    for i in range(limited_num_batches):
 
         logger.debug("Writing ID list #" + str(i) + " to product.")
+
+        # For the filename, we want to set it up in a subfolder so we don't get too many files
+        subfolder_number = i % 256
+        subfolder_name = "data/s" + str(subfolder_number)
+
+        qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
+
+        if not os.path.exists(qualified_subfolder_name):
+            # Can we create it?
+            try:
+                os.mkdir(qualified_subfolder_name)
+            except Exception as e:
+                logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+                raise e
 
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
                                                               instance_id=str(i),
                                                               extension=".xml",
                                                               version=SHE_CTE.__version__,
-                                                              subdir="data",
+                                                              subdir=subfolder_name,
                                                               processing_function="SHE")
         id_list_product_filename_list.append(batch_id_list_product_filename)
 

@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-05-08"
+__updated__ = "2019-05-27"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -154,6 +154,20 @@ def estimate_shears_from_args(args, dry_run=False):
 
     logger.info("Generating shear estimates product...")
 
+    # For the filename, we want to set it up in a subfolder so we don't get too many files
+    subfolder_number = os.getpid() % 256
+    subfolder_name = "data/s" + str(subfolder_number)
+
+    qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
+
+    if not os.path.exists(qualified_subfolder_name):
+        # Can we create it?
+        try:
+            os.mkdir(qualified_subfolder_name)
+        except Exception as e:
+            logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+            raise e
+
     # Determine the instance ID to use for the estimates file
     qualified_stacked_image_data_filename = os.path.join(
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
@@ -170,19 +184,24 @@ def estimate_shears_from_args(args, dry_run=False):
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
-        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen]
+        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
-                                          version=SHE_CTE.__version__),
+                                          version=SHE_CTE.__version__,
+                                          subdir=subfolder_name),
         KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
-                                          version=SHE_CTE.__version__),
+                                          version=SHE_CTE.__version__,
+                                          subdir=subfolder_name),
         LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id,
-                                             version=SHE_CTE.__version__),
+                                             version=SHE_CTE.__version__,
+                                             subdir=subfolder_name),
         MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id,
-                                                version=SHE_CTE.__version__),
+                                                version=SHE_CTE.__version__,
+                                                subdir=subfolder_name),
         REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id,
-                                              version=SHE_CTE.__version__))
+                                              version=SHE_CTE.__version__,
+                                              subdir=subfolder_name))
 
     if not dry_run:
 
@@ -247,7 +266,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
                                                        workdir=args.workdir,
-                                                       debug=args.debug)
+                                                       debug=args.debug,
+                                                       sim_sc4_fix=True)
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
