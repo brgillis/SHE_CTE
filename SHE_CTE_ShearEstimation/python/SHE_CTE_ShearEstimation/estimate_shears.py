@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-05-24"
+__updated__ = "2019-05-27"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -154,6 +154,10 @@ def estimate_shears_from_args(args, dry_run=False):
 
     logger.info("Generating shear estimates product...")
 
+    # For the filename, we want to set it up in a subfolder so we don't get too many files
+    subfolder_number = os.getpid() % 256
+    subfolder_name = "data/s" + str(subfolder_number)
+
     # Determine the instance ID to use for the estimates file
     qualified_stacked_image_data_filename = os.path.join(
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
@@ -174,15 +178,20 @@ def estimate_shears_from_args(args, dry_run=False):
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
-                                          version=SHE_CTE.__version__),
+                                          version=SHE_CTE.__version__,
+                                          subdir=subfolder_name),
         KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
-                                          version=SHE_CTE.__version__),
+                                          version=SHE_CTE.__version__,
+                                          subdir=subfolder_name),
         LensMC_filename=get_allowed_filename("LensMC-SHM", estimates_instance_id,
-                                             version=SHE_CTE.__version__),
+                                             version=SHE_CTE.__version__,
+                                             subdir=subfolder_name),
         MomentsML_filename=get_allowed_filename("MomentsML-SHM", estimates_instance_id,
-                                                version=SHE_CTE.__version__),
+                                                version=SHE_CTE.__version__,
+                                                subdir=subfolder_name),
         REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id,
-                                              version=SHE_CTE.__version__))
+                                              version=SHE_CTE.__version__,
+                                              subdir=subfolder_name))
 
     if not dry_run:
 
