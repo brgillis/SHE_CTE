@@ -174,7 +174,7 @@ def estimate_shears_from_args(args, dry_run=False):
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
-        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen]
+        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
 
     shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
