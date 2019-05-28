@@ -61,7 +61,7 @@ def model_psfs(args, dry_run=False):
     logger.info("Reading mock" + dry_label + " data images and detections tables...")
 
     frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
-                                     seg_listfile_filename=args.segmentation_images,
+                                     seg_listfile_filename=None,
                                      detections_listfile_filename=args.detections_tables,
                                      workdir=args.workdir,
                                      clean_detections=True,

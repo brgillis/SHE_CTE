@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-05-10"
+__updated__ = "2019-05-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -131,12 +131,20 @@ def match_to_tu_from_args(args):
         ra_col = shear_table[setf.x_world]
         dec_col = shear_table[setf.y_world]
 
-        # Check if the range in this method's table sets a new min/max for ra and dec
-        ra_range[0] = np.min((ra_range[0], np.min(ra_col.data)))
-        ra_range[1] = np.max((ra_range[1], np.max(ra_col.data)))
+        flags_col = shear_table[setf.flags]
 
-        dec_range[0] = np.min((dec_range[0], np.min(dec_col.data)))
-        dec_range[1] = np.max((dec_range[1], np.max(dec_col.data)))
+        good_ra_data = ra_col[flags_col == 0]
+        good_dec_data = dec_col[flags_col == 0]
+
+        if len(good_ra_data) == 0:
+            continue
+
+        # Check if the range in this method's table sets a new min/max for ra and dec
+        ra_range[0] = np.min((ra_range[0], np.min(good_ra_data)))
+        ra_range[1] = np.max((ra_range[1], np.max(good_ra_data)))
+
+        dec_range[0] = np.min((dec_range[0], np.min(good_dec_data)))
+        dec_range[1] = np.max((dec_range[1], np.max(good_dec_data)))
 
     if ra_range[1] < ra_range[0] or dec_range[1] < dec_range[0]:
         raise ValueError("Invalid range")
@@ -165,6 +173,39 @@ def match_to_tu_from_args(args):
                                                               path=args.sim_path)
 
     logger.info("Found " + str(len(overlapping_galaxy_catalog)) + " galaxies in overlapping region.")
+
+    # Remove unused columns in the star table
+
+    overlapping_star_catalog.remove_columns(['H', 'J-H', 'z-H', 'i-H', 'r-H', 'g-H', 'g-G', 'g-BP', 'g-RP', 'V-Ic',
+                                             'mux', 'muy', 'Vr', 'UU', 'VV', 'WW', 'Mv', 'CL', 'Typ', 'Teff', 'logg',
+                                             'Age', 'Mass', 'Mbol', 'Radius', '[Fe/H]', 'l(deg)', 'b(deg)',
+                                             'RA2000.0', 'DEC2000.0', 'Dist', 'x(kpc)', 'y(kpc)', 'z(kpc)', 'Av',
+                                             '[alpha/Fe]', 'Parallax(microarsec)', 'errparallax(micro)', 'Gmag',
+                                             'error_dist(kpc)', 'RA2000(Gaia)', 'DEC2000(Gaia)', 'i', 'ORIGIN',
+                                             'TU_FLUX_Y_NISP', 'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
+                                             'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
+                                             'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
+                                             'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
+                                             'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
+                                             'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
+                                             'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
+                                             'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS', ])
+
+    # Remove unused columns in the galaxy table
+
+    overlapping_galaxy_catalog.remove_columns(['id', 'ra', 'dec', 'ref_mag_r01', 'euclid_nisp_h', 'ext_law', 'ebv',
+                                               'lsfr', 'metallicity', 'lmstellar', 'logf_halpha_ext', 'logf_hbeta_ext',
+                                               'logf_o2_ext', 'logf_o3_ext', 'logf_n2_ext', 'logf_s2_ext',
+                                               'stamp_file_id', 'stamp_index', 'spectra_index', 'Av', 'TU_FLUX_Y_NISP',
+                                               'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
+                                               'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
+                                               'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
+                                               'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
+                                               'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
+                                               'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
+                                               'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
+                                               'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS',
+                                               ])
 
     # Set up star and galaxy tables for matching
 
@@ -232,18 +273,63 @@ def match_to_tu_from_args(args):
         star_matched_table.remove_columns([star_index_colname, gal_index_colname])
         gal_matched_table.remove_columns([star_index_colname, gal_index_colname])
 
-        # Add extra useful columns to the galaxy-matched table for
+        # Add extra useful columns to the galaxy-matched table for analysis
+
+        # Details about estimated shear
+
         gal_matched_table.add_column(
             Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
                    name="Beta_Est_Shear"))
+
+        g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"]**2)
+        gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
+
+        gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
+
+        # Details about the input shear
+
+        g1_in = gal_matched_table["gamma1"]
+        g2_in = gal_matched_table["gamma2"]
+
         gal_matched_table.add_column(
-            Column(np.arctan2(gal_matched_table["gamma2"], gal_matched_table["gamma1"]) * 90 / np.pi,
-                   name="Beta_Input_Shear"))
+            Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
+
         gal_matched_table.add_column(
-            Column(np.where(gal_matched_table["disk_angle"] < -90, gal_matched_table["disk_angle"] + 180,
-                            np.where(gal_matched_table["disk_angle"] > 90, gal_matched_table["disk_angle"] - 180,
-                                     gal_matched_table["disk_angle"])),
-                   name="Beta_Input_Unsheared_Shape"))
+            Column(np.sqrt(g1_in**2 + g2_in**2) * 90 / np.pi, name="Mag_Input_Shear"))
+
+        # Details about the input bulge shape
+
+        bulge_angle = gal_matched_table["bulge_angle"]
+        regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
+                                           np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
+        gal_matched_table.add_column(Column(regularized_bulge_angle,
+                                            name="Beta_Input_Bulge_Unsheared_Shape"))
+
+        bulge_axis_ratio = gal_matched_table["bulge_axis_ratio"]
+        bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
+        gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
+
+        gal_matched_table.add_column(Column(bulge_g_mag * np.cos(bulge_angle * np.pi / 90),
+                                            name="G1_Input_Bulge_Unsheared_Shape"))
+        gal_matched_table.add_column(Column(bulge_g_mag * np.sin(bulge_angle * np.pi / 90),
+                                            name="G2_Input_Bulge_Unsheared_Shape"))
+
+        # Details about the input disk shape
+
+        disk_angle = gal_matched_table["disk_angle"]
+        regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
+                                          np.where(disk_angle > 90, disk_angle - 180, disk_angle))
+        gal_matched_table.add_column(Column(regularized_disk_angle,
+                                            name="Beta_Input_Disk_Unsheared_Shape"))
+
+        disk_axis_ratio = gal_matched_table["disk_axis_ratio"]
+        disk_g_mag = (1 - disk_axis_ratio) / (1 + disk_axis_ratio)
+        gal_matched_table.add_column(Column(disk_g_mag, name="Mag_Input_Disk_Unsheared_Shape"))
+
+        gal_matched_table.add_column(Column(disk_g_mag * np.cos(disk_angle * np.pi / 90),
+                                            name="G1_Input_Disk_Unsheared_Shape"))
+        gal_matched_table.add_column(Column(disk_g_mag * np.sin(disk_angle * np.pi / 90),
+                                            name="G2_Input_Disk_Unsheared_Shape"))
 
         # Add these tables to the dictionaries of tables
         star_matched_tables[method] = star_matched_table
