@@ -115,8 +115,9 @@ def cross_validate_shear(args, dry_run=False):
         if filename is not None and filename != "None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, setfs[method]):
-                raise ValueError("Shear estimates table from " +
-                                 join(args.workdir, filename) + " is in invalid format.")
+                logger.warn("Shear estimates table from " +
+                            join(args.workdir, filename) + " is in invalid format.")
+                continue
         else:
             shear_estimates_table = None
             if method == args.primary_method:
