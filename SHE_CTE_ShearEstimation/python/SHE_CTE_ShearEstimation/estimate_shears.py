@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-05-27"
+__updated__ = "2019-05-28"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -24,7 +24,8 @@ import copy
 import os
 
 import SHE_CTE
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments, bfd_perform_integration
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
@@ -51,7 +52,8 @@ loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_control_training_data,
-                   "BFD": None}
+                   "BFD": bfd_load_training_data}
+
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
@@ -105,35 +107,9 @@ def estimate_shears_from_args(args, dry_run=False):
                                     psf_listfile_filename=args.psf_images_and_tables,
                                     detections_listfile_filename=args.detections_tables,
                                     workdir=args.workdir,
-                                    clean_detections=True,
+                                    object_id_list_product_filename=args.object_ids,
                                     memmap=True,
                                     mode='denywrite')
-
-    # if given a list of object ids then create data_stack with pruned detections_catalogue
-
-    object_ids_list_product = get_conditional_product(args.object_ids, args.workdir)
-
-    if object_ids_list_product is not None:
-        logger.info("Pruning list of galaxy objects to loop over")
-        id_list = object_ids_list_product.get_id_list()
-
-        # Keep the full detections catalogue in a different location
-        data_stack.detections_catalogue_backup = data_stack.detections_catalogue
-
-        rows_to_use = []
-
-        # loop over detections_catalog and make list of indices not in our object_id list
-        for row in data_stack.detections_catalogue:
-            if row[detf.ID] in id_list:
-                rows_to_use.append(row)
-
-        data_stack.detections_catalogue = Table(names=data_stack.detections_catalogue_backup.colnames,
-                                                dtype=[data_stack.detections_catalogue_backup.dtype[n] for n in data_stack.detections_catalogue_backup.colnames])
-
-        for row in rows_to_use:
-            data_stack.detections_catalogue.add_row(row)
-
-        logger.info("Finished pruning list of galaxy objects to loop over")
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
@@ -247,7 +223,8 @@ def estimate_shears_from_args(args, dry_run=False):
                             raise ValueError(
                                 "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
-
+                    if method == "BFD":
+                        bfd_training_data = training_data
                 else:
                     training_data = None
 
@@ -261,7 +238,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
                         # For now just leave as handle to fits file
                         calibration_data = fits.open(os.path.join(args.workdir, method_calibration_filename))
+
                 # need to add ids to iterate over
+
                 shear_estimates_table = estimate_shear(data_stack,
                                                        training_data=training_data,
                                                        calibration_data=calibration_data,
@@ -316,7 +295,8 @@ def estimate_shears_from_args(args, dry_run=False):
 
             if method == 'BFD':
                 try:
-                    bfd_perform_integration(os.path.join(args.workdir, shear_estimates_filename))
+                    bfd_perform_integration(target_file=os.path.join(
+                        args.workdir, shear_estimates_filename), template_file=bfd_training_data)
                 except Exception as e:
                     logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
