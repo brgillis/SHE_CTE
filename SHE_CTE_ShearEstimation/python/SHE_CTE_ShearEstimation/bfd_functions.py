@@ -50,7 +50,7 @@ x_buffer = -5
 y_buffer = -5
 
 
-def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, debug=False):
+def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, debug=False, *args, **kwargs):
     # not using training data or calibration data yet
 
     logger = getLogger(__name__)
