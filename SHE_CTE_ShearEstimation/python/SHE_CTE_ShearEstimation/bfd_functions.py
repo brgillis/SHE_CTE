@@ -5,7 +5,7 @@
     Provides functions to measure the BFD moments of galaxies
 """
 
-__updated__ = "2018-10-15"
+__updated__ = "2019-05-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,14 +19,11 @@ __updated__ = "2018-10-15"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-import os
 from math import sqrt
-from astropy.table import Table
+import os
 import subprocess
-from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
-from SHE_BFD_CalculateMoments import bfd
-from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
-from SHE_CTE_ShearEstimation import magic_values as mv
+
+from SHE_PPT.file_io import read_xml_product, find_file, get_data_filename
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.noise import get_var_ADU_per_pixel
@@ -35,17 +32,19 @@ from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf a
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.file_io import read_xml_product, find_file
-
-
-import numpy as np
+from astropy.table import Table
 import pdb
+
+from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
+from SHE_BFD_CalculateMoments import bfd
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
+from SHE_CTE_ShearEstimation import magic_values as mv
+import numpy as np
+
 
 #bfd = None
 #get_bfd_info = None
 #load_bfd_configuration = None
-
-
 stamp_size = 128  # hardcoded for now
 x_buffer = -5
 y_buffer = -5
@@ -257,7 +256,7 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
     else:
 
         # Read in the training data product
-        template_filename = find_file(training_data_filename,workdir)
+        template_filename = find_file(get_data_filename(training_data_filename,workdir),workdir)
 
     t = Table.read(template_filename)
     if is_in_format(t,setf) == False:
