@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-05-27"
+__updated__ = "2019-05-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,7 +24,6 @@ import argparse
 import math
 import os
 
-import SHE_CTE
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file)
@@ -35,7 +34,10 @@ from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
+
+import SHE_CTE
 import numpy as np
+
 
 default_batch_size = 20
 default_max_batches = 0
@@ -157,6 +159,8 @@ def object_id_split_from_args(args):
 
     if max_batches > 0:
         limited_num_batches = np.min((num_batches, max_batches))
+    else:
+        limited_num_batches = num_batches
 
     logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
 
