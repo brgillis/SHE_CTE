@@ -97,9 +97,17 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]*3600
     else:
         stacked_gal_scale = 0.1
+        
+    valid_detector = None
+    for exposure in data_stack.exposures:
+        for detector in exposure.detectors.ravel():
+            if detector is not None:
+                valid_detector = detector
+    if valid_detector is None:
+        raise RuntimeError("No valid detectors found")
 
-    if scale_label in data_stack.exposures[0].detectors[1, 1].header:
-        gal_scale = data_stack.exposures[0].detectors[1, 1].header[scale_label]*3600
+    if scale_label in valid_detector.header:
+        gal_scale = valid_detector.header[scale_label]*3600
     else:
         gal_scale = 0.1
 
