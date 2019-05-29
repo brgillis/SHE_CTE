@@ -91,6 +91,7 @@ def object_id_split_from_args(args):
     if args.pipeline_config is None or args.pipeline_config == "None":
         logger.warn("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
         batch_size = default_batch_size
+        max_batches = default_max_batches
     else:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
