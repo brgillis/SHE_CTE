@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2019-05-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,16 +24,18 @@ __updated__ = "2019-04-23"
 import argparse
 import os
 
-import SHE_CTE
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.bfd_moments import tf as bfdtf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy import table
+
+import SHE_CTE
 
 
 logger = getLogger(__name__)
@@ -129,7 +131,8 @@ def shear_estimates_merge_from_args(args):
                 shear_estimates_method_table = table.Table.read(os.path.join(
                     args.workdir, shear_estimates_method_table_filename))
 
-                if not is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True):
+                if not (is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True) or 
+                        is_in_format(shear_estimates_method_table, bfdtf, verbose=True, ignore_metadata=True)):
                     raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
 
                 # Append the table to the list of tables
