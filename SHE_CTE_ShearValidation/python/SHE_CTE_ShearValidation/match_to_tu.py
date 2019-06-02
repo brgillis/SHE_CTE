@@ -266,12 +266,18 @@ def match_to_tu_from_args(args):
                 best_distance = np.where(best_gal_distance <= best_star_distance, best_gal_distance, best_star_distance)
         
                 # Mask rows where the match isn't close enough, or to the other type of object, with -99
-                best_star_id = np.where(best_distance < args.match_threshold,
+                
+                in_ra_range = np.logical_and(shear_table[setf.x_world]>=local_ra_range[0],shear_table[setf.x_world]<local_ra_range[1])
+                in_dec_range = np.logical_and(shear_table[setf.y_world]>=local_dec_range[0],shear_table[setf.y_world]<local_dec_range[1])
+                
+                in_range = np.logical_and(in_ra_range,in_dec_range)
+                
+                best_star_id = np.where(in_range,np.where(best_distance < args.match_threshold,
                                         np.where(best_star_distance < best_gal_distance, best_star_id, -99),
-                                        -99)
-                best_gal_id = np.where(best_distance < args.match_threshold,
+                                        -99),-99)
+                best_gal_id = np.where(in_range,np.where(best_distance < args.match_threshold,
                                        np.where(best_gal_distance <= best_star_distance, best_gal_id, -99),
-                                       -99)
+                                       -99),-99)
         
                 # Add columns to the shear estimates table so we can match to it
                 shear_table.add_column(Column(best_star_id, name=star_index_colname))
@@ -361,8 +367,8 @@ def match_to_tu_from_args(args):
             matched_catalog_product.set_method_filename(method, "None")
             continue
                 
-        gal_matched_table = unique(vstack(gal_matched_tables[method]),keys=setf.ID)
-        star_matched_table = unique(vstack(gal_matched_tables[method]),keys=setf.ID)
+        gal_matched_table = vstack(gal_matched_tables[method])
+        star_matched_table = vstack(gal_matched_tables[method])
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
                                                        instance_id=method.upper() + "-" + str(os.getpid()),
