@@ -292,15 +292,17 @@ def match_to_tu_from_args(args):
                 # Add extra useful columns to the galaxy-matched table for analysis
         
                 # Details about estimated shear
+                
+                if not method=="BFD":
         
-                gal_matched_table.add_column(
-                    Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
-                           name="Beta_Est_Shear"))
-        
-                g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"]**2)
-                gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
-        
-                gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
+                    gal_matched_table.add_column(
+                        Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
+                               name="Beta_Est_Shear"))
+            
+                    g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"]**2)
+                    gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
+            
+                    gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
         
                 # Details about the input shear
         
