@@ -241,9 +241,6 @@ def match_to_tu_from_args(args):
 
             # Perform match to SIM's tables for each method
         
-            star_matched_tables = {}
-            gal_matched_tables = {}
-        
             for method in methods:
         
                 shear_table = shear_tables[method]
