@@ -30,7 +30,7 @@ from SHE_PPT.table_utility import table_to_hdu
 from astropy import units
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
-from astropy.table import Table, Column, join, vstack
+from astropy.table import Table, Column, join, vstack, unique
 
 import SHE_CTE
 import numpy as np
@@ -359,8 +359,8 @@ def match_to_tu_from_args(args):
             matched_catalog_product.set_method_filename(method, "None")
             continue
                 
-        gal_matched_table = vstack(gal_matched_tables[method])
-        star_matched_table = vstack(gal_matched_tables[method])
+        gal_matched_table = unique(vstack(gal_matched_tables[method]),keys=setf.ID)
+        star_matched_table = unique(vstack(gal_matched_tables[method]),keys=setf.ID)
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
                                                        instance_id=method.upper() + "-" + str(os.getpid()),
