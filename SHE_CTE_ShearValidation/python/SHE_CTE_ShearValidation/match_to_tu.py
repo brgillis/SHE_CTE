@@ -398,7 +398,7 @@ def match_to_tu_from_args(args):
         hdulist.append(table_to_hdu(unmatched_table))
 
         # Write out the HDU list to a file
-        logger.debug("Writing output matched catalogs for method " + method + " to " + os.path.join(args.workdir,
+        logger.info("Writing output matched catalogs for method " + method + " to " + os.path.join(args.workdir,
                                                                                                     method_filename))
         hdulist.writeto(os.path.join(args.workdir, method_filename), clobber=True)
 
