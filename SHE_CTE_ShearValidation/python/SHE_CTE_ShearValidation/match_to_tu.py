@@ -297,6 +297,11 @@ def match_to_tu_from_args(args):
         
                 gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
                 logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
+                
+                # Remove matched rows from the shear table
+                matched_rows = np.logical_or(best_star_id>0,best_gal_id>0)
+                matched_indices = (matched_rows*np.arange(len(matched_rows)))[matched_rows]
+                shear_table.remove_rows(matched_indices)
         
                 # Remove extra columns we no longer need
                 star_matched_table.remove_columns([star_index_colname, gal_index_colname])
