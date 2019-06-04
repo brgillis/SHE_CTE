@@ -251,7 +251,7 @@ def match_to_tu_from_args(args):
             for method in methods:
         
                 shear_table = shear_tables[method]
-                if shear_table is None:
+                if shear_table is None or len(shear_table)==0:
                     continue
         
                 logger.info("Performing match for method " + method + ".")
