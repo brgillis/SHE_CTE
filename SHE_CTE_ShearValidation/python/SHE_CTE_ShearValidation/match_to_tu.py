@@ -282,11 +282,11 @@ def match_to_tu_from_args(args):
         
                 # Add columns to the shear estimates table so we can match to it
                 if star_index_colname in shear_table.colnames:
-                    shear_table[star_index_colname].data = best_star_id
+                    shear_table[star_index_colname] = best_star_id
                 else:
                     shear_table.add_column(Column(best_star_id, name=star_index_colname))
                 if gal_index_colname in shear_table.colnames:
-                    shear_table[gal_index_colname].data = best_gal_id
+                    shear_table[gal_index_colname] = best_gal_id
                 else:
                     shear_table.add_column(Column(best_gal_id, name=gal_index_colname))
         
