@@ -181,7 +181,7 @@ def match_to_tu_from_args(args):
             local_ra_range = np.array((ra_limits[ra_i],ra_limits[ra_i+1]))
             local_dec_range = np.array((dec_limits[dec_i],dec_limits[dec_i+1]))
             
-            logger.info("Processing batch (" + str(ra_i) + "," + str(dec_i) + ") of (" +
+            logger.info("Processing batch (" + str(ra_i+1) + "," + str(dec_i+1) + ") of (" +
                         str(len(ra_limits)-1) + "," + str(len(dec_limits)-1) + ")")
             logger.info("Processing ra range: " + str(local_ra_range))
             logger.info("      and dec range: " + str(local_dec_range))
