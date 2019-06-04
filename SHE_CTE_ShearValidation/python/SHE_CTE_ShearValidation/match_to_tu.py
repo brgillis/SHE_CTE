@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-02"
+__updated__ = "2019-06-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -43,7 +43,7 @@ methods = ("BFD", "KSB", "LensMC", "MomentsML", "REGAUSS")
 star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
-max_coverage = 1.5 # deg
+max_coverage = 0.5 # deg
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -126,6 +126,10 @@ def match_to_tu_from_args(args):
     dec_range = np.array((1e99, -1e99))
 
     for method in methods:
+        
+        # BFD has a bug in determining the range, so skip it here unless it's the only method
+        if method=="BFD" and len(methods)>1:
+            continue
 
         shear_table = shear_tables[method]
         if shear_table is None:
@@ -277,8 +281,14 @@ def match_to_tu_from_args(args):
                                        -99),-99)
         
                 # Add columns to the shear estimates table so we can match to it
-                shear_table.add_column(Column(best_star_id, name=star_index_colname))
-                shear_table.add_column(Column(best_gal_id, name=gal_index_colname))
+                if star_index_colname in shear_table.colnames:
+                    shear_table[star_index_colname].data = best_star_id
+                else:
+                    shear_table.add_column(Column(best_star_id, name=star_index_colname))
+                if gal_index_colname in shear_table.colnames:
+                    shear_table[gal_index_colname].data = best_gal_id
+                else:
+                    shear_table.add_column(Column(best_gal_id, name=gal_index_colname))
         
                 # Match to the star and galaxy tables
         
