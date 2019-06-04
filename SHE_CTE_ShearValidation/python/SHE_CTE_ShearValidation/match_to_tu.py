@@ -166,8 +166,8 @@ def match_to_tu_from_args(args):
     logger.info("  RA : " + str(ra_range[0]) + " to " + str(ra_range[1]))
     logger.info("  DEC: " + str(dec_range[0]) + " to " + str(dec_range[1]))
     
-    ra_limits = np.linspace(ra_range[0], ra_range[1], num=int((ra_range[1]-ra_range[0])/max_coverage)+1, endpoint=True)
-    dec_limits = np.linspace(dec_range[0], dec_range[1], num=int((dec_range[1]-dec_range[0])/max_coverage)+1, endpoint=True)
+    ra_limits = np.linspace(ra_range[0], ra_range[1], num=int((ra_range[1]-ra_range[0])/max_coverage)+2, endpoint=True)
+    dec_limits = np.linspace(dec_range[0], dec_range[1], num=int((dec_range[1]-dec_range[0])/max_coverage)+2, endpoint=True)
     
     star_matched_tables = {}
     gal_matched_tables = {}
