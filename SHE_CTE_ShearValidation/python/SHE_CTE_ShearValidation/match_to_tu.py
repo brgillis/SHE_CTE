@@ -330,7 +330,7 @@ def match_to_tu_from_args(args):
         
                 # Details about the input bulge shape
         
-                bulge_angle = gal_matched_table["bulge_angle"] - 90
+                bulge_angle = gal_matched_table["bulge_angle"] + 90
                 regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
                                                    np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
                 gal_matched_table.add_column(Column(regularized_bulge_angle,
@@ -347,7 +347,7 @@ def match_to_tu_from_args(args):
         
                 # Details about the input disk shape
         
-                disk_angle = gal_matched_table["disk_angle"] - 90
+                disk_angle = gal_matched_table["disk_angle"] + 90
                 regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
                                                   np.where(disk_angle > 90, disk_angle - 180, disk_angle))
                 gal_matched_table.add_column(Column(regularized_disk_angle,
