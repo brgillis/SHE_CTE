@@ -43,7 +43,7 @@ methods = ("BFD", "KSB", "LensMC", "MomentsML", "REGAUSS")
 star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
-max_coverage = 0.5 # deg
+max_coverage = 1.0 # deg
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
