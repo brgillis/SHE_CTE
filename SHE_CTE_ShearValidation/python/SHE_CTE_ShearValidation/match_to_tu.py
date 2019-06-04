@@ -178,8 +178,11 @@ def match_to_tu_from_args(args):
     
     for ra_i in range(len(ra_limits)-1):
         for dec_i in range(len(dec_limits)-1):
-            local_ra_range = np.array((ra_limits[ra_i],ra_limits[ra_i]+1))
-            local_dec_range = np.array((dec_limits[dec_i],dec_limits[dec_i]+1))
+            local_ra_range = np.array((ra_limits[ra_i],ra_limits[ra_i+1]))
+            local_dec_range = np.array((dec_limits[dec_i],dec_limits[dec_i+1]))
+            
+            logger.info("Processing ra range: " + str(local_ra_range))
+            logger.info("      and dec range: " + str(local_dec_range))
 
             # Read in the star and galaxy catalogs from the overlapping area
             overlapping_star_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
