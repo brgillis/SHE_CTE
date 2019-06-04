@@ -381,6 +381,7 @@ def match_to_tu_from_args(args):
                 
         gal_matched_table = vstack(gal_matched_tables[method])
         star_matched_table = vstack(gal_matched_tables[method])
+        unmatched_table = shear_tables[method]
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
                                                        instance_id=method.upper() + "-" + str(os.getpid()),
@@ -394,6 +395,7 @@ def match_to_tu_from_args(args):
         # Add the galaxy table first, since it's more relevant
         hdulist.append(table_to_hdu(gal_matched_table))
         hdulist.append(table_to_hdu(star_matched_table))
+        hdulist.append(table_to_hdu(unmatched_table))
 
         # Write out the HDU list to a file
         logger.debug("Writing output matched catalogs for method " + method + " to " + os.path.join(args.workdir,
