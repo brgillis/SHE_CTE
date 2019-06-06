@@ -134,65 +134,66 @@ def object_id_split_from_args(args):
                 logger.info("Using limited selection of IDs:" + str(ids_to_use))
 
     # Read in each detections table and add the IDs in it to a global set
-    all_ids = set()
-
-    logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
-
-    detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
-
-    for tile_detections_table_product_filename in detections_table_product_filenames:
-
-        # Read in the product and get the filename of the table
-
-        tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
-                                                                      tile_detections_table_product_filename))
-
-        if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
-            raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
-
-        tile_detections_table_filename = tile_detections_table_product.get_data_filename()
-
-        # Read in the table
-
-        tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
-
-        if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
-            raise TypeError("Input detections table is of invalid format.")
-
-        # Get the ID list from it and add it to the set
-        all_ids.update(tile_detections_table[detf.ID].data)
-
-    logger.info("Finished reading in IDs from detections table.")
-
-    # Convert IDs to a numpy array for easier handling
-    all_ids_array = np.array(list(all_ids))
-    num_ids = len(all_ids_array)
-
-    # If only using specific IDs, put them all in one batch
-    if ids_to_use is not None:
-        batch_size = len(ids_to_use)
-        num_batches = 1
-        limited_num_batches = 1
-        
-        id_arrays = [np.array(ids_to_use)]
-    # If batch size is zero, use all IDs in one batch
-    else:
-        if batch_size == 0:
-            batch_size = num_ids
-
-        num_batches = int(math.ceil(num_ids / batch_size))
-
-        if max_batches > 0:
-            limited_num_batches = np.min((num_batches, max_batches))
-        else:
-            limited_num_batches = num_batches
-
-        logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
-
-        id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
-                                       num_batches - 1, endpoint=True, dtype=int)
     
-        id_arrays = np.split(all_ids_array, id_split_indices)
+    
+    if ids_to_use is not None:
+        
+        all_ids_array = np.array(ids_to_use)
+        
+    else:
+        
+        all_ids = set()
+    
+        logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
+    
+        detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
+    
+        for tile_detections_table_product_filename in detections_table_product_filenames:
+    
+            # Read in the product and get the filename of the table
+    
+            tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
+                                                                          tile_detections_table_product_filename))
+    
+            if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
+                raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
+    
+            tile_detections_table_filename = tile_detections_table_product.get_data_filename()
+    
+            # Read in the table
+    
+            tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
+    
+            if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input detections table is of invalid format.")
+    
+            # Get the ID list from it and add it to the set
+            all_ids.update(tile_detections_table[detf.ID].data)
+    
+        logger.info("Finished reading in IDs from detections table.")
+    
+        # Convert IDs to a numpy array for easier handling
+        all_ids_array = np.array(list(all_ids))
+        
+    num_ids = len(all_ids_array)
+    
+    # If batch size is zero, use all IDs in one batch
+    if batch_size == 0:
+        batch_size = num_ids
+
+    num_batches = int(math.ceil(num_ids / batch_size))
+
+    if max_batches > 0:
+        limited_num_batches = np.min((num_batches, max_batches))
+    else:
+        limited_num_batches = num_batches
+
+    logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
+
+    id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
+                                   num_batches - 1, endpoint=True, dtype=int)
+
+    id_arrays = np.split(all_ids_array, id_split_indices)
 
     # Perform some quick sanity checks
     assert len(id_arrays) == num_batches
