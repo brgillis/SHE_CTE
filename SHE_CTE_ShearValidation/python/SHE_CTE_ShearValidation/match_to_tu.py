@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-12"
+__updated__ = "2019-06-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -42,7 +42,7 @@ methods = ("BFD", "KSB", "LensMC", "MomentsML", "REGAUSS")
 star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
-max_coverage = 1.0  # deg
+max_coverage = 2.0  # deg
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -325,10 +325,10 @@ def match_to_tu_from_args(args):
                 if not method == "BFD":
 
                     gal_matched_table.add_column(
-                        Column(np.arctan2(gal_matched_table["G2"], gal_matched_table["G1"]) * 90 / np.pi,
+                        Column(np.arctan2(gal_matched_table["G2"].data, gal_matched_table["G1"].data) * 90 / np.pi,
                                name="Beta_Est_Shear"))
 
-                    g_mag = np.sqrt(gal_matched_table["G1"]**2 + gal_matched_table["G2"]**2)
+                    g_mag = np.sqrt(gal_matched_table["G1"].data**2 + gal_matched_table["G2"].data**2)
                     gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
 
                     gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
