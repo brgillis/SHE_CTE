@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-05-28"
+__updated__ = "2019-06-20"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -23,13 +23,6 @@ __updated__ = "2019-05-28"
 import copy
 import os
 
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -45,6 +38,14 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
 from astropy.table import Table
+
+import SHE_CTE
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -246,7 +247,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        calibration_data=calibration_data,
                                                        workdir=args.workdir,
                                                        debug=args.debug,
-                                                       sim_sc4_fix=True)
+                                                       sim_sc4_fix=False)
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
