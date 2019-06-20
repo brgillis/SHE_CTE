@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-05-29"
+__updated__ = "2019-06-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -92,6 +92,7 @@ def object_id_split_from_args(args):
         logger.warn("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
         batch_size = default_batch_size
         max_batches = default_max_batches
+        ids_to_use = None
     else:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
@@ -117,41 +118,65 @@ def object_id_split_from_args(args):
                 raise ValueError("Invalid max batches: " + str(max_batches) + ". Must be >= 0.")
             logger.info("Using max batches of: " + str(max_batches))
 
+        # Check for the IDs key
+        if ConfigKeys.OID_IDS.value not in pipeline_config:
+            logger.info("Key " + ConfigKeys.OID_IDS.value + " not found in pipeline config " + args.pipeline_config + ". " +
+                        "Using default of using all IDs")
+            ids_to_use = None
+        else:
+            ids_to_use_str = pipeline_config[ConfigKeys.OID_IDS.value].split()
+            
+            if len(ids_to_use_str)==0:
+                ids_to_use = None
+                logger.info("Using all IDs")
+            else:
+                ids_to_use = list(map(int, ids_to_use_str))
+                logger.info("Using limited selection of IDs:" + str(ids_to_use))
+
     # Read in each detections table and add the IDs in it to a global set
-    all_ids = set()
-
-    logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
-
-    detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
-
-    for tile_detections_table_product_filename in detections_table_product_filenames:
-
-        # Read in the product and get the filename of the table
-
-        tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
-                                                                      tile_detections_table_product_filename))
-
-        if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
-            raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
-
-        tile_detections_table_filename = tile_detections_table_product.get_data_filename()
-
-        # Read in the table
-
-        tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
-
-        if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
-            raise TypeError("Input detections table is of invalid format.")
-
-        # Get the ID list from it and add it to the set
-        all_ids.update(tile_detections_table[detf.ID].data)
-
-    logger.info("Finished reading in IDs from detections table.")
-
-    # Convert IDs to a numpy array for easier handling
-    all_ids_array = np.array(list(all_ids))
+    
+    
+    if ids_to_use is not None:
+        
+        all_ids_array = np.array(ids_to_use)
+        
+    else:
+        
+        all_ids = set()
+    
+        logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
+    
+        detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
+    
+        for tile_detections_table_product_filename in detections_table_product_filenames:
+    
+            # Read in the product and get the filename of the table
+    
+            tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
+                                                                          tile_detections_table_product_filename))
+    
+            if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
+                raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
+    
+            tile_detections_table_filename = tile_detections_table_product.get_data_filename()
+    
+            # Read in the table
+    
+            tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
+    
+            if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input detections table is of invalid format.")
+    
+            # Get the ID list from it and add it to the set
+            all_ids.update(tile_detections_table[detf.ID].data)
+    
+        logger.info("Finished reading in IDs from detections table.")
+    
+        # Convert IDs to a numpy array for easier handling
+        all_ids_array = np.array(list(all_ids))
+        
     num_ids = len(all_ids_array)
-
+    
     # If batch size is zero, use all IDs in one batch
     if batch_size == 0:
         batch_size = num_ids
