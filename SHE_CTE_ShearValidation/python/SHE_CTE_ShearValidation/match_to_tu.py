@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-14"
+__updated__ = "2019-06-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -267,7 +267,9 @@ def match_to_tu_from_args(args):
                 best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
                 best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
 
-                assert(len(best_star_id) == len(best_gal_id))
+                # Perform the reverse match as well, and only use a symmetric best-match table
+                best_obj_id_from_star, best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(sky_coord_se)
+                best_obj_id_from_gal, best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
 
                 # Check that the overall best distance is less than the threshold
                 best_distance = np.where(best_gal_distance <= best_star_distance,
@@ -282,6 +284,8 @@ def match_to_tu_from_args(args):
 
                 in_range = np.logical_and(in_ra_range, in_dec_range)
 
+                # Mask out with -99 if the distance is outside the threshold or it better matches to the
+                # other type of object
                 best_star_id = np.where(in_range, np.where(best_distance < args.match_threshold,
                                                            np.where(best_star_distance <
                                                                     best_gal_distance, best_star_id, -99),
@@ -290,6 +294,14 @@ def match_to_tu_from_args(args):
                                                           np.where(best_gal_distance <=
                                                                    best_star_distance, best_gal_id, -99),
                                                           -99), -99)
+
+                # Check for symmetric matches
+                symmetric_star_match = best_obj_id_from_star[best_star_id] = np.arange(best_star_id)
+                symmetric_gal_match = best_obj_id_from_gal[best_gal_id] = np.arange(best_gal_id)
+
+                # Mask out with -99 if we don't have a symmetric match
+                best_star_id = np.where(symmetric_star_match, best_star_id, -99)
+                best_gal_id = np.where(symmetric_gal_match, best_gal_id, -99)
 
                 # Add columns to the shear estimates table so we can match to it
                 if star_index_colname in shear_table.colnames:
