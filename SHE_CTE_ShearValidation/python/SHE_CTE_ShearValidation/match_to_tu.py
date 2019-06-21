@@ -42,7 +42,7 @@ methods = ("BFD", "KSB", "LensMC", "MomentsML", "REGAUSS")
 star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
-max_coverage = 2.0  # deg
+max_coverage = 1.0  # deg
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -296,8 +296,12 @@ def match_to_tu_from_args(args):
                                                           -99), -99)
 
                 # Check for symmetric matches
-                symmetric_star_match = best_obj_id_from_star[best_star_id] = np.arange(best_star_id)
-                symmetric_gal_match = best_obj_id_from_gal[best_gal_id] = np.arange(best_gal_id)
+                symmetric_star_match = best_obj_id_from_star[best_star_id] == np.arange(len(best_star_id))
+                symmetric_gal_match = best_obj_id_from_gal[best_gal_id] == np.arange(len(best_gal_id))
+
+                # Note - this will give junk results for those that are already flagged -99, but since we
+                # do an or-wise update in the next step, it isn't an issue here. Be warned though if
+                # do anything else with these new symmetric_*_match arrays
 
                 # Mask out with -99 if we don't have a symmetric match
                 best_star_id = np.where(symmetric_star_match, best_star_id, -99)
