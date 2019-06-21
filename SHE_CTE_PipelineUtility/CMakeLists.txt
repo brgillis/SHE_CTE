@@ -12,7 +12,6 @@ elements_install_python_modules()
 # Instruction for creating a Python executable
 elements_add_python_program(SHE_CTE_ObjectIdSplit SHE_CTE_PipelineUtility.ObjectIdSplit)
 elements_add_python_program(SHE_CTE_ShearEstimatesMerge SHE_CTE_PipelineUtility.ShearEstimatesMerge)
-elements_add_python_program(SHE_CTE_MakeMockAnalysisData SHE_CTE_PipelineUtility.MakeMockAnalysisData)
 elements_add_python_program(SHE_CTE_CleanupBiasMeasurement SHE_CTE_PipelineUtility.CleanupBiasMeasurement)
 
 # Install the configuration files
