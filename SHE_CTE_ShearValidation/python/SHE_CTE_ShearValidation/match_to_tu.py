@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-21"
+__updated__ = "2019-06-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -433,7 +433,7 @@ def match_to_tu_from_args(args):
     # Write the data product
     logger.info("Writing output matched catalog data product to " + os.path.join(args.workdir,
                                                                                  args.matched_catalog))
-    file_io.write_xml_product(product=matched_catalog_product, xml_file_name=os.path.join(args.workdir,
-                                                                                          args.matched_catalog))
+    file_io.write_xml_product(product=matched_catalog_product, args.matched_catalog,
+                              workdir=args.workdir)
 
     return

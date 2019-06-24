@@ -139,8 +139,8 @@ class TestMeasureStatistics:
             filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None,
                                               version=SHE_CTE.__version__)
 
-            write_xml_product(shear_bias_statistics_prod_0, join(args.workdir, filename_0))
-            write_xml_product(shear_bias_statistics_prod_1, join(args.workdir, filename_1))
+            write_xml_product(shear_bias_statistics_prod_0, filename_0, workdir=args.workdir)
+            write_xml_product(shear_bias_statistics_prod_1, filename_1, workdir=args.workdir)
 
             shear_bias_statistics_filenames_0.append(filename_0)
             shear_bias_statistics_filenames_1.append([filename_1, ])  # We should also be able to read a length-1 tuple
