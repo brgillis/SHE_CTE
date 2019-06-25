@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-05-24"
+__updated__ = "2019-06-25"
 
 from copy import deepcopy
 from math import sqrt
@@ -352,7 +352,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
         # Correct the estimate for WCS shear and rotation
         try:
             correct_for_wcs_shear_and_rotation(shear_estimate, gal_stamp,
-                                               sim_sc4_fix=sim_sc4_fix)  # TODO - Add sim_sc4_fix here
+                                               sim_sc4_fix=sim_sc4_fix)
         except RuntimeError as e:
             # Report the error
             logger.warn(str(e))
