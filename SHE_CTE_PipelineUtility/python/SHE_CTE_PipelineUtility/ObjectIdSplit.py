@@ -236,7 +236,7 @@ def object_id_split_from_args(args):
 
         # Create and save the product
         batch_id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
-        write_xml_product(batch_id_list_product, os.path.join(args.workdir, batch_id_list_product_filename))
+        write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
         logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
 

@@ -300,13 +300,13 @@ class TestMeasureStatistics:
 
         details_filename = "test_details_table.fits"
         details_product = products.details.create_details_product(details_filename)
-        write_xml_product(details_product, join(args.workdir, args.details_table))
+        write_xml_product(details_product, args.details_table, workdir=args.workdir)
         self.details.write(join(args.workdir, details_filename), format="fits")
 
         shear_estimates_filename = "test_shear_estimates.fits"
         shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
             KSB_filename=shear_estimates_filename)
-        write_xml_product(shear_estimates_product, join(args.workdir, args.shear_estimates))
+        write_xml_product(shear_estimates_product, args.shear_estimates, workdir=args.workdir)
         self.shear_estimates.write(join(args.workdir, shear_estimates_filename), format="fits")
 
         # Call the function

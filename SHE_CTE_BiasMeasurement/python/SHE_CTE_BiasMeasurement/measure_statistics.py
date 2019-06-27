@@ -5,7 +5,7 @@
     Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2019-04-16"
+__updated__ = "2019-06-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -90,8 +90,7 @@ def measure_statistics_from_args(args):
             shear_bias_statistics_product.set_method_statistics(method, None, None)
 
     # Write out the statistics product
-    qualified_statistics_filename = os.path.join(args.workdir, args.shear_bias_statistics)
-    write_xml_product(shear_bias_statistics_product, qualified_statistics_filename)
+    write_xml_product(shear_bias_statistics_product, args.shear_bias_statistics, workdir=args.workdir)
 
     # Try to archive the product
 

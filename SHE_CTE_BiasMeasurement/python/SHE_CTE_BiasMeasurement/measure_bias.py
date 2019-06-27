@@ -146,7 +146,7 @@ def measure_bias_from_args(args):
 
         bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
 
-    write_xml_product(bias_measurement_prod, os.path.join(args.workdir, args.shear_bias_measurements))
+    write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
 
     # Try to archive the product
 

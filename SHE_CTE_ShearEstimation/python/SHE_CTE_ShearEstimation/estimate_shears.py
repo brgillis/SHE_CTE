@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-06-21"
+__updated__ = "2019-06-24"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -316,8 +316,7 @@ def estimate_shears_from_args(args, dry_run=False):
         if method not in methods:
             shear_estimates_prod.set_method_filename(method, None)
 
-    write_xml_product(shear_estimates_prod,
-                      os.path.join(args.workdir, args.shear_estimates_product))
+    write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 
     logger.info("Finished shear estimation.")
 
