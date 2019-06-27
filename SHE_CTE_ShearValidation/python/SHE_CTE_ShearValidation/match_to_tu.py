@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-24"
+__updated__ = "2019-06-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,7 +22,6 @@ __updated__ = "2019-06-24"
 
 import os
 
-import SHE_CTE
 from SHE_PPT import file_io
 from SHE_PPT import products
 from SHE_PPT.logging import getLogger
@@ -32,6 +31,8 @@ from astropy import units
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.table import Table, Column, join, vstack, unique
+
+import SHE_CTE
 import numpy as np
 
 
@@ -433,7 +434,7 @@ def match_to_tu_from_args(args):
     # Write the data product
     logger.info("Writing output matched catalog data product to " + os.path.join(args.workdir,
                                                                                  args.matched_catalog))
-    file_io.write_xml_product(product=matched_catalog_product, args.matched_catalog,
+    file_io.write_xml_product(matched_catalog_product, args.matched_catalog,
                               workdir=args.workdir)
 
     return
