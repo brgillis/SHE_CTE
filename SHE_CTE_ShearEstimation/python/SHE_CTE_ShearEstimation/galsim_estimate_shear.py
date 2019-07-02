@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-06-25"
+__updated__ = "2019-07-02"
 
 from copy import deepcopy
 from math import sqrt
@@ -96,7 +96,7 @@ def log_no_psf_scale():
     logger.warn("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
 
 
-def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny):
+def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny, stacked=False):
 
     if scale_label in initial_image.header:
         in_scale = initial_image.header[scale_label]
@@ -107,7 +107,10 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
     # Add a default background map if necessary
     initial_image.add_default_background_map()
 
-    bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
+    if stacked:
+        bkg_subtracted_stamp_data = initial_image.data
+    else:
+        bkg_subtracted_stamp_data = initial_image.data - initial_image.background_map
 
     window_nx = int(resampled_nx * resampled_scale / in_scale) + 1
     window_ny = int(resampled_ny * resampled_scale / in_scale) + 1
@@ -261,12 +264,12 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
 
         try:
 
-            gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(bkg_subtracted_gal_stamp_data.transpose(), scale=psf_scale),
+            gal_mom = galsim.hsm.FindAdaptiveMom(galsim.Image(bkg_subtracted_gal_stamp_data.transpose(), scale=gal_scale),
                                                  badpix=galsim.Image(
                                                      (gal_stamp.boolmask).astype(np.uint16).transpose(), scale=gal_scale),
                                                  guess_sig=gal_sig,)
 
-            resampled_gal_stamp_size = int(5 * gal_mom.moments_sigma * gal_scale /
+            resampled_gal_stamp_size = int(20 * gal_mom.moments_sigma * gal_scale /
                                            psf_scale)    # Calculate the galaxy's S/N
             a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
             gain = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
@@ -296,7 +299,8 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
                 raise
 
     # Get a resampled galaxy stamp
-    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size)
+    resampled_gal_stamp = get_resampled_image(gal_stamp, psf_scale, resampled_gal_stamp_size, resampled_gal_stamp_size,
+                                              stacked=stacked)
 
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
