@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2019-04-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,12 +23,13 @@ __updated__ = "2019-04-23"
 import argparse
 import os
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+from SHE_CTE_BiasMeasurement import magic_values as mv
 import numpy as np
 
 

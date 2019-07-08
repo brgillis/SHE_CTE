@@ -32,6 +32,7 @@ from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combin
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
 import numpy as np
 
+
 bootstrap_threshold = 2
 
 
@@ -182,10 +183,15 @@ def measure_bias_from_args(args):
         else:
             # do bias measurement for BFD
             if len(method_shear_statistics_lists[method].bfd_statistics_list) > 0:
-                g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
-                    method_shear_statistics_lists[method].bfd_statistics_list, do_g1=True))
-                g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
-                    method_shear_statistics_lists[method].bfd_statistics_list, do_g1=False))
+                try:
+                    g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                        method_shear_statistics_lists[method].bfd_statistics_list, do_g1=True))
+                    g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
+                        method_shear_statistics_lists[method].bfd_statistics_list, do_g1=False))
+                except np.linalg.linalg.LinAlgError as e:
+                    logger.warn("Unable to calculate bias for BFD. Exception was: " + str(e))
+                    g1_bias_measurements = None
+                    g2_bias_measurements = None
             else:
                 g1_bias_measurements = None
                 g2_bias_measurements = None

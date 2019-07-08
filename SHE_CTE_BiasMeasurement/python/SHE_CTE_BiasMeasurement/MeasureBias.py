@@ -20,11 +20,12 @@
 
 import argparse
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():

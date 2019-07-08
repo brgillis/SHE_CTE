@@ -112,7 +112,7 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
         gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
-        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]*3600
     else:
         psf_scale = 0.02
     cnt = 0
