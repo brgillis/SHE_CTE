@@ -66,10 +66,9 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
             files_found += more_files_found
     else:
         pool = mp.Pool(processes=number_threads)
-        pool_results = [pool.apply_async(recursive_find_files, args=(
+        pool_results = [pool.apply(recursive_find_files, args=(
             qualified_name, required_filename, False, 1)) for qualified_name in dirs]
-        for pool_result in pool_results:
-            more_files_found = pool_result.get()
+        for more_files_found in pool_results:
             files_found += more_files_found
 
     # If we're at the endpoint, remove the base dir from all files in the list
