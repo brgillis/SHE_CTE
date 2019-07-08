@@ -72,8 +72,6 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
             more_files_found = pool_result.get()
             files_found += more_files_found
 
-    # End "for file_or_dir in files_and_dirs:"
-
     # If we're at the endpoint, remove the base dir from all files in the list
     if endpoint:
         logger.debug("At endpoint of recursive_find_files, so cleaning up base_dir from filenames (" +
