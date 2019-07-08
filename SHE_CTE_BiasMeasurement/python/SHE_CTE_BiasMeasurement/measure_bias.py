@@ -30,6 +30,7 @@ from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
+import multiprocessing as mp
 import numpy as np
 
 
@@ -75,8 +76,12 @@ def measure_bias_from_args(args):
         number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
             number_threads = 1
-    else:
+    elif number_threads < 1:
         number_threads = 1
+
+    # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
+    if number_threads <= 0:
+        number_threads = max(1, mp.cpu_count() + number_threads)
 
     if args.archive_dir is not None:
         archive_dir = args.archive_dir
@@ -103,13 +108,13 @@ def measure_bias_from_args(args):
         if webdav_archive.lower() == "none":
             webdav_archive = None
     else:
-        webdav_dir = None
+        webdav_archive = None
 
     # Get a list of input files
 
     if args.shear_bias_statistics is None or args.shear_bias_statistics == "None":
         # Working in recovery mode, so search within the workdir to find the files
-        shear_statistics_files = recursive_find_files(args.workdir)
+        shear_statistics_files = recursive_find_files(args.workdir, number_threads=number_threads)
     else:
         shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
 

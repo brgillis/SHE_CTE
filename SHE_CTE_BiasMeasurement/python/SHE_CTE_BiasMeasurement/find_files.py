@@ -5,7 +5,7 @@
     Functions to help find archived shear statistics files
 """
 
-__updated__ = "2018-08-22"
+__updated__ = "2019-07-08"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,17 +22,19 @@ __updated__ = "2018-08-22"
 
 import os
 from SHE_PPT.logging import getLogger
+import multiprocessing as mp
 
 shear_statistics_filename = "shear_bias_statistics.xml"
 
 
-def recursive_find_files(base_dir=".", required_filename=shear_statistics_filename, endpoint=True):
+def recursive_find_files(base_dir=".", required_filename=shear_statistics_filename, endpoint=True,
+                         number_threads=1):
     """Search recursively through the provided directory to find any files matching the desired filename.
     """
-    
+
     logger = getLogger(__name__)
-    
-    logger.debug("Entering recursive_find_files with base_dir = "+base_dir)
+
+    logger.debug("Entering recursive_find_files with base_dir = " + base_dir)
 
     # Silently remove trailing slash from base_dir if present
     if base_dir[-1] == "/":
@@ -44,6 +46,7 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
     files_and_dirs = os.listdir(base_dir)
 
     # Loop through this directory and add any we find, including recursively
+    dirs = []
     for file_or_dir in files_and_dirs:
         qualified_name = os.path.join(base_dir, file_or_dir)
 
@@ -54,18 +57,30 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
                 files_found.append(qualified_name)
         # If it's a directory, search through it for files
         if os.path.isdir(qualified_name):
+            dirs.append(qualified_name)
+
+    # Look through directories now. If number_threads is 1, do this simply, otherwise use a pool
+    if number_threads == 1:
+        for qualified_name in dirs:
             more_files_found = recursive_find_files(qualified_name, required_filename, endpoint=False)
+            files_found += more_files_found
+    else:
+        pool = mp.Pool(processes=number_threads)
+        pool_results = [pool.apply_async(recursive_find_files, args=(
+            qualified_name, required_filename, False, 1)) for qualified_name in range(1, 7)]
+        for pool_result in pool_results:
+            more_files_found = pool_result.get()
             files_found += more_files_found
 
     # End "for file_or_dir in files_and_dirs:"
 
     # If we're at the endpoint, remove the base dir from all files in the list
     if endpoint:
-        logger.debug("At endpoint of recursive_find_files, so cleaning up base_dir from filenames ("+
-                     str(files_found)+")")
+        logger.debug("At endpoint of recursive_find_files, so cleaning up base_dir from filenames (" +
+                     str(files_found) + ")")
         for i in range(len(files_found)):
             files_found[i] = files_found[i].replace(base_dir + "/", "")
-    
+
     logger.debug("Entering recursive_find_files with files found: " + str(files_found))
 
     # Return the list of files found
