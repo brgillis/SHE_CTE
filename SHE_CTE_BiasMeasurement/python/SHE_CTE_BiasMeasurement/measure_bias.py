@@ -121,6 +121,8 @@ def measure_bias_from_args(args):
         number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
             number_threads = 1
+    else:
+        number_threads = 1
     elif number_threads < 1:
         number_threads = 1
 
