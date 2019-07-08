@@ -79,7 +79,7 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
         for i in range(len(files_found)):
             files_found[i] = files_found[i].replace(base_dir + "/", "")
 
-    logger.debug("Entering recursive_find_files with files found: " + str(files_found))
+    logger.debug("Exiting recursive_find_files with files found: " + str(files_found))
 
     # Return the list of files found
     return files_found
