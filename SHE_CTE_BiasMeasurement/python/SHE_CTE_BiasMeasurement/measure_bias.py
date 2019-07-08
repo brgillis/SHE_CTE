@@ -36,6 +36,18 @@ import numpy as np
 
 bootstrap_threshold = 2
 
+logger = getLogger(__name__)
+
+
+class MethodStatistics(object):
+    """Class to contain lists of g1 and g2 bias statistics.
+    """
+
+    def __init__(self):
+        self.g1_statistics = None
+        self.g2_statistics = None
+        self.bfd_statistics = None
+
 
 class MethodStatisticsList(object):
     """Class to contain lists of g1 and g2 bias statistics.
@@ -47,6 +59,41 @@ class MethodStatisticsList(object):
         self.bfd_statistics_list = []
 
 
+def read_statistics(shear_statistics_file, workdir):
+
+    # This is a merge point, so we get the file as a tuple of length 1 in the listfile
+    if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
+        if len(shear_statistics_file) == 1:
+            shear_statistics_file = shear_statistics_file[0]
+        else:
+            raise ValueError("Unexpected format of shear statistics listfile.")
+
+    try:
+        shear_statistics_prod = read_xml_product(os.path.join(workdir, shear_statistics_file))
+    except (EOFError, UnpicklingError) as e:
+        logger.warn("File " + os.path.join(workdir, shear_statistics_file) + " seems to be corrupted: " + str(e))
+        return
+
+    all_method_statistics = {}
+
+    for method in mv.estimation_methods:
+
+        method_statistics = MethodStatistics()
+        method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
+
+        if not method == "BFD":  # get info for method if not BFD
+
+            method_statistics.g1_statistics = method_shear_statistics[0]
+            method_statistics.g2_statistics = method_shear_statistics[1]
+
+        elif method_shear_statistics is not None:  # get info for BFD method
+            method_statistics.bfd_statistics = method_shear_statistics
+
+        all_method_statistics[method] = method_statistics
+
+    return all_method_statistics
+
+
 def measure_bias_from_args(args):
     """
     @brief
@@ -56,8 +103,6 @@ def measure_bias_from_args(args):
 
     @return None
     """
-
-    logger = getLogger(__name__)
     logger.debug("Entering measure_bias_from_args.")
 
     # Read in the pipeline config
@@ -119,40 +164,35 @@ def measure_bias_from_args(args):
         shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
 
     # Load in statistics from each file
+    l_method_shear_statistics = []
+
+    # Read simply if number_threads==1
+    if number_threads == 1:
+
+        l_method_shear_statistics = [read_statistics(
+            shear_statistics_file, workdir=args.workdir) for shear_statistics_file in shear_statistics_files]
+
+    # Otherwise use multiprocessing
+    else:
+
+        pool = mp.Pool(processes=number_threads)
+        l_method_shear_statistics = [pool.apply(read_statistics, args=(
+            shear_statistics_file, args.workdir)) for shear_statistics_file in shear_statistics_files]
+
+    # Combine the statistics into a single list for each method
     method_shear_statistics_lists = {}
     for method in mv.estimation_methods:
-        method_shear_statistics_lists[method] = MethodStatisticsList()
 
-    for shear_statistics_file in shear_statistics_files:
+        method_shear_statistics_list = MethodStatisticsList()
 
-        # This is a merge point, so we get the file as a tuple of length 1 in the listfile
-        if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
-            if len(shear_statistics_file) == 1:
-                shear_statistics_file = shear_statistics_file[0]
-            else:
-                raise ValueError("Unexpected format of shear statistics listfile.")
+        method_shear_statistics_list.g1_statistics_list = [l_method_shear_statistics[i]
+                                                           [method].g1_statistics for i in range(len(l_method_shear_statistics))]
+        method_shear_statistics_list.g2_statistics_list = [l_method_shear_statistics[i]
+                                                           [method].g2_statistics for i in range(len(l_method_shear_statistics))]
+        method_shear_statistics_list.bfd_statistics_list = [l_method_shear_statistics[i]
+                                                            [method].bfd_statistics for i in range(len(l_method_shear_statistics))]
 
-        try:
-            shear_statistics_prod = read_xml_product(os.path.join(args.workdir, shear_statistics_file))
-        except (EOFError, UnpicklingError) as e:
-            logger.warn("File " + os.path.join(args.workdir, shear_statistics_file) + " seems to be corrupted: " +
-                        str(e))
-            continue
-
-        for method in mv.estimation_methods:
-
-            method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
-
-            if not method == "BFD":
-                # get info for method if not BFD
-                if method_shear_statistics[0] is not None:
-                    method_shear_statistics_lists[method].g1_statistics_list.append(method_shear_statistics[0])
-                if method_shear_statistics[1] is not None:
-                    method_shear_statistics_lists[method].g2_statistics_list.append(method_shear_statistics[1])
-            else:
-                # get info for BFD method
-                if method_shear_statistics is not None:
-                    method_shear_statistics_lists[method].bfd_statistics_list.append(method_shear_statistics)
+        method_shear_statistics_lists[method] = method_shear_statistics_list
 
     # Calculate the bias and compile into a data product
     bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
