@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-07-02"
+__updated__ = "2019-07-08"
 
 from copy import deepcopy
 from math import sqrt
@@ -42,8 +42,8 @@ x_buffer = -5
 y_buffer = -5
 get_exposure_estimates = False
 
-default_galaxy_scale = 0.1
-default_psf_scale = 0.02
+default_galaxy_scale = 0.1 / 3600
+default_psf_scale = 0.02 / 3600
 
 
 class ShearEstimate(object):
