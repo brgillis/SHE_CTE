@@ -123,7 +123,8 @@ def measure_bias_from_args(args):
             number_threads = 1
     else:
         number_threads = 1
-    elif number_threads < 1:
+
+    if number_threads < 1:
         number_threads = 1
 
     # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
