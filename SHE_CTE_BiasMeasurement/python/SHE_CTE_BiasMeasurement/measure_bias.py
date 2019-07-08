@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2019-04-16"
+__updated__ = "2019-07-08"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -57,6 +57,52 @@ def measure_bias_from_args(args):
 
     logger = getLogger(__name__)
     logger.debug("Entering measure_bias_from_args.")
+
+    # Read in the pipeline config
+    try:
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        if pipeline_config is None:
+            pipeline_config = {}
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+                    "Exception was: " + str(e))
+        pipeline_config = {}
+
+    if args.number_threads is not None:
+        number_threads = args.number_threads
+    elif ConfigKeys.MB_NUM_THREADS.value in pipeline_config:
+        number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
+        if number_threads.lower() == "none":
+            number_threads = 1
+    else:
+        number_threads = 1
+
+    if args.archive_dir is not None:
+        archive_dir = args.archive_dir
+    elif ConfigKeys.MB_ARCHIVE_DIR.value in pipeline_config:
+        archive_dir = pipeline_config[ConfigKeys.MB_ARCHIVE_DIR.value]
+        if archive_dir.lower() == "none":
+            archive_dir = None
+    else:
+        archive_dir = None
+
+    if args.webdav_dir is not None:
+        webdav_dir = args.webdav_dir
+    elif ConfigKeys.MB_WEBDAV_DIR.value in pipeline_config:
+        webdav_dir = pipeline_config[ConfigKeys.MB_WEBDAV_DIR.value]
+        if webdav_dir.lower() == "none":
+            webdav_dir = None
+    else:
+        webdav_dir = None
+
+    if args.webdav_archive is not None:
+        webdav_archive = args.webdav_archive
+    elif ConfigKeys.MB_WEBDAV_ARCHIVE.value in pipeline_config:
+        webdav_archive = pipeline_config[ConfigKeys.MB_WEBDAV_ARCHIVE.value]
+        if webdav_archive.lower() == "none":
+            webdav_archive = None
+    else:
+        webdav_dir = None
 
     # Get a list of input files
 
@@ -149,33 +195,6 @@ def measure_bias_from_args(args):
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
 
     # Try to archive the product
-
-    # First get the pipeline config so we can figure out where to archive it
-    try:
-        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
-        if pipeline_config is None:
-            pipeline_config = {}
-    except Exception as e:
-        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
-                    "Exception was: " + str(e))
-        pipeline_config = {}
-
-    if ConfigKeys.MB_ARCHIVE_DIR.value in pipeline_config:
-        archive_dir = pipeline_config[ConfigKeys.MB_ARCHIVE_DIR.value]
-        if archive_dir == "None":
-            archive_dir = None
-    else:
-        archive_dir = args.archive_dir
-
-    if ConfigKeys.MB_WEBDAV_ARCHIVE.value in pipeline_config:
-        webdav_dir = pipeline_config[ConfigKeys.MB_WEBDAV_ARCHIVE.value]
-    else:
-        webdav_dir = args.webdav_dir
-
-    if ConfigKeys.MB_WEBDAV_DIR.value in pipeline_config:
-        webdav_archive = pipeline_config[ConfigKeys.MB_WEBDAV_DIR.value].lower() == "true"
-    else:
-        webdav_archive = args.webdav_archive
 
     # If we're archiving with webdav, determine its mount dir and the full archive directory
     if webdav_archive and archive_dir is not None:

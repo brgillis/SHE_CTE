@@ -60,6 +60,10 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
+    # Input arguments
+    parser.add_argument('--number_threads', type=int, default=None,
+                        help='Number of parallel threads to use.')
+
     # Archive directory
     parser.add_argument('--archive_dir', type=str, default=None)
 
