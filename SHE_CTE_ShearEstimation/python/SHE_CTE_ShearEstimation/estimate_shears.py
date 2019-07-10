@@ -295,6 +295,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
             if method == 'BFD':
                 try:
+                    del data_stack # try to save memory before SHE_BFD_BoostTest
                     bfd_perform_integration(target_file=os.path.join(
                         args.workdir, shear_estimates_filename), template_file=bfd_training_data)
                 except Exception as e:
