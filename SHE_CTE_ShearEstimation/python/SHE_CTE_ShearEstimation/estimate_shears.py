@@ -195,6 +195,11 @@ def estimate_shears_from_args(args, dry_run=False):
             # Default to using all methods
             methods = list(estimation_methods.keys())
 
+	# Make sure BFD is the last method run so we can manage memory around it better
+        if "BFD" in methods:
+            methods.remove("BFD")
+            methods.append("BFD")
+
         for method in methods:
 
             logger.info("Estimating shear with method " + method + "...")
@@ -295,6 +300,11 @@ def estimate_shears_from_args(args, dry_run=False):
 
             if method == 'BFD':
                 try:
+                    pmem = os.popen('ps -p '+str(os.getpid())+' -o pmem').readlines()[-1].split()[0]
+                    logger.debug("Memory used before deletion: " + pmem + "%")
+                    del data_stack # try to save memory before SHE_BFD_BoostTest
+                    pmem = os.popen('ps -p '+str(os.getpid())+' -o pmem').readlines()[-1].split()[0]
+                    logger.debug("Memory used after deletion: " + pmem + "%")
                     bfd_perform_integration(target_file=os.path.join(
                         args.workdir, shear_estimates_filename), template_file=bfd_training_data)
                 except Exception as e:
