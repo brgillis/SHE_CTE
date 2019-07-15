@@ -46,6 +46,7 @@ class Args(object):
         self.webdav_archive = False
         self.bootstrap_seed = 1
         self.number_threads = 1
+        self.pipeline_config = "None"
 
 
 class TestMeasureStatistics:
