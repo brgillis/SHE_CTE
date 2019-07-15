@@ -233,7 +233,7 @@ def bfd_perform_integration(target_file=None, template_file=None):
     nfactor1=1.
     nfactor2=10.
     nthreads=1
-    call=["boostTest","--targetFile", target_file, "--templateFile", template_file, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads),"--seed",str(12345)]
+    call=["SHE_BFD_BoostTest","--targetFile", target_file, "--templateFile", template_file, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads),"--seed",str(12345)]
     returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout=np.str(returncode.stdout)
     stderr=np.str(returncode.stderr)
