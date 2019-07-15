@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-04-22"
+__updated__ = "2019-07-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -45,6 +45,7 @@ class Args(object):
         self.webdav_dir = None
         self.webdav_archive = False
         self.bootstrap_seed = 1
+        self.number_threads = 1
 
 
 class TestMeasureStatistics:
