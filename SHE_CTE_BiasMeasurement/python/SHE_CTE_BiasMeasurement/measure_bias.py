@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2019-07-08"
+__updated__ = "2019-07-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -184,16 +184,20 @@ def measure_bias_from_args(args):
 
     # Combine the statistics into a single list for each method
     method_shear_statistics_lists = {}
+
+    def remove_values_from_list(the_list, val):
+        return [value for value in the_list if value != val]
+
     for method in mv.estimation_methods:
 
         method_shear_statistics_list = MethodStatisticsList()
 
-        method_shear_statistics_list.g1_statistics_list = [l_method_shear_statistics[i]
-                                                           [method].g1_statistics for i in range(len(l_method_shear_statistics))]
-        method_shear_statistics_list.g2_statistics_list = [l_method_shear_statistics[i]
-                                                           [method].g2_statistics for i in range(len(l_method_shear_statistics))]
-        method_shear_statistics_list.bfd_statistics_list = [l_method_shear_statistics[i]
-                                                            [method].bfd_statistics for i in range(len(l_method_shear_statistics))]
+        method_shear_statistics_list.g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                                                   [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
+        method_shear_statistics_list.g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                                                   [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
+        method_shear_statistics_list.bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                                                    [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
 
         method_shear_statistics_lists[method] = method_shear_statistics_list
 
