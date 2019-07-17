@@ -5,7 +5,7 @@
     Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2019-06-24"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,17 +22,16 @@ __updated__ = "2019-06-24"
 # Boston, MA 02110-1301 USA
 
 import os
-from os.path import join
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.bfd_statistics_calculation import calculate_bfd_shear_bias_statistics
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
 from astropy.table import Table
-from astropy.table import Table
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.bfd_statistics_calculation import calculate_bfd_shear_bias_statistics
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 
 
 def measure_statistics_from_args(args):
@@ -58,7 +57,7 @@ def measure_statistics_from_args(args):
 
     # Initialise the output product
 
-    shear_bias_statistics_product = products.shear_bias_stats.create_shear_bias_statistics_product()
+    shear_bias_statistics_product = products.shear_bias_statistics.create_shear_bias_statistics_product()
 
     # Read in shear estimates, and calculate statistics for each method
 
@@ -82,12 +81,12 @@ def measure_statistics_from_args(args):
                 shear_bias_statistics = calculate_bfd_shear_bias_statistics(estimates_table, details_table)
 
             # Save these in the data product
-            shear_bias_statistics_product.set_method_statistics(method, *shear_bias_statistics)
+            shear_bias_statistics_product.set_method_bias_statistics(method, shear_bias_statistics, workdir=args.workdir)
 
         except Exception as e:
 
             logger.warn("Failsafe exception block triggered with exception: " + str(e))
-            shear_bias_statistics_product.set_method_statistics(method, None, None)
+            shear_bias_statistics_product.set_method_bias_statistics(method, None, workdir=args.workdir)
 
     # Write out the statistics product
     write_xml_product(shear_bias_statistics_product, args.shear_bias_statistics, workdir=args.workdir)
