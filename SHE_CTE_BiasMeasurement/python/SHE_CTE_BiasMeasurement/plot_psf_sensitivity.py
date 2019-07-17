@@ -7,16 +7,17 @@
 from copy import deepcopy
 from os.path import join
 
-from SHE_CTE_BiasMeasurement.plot_bias_measurements import testing_data_labels
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
-import matplotlib.pyplot as pyplot
-import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
 
+from SHE_CTE_BiasMeasurement.plot_bias_measurements import testing_data_labels
+import matplotlib.pyplot as pyplot
+import numpy as np
 
-__updated__ = "2018-11-23"
+
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -151,8 +152,9 @@ def plot_psf_sensitivity_from_args(args):
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            all_bias_measurements[tag] = read_xml_product(join(root_data_folder, args.data_folder_head + tag +
-                                                               "/shear_bias_measurements.xml"))
+            tagdir = join(root_data_folder, args.data_folder_head + tag)
+            all_bias_measurements[tag] = read_xml_product(dir + "/shear_bias_measurements.xml")
+            all_bias_measurements_dirs[tag] = tagdir
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -232,14 +234,14 @@ def plot_psf_sensitivity_from_args(args):
 
                         # Get the bias measurements for this method and testing variant
                         g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
-                            method)
+                            method, workdir=all_bias_measurements_dirs[tag])
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements[tag_template].get_method_bias_measurements(method))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=all_bias_measurements_dirs[tag]))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 

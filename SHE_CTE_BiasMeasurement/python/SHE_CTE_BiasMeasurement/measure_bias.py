@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2019-07-15"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,16 +20,17 @@ __updated__ = "2019-07-15"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from _pickle import UnpicklingError
 import os
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
+
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
 
@@ -79,7 +80,7 @@ def read_statistics(shear_statistics_file, workdir):
     for method in mv.estimation_methods:
 
         method_statistics = MethodStatistics()
-        method_shear_statistics = shear_statistics_prod.get_method_statistics(method)
+        method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
 
         if not method == "BFD":  # get info for method if not BFD
 
@@ -202,7 +203,7 @@ def measure_bias_from_args(args):
         method_shear_statistics_lists[method] = method_shear_statistics_list
 
     # Calculate the bias and compile into a data product
-    bias_measurement_prod = products.shear_bias_measurements.create_shear_bias_measurements_product()
+    bias_measurement_prod = products.shear_bias_statistics.create_shear_bias_statistics_product()
 
     for method in mv.estimation_methods:
 
@@ -248,7 +249,7 @@ def measure_bias_from_args(args):
                 g1_bias_measurements = None
                 g2_bias_measurements = None
 
-        bias_measurement_prod.set_method_bias_measurements(method, g1_bias_measurements, g2_bias_measurements)
+        bias_measurement_prod.set_method_bias_measurements(method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
 
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
 
