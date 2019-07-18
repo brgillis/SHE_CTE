@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2018-10-15"
+__updated__ = "2019-07-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -89,9 +89,8 @@ class TestBFDMeasureStatistics:
     def test_calculate_shear_bias_statistics(self):
         """Try using the calculate_shear_bias_statistics function and check the results.
         """
-        bfd_stats, extra = calculate_bfd_shear_bias_statistics(self.bfd_estimates, self.details)
+        bfd_stats = calculate_bfd_shear_bias_statistics(self.bfd_estimates, self.details)
 
-        assert extra == None
         assert bfd_stats.b1 == approx(self.ex_b1, abs=1e-5)
         assert bfd_stats.b2 == approx(self.ex_b2, abs=1e-5)
         assert bfd_stats.b3 == approx(self.ex_b3, abs=1e-4)
