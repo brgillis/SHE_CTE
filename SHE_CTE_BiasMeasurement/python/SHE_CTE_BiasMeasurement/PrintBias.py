@@ -104,7 +104,8 @@ def mainMethod(args):
             logger.warn("No bias measurements available for method " + method)
             continue
 
-        if np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m):
+        if (np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m) or
+                g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf"):
             logger.warn("Bad bias measurements for method " + method)
             continue
 
