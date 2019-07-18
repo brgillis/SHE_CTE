@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2019-07-17"
+__updated__ = "2019-07-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -99,7 +99,7 @@ def mainMethod(args):
 
         g1_bias, g2_bias = p.get_method_bias_measurements(method)
 
-        if g1_bias is None or g2_bias is None:
+        if g1_bias is None or g2_bias is None or g1_bias.m is None or g2_bias.m is None:
             logger.warn("No bias measurements available for method " + method)
             continue
 
