@@ -245,7 +245,7 @@ def measure_bias_from_args(args):
         else:
             # do bias measurement for BFD
             try:
-                if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
+                if len(method_shear_statistics_lists[method].bfd_statistics_list) >= bootstrap_threshold:
                     # We have enough data to calculate bootstrap errors
                     g1_bias_measurements, g2_bias_measurements = calculate_bfd_bootstrap_bias_measurements(
                         method_shear_statistics_lists[method].bfd_statistics_list, seed=args.bootstrap_seed)
