@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-07-15"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,16 +20,17 @@ __updated__ = "2019-07-15"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from numpy.testing import assert_almost_equal
 from os.path import join
-import pytest
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 from SHE_PPT import products
 from SHE_PPT.file_io import write_xml_product, read_xml_product,\
     get_allowed_filename, write_listfile
 from SHE_PPT.math import LinregressStatistics
+from numpy.testing import assert_almost_equal
+import pytest
+
+import SHE_CTE
+from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
 import numpy as np
 
 
@@ -125,10 +126,10 @@ class TestMeasureStatistics:
 
         # Set up the files to be read in
 
-        shear_bias_statistics_prod_0 = products.shear_bias_stats.create_shear_bias_statistics_product()
-        shear_bias_statistics_prod_0.set_KSB_statistics(self.g1_0_bias_statistics, self.g2_0_bias_statistics)
-        shear_bias_statistics_prod_1 = products.shear_bias_stats.create_shear_bias_statistics_product()
-        shear_bias_statistics_prod_1.set_KSB_statistics(self.g1_1_bias_statistics, self.g2_1_bias_statistics)
+        shear_bias_statistics_prod_0 = products.shear_bias_statistics.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_0.set_KSB_bias_statistics((self.g1_0_bias_statistics, self.g2_0_bias_statistics), workdir=self.workdir)
+        shear_bias_statistics_prod_1 = products.shear_bias_statistics.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_1.set_KSB_bias_statistics((self.g1_1_bias_statistics, self.g2_1_bias_statistics), workdir=self.workdir)
 
         shear_bias_statistics_filenames_0 = []
         shear_bias_statistics_filenames_1 = []
@@ -161,7 +162,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 
         assert_almost_equal(g1_bias.m, self.ex_m1_0)
         assert_almost_equal(g1_bias.c, self.ex_c1_0)
@@ -179,7 +180,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 
         assert_almost_equal(g1_bias.m, self.ex_m1_1)
         assert_almost_equal(g1_bias.c, self.ex_c1_1)
@@ -197,7 +198,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements()
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 
         assert_almost_equal(g1_bias.m, (self.ex_m1_0 + 2 * self.ex_m1_1) / 3)
         assert_almost_equal(g1_bias.c, (self.ex_c1_0 + 2 * self.ex_c1_1) / 3)

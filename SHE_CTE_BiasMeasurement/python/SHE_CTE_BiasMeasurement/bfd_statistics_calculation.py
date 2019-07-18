@@ -5,7 +5,7 @@
     Function to calculate bias statistics from tables of shear measurements and input details.
 """
 
-__updated__ = "2018-10-15"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,16 +20,16 @@ __updated__ = "2018-10-15"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from numpy.testing.utils import assert_allclose
-
-from SHE_BFD_CalculateMoments.bfd import BfdPqrs
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import get_linregress_statistics, LinregressStatistics, BFDSumStatistics, get_bfd_sum_statistics
 from SHE_PPT.table_formats.bfd_moments import tf as bfdf
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from astropy import table
+from numpy.testing.utils import assert_allclose
+
+from SHE_BFD_CalculateMoments.bfd import BfdPqrs
+from SHE_CTE_BiasMeasurement import magic_values as mv
 import numpy as np
 
 

@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-07-15"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,18 +21,19 @@ __updated__ = "2019-07-15"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from copy import deepcopy
-from numpy.testing import assert_almost_equal
 from os.path import join
-import pytest
 
-from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT import table_formats
 from SHE_PPT.file_io import write_xml_product, read_xml_product
 from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
+from numpy.testing import assert_almost_equal
+import pytest
+
+from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 import numpy as np
 
 
@@ -316,7 +317,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_statistics_product = read_xml_product(join(args.workdir, args.shear_bias_statistics))
 
-        g1_bias_stats, g2_bias_stats = shear_bias_statistics_product.get_KSB_statistics()
+        g1_bias_stats, g2_bias_stats = shear_bias_statistics_product.get_KSB_bias_statistics(workdir=self.workdir)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))

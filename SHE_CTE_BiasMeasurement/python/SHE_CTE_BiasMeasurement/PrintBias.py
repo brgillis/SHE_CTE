@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2019-07-18"
+__updated__ = "2019-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
