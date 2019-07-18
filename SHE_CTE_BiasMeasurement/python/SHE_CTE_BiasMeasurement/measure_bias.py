@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2019-07-17"
+__updated__ = "2019-07-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,17 +20,17 @@ __updated__ = "2019-07-17"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from _pickle import UnpicklingError
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
-from _pickle import UnpicklingError
+from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
 import multiprocessing as mp
 import numpy as np
 
@@ -203,7 +203,16 @@ def measure_bias_from_args(args):
         method_shear_statistics_lists[method] = method_shear_statistics_list
 
     # Calculate the bias and compile into a data product
-    bias_measurement_prod = products.shear_bias_statistics.create_shear_bias_statistics_product()
+    bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=method_shear_statistics_lists["BFD"].bfd_statistics_list,
+                                                                        KSB_bias_statistics=(method_shear_statistics_lists["KSB"].g1_statistics_list,
+                                                                                             method_shear_statistics_lists["KSB"].g2_statistics_list),
+                                                                        LensMC_bias_statistics=(method_shear_statistics_lists["LensMC"].g1_statistics_list,
+                                                                                                method_shear_statistics_lists["LensMC"].g2_statistics_list),
+                                                                        MomentsML_bias_statistics=(method_shear_statistics_lists["MomentsML"].g1_statistics_list,
+                                                                                                   method_shear_statistics_lists["MomentsML"].g2_statistics_list),
+                                                                        REGAUSS_bias_statistics=(method_shear_statistics_lists["REGAUSS"].g1_statistics_list,
+                                                                                                 method_shear_statistics_lists["REGAUSS"].g2_statistics_list),
+                                                                        workdir=".")
 
     for method in mv.estimation_methods:
 
@@ -249,7 +258,8 @@ def measure_bias_from_args(args):
                 g1_bias_measurements = None
                 g2_bias_measurements = None
 
-        bias_measurement_prod.set_method_bias_measurements(method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
+        bias_measurement_prod.set_method_bias_measurements(
+            method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
 
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
 
