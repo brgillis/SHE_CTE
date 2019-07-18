@@ -244,17 +244,21 @@ def measure_bias_from_args(args):
 
         else:
             # do bias measurement for BFD
-            if len(method_shear_statistics_lists[method].bfd_statistics_list) > 0:
-                try:
+            try:
+                if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
+                    # We have enough data to calculate bootstrap errors
+                    g1_bias_measurements, g2_bias_measurements = calculate_bfd_bootstrap_bias_measurements(
+                        method_shear_statistics_lists[method].bfd_statistics_list, seed=args.bootstrap_seed)
+                elif len(method_shear_statistics_lists[method].bfd_statistics_list) > 0:
                     g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
                         method_shear_statistics_lists[method].bfd_statistics_list, do_g1=True))
                     g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
                         method_shear_statistics_lists[method].bfd_statistics_list, do_g1=False))
-                except np.linalg.linalg.LinAlgError as e:
-                    logger.warn("Unable to calculate bias for BFD. Exception was: " + str(e))
+                else:
                     g1_bias_measurements = None
                     g2_bias_measurements = None
-            else:
+            except np.linalg.linalg.LinAlgError as e:
+                logger.warn("Unable to calculate bias for BFD. Exception was: " + str(e))
                 g1_bias_measurements = None
                 g2_bias_measurements = None
 
@@ -312,3 +316,43 @@ def calculate_bootstrap_bias_measurements(statistics_list, n_bootstrap=1000, see
     bias_measurements.c_err = np.std(c_bs)
 
     return bias_measurements
+
+
+def calculate_bfd_bootstrap_bias_measurements(statistics_list, n_bootstrap=1000, seed=0):
+    """Calculates a BiasMeasurements object using bootstrap errors from a list of BFD statistics objects.
+    """
+
+    # Seed the random number generator
+    np.random.seed(seed)
+
+    # Get a base object for the m and c calculations
+    g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(statistics_list, do_g1=True))
+    g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(statistics_list, do_g1=False))
+
+    # Bootstrap to get errors on m and c
+    n_sample = len(statistics_list)
+
+    m1_bs = np.empty(n_bootstrap)
+    c1_bs = np.empty(n_bootstrap)
+    m2_bs = np.empty(n_bootstrap)
+    c2_bs = np.empty(n_bootstrap)
+    statistics_array = np.array(statistics_list)
+    for i in range(n_bootstrap):
+        u = np.random.random_integers(0, n_sample - 1, n_sample)
+
+        bias_measurements_b1s = BiasMeasurements(combine_bfd_sum_statistics(statistics_array[u], do_g1=True))
+        bias_measurements_b2s = BiasMeasurements(combine_bfd_sum_statistics(statistics_array[u], do_g1=False))
+
+        m1_bs[i] = bias_measurements_b1s.m
+        c1_bs[i] = bias_measurements_b1s.c
+
+        m2_bs[i] = bias_measurements_b2s.m
+        c2_bs[i] = bias_measurements_b2s.c
+
+    # Update the bias measurements in the output objects
+    g1_bias_measurements.m_err = np.std(m1_bs)
+    g1_bias_measurements.c_err = np.std(c1_bs)
+    g2_bias_measurements.m_err = np.std(m2_bs)
+    g2_bias_measurements.c_err = np.std(c2_bs)
+
+    return g1_bias_measurements, g2_bias_measurements
