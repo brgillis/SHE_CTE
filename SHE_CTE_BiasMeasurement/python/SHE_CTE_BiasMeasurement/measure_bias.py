@@ -165,6 +165,8 @@ def measure_bias_from_args(args):
 
     if args.shear_bias_statistics is None or args.shear_bias_statistics == "None":
         # Working in recovery mode, so search within the workdir to find the files
+        logger.info("No list of statistics files supplied, so searching for files which match the filename '" +
+                    "shear_bias_statistics.xml" + "'.")
         shear_statistics_files = recursive_find_files(args.workdir, number_threads=number_threads)
     else:
         shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
