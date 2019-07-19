@@ -4,8 +4,24 @@
 
     Primary execution loop for measuring bias in shear estimates.
 """
+from _pickle import UnpicklingError
+from numpy.lib.arraysetops import isin
+import os
 
-__updated__ = "2019-07-18"
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
+from SHE_PPT.logging import getLogger
+from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics,
+                          LinregressStatistics, BFDSumStatistics)
+from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
+from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
+import multiprocessing as mp
+import numpy as np
+
+
+__updated__ = "2019-07-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,20 +35,6 @@ __updated__ = "2019-07-18"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
-from _pickle import UnpicklingError
-import os
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
-from SHE_PPT import products
-from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
-from SHE_PPT.logging import getLogger
-from SHE_PPT.math import combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics
-from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
-from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
-import multiprocessing as mp
-import numpy as np
 
 
 bootstrap_threshold = 2
@@ -193,12 +195,28 @@ def measure_bias_from_args(args):
 
         method_shear_statistics_list = MethodStatisticsList()
 
-        method_shear_statistics_list.g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                                                   [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
-        method_shear_statistics_list.g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                                                   [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
-        method_shear_statistics_list.bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                                                    [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
+        l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                        [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
+        l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                        [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
+        l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                         [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
+
+        method_shear_statistics_list.g1_statistics_list = []
+        method_shear_statistics_list.g2_statistics_list = []
+        method_shear_statistics_list.bfd_statistics_list = []
+
+        # Compress the lists to be 1D
+        for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
+                                              (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
+                                              (l_bfd_statistics_list, method_shear_statistics_list.bfd_statistics_list),):
+            for item in uncompressed_list:
+                if isinstance(item, list):
+                    final_list += item
+                elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
+                    final_list.append(item)
+                else:
+                    raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
 
         method_shear_statistics_lists[method] = method_shear_statistics_list
 
