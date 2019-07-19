@@ -5,7 +5,7 @@
     Functions to help find archived shear statistics files
 """
 
-__updated__ = "2019-07-08"
+__updated__ = "2019-07-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,10 +24,8 @@ import os
 from SHE_PPT.logging import getLogger
 import multiprocessing as mp
 
-shear_statistics_filename = "shear_bias_statistics.xml"
 
-
-def recursive_find_files(base_dir=".", required_filename=shear_statistics_filename, endpoint=True,
+def recursive_find_files(base_dir, bias_statistics_filename, bias_measurements_filename, endpoint=True,
                          number_threads=1):
     """Search recursively through the provided directory to find any files matching the desired filename.
     """
@@ -47,29 +45,39 @@ def recursive_find_files(base_dir=".", required_filename=shear_statistics_filena
 
     # Loop through this directory and add any we find, including recursively
     dirs = []
+
+    found_bias_measurements = False
+
     for file_or_dir in files_and_dirs:
         qualified_name = os.path.join(base_dir, file_or_dir)
 
         # If it's a file, does it match the required pattern?
         if os.path.isfile(qualified_name):
-            if file_or_dir == required_filename:
-                # It does, so add it to the list
+            if file_or_dir == bias_measurements_filename:
+                # It's a bias measurements file, so add it to the list and note we found one
+                files_found.append(qualified_name)
+                found_bias_measurements = True
+            elif file_or_dir == bias_statistics_filename:
+                # It's a bias statistics file, so add it to the list
                 files_found.append(qualified_name)
         # If it's a directory, search through it for files
         if os.path.isdir(qualified_name):
             dirs.append(qualified_name)
 
-    # Look through directories now. If number_threads is 1, do this simply, otherwise use a pool
-    if number_threads == 1:
-        for qualified_name in dirs:
-            more_files_found = recursive_find_files(qualified_name, required_filename, endpoint=False)
-            files_found += more_files_found
-    else:
-        pool = mp.Pool(processes=number_threads)
-        pool_results = [pool.apply(recursive_find_files, args=(
-            qualified_name, required_filename, False, 1)) for qualified_name in dirs]
-        for more_files_found in pool_results:
-            files_found += more_files_found
+    # Look through directories now if we didn't find a bias measurements file.
+    # If number_threads is 1, do this simply, otherwise use a pool
+    if not found_bias_measurements:
+        if number_threads == 1:
+            for qualified_name in dirs:
+                more_files_found = recursive_find_files(
+                    qualified_name, bias_statistics_filename, bias_measurements_filename, endpoint=False)
+                files_found += more_files_found
+        else:
+            pool = mp.Pool(processes=number_threads)
+            pool_results = [pool.apply(recursive_find_files, args=(
+                qualified_name, bias_statistics_filename, bias_measurements_filename, False, 1)) for qualified_name in dirs]
+            for more_files_found in pool_results:
+                files_found += more_files_found
 
     # If we're at the endpoint, remove the base dir from all files in the list
     if endpoint:

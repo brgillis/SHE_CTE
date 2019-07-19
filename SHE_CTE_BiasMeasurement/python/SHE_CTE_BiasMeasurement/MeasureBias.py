@@ -20,12 +20,11 @@
 
 import argparse
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -64,6 +63,10 @@ def defineSpecificProgramOptions():
     # Input arguments
     parser.add_argument('--number_threads', type=int, default=None,
                         help='Number of parallel threads to use.')
+    parser.add_argument('--recovery_bias_statistics_filename', type=str, default="shear_bias_statistics.xml",
+                        help='Expected name of bias statistics files for when operating in recovery mode')
+    parser.add_argument('--recovery_bias_measurements_filename', type=str, default="shear_bias_measurements.xml",
+                        help='Expected name of bias measurements files for when operating in recovery mode')
 
     # Archive directory
     parser.add_argument('--archive_dir', type=str, default=None)
