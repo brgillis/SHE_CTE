@@ -134,7 +134,7 @@ def read_method_estimates_tables(shear_estimates_table_product_filename, workdir
 
         logger.debug("Finished loading shear estimates from file: " + shear_estimates_table_product_filename)
 
-    return
+    return shear_estimates_tables
 
 
 def shear_estimates_merge_from_args(args):
@@ -181,8 +181,10 @@ def shear_estimates_merge_from_args(args):
 
     if number_threads == 1:
 
-        l_shear_estimates_tables = [read_method_estimates_tables(shear_estimates_table_product_filename,
-                                                                 args.workdir) for shear_estimates_table_product_filename in shear_estimates_table_product_filenames]
+        full_l_shear_estimates_tables = [read_method_estimates_tables(
+            f, args.workdir) for f in shear_estimates_table_product_filenames]
+
+        l_shear_estimates_tables = [t for t in full_l_shear_estimates_tables if t is not None]
 
     else:
 
@@ -193,7 +195,7 @@ def shear_estimates_merge_from_args(args):
         pool.close()
         pool.join()
 
-        l_shear_estimates_tables = [a.get() for a in pool_shear_estimates_tables]
+        l_shear_estimates_tables = [a.get() for a in pool_shear_estimates_tables if a.get() is not None]
 
     # Sort the tables into the expected format
     for method in methods:
