@@ -43,6 +43,8 @@ logger = getLogger(__name__)
 
 methods = ("KSB", "REGAUSS", "LensMC", "BFD", "MomentsML")
 
+default_number_threads = 8
+
 
 def defineSpecificProgramOptions():
     """
@@ -159,12 +161,9 @@ def shear_estimates_merge_from_args(args):
     elif ConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
         number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
-            number_threads = 1
+            number_threads = default_number_threads
     else:
-        number_threads = 1
-
-    if number_threads < 1:
-        number_threads = 1
+        number_threads = default_number_threads
 
     # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
     if number_threads <= 0:
