@@ -187,8 +187,10 @@ def shear_estimates_merge_from_args(args):
     else:
 
         pool = mp.Pool(processes=number_threads)
-        l_shear_estimates_tables = [pool.apply(read_method_estimates_tables, args=(
+        pool_shear_estimates_tables = [pool.apply_async(read_method_estimates_tables, args=(
             shear_estimates_table_product_filename, args.workdir)) for shear_estimates_table_product_filename in shear_estimates_table_product_filenames]
+
+        l_shear_estimates_tables = [a.get() for a in pool_shear_estimates_tables]
 
     # Sort the tables into the expected format
     for method in methods:
