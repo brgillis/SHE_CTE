@@ -4,24 +4,23 @@
 
     Primary execution loop for measuring bias in shear estimates.
 """
+from _pickle import UnpicklingError
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics,
                           LinregressStatistics, BFDSumStatistics)
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
-from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-07-22"
+__updated__ = "2019-07-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -38,6 +37,7 @@ __updated__ = "2019-07-22"
 
 
 bootstrap_threshold = 2
+default_number_threads = 8
 
 logger = getLogger(__name__)
 
@@ -123,12 +123,9 @@ def measure_bias_from_args(args):
     elif ConfigKeys.MB_NUM_THREADS.value in pipeline_config:
         number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
-            number_threads = 1
+            number_threads = default_number_threads
     else:
-        number_threads = 1
-
-    if number_threads < 1:
-        number_threads = 1
+        number_threads = default_number_threads
 
     # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
     if number_threads <= 0:
