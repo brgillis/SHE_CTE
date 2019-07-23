@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-05-29"
+__updated__ = "2019-07-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,18 +24,19 @@ __updated__ = "2019-05-29"
 import argparse
 import os
 
+import SHE_CTE
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.table_formats.bfd_moments import tf as bfdtf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy import table
-
-import SHE_CTE
+import multiprocessing as mp
 
 
 logger = getLogger(__name__)
@@ -58,11 +59,18 @@ def defineSpecificProgramOptions():
 
     parser = argparse.ArgumentParser()
 
-    # Input arguments
+    # Input data
     parser.add_argument('--input_shear_estimates_listfile', type=str)
 
-    # Output arguments
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
+    # Output data
     parser.add_argument('--output_shear_estimates', type=str)
+
+    # Input arguments
+    parser.add_argument('--number_threads', type=int, default=None,
+                        help='Number of parallel threads to use.')
 
     # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
@@ -76,11 +84,87 @@ def defineSpecificProgramOptions():
     return parser
 
 
+def read_method_estimates_tables(shear_estimates_table_product_filename, workdir):
+
+    try:
+
+        logger.debug("Loading shear estimates from file: " + shear_estimates_table_product_filename)
+
+        # Read in the product and get the filename of the table
+
+        shear_estimates_table_product = read_xml_product(
+            os.path.join(workdir, shear_estimates_table_product_filename))
+
+        if not isinstance(shear_estimates_table_product, products.shear_estimates.dpdShearMeasurement):
+            raise TypeError("Shear product is of invalid type: " + type(shear_estimates_table_product))
+
+    except Exception as e:
+
+        logger.warn("Failsafe block encountered exception: " + str(e))
+        return
+
+    # Loop over methods and read in the table
+
+    shear_estimates_tables = {}
+
+    for method in methods:
+
+        try:
+
+            shear_estimates_method_table_filename = shear_estimates_table_product.get_method_filename(method)
+
+            if shear_estimates_method_table_filename is None or shear_estimates_method_table_filename == "None":
+                logger.debug("No shear estimates available for method: " + method)
+                continue
+
+            shear_estimates_method_table = table.Table.read(os.path.join(
+                workdir, shear_estimates_method_table_filename))
+
+            if not (is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True) or
+                    is_in_format(shear_estimates_method_table, bfdtf, verbose=True, ignore_metadata=True)):
+                raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
+
+            # Append the table to the list of tables
+            shear_estimates_tables[method].append(shear_estimates_method_table)
+
+        except Exception as e:
+
+            logger.warn("Failsafe block encountered exception: " + str(e))
+            return
+
+        logger.debug("Finished loading shear estimates from file: " + shear_estimates_table_product_filename)
+
+    return
+
+
 def shear_estimates_merge_from_args(args):
     """ Core function for implementing a merge of shear estimates tables
     """
 
     logger.debug('# Entering shear_estimates_merge_from_args(args)')
+
+    # Read in the pipeline config
+    try:
+        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        if pipeline_config is None:
+            pipeline_config = {}
+    except Exception as e:
+        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+                    "Exception was: " + str(e))
+        pipeline_config = {}
+
+    # Determine how many threads we'll use
+    if args.number_threads is not None:
+        number_threads = args.number_threads
+    elif ConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
+        number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
+        if number_threads.lower() == "none":
+            number_threads = 1
+    else:
+        number_threads = 1
+
+    if number_threads < 1:
+        number_threads = 1
 
     # Keep a list of all shear estimates tables for each method
     shear_estimates_tables = dict.fromkeys(methods)
@@ -93,63 +177,27 @@ def shear_estimates_merge_from_args(args):
     shear_estimates_table_product_filenames = read_listfile(
         os.path.join(args.workdir, args.input_shear_estimates_listfile))
 
-    # We'll use a failsafe exception block in case of corrupt data, and combine what we can. But raise
-    # an exception if we can't get anything
-    at_least_one_good_estimates_table = False
+    # If using just one thread, don't bother with multiprocessing to read tables
 
-    for shear_estimates_table_product_filename in shear_estimates_table_product_filenames:
+    if number_threads == 1:
 
-        try:
+        l_shear_estimates_tables = [read_method_estimates_tables(shear_estimates_table_product_filename,
+                                                                 args.workdir) for shear_estimates_table_product_filename in shear_estimates_table_product_filenames]
 
-            logger.debug("Loading shear estimates from file: " + shear_estimates_table_product_filename)
+    else:
 
-            # Read in the product and get the filename of the table
+        pool = mp.Pool(processes=number_threads)
+        l_shear_estimates_tables = [pool.apply(read_method_estimates_tables, args=(
+            shear_estimates_table_product_filename, args.workdir)) for shear_estimates_table_product_filename in shear_estimates_table_product_filenames]
 
-            shear_estimates_table_product = read_xml_product(
-                os.path.join(args.workdir, shear_estimates_table_product_filename))
+    # Sort the tables into the expected format
+    for method in methods:
 
-            if not isinstance(shear_estimates_table_product, products.shear_estimates.dpdShearMeasurement):
-                raise TypeError("Shear product is of invalid type: " + type(shear_estimates_table_product))
-
-        except Exception as e:
-
-            logger.warn("Failsafe block encountered exception: " + str(e))
-            continue
-
-        # Loop over methods and read in the table
-
-        for method in methods:
-
-            try:
-
-                shear_estimates_method_table_filename = shear_estimates_table_product.get_method_filename(method)
-
-                if shear_estimates_method_table_filename is None or shear_estimates_method_table_filename == "None":
-                    logger.debug("No shear estimates available for method: " + method)
-                    continue
-
-                shear_estimates_method_table = table.Table.read(os.path.join(
-                    args.workdir, shear_estimates_method_table_filename))
-
-                if not (is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True) or 
-                        is_in_format(shear_estimates_method_table, bfdtf, verbose=True, ignore_metadata=True)):
-                    raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
-
-                # Append the table to the list of tables
-                shear_estimates_tables[method].append(shear_estimates_method_table)
-
-                if len(shear_estimates_method_table) > 0:
-                    at_least_one_good_estimates_table = True
-
-            except Exception as e:
-
-                logger.warn("Failsafe block encountered exception: " + str(e))
+        for i in range(len(l_shear_estimates_tables)):
+            t = l_shear_estimates_tables[i][method]
+            if t is None or len(t) == 0:
                 continue
-
-            logger.debug("Finished loading shear estimates from file: " + shear_estimates_table_product_filename)
-
-    if not at_least_one_good_estimates_table:
-        raise RuntimeError("Not able to load any shear estimates tables successfully.")
+            shear_estimates_tables[method].append(t)
 
     logger.info("Finished loading shear estimates from files listed in: " + args.input_shear_estimates_listfile)
 
