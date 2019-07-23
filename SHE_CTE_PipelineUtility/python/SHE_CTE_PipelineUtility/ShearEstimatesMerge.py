@@ -125,7 +125,7 @@ def read_method_estimates_tables(shear_estimates_table_product_filename, workdir
                 raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
 
             # Append the table to the list of tables
-            shear_estimates_tables[method].append(shear_estimates_method_table)
+            shear_estimates_tables[method] = shear_estimates_method_table
 
         except Exception as e:
 
