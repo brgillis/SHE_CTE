@@ -166,6 +166,10 @@ def shear_estimates_merge_from_args(args):
     if number_threads < 1:
         number_threads = 1
 
+    # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
+    if number_threads <= 0:
+        number_threads = max(1, mp.cpu_count() + number_threads)
+
     # Keep a list of all shear estimates tables for each method
     shear_estimates_tables = dict.fromkeys(methods)
     for method in methods:
