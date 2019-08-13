@@ -69,7 +69,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
     if recovery_mode:
         extra_workdir_portion = shear_statistics_file.split('/')[0]
         workdir = os.path.join(workdir, extra_workdir_portion)
-        shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', count=1)
+        shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', 1)
 
     # This is a merge point, so we get the file as a tuple of length 1 in the listfile
     if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
