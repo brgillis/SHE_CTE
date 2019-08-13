@@ -5,7 +5,7 @@
     Provides functions to measure the BFD moments of galaxies
 """
 
-__updated__ = "2019-05-29"
+__updated__ = "2019-08-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,26 +19,27 @@ __updated__ = "2019-05-29"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
 from math import sqrt
 import os
+import pdb
 import subprocess
 
+from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
+from SHE_BFD_CalculateMoments import bfd
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.file_io import read_xml_product, find_file, get_data_filename
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
 from SHE_PPT.noise import get_var_ADU_per_pixel
+from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
-import pdb
-
-from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
-from SHE_BFD_CalculateMoments import bfd
-from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
-from SHE_CTE_ShearEstimation import magic_values as mv
 import numpy as np
 
 
@@ -94,10 +95,10 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
 
     # define pixel scales
     if scale_label in data_stack.stacked_image.header:
-        stacked_gal_scale = data_stack.stacked_image.header[scale_label]*3600
+        stacked_gal_scale = data_stack.stacked_image.header[scale_label] * 3600
     else:
         stacked_gal_scale = 0.1
-        
+
     valid_detector = None
     for exposure in data_stack.exposures:
         for detector in exposure.detectors.ravel():
@@ -107,12 +108,12 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
         raise RuntimeError("No valid detectors found")
 
     if scale_label in valid_detector.header:
-        gal_scale = valid_detector.header[scale_label]*3600
+        gal_scale = valid_detector.header[scale_label] * 3600
     else:
         gal_scale = 0.1
 
     if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
-        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]*3600
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label] * 3600
     else:
         psf_scale = 0.02
     cnt = 0
@@ -167,7 +168,7 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                                 seg_map=stacked_gal_stamp.segmentation_map,
                                 flag_map=stacked_gal_stamp.mask,
                                 bkgd_map=stacked_gal_stamp.background_map,
-                                do_bkgd_sub=False) # bkgd already sub in stack
+                                do_bkgd_sub=False)  # bkgd already sub in stack
 
         if config_data['isTarget'] == True:
             if bfd_info.lost:
@@ -190,7 +191,7 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
 
         else:
 
-            if (bfd_info.template_lost==False) & (cnt < 200):
+            if (bfd_info.template_lost == False) & (cnt < 200):
                 for i, tmpl in enumerate(bfd_info.templates):
                     bfd_info.get_template(i)
                     bfd_moments_table.add_row({setf.ID: gal_id,
@@ -225,20 +226,21 @@ def bfd_perform_integration(target_file=None, template_file=None):
         logger.warn("no target file given")
 
     if template_file is None:
-        template_file=getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
+        template_file = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
-    sn1=5
-    sn2=35
-    sn3=100
-    nfactor1=1.
-    nfactor2=10.
-    nthreads=1
-    call=["SHE_BFD_BoostTest","--targetFile", target_file, "--templateFile", template_file, "--selectSN",str(sn1)+"," + str(sn2)+"," + str(sn3),"--noiseFactor", str(nfactor1) + "," + str(nfactor2),"--nThreads",str(nthreads),"--seed",str(12345)]
-    returncode=subprocess.run(call,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    stdout=np.str(returncode.stdout)
-    stderr=np.str(returncode.stderr)
-    stdoutsplit=stdout.split("\\n")
-    stderrsplit=stderr.split("\\n")
+    sn1 = 5
+    sn2 = 35
+    sn3 = 100
+    nfactor1 = 1.
+    nfactor2 = 10.
+    nthreads = 1
+    call = ["SHE_BFD_BoostTest", "--targetFile", target_file, "--templateFile", template_file, "--selectSN", str(sn1) + "," + str(
+        sn2) + "," + str(sn3), "--noiseFactor", str(nfactor1) + "," + str(nfactor2), "--nThreads", str(nthreads), "--seed", str(12345)]
+    returncode = subprocess.run(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout = np.str(returncode.stdout)
+    stderr = np.str(returncode.stderr)
+    stdoutsplit = stdout.split("\\n")
+    stderrsplit = stderr.split("\\n")
     logger.info("BFD Integration STDOUT INFO:")
     for out in stdoutsplit:
         logger.info(out)
@@ -248,7 +250,6 @@ def bfd_perform_integration(target_file=None, template_file=None):
 
     logger.debug("Exiting BFD integration")
 
-
     return
 
 
@@ -256,18 +257,20 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
 
     logger = getLogger(__name__)
     logger.debug("Entering load_BFD_Training_data")
-    # basically just a check that the training data is in the correct format and then returns the filepath+name for later use
+    # basically just a check that the training data is in the correct format
+    # and then returns the filepath+name for later use
 
-    if training_data_filename is None or training_data_filename == "None":
+    training_data = get_conditional_product(training_data_filename, workdir=workdir)
+
+    if training_data is None:
         logger.warn("No training data provided; using default?")
         template_filename = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
     else:
-
         # Read in the training data product
-        template_filename = find_file(get_data_filename(training_data_filename,workdir),workdir)
+        template_filename = training_data.get_filename()
 
     t = Table.read(template_filename)
-    if is_in_format(t,setf) == False:
+    if is_in_format(t, setf) == False:
         logger.warn("template file is not in correct format")
 
     logger.debug("Exiting bfd load training data")
