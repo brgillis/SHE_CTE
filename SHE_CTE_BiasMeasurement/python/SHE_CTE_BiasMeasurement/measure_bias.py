@@ -67,7 +67,9 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
 
     # In recovery mode, adjust the work directory to match where the data will be for each file
     if recovery_mode:
-        workdir = os.path.join(workdir, shear_statistics_file.split('/')[0])
+        extra_workdir_portion = shear_statistics_file.split('/')[0]
+        workdir = os.path.join(workdir, extra_workdir_portion)
+        shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', count=1)
 
     # This is a merge point, so we get the file as a tuple of length 1 in the listfile
     if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
@@ -185,7 +187,7 @@ def measure_bias_from_args(args):
     if number_threads == 1:
 
         l_method_shear_statistics = [read_statistics(
-            shear_statistics_file, workdir=args.workdir, recovery_mode) for shear_statistics_file in shear_statistics_files]
+            shear_statistics_file, workdir=args.workdir, recovery_mode=recovery_mode) for shear_statistics_file in shear_statistics_files]
 
     # Otherwise use multiprocessing
     else:
