@@ -4,6 +4,20 @@
 
     Primary execution loop for measuring bias in shear estimates.
 """
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
 from _pickle import UnpicklingError
 import os
 
@@ -20,20 +34,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-07-23"
-
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
-#
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
-# any later version.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+__updated__ = "2019-08-13"
 
 
 bootstrap_threshold = 2
@@ -62,7 +63,13 @@ class MethodStatisticsList(object):
         self.bfd_statistics_list = []
 
 
-def read_statistics(shear_statistics_file, workdir):
+def read_statistics(shear_statistics_file, workdir, recovery_mode):
+
+    # In recovery mode, adjust the work directory to match where the data will be for each file
+    if recovery_mode:
+        extra_workdir_portion = shear_statistics_file.split('/')[0]
+        workdir = os.path.join(workdir, extra_workdir_portion)
+        shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', 1)
 
     # This is a merge point, so we get the file as a tuple of length 1 in the listfile
     if isinstance(shear_statistics_file, tuple) or isinstance(shear_statistics_file, list):
@@ -168,8 +175,10 @@ def measure_bias_from_args(args):
                                                       bias_statistics_filename=args.recovery_bias_statistics_filename,
                                                       bias_measurements_filename=args.recovery_bias_measurements_filename,
                                                       number_threads=number_threads)
+        recovery_mode = True
     else:
         shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
+        recovery_mode = False
 
     # Load in statistics from each file
     l_method_shear_statistics = []
@@ -178,14 +187,14 @@ def measure_bias_from_args(args):
     if number_threads == 1:
 
         l_method_shear_statistics = [read_statistics(
-            shear_statistics_file, workdir=args.workdir) for shear_statistics_file in shear_statistics_files]
+            shear_statistics_file, workdir=args.workdir, recovery_mode=recovery_mode) for shear_statistics_file in shear_statistics_files]
 
     # Otherwise use multiprocessing
     else:
 
         pool = mp.Pool(processes=number_threads)
         l_method_shear_statistics = [pool.apply(read_statistics, args=(
-            shear_statistics_file, args.workdir)) for shear_statistics_file in shear_statistics_files]
+            shear_statistics_file, args.workdir, recovery_mode)) for shear_statistics_file in shear_statistics_files]
 
     # Combine the statistics into a single list for each method
     method_shear_statistics_lists = {}
