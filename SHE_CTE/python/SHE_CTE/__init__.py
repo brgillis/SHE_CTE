@@ -5,7 +5,7 @@
     SHE_CTE package, for modules general to SHE_CTE
 """
 
-__updated__ = "2019-08-13"
+__updated__ = "2019-08-16"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,4 +20,4 @@ __updated__ = "2019-08-13"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "0.8.10"
+__version__ = "0.8.11"
