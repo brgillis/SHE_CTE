@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-07-17"
+__updated__ = "2019-08-16"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,6 +21,7 @@ __updated__ = "2019-07-17"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from copy import deepcopy
+import os
 from os.path import join
 
 from SHE_PPT import products
@@ -299,17 +300,19 @@ class TestMeasureStatistics:
         args.shear_bias_statistics = "test_shear_statistics.xml"
 
         # Set up the files to be read in
+        
+        os.makedirs(os.path.join(args.workdir,"data"))
 
         details_filename = "test_details_table.fits"
         details_product = products.details.create_details_product(details_filename)
         write_xml_product(details_product, args.details_table, workdir=args.workdir)
-        self.details.write(join(args.workdir, details_filename), format="fits")
+        self.details.write(join(args.workdir, "data/"+details_filename), format="fits")
 
         shear_estimates_filename = "test_shear_estimates.fits"
         shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
             KSB_filename=shear_estimates_filename)
         write_xml_product(shear_estimates_product, args.shear_estimates, workdir=args.workdir)
-        self.shear_estimates.write(join(args.workdir, shear_estimates_filename), format="fits")
+        self.shear_estimates.write(join(args.workdir, "data/"+shear_estimates_filename), format="fits")
 
         # Call the function
         measure_statistics_from_args(args)
