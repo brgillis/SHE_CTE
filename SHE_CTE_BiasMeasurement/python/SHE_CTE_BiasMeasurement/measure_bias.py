@@ -68,7 +68,14 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
     # In recovery mode, adjust the work directory to match where the data will be for each file
     if recovery_mode:
         extra_workdir_portion = os.path.split(shear_statistics_file)[0]
+
+        # Check for if the product was accidentally placed in the data directory
+        if len(extra_workdir_portion) > 4 and extra_workdir_portion[-4:] == "data":
+            extra_workdir_portion = extra_workdir_portion[:-5]
+            shear_statistics_file = "data/" + shear_statistics_file
+
         workdir = os.path.join(workdir, extra_workdir_portion)
+
         shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', 1)
 
     # This is a merge point, so we get the file as a tuple of length 1 in the listfile
