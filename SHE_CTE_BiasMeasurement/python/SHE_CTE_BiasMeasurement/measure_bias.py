@@ -34,7 +34,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-08-13"
+__updated__ = "2019-09-04"
 
 
 bootstrap_threshold = 2
@@ -67,7 +67,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
 
     # In recovery mode, adjust the work directory to match where the data will be for each file
     if recovery_mode:
-        extra_workdir_portion = shear_statistics_file.split('/')[0]
+        extra_workdir_portion = os.path.split(shear_statistics_file)[0]
         workdir = os.path.join(workdir, extra_workdir_portion)
         shear_statistics_file = shear_statistics_file.replace(extra_workdir_portion + '/', '', 1)
 
