@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-08-16"
+__updated__ = "2019-09-05"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,20 +21,19 @@ __updated__ = "2019-08-16"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from copy import deepcopy
+from numpy.testing import assert_almost_equal
 import os
 from os.path import join
+import pytest
 
+from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT import table_formats
 from SHE_PPT.file_io import write_xml_product, read_xml_product
 from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
 from SHE_PPT.table_formats.details import tf as datf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
-from numpy.testing import assert_almost_equal
-import pytest
-
-from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 import numpy as np
 
 
@@ -52,6 +51,7 @@ class Args(object):
         self.webdav_archive = False
         self.number_threads = 1
         self.pipeline_config = "None"
+        self.store_measurements_only = False
 
 
 class TestMeasureStatistics:
@@ -300,19 +300,19 @@ class TestMeasureStatistics:
         args.shear_bias_statistics = "test_shear_statistics.xml"
 
         # Set up the files to be read in
-        
-        os.makedirs(os.path.join(args.workdir,"data"))
+
+        os.makedirs(os.path.join(args.workdir, "data"))
 
         details_filename = "test_details_table.fits"
         details_product = products.details.create_details_product(details_filename)
         write_xml_product(details_product, args.details_table, workdir=args.workdir)
-        self.details.write(join(args.workdir, "data/"+details_filename), format="fits")
+        self.details.write(join(args.workdir, "data/" + details_filename), format="fits")
 
         shear_estimates_filename = "test_shear_estimates.fits"
         shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
             KSB_filename=shear_estimates_filename)
         write_xml_product(shear_estimates_product, args.shear_estimates, workdir=args.workdir)
-        self.shear_estimates.write(join(args.workdir, "data/"+shear_estimates_filename), format="fits")
+        self.shear_estimates.write(join(args.workdir, "data/" + shear_estimates_filename), format="fits")
 
         # Call the function
         measure_statistics_from_args(args)
