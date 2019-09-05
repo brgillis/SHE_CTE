@@ -248,8 +248,7 @@ def shear_estimates_merge_from_args(args):
                     " output to: " + combined_shear_estimates_table_filename)
 
     # Save the product
-    write_xml_product(combined_shear_estimates_product, os.path.join(args.workdir,
-                                                                     args.output_shear_estimates))
+    write_xml_product(combined_shear_estimates_product, args.output_shear_estimates, args.workdir)
 
     logger.info("Combined shear estimates product output to: " + args.output_shear_estimates)
 
