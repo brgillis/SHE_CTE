@@ -34,7 +34,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-09-04"
+__updated__ = "2019-09-05"
 
 
 bootstrap_threshold = 2
