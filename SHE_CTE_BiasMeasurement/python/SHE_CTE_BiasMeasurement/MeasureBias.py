@@ -67,6 +67,9 @@ def defineSpecificProgramOptions():
                         help='Expected name of bias statistics files for when operating in recovery mode')
     parser.add_argument('--recovery_bias_measurements_filename', type=str, default="shear_bias_measurements.xml",
                         help='Expected name of bias measurements files for when operating in recovery mode')
+    parser.add_argument('--store_measurements_only', action='store_true',
+                        help='If set, the resulting bias measurements file will contain only the measurements. ' +
+                             'Otherwise, it will also store data for all individual galaxy measurements.')
 
     # Archive directory
     parser.add_argument('--archive_dir', type=str, default=None)
