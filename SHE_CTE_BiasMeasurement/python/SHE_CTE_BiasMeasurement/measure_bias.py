@@ -34,7 +34,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-09-04"
+__updated__ = "2019-09-05"
 
 
 bootstrap_threshold = 2
@@ -240,16 +240,28 @@ def measure_bias_from_args(args):
         method_shear_statistics_lists[method] = method_shear_statistics_list
 
     # Calculate the bias and compile into a data product
-    bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=method_shear_statistics_lists["BFD"].bfd_statistics_list,
-                                                                        KSB_bias_statistics=(method_shear_statistics_lists["KSB"].g1_statistics_list,
-                                                                                             method_shear_statistics_lists["KSB"].g2_statistics_list),
-                                                                        LensMC_bias_statistics=(method_shear_statistics_lists["LensMC"].g1_statistics_list,
-                                                                                                method_shear_statistics_lists["LensMC"].g2_statistics_list),
-                                                                        MomentsML_bias_statistics=(method_shear_statistics_lists["MomentsML"].g1_statistics_list,
-                                                                                                   method_shear_statistics_lists["MomentsML"].g2_statistics_list),
-                                                                        REGAUSS_bias_statistics=(method_shear_statistics_lists["REGAUSS"].g1_statistics_list,
-                                                                                                 method_shear_statistics_lists["REGAUSS"].g2_statistics_list),
-                                                                        workdir=".")
+    if args.store_measurements_only:
+        bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=[],
+                                                                            KSB_bias_statistics=([],
+                                                                                                 []),
+                                                                            LensMC_bias_statistics=([],
+                                                                                                    []),
+                                                                            MomentsML_bias_statistics=([],
+                                                                                                       []),
+                                                                            REGAUSS_bias_statistics=([],
+                                                                                                     []),
+                                                                            workdir=args.workdir)
+    else:
+        bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=method_shear_statistics_lists["BFD"].bfd_statistics_list,
+                                                                            KSB_bias_statistics=(method_shear_statistics_lists["KSB"].g1_statistics_list,
+                                                                                                 method_shear_statistics_lists["KSB"].g2_statistics_list),
+                                                                            LensMC_bias_statistics=(method_shear_statistics_lists["LensMC"].g1_statistics_list,
+                                                                                                    method_shear_statistics_lists["LensMC"].g2_statistics_list),
+                                                                            MomentsML_bias_statistics=(method_shear_statistics_lists["MomentsML"].g1_statistics_list,
+                                                                                                       method_shear_statistics_lists["MomentsML"].g2_statistics_list),
+                                                                            REGAUSS_bias_statistics=(method_shear_statistics_lists["REGAUSS"].g1_statistics_list,
+                                                                                                     method_shear_statistics_lists["REGAUSS"].g2_statistics_list),
+                                                                            workdir=args.workdir)
 
     for method in mv.estimation_methods:
 
