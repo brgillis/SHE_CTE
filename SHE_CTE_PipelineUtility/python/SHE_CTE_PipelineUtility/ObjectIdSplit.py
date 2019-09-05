@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-06-06"
+__updated__ = "2019-09-05"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,18 +24,18 @@ import argparse
 import math
 import os
 
+import SHE_CTE
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.products import object_id_list, detections
+from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
-
-import SHE_CTE
 import numpy as np
 
 
@@ -62,6 +62,9 @@ def defineSpecificProgramOptions():
 
     # Input arguments
     parser.add_argument('--detections_tables', type=str)
+
+    parser.add_argument('--data_images', type=str, default=None,
+                        help='.json listfile containing filenames of data image products.')
 
     parser.add_argument("--pipeline_config", default=None, type=str,
                         help="Pipeline-wide configuration file.")
@@ -125,58 +128,88 @@ def object_id_split_from_args(args):
             ids_to_use = None
         else:
             ids_to_use_str = pipeline_config[ConfigKeys.OID_IDS.value].split()
-            
-            if len(ids_to_use_str)==0:
+
+            if len(ids_to_use_str) == 0:
                 ids_to_use = None
                 logger.info("Using all IDs")
             else:
                 ids_to_use = list(map(int, ids_to_use_str))
                 logger.info("Using limited selection of IDs:" + str(ids_to_use))
 
-    # Read in each detections table and add the IDs in it to a global set
-    
-    
-    if ids_to_use is not None:
-        
-        all_ids_array = np.array(ids_to_use)
-        
+    # Read in the data images
+
+    logger.info("Reading data images...")
+
+    if args.data_images is not None:
+        data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
+                                        detections_listfile_filename=args.detections_tables,
+                                        workdir=args.workdir,
+                                        memmap=True,
+                                        mode='denywrite')
     else:
-        
+        data_stack = None
+
+    # Read in each detections table and add the IDs in it to a global set
+
+    if ids_to_use is not None:
+
+        all_ids_array = np.array(ids_to_use)
+
+    else:
+
         all_ids = set()
-    
+
         logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
-    
+
         detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
-    
+
         for tile_detections_table_product_filename in detections_table_product_filenames:
-    
+
             # Read in the product and get the filename of the table
-    
+
             tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
                                                                           tile_detections_table_product_filename))
-    
+
             if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
                 raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
-    
+
             tile_detections_table_filename = tile_detections_table_product.get_data_filename()
-    
+
             # Read in the table
-    
+
             tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
-    
+
             if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
                 raise TypeError("Input detections table is of invalid format.")
-    
+
             # Get the ID list from it and add it to the set
             all_ids.update(tile_detections_table[detf.ID].data)
-    
+
         logger.info("Finished reading in IDs from detections table.")
-    
-        # Convert IDs to a numpy array for easier handling
-        all_ids_array = np.array(list(all_ids))
-        
+
+        # If supplied with data images, prune IDs that aren't in the images
+        if data_stack is not None:
+
+            good_ids = []
+
+            for gal_id in all_ids:
+
+                # Get a stack of the galaxy images
+                gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id,
+                                                                  width=1,)
+
+                # Do we have any data for this object?
+                if not gal_stamp_stack.is_empty():
+                    good_ids.append(gal_id)
+
+            all_ids_array = np.array(good_ids)
+
+        else:
+            # Convert IDs to a numpy array for easier handling
+            all_ids_array = np.array(list(all_ids))
+
     num_ids = len(all_ids_array)
-    
+
     # If batch size is zero, use all IDs in one batch
     if batch_size == 0:
         batch_size = num_ids
