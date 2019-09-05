@@ -210,6 +210,8 @@ def measure_bias_from_args(args):
     def remove_values_from_list(the_list, val):
         return [value for value in the_list if value != val]
 
+    have_some_data = False
+
     for method in mv.estimation_methods:
 
         method_shear_statistics_list = MethodStatisticsList()
@@ -238,6 +240,14 @@ def measure_bias_from_args(args):
                     raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
 
         method_shear_statistics_lists[method] = method_shear_statistics_list
+
+        if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
+            len(method_shear_statistics_list.g2_statistics_list) > 0 or
+                len(method_shear_statistics_list.bfd_statistics_list) > 0):
+            have_some_data = True
+
+    if not have_some_data:
+        raise RuntimeError("No shear bias statistics are available; aborting.")
 
     # Calculate the bias and compile into a data product
     if args.store_measurements_only:
