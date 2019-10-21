@@ -132,7 +132,8 @@ def plot_bias_measurements_from_args(args):
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            all_bias_measurements[tag] = read_xml_product(root_data_folder, workdir=root_data_folder)
+            all_bias_measurements[tag] = read_xml_product(
+                join(root_data_folder, args.bias_measurements_head + tag + ".xml"), workdir=root_data_folder)
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
