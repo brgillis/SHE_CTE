@@ -230,17 +230,32 @@ def plot_bias_measurements_from_args(args):
                                 g1_bias_measurement -= g1_central_bias_measurement
                                 g2_bias_measurement -= g2_central_bias_measurement
 
-                        ly1.append(g1_bias_measurement)
-                        ly2.append(g2_bias_measurement)
+                        if g1_bias_measurement != '':
+                            ly1.append(g1_bias_measurement)
+                        else:
+                            ly1.append(np.nan)
+                        if g2_bias_measurement != '':
+                            ly2.append(g2_bias_measurement)
+                        else:
+                            ly2.append(np.nan)
 
                         # To calculate combined error, we also need non-error
                         if "_err" in measurement_key:
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key.replace("_err", "")))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key.replace("_err", "")))
+                            g1_o = getattr(g1_bias_measurements, measurement_key.replace("_err", ""))
+                            g2_o = getattr(g2_bias_measurements, measurement_key.replace("_err", ""))
                         else:
                             # And for non-error values, we'll want to plot error bars too, so we need that
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key + "_err"))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key + "_err"))
+                            g1_o = getattr(g1_bias_measurements, measurement_key + "_err")
+                            g2_o = getattr(g2_bias_measurements, measurement_key + "_err")
+
+                        if g1_o != '':
+                            ly1_o.append(g1_o)
+                        else:
+                            ly1_o.append(np.nan)
+                        if g2_o != '':
+                            ly2_o.append(g2_o)
+                        else:
+                            ly2_o.append(np.nan)
 
                     x_vals = np.array(lx)
                     y1_vals = np.array(ly1)
