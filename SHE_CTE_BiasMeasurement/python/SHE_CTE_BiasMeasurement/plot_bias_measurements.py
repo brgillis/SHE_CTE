@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2019-07-17"
+__updated__ = "2019-10-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,11 +25,10 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import fsolve
-
 import matplotlib.pyplot as pyplot
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import fsolve
 
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
@@ -120,7 +119,9 @@ def plot_bias_measurements_from_args(args):
     """
 
     # Determine the qualified path to the root data folder
-    if args.root_data_folder[0] == "/":
+    if args.root_data_folder is None:
+        root_data_folder = args.workdir
+    elif args.root_data_folder[0] == "/":
         root_data_folder = args.root_data_folder
     else:
         # Relative to workdir in this case
@@ -128,13 +129,10 @@ def plot_bias_measurements_from_args(args):
 
     # Open and and keep in memory all bias measurements
     all_bias_measurements = {}
-    all_bias_measurements_dirs = {}
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(dir + "/shear_bias_measurements.xml")
-            all_bias_measurements_dirs[tag] = tagdir
+            all_bias_measurements[tag] = read_xml_product(root_data_folder, workdir=root_data_folder)
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -212,14 +210,14 @@ def plot_bias_measurements_from_args(args):
 
                         # Get the bias measurements for this method and testing variant
                         g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
-                            method, workdir=all_bias_measurements_dirs[tag])
+                            method, workdir=root_data_folder)
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=all_bias_measurements_dirs[tag]))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=root_data_folder))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 
