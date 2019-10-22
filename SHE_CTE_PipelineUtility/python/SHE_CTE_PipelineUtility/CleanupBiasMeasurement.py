@@ -117,12 +117,12 @@ def cleanup_bias_measurement_from_args(args):
     def remove_file(qualified_filename):
         if qualified_filename[-1] == "/":
             logger.warn("Attempted to remove directory " + qualified_filename)
-            return
+            return 1
         if not os.path.exists(qualified_filename):
             logger.warn("Expected file '" + qualified_filename + "' does not exist.")
-            return
+            return 1
         os.remove(qualified_filename)
-        return
+        return 0
 
     def remove_product(qualified_filename):
 
@@ -142,7 +142,8 @@ def cleanup_bias_measurement_from_args(args):
             for data_filename in data_filenames:
                 if (data_filename is not None and data_filename != "default_filename.fits" and
                         data_filename != "" and data_filename != "None"):
-                    remove_file(os.path.join(args.workdir, data_filename))
+                    if remove_file(os.path.join(args.workdir, data_filename)):
+                        logger.warn("...in removal of product " + qualified_filename)
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
             if not args.debug:
