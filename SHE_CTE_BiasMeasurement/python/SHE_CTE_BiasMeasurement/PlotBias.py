@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2019-04-24"
+__updated__ = "2019-10-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,12 +23,11 @@ __updated__ = "2019-04-24"
 import argparse
 import os
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.plot_bias_measurements import plot_bias_measurements_from_args
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
 import numpy as np
 
 
@@ -51,13 +50,13 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input Data
-    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML", "LensMC"],
+    parser.add_argument('--methods', nargs='*', default=["BFD", "KSB", "REGAUSS", "MomentsML", "LensMC"],
                         help='Methods to plot bias measurements for.')
-    parser.add_argument('--root_data_folder', default="../",
+    parser.add_argument('--root_data_folder', default=None,
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
-                             "or relative to workdir.")
-    parser.add_argument('--data_folder_head', default="workspace_",
-                        help="Head of folder names containing bias measurements, minus the E??P??S?? portion.")
+                             "or relative to workdir. Default=workdir")
+    parser.add_argument('--bias_measurements_head', default="shear_bias_measurements_",
+                        help="Head of filenames of bias measurements, minus the E??P??S?? portion.")
     parser.add_argument('--output_file_name_head', default="sensitivity_testing",
                         help="Desired head of filenames for created files.")
     parser.add_argument('--output_format', default="png",
@@ -75,7 +74,7 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
 
     # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type=str, default="/home/user/Work/workspace")
+    parser.add_argument('--workdir', type=str, default=".")
     parser.add_argument('--logdir', type=str, default="logs")
 
     logger.debug('# Exiting SHE_CTE_PlotBias defineSpecificProgramOptions()')

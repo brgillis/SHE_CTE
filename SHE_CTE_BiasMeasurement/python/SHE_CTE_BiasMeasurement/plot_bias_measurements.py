@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2019-07-17"
+__updated__ = "2019-10-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,11 +25,10 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import fsolve
-
 import matplotlib.pyplot as pyplot
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import fsolve
 
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
@@ -120,7 +119,9 @@ def plot_bias_measurements_from_args(args):
     """
 
     # Determine the qualified path to the root data folder
-    if args.root_data_folder[0] == "/":
+    if args.root_data_folder is None:
+        root_data_folder = args.workdir
+    elif args.root_data_folder[0] == "/":
         root_data_folder = args.root_data_folder
     else:
         # Relative to workdir in this case
@@ -128,13 +129,11 @@ def plot_bias_measurements_from_args(args):
 
     # Open and and keep in memory all bias measurements
     all_bias_measurements = {}
-    all_bias_measurements_dirs = {}
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(dir + "/shear_bias_measurements.xml")
-            all_bias_measurements_dirs[tag] = tagdir
+            all_bias_measurements[tag] = read_xml_product(
+                join(root_data_folder, args.bias_measurements_head + tag + ".xml"), workdir=root_data_folder)
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -212,14 +211,14 @@ def plot_bias_measurements_from_args(args):
 
                         # Get the bias measurements for this method and testing variant
                         g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
-                            method, workdir=all_bias_measurements_dirs[tag])
+                            method, workdir=root_data_folder)
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=all_bias_measurements_dirs[tag]))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=root_data_folder))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 
@@ -231,17 +230,32 @@ def plot_bias_measurements_from_args(args):
                                 g1_bias_measurement -= g1_central_bias_measurement
                                 g2_bias_measurement -= g2_central_bias_measurement
 
-                        ly1.append(g1_bias_measurement)
-                        ly2.append(g2_bias_measurement)
+                        if g1_bias_measurement != '':
+                            ly1.append(g1_bias_measurement)
+                        else:
+                            ly1.append(np.nan)
+                        if g2_bias_measurement != '':
+                            ly2.append(g2_bias_measurement)
+                        else:
+                            ly2.append(np.nan)
 
                         # To calculate combined error, we also need non-error
                         if "_err" in measurement_key:
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key.replace("_err", "")))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key.replace("_err", "")))
+                            g1_o = getattr(g1_bias_measurements, measurement_key.replace("_err", ""))
+                            g2_o = getattr(g2_bias_measurements, measurement_key.replace("_err", ""))
                         else:
                             # And for non-error values, we'll want to plot error bars too, so we need that
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key + "_err"))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key + "_err"))
+                            g1_o = getattr(g1_bias_measurements, measurement_key + "_err")
+                            g2_o = getattr(g2_bias_measurements, measurement_key + "_err")
+
+                        if g1_o != '':
+                            ly1_o.append(g1_o)
+                        else:
+                            ly1_o.append(np.nan)
+                        if g2_o != '':
+                            ly2_o.append(g2_o)
+                        else:
+                            ly2_o.append(np.nan)
 
                     x_vals = np.array(lx)
                     y1_vals = np.array(ly1)
@@ -258,7 +272,7 @@ def plot_bias_measurements_from_args(args):
                         y_errs = None
                     elif calibration_label == "_normed":
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
-                        # Carry over errors from previoius run, on unnormed data
+                        # Carry over errors from previous run, on unnormed data
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
@@ -275,32 +289,12 @@ def plot_bias_measurements_from_args(args):
                         y2_vals *= err_factor
                         y_vals *= err_factor
                     if do_fig:
-                        ax.plot(x_vals, y_vals, color=method_colors[method], marker='o', linestyle='None')
-
-                    # Calculate and plot an interpolating spline
-                    y1_spline = Spline(x_vals, y1_vals)
-                    y2_spline = Spline(x_vals, y2_vals)
-
-                    if not "_err" in measurement_key:
-                        def y_spline(x): return np.sqrt(y1_spline(x)**2 + y2_spline(x)**2)
-                    else:
-                        y1_o_spline = Spline(x_vals, y1_o_vals)
-                        y2_o_spline = Spline(x_vals, y2_o_vals)
-
-                        def y_spline(x): return (np.abs(y1_o_spline(x)) * y1_spline(x) + np.abs(y2_o_spline(x))
-                                                 * y2_spline(x)) / np.sqrt(y1_o_spline(x)**2 + y2_o_spline(x)**2)
-
-                    x_spline_vals = np.linspace(x_vals[0], x_vals[-1], 100)
-                    y_spline_vals = y_spline(x_spline_vals)
+                        ax.plot(x_vals, y_vals, color=method_colors[method], marker='o')
 
                     if "_big" not in method:
                         label = method
                     else:
                         label = "Big " + method.replace("_big", "")
-
-                    if do_fig:
-                        ax.plot(x_spline_vals, y_spline_vals, color=method_colors[method], marker='None',
-                                label=label)
 
                     # Save this data for the next plot if not showing errors
                     if not "_err" in measurement_key:

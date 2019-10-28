@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2019-04-24"
+__updated__ = "2019-10-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,13 +24,12 @@ import argparse
 import os
 import shutil
 
+import SHE_CTE
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, ConfigKeys
 from SHE_PPT.utility import get_arguments_string
-
-import SHE_CTE
 
 
 def defineSpecificProgramOptions():
@@ -118,12 +117,12 @@ def cleanup_bias_measurement_from_args(args):
     def remove_file(qualified_filename):
         if qualified_filename[-1] == "/":
             logger.warn("Attempted to remove directory " + qualified_filename)
-            return
+            return 1
         if not os.path.exists(qualified_filename):
             logger.warn("Expected file '" + qualified_filename + "' does not exist.")
-            return
+            return 1
         os.remove(qualified_filename)
-        return
+        return 0
 
     def remove_product(qualified_filename):
 
@@ -141,8 +140,10 @@ def cleanup_bias_measurement_from_args(args):
         if hasattr(p, "get_all_filenames"):
             data_filenames = p.get_all_filenames()
             for data_filename in data_filenames:
-                if data_filename is not None and data_filename != "default_filename.fits" and data_filename != "":
-                    remove_file(os.path.join(args.workdir, data_filename))
+                if (data_filename is not None and data_filename != "default_filename.fits" and
+                        data_filename != "" and data_filename != "None"):
+                    if remove_file(os.path.join(args.workdir, data_filename)):
+                        logger.warn("...in removal of product " + qualified_filename)
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
             if not args.debug:

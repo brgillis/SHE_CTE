@@ -180,13 +180,13 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                     cov_even = np.append(cov_even, bfd_info.cov_even[i, i:5])
 
                 cov_odd = np.append(bfd_info.cov_odd[0, 0:2], bfd_info.cov_odd[1, 1:2])
-                bfd_info.x += gal_x_world
-                bfd_info.y += gal_y_world
+                xsave= bfd_info.x/3600.+gal_x_world
+                ysave = bfd_info.y/3600.+gal_y_world
                 # Add this row to the estimates table
                 bfd_moments_table.add_row({setf.ID: gal_id,
                                            setf.bfd_moments: bfd_info.m,
-                                           setf.x_world: bfd_info.x,
-                                           setf.y_world: bfd_info.y,
+                                           setf.x_world: xsave,
+                                           setf.y_world: ysave,
                                            setf.bfd_cov_even: cov_even,
                                            setf.bfd_cov_odd: cov_odd})
 
