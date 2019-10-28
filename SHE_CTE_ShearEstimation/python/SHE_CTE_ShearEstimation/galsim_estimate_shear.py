@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-07-08"
+__updated__ = "2019-10-28"
 
 from copy import deepcopy
 from math import sqrt
@@ -146,12 +146,66 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
 
 
 def KSB_estimate_shear(data_stack, training_data, calibration_data, workdir, sim_sc4_fix=False, *args, **kwargs):
+    """
+        Top-level function to run the KSB shear estimation algorithm. 
+
+        The estimation is performed through the implementation of the method in the GalSim toolkit, with a wrapper to
+        handle interfacing and to project the galaxy and PSF onto the same pixel scale.
+
+        Parameters
+        ----------
+        frame_stack : SHEFrameStack
+            All the data (image, detections table, psfs, etc.)
+        training_data : SHE_CTE.control_training_data.ControlTraining
+            All the method parameters
+        calibration_data : None
+            Currently unused; needed for proper interface
+        workdir : string
+            Working directory
+        sim_sc4_fix : bool
+            If set to True, will not correct for astrometric shear (to account for this effect not being present in
+            SIM's SC4 simulations)
+        *args, **kwargs : Needed in anticipation of future interface changes that might not affect all methods.
+
+        Returns
+        -------
+        astropy.table.Table
+            A table containing one row for each galaxy, in the shear_estimates table format.
+    """
+
     # Not using training or calibration data at this stage
     return GS_estimate_shear(data_stack, training_data=training_data, method="KSB", workdir=workdir,
                              sim_sc4_fix=sim_sc4_fix, *args, **kwargs)
 
 
 def REGAUSS_estimate_shear(data_stack, training_data, calibration_data, workdir, sim_sc4_fix=False, *args, **kwargs):
+    """
+        Top-level function to run the REGAUSS shear estimation algorithm. 
+
+        The estimation is performed through the implementation of the method in the GalSim toolkit, with a wrapper to
+        handle interfacing and to project the galaxy and PSF onto the same pixel scale.
+
+        Parameters
+        ----------
+        frame_stack : SHEFrameStack
+            All the data (image, detections table, psfs, etc.)
+        training_data : SHE_CTE.control_training_data.ControlTraining
+            All the method parameters
+        calibration_data : None
+            Currently unused; needed for proper interface
+        workdir : string
+            Working directory
+        sim_sc4_fix : bool
+            If set to True, will not correct for astrometric shear (to account for this effect not being present in
+            SIM's SC4 simulations)
+        *args, **kwargs : Needed in anticipation of future interface changes that might not affect all methods.
+
+        Returns
+        -------
+        astropy.table.Table
+            A table containing one row for each galaxy, in the shear_estimates table format.
+    """
+
     # Not using training or calibration data at this stage
     return GS_estimate_shear(data_stack, training_data=training_data, method="REGAUSS", workdir=workdir,
                              sim_sc4_fix=sim_sc4_fix, *args, **kwargs)
