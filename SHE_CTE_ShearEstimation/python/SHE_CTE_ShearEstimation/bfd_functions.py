@@ -260,7 +260,9 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
     # basically just a check that the training data is in the correct format
     # and then returns the filepath+name for later use
 
-    if training_data_filename is None:
+    training_data = get_conditional_product(training_data_filename, workdir=workdir)
+
+    if training_data is None:
         logger.warn("No training data provided; using default?")
         template_filename = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
@@ -269,7 +271,7 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
             logger.warn("template file is not in correct format")
     else:
         # Read in the training data product
-        training_data = get_conditional_product(training_data_filename, workdir=workdir)
+        template_filename = training_data.get_filename()
 
     logger.debug("Exiting bfd load training data")
 
