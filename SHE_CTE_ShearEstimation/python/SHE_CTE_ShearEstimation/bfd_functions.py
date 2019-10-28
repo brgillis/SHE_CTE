@@ -5,7 +5,7 @@
     Provides functions to measure the BFD moments of galaxies
 """
 
-__updated__ = "2019-08-26"
+__updated__ = "2019-10-28"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,8 +22,13 @@ __updated__ = "2019-08-26"
 
 from math import sqrt
 import os
+import pdb
 import subprocess
 
+from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
+from SHE_BFD_CalculateMoments import bfd
+from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
+from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT.file_io import read_xml_product, find_file, get_data_filename
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, stamp_size_label
@@ -35,12 +40,6 @@ from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
-import pdb
-
-from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
-from SHE_BFD_CalculateMoments import bfd
-from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
-from SHE_CTE_ShearEstimation import magic_values as mv
 import numpy as np
 
 
@@ -180,8 +179,8 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                     cov_even = np.append(cov_even, bfd_info.cov_even[i, i:5])
 
                 cov_odd = np.append(bfd_info.cov_odd[0, 0:2], bfd_info.cov_odd[1, 1:2])
-                xsave= bfd_info.x/3600.+gal_x_world
-                ysave = bfd_info.y/3600.+gal_y_world
+                xsave = bfd_info.x / 3600. + gal_x_world
+                ysave = bfd_info.y / 3600. + gal_y_world
                 # Add this row to the estimates table
                 bfd_moments_table.add_row({setf.ID: gal_id,
                                            setf.bfd_moments: bfd_info.m,
@@ -261,18 +260,16 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
     # basically just a check that the training data is in the correct format
     # and then returns the filepath+name for later use
 
-    training_data = get_conditional_product(training_data_filename, workdir=workdir)
-
-    if training_data is None:
+    if training_data_filename is None:
         logger.warn("No training data provided; using default?")
         template_filename = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
+
+        t = Table.read(template_filename)
+        if is_in_format(t, setf) == False:
+            logger.warn("template file is not in correct format")
     else:
         # Read in the training data product
-        template_filename = training_data.get_filename()
-
-    t = Table.read(template_filename)
-    if is_in_format(t, setf) == False:
-        logger.warn("template file is not in correct format")
+        training_data = get_conditional_product(training_data_filename, workdir=workdir)
 
     logger.debug("Exiting bfd load training data")
 
