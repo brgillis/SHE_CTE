@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-07-23"
+__updated__ = "2019-10-28"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -204,6 +204,8 @@ def shear_estimates_merge_from_args(args):
     for method in methods:
 
         for i in range(len(l_shear_estimates_tables)):
+            if method not in l_shear_estimates_tables[i]:
+                continue
             t = l_shear_estimates_tables[i][method]
             if t is None or len(t) == 0:
                 continue
