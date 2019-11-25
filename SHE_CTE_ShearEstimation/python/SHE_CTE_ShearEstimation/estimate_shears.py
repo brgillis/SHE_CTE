@@ -309,7 +309,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     pmem = os.popen('ps -p ' + str(os.getpid()) + ' -o pmem').readlines()[-1].split()[0]
                     logger.debug("Memory used after deletion: " + pmem + "%")
                     bfd_perform_integration(target_file=os.path.join(
-                        args.workdir, shear_estimates_filename), template_file=bfd_training_data)
+                        args.workdir, shear_estimates_filename), template_file=os.path.join(
+                        args.workdir,bfd_training_data))
                 except Exception as e:
                     logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
