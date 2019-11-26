@@ -227,16 +227,22 @@ def bfd_perform_integration(target_file=None, template_file=None):
 
     if template_file is None:
         template_file = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
+    # get configuration info
+    config_data = load_bfd_configuration()
 
-    sn1 = 5
-    sn2 = 35
-    sn3 = 100
-    nfactor1 = 1.
-    nfactor2 = 10.
-    nthreads = 1
+    sn1 = np.float(config_data['INTEGRATE']['INT_sn1'])
+    sn2 = np.float(config_data['INTEGRATE']['INT_sn2'])
+    sn3 = np.float(config_data['INTEGRATE']['INT_sn3'])
+    sn4 = np.float(config_data['INTEGRATE']['INT_sn4'])
+    nfactor1 = np.float(config_data['INTEGRATE']['INT_nfactor1'])
+    nfactor2 = np.float(config_data['INTEGRATE']['INT_nfactor2'])
+    nfactor3 = np.float(config_data['INTEGRATE']['INT_nfactor3'])
+    nthreads = np.int(config_data['INTEGRATE']['INT_nthreads'])
+
     call = ["SHE_BFD_BoostTest", "--targetFile", target_file, "--templateFile", template_file, "--selectSN", str(sn1) + "," + str(
-        sn2) + "," + str(sn3), "--noiseFactor", str(nfactor1) + "," + str(nfactor2), "--nThreads", str(nthreads), "--seed", str(12345)]
+        sn2) + "," + str(sn3)+","+str(sn4), "--noiseFactor", str(nfactor1) + "," + str(nfactor2)+","+str(nfactor3), "--nThreads", str(nthreads), "--seed", str(12345)]
     returncode = subprocess.run(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     stdout = np.str(returncode.stdout)
     stderr = np.str(returncode.stderr)
     stdoutsplit = stdout.split("\\n")
