@@ -1,4 +1,4 @@
-l# Declare this directory as an Elements module
+# Declare this directory as an Elements module
 elements_subdir(SHE_CTE_ShearEstimation)
 
 # Declare Elements module dependencies
