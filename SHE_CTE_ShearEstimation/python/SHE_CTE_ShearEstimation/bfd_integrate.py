@@ -129,6 +129,8 @@ def perform_bfd_integration(args, dry_run=False):
 
         logger.info("Dry Run No BFD Integration Run")
 
+    write_xml_product(shear_estimates_prod_table, args.shear_estimates_product_update, workdir=args.workdir)
+
     logger.info("Finished BFD Integration")
 
     return

@@ -66,6 +66,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--mdb', type=str, default=None,  # Use default to allow simple running with default values
                         help='Mission Database .xml file')
 
+    # Output arguments
+    parser.add_argument('--shear_estimates_product_update',type=str,
+                        help='XML data product to contain file links to the shear estimates tables after BFD integration.')
 
     # Optional input arguments (cannot be used in pipeline)
 
