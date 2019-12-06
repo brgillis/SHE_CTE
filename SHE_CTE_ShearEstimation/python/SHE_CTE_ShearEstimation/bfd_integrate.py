@@ -23,7 +23,7 @@ __updated__ = "2019-12-03"
 
 import copy
 import os
-
+import pdb
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -77,15 +77,15 @@ def perform_bfd_integration(args, dry_run=False):
         logger.warn("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
                     ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
-    # Set up BFD training Data
-
-    bfd_training_data_filename=args.bfd_training_data
-    bfd_training_data=load_bfd_training_data(bfd_training_data_filename,workdir=args.workdir)
-                                    
-    # Read in Shear Estimates Product
-    shear_estimates_prod = args.shear_estimate_product
-
     if not dry_run:
+        # Set up BFD training Data
+        
+        bfd_training_data_filename=args.bfd_training_data
+        bfd_training_data=bfd_load_training_data(bfd_training_data_filename,workdir=args.workdir)
+
+        # Read in Shear Estimates Product
+        shear_estimates_prod_table = read_xml_product(os.path.join(args.workdir,args.shear_estimates_product))
+
 
         method_shear_estimates = {}
 
@@ -102,14 +102,16 @@ def perform_bfd_integration(args, dry_run=False):
             methods = list(estimation_methods.keys())
 
         for method in methods:
+            print(method)
 
-            if method is not "BFD":
-                logger.info("Skipping method " + method + "because does not need BFD Integration")
+            if method != "BFD":
+                logger.info("Skipping method " + method + " because does not need BFD Integration")
                 continue
 
             logger.info("Performing Integration for method " + method + "...")
             # get BFD filename for shear estimates
-            shear_estimates_filename = shear_estimates_prod.get_method_filename(method)
+
+            shear_estimates_filename = shear_estimates_prod_table.get_method_filename(method)
 
             # Perform the Integration
 

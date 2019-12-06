@@ -25,7 +25,7 @@ from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_ShearEstimation.bfd_integration import perform_bfd_integration
+from SHE_CTE_ShearEstimation.bfd_integrate import perform_bfd_integration
 
 
 def defineSpecificProgramOptions():
@@ -97,8 +97,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_BFDIntegrate mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_BFDIntegrate"
-                                    store_true=["profile", "debug", "dry_run"])
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_BFDIntegrate",store_true=["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
