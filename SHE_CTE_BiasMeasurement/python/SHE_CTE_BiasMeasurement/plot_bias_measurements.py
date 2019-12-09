@@ -206,8 +206,10 @@ def plot_bias_measurements_from_args(args):
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
-                        if g1_bias_measurement == '' or g2_bias_measurement == '':
-                            continue
+                        if g1_bias_measurement == '':
+                            g1_bias_measurement = np.nan
+                        if g2_bias_measurement == '':
+                            g2_bias_measurement = np.nan
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
@@ -224,14 +226,8 @@ def plot_bias_measurements_from_args(args):
                                 g1_bias_measurement -= g1_central_bias_measurement
                                 g2_bias_measurement -= g2_central_bias_measurement
 
-                        if g1_bias_measurement != '':
-                            ly1.append(g1_bias_measurement)
-                        else:
-                            ly1.append(np.nan)
-                        if g2_bias_measurement != '':
-                            ly2.append(g2_bias_measurement)
-                        else:
-                            ly2.append(np.nan)
+                        ly1.append(g1_bias_measurement)
+                        ly2.append(g2_bias_measurement)
 
                         # To calculate combined error, we also need non-error
                         if "_err" in measurement_key:
