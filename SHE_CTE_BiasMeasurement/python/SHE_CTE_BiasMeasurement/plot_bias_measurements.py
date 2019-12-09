@@ -206,6 +206,9 @@ def plot_bias_measurements_from_args(args):
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
+                        if g1_bias_measurement == '' or g2_bias_measurement == '':
+                            continue
+
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
