@@ -132,9 +132,6 @@ def plot_bias_measurements_from_args(args):
         e_tag = tag_template.replace("Ep0", "E" + testing_variant)
         read_bias_measurements(e_tag)
 
-        p_tag = tag_template.replace("Pp0", "P" + testing_variant)
-        read_bias_measurements(p_tag)
-
         s_tag = tag_template.replace("Sp0", "S" + testing_variant)
         read_bias_measurements(s_tag)
 
