@@ -38,18 +38,15 @@ def Spline(*args, **kwargs):
     return InterpolatedUnivariateSpline(*args, k=1, **kwargs)
 
 
-testing_data_labels = {"P": "PSF Defocus",
-                       "S": "Sky Level (ADU/pixel)",
+testing_data_labels = {"S": "Sky Level (ADU/pixel)",
                        "E": r"$\sigma(e)$",
                        "T": r"Truncation Radius (multiple of $r_{\rm s}$)"}
 
-titles = {"P": "Varying PSF Defocus",
-          "S": "Varying Sky Background Level",
+titles = {"S": "Varying Sky Background Level",
           "E": "Varying Galaxy Ellipticity Distribution Sigma",
           "T": "Varying Disk Truncation Radius", }
 
-testing_data_labels_no_units = {"P": "PSF Defocus",
-                                "S": "Sky Level",
+testing_data_labels_no_units = {"S": "Sky Level",
                                 "E": r"$\sigma(e)$",
                                 "T": "Truncation Radius"}
 
@@ -60,25 +57,13 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
 
-x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
-            "S": [45.52, 45.61, 45.71, 45.80,  45.90],
+x_values = {"S": [45.52, 45.61, 45.71, 45.80,  45.90],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
             "T": [3.0, 4.0, 4.5, 6.0, 10.0],
             }
 
-psf_sizes = [3.4650847911834717, 3.4410696029663086, 3.437717914581299, 3.4388890266418457, 3.457798719406128]
-psf_e1s = [-0.026677351839757016, -0.015707015526647293, -
-           0.01078109071149982, -0.005838585294871197, 0.005233986604431368]
-psf_e2s = [-0.00133671593078985, -0.0021742508792400757, -
-           0.0025054379672887783, -0.0028106944785056443, -0.0033976166026231545]
-
-psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
-                  "E1": (r"PSF $e_1$", psf_e1s),
-                  "E2": (r"PSF $e_2$", psf_e2s)}
-
-x_ranges = {"P": [0.975, 1.025],
-            "S": [45.50, 45.92],
+x_ranges = {"S": [45.50, 45.92],
             "E": [0.170, 0.315],
             "T": [2.5, 10.5]}
 
@@ -406,114 +391,6 @@ def plot_bias_measurements_from_args(args):
                             fig.show()
                         else:
                             pyplot.close()
-
-                # For the PSF, also plot against each other property
-                if testing_data_key == "P" and (measurement_key_template == "mDIM" or
-                                                measurement_key_template == "cDIM") and do_fig:
-
-                    for prop_key in psf_properties:
-
-                        # Only plot m versus R2 and c versus E
-                        if (("m" in measurement_key_template and "E" in prop_key) or
-                                ("c" in measurement_key_template and "R" in prop_key)):
-                            continue
-
-                        for index in (1, 2):
-
-                            if ("E" in prop_key) and (str(index) not in prop_key):
-                                continue
-
-                            # Set up the figure
-
-                            pyplot.title(titles[testing_data_key])
-
-                            fig = pyplot.figure()
-                            fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
-
-                            ax = fig.add_subplot(1, 1, 1)
-                            ax.set_xlabel(psf_properties[prop_key][0], fontsize=fontsize)
-                            if calibration_label == "_normed":
-                                if prop_key == "R2":
-                                    prop_label = r"$R^2$"
-                                else:
-                                    prop_label = prop_key.lower()
-                                ax.set_ylabel("$\Delta " + measurement_key + "_" + str(index) +
-                                              "$ (relative to " + prop_label +
-                                              "=%1.4f)" % psf_properties[prop_key][1][2], fontsize=fontsize)
-                            else:
-                                ax.set_ylabel("$" + measurement_key + "_" + str(index) + "$", fontsize=fontsize)
-
-                            # Plot the values and error bars
-
-                            x_spline_vals = np.linspace(np.min(psf_properties[prop_key][1]),
-                                                        np.max(psf_properties[prop_key][1]), 100)
-
-                            for method in args.methods:
-                                ax.plot(psf_properties[prop_key][1],
-                                        all_methods_data[(method, calibration_label)]["y" + str(index)],
-                                        color=method_colors[method], marker='o', label=method)
-
-                                ax.errorbar(psf_properties[prop_key][1],
-                                            all_methods_data[(method, calibration_label)]["y" + str(index)],
-                                            all_methods_data[(method, calibration_label)]["y" + str(index) + "_err"],
-                                            color=method_colors[method], linestyle='None')
-
-                                # Plot expected values
-                                if calibration_label == "" or method_colors[method] == "k":
-                                    if calibration_label == "":
-                                        method_label = "Ex. " + method
-                                    else:
-                                        method_label = "Expected"
-                                    if measurement_key_template == "mDIM" and prop_key == "R2":
-                                        r2_diff = 1 - np.array(psf_sizes)**2 / psf_sizes[2]**2
-                                        ex_m0 = r2_diff * psf_gal_size_ratio
-                                        ex_m = (1 + ex_m0) * \
-                                            (1 + all_methods_data[(method, calibration_label)]
-                                             ["y" + str(index)][2]) - 1
-
-                                        ax.plot(np.square(psf_sizes), ex_m,
-                                                color=method_colors[method], marker='.', linestyle='dotted',
-                                                label=method_label)
-
-                                    if measurement_key_template == "cDIM" and prop_key == "E1" and index == 1:
-                                        e1_diff = np.array(psf_e1s) - psf_e1s[2]
-                                        ex_c1 = e1_diff * psf_gal_size_ratio + \
-                                            all_methods_data[(method, calibration_label)]["y1"][2]
-
-                                        ax.plot(psf_e1s, ex_c1,
-                                                color=method_colors[method], marker='.', linestyle='dotted',
-                                                label=method_label)
-
-                                    if measurement_key_template == "cDIM" and prop_key == "E2" and index == 2:
-                                        e2_diff = np.array(psf_e2s) - psf_e2s[2]
-                                        ex_c2 = e2_diff * psf_gal_size_ratio + \
-                                            all_methods_data[(method, calibration_label)]["y2"][2]
-
-                                        ax.plot(psf_e2s, ex_c2,
-                                                color=method_colors[method], marker='.', linestyle='dotted',
-                                                label=method_label)
-
-                            # Plot zero and limits
-                            xlim = deepcopy(ax.get_xlim())
-                            ax.plot(xlim, [target, target], label=None, color="k", linestyle="dashed")
-                            ax.plot(xlim, [20 * target, 20 * target], label=None, color="k", linestyle="dotted")
-                            ax.plot(xlim, [-target, -target], label=None, color="k", linestyle="dashed")
-                            ax.plot(xlim, [-20 * target, -20 * target], label=None, color="k", linestyle="dotted")
-                            ax.plot(xlim, [0, 0], label=None, color="k", linestyle="solid")
-                            ax.set_xlim(xlim)
-
-                            # Save and show it
-
-                            ax.legend(loc="lower right", numpoints=1)
-                            output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                                   testing_data_key + "_" + measurement_key + str(index) + "_" +
-                                                   prop_key + calibration_label + "." + args.output_format)
-                            pyplot.savefig(output_filename, format=args.output_format,
-                                           bbox_inches="tight", pad_inches=0.05)
-                            if not args.hide:
-                                fig.show()
-                            else:
-                                pyplot.close()
 
             # Now plot dim 1 v dim 2
 
