@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2019-10-21"
+__updated__ = "2019-12-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -40,17 +40,20 @@ def Spline(*args, **kwargs):
 
 testing_data_labels = {"P": "PSF Defocus",
                        "S": "Sky Level (ADU/pixel)",
-                       "E": r"$\sigma(e)$"}
+                       "E": r"$\sigma(e)$",
+                       "T": r"Truncation Radius (multiple of $r_{\rm s}$)"}
 
 titles = {"P": "Varying PSF Defocus",
           "S": "Varying Sky Background Level",
-          "E": "Varying Galaxy Ellipticity Distribution Sigma", }
+          "E": "Varying Galaxy Ellipticity Distribution Sigma",
+          "E": "Varying Disk Truncation Radius", }
 
 testing_data_labels_no_units = {"P": "PSF Defocus",
                                 "S": "Sky Level",
-                                "E": r"$\sigma(e)$"}
+                                "E": r"$\sigma(e)$"
+                                "E": "Truncation Radius"}
 
-tag_template = "Ep0Pp0Sp0"
+tag_template = "Ep0Pp0Sp0Tp0"
 
 testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 
@@ -61,6 +64,7 @@ x_values = {"P": [0.98, 0.998, 1.0, 1.002, 1.02],
             "S": [45.52, 45.61, 45.71, 45.80,  45.90],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
                   0.27099491059570091, 0.30241731263684996],
+            "T": [3.0, 4.0, 4.5, 6.0, 10.0],
             }
 
 psf_sizes = [3.4650847911834717, 3.4410696029663086, 3.437717914581299, 3.4388890266418457, 3.457798719406128]
@@ -75,10 +79,12 @@ psf_properties = {"R2": (r"PSF $R^2$ (pixels^2)", np.square(psf_sizes)),
 
 x_ranges = {"P": [0.975, 1.025],
             "S": [45.50, 45.92],
-            "E": [0.170, 0.315]}
+            "E": [0.170, 0.315],
+            "T": [2.5, 10.5]}
 
 target_limit_factors = {"P": {"m": 64, "c": 32},
                         "S": {"m": 32, "c": 20},
+                        "E": {"m": 24,  "c": 32},
                         "E": {"m": 24,  "c": 32}, }
 
 y_range = (1e-6, 5e-1)
@@ -146,6 +152,9 @@ def plot_bias_measurements_from_args(args):
 
         s_tag = tag_template.replace("Sp0", "S" + testing_variant)
         read_bias_measurements(s_tag)
+
+        t_tag = tag_template.replace("Tp0", "T" + testing_variant)
+        read_bias_measurements(t_tag)
 
     # Plot the biases and errors for each measurement
     for testing_data_key in testing_data_labels:
