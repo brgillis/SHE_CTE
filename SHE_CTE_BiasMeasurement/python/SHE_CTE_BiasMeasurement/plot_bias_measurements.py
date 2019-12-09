@@ -46,12 +46,12 @@ testing_data_labels = {"P": "PSF Defocus",
 titles = {"P": "Varying PSF Defocus",
           "S": "Varying Sky Background Level",
           "E": "Varying Galaxy Ellipticity Distribution Sigma",
-          "E": "Varying Disk Truncation Radius", }
+          "T": "Varying Disk Truncation Radius", }
 
 testing_data_labels_no_units = {"P": "PSF Defocus",
                                 "S": "Sky Level",
-                                "E": r"$\sigma(e)$"
-                                "E": "Truncation Radius"}
+                                "E": r"$\sigma(e)$",
+                                "T": "Truncation Radius"}
 
 tag_template = "Ep0Pp0Sp0Tp0"
 
