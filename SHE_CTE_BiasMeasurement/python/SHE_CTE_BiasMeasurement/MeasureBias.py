@@ -110,7 +110,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MeasureBias",
-                                    store_true=["profile", "debug", "webdav_archive"])
+                                    store_true=["profile", "debug", "webdav_archive", "store_measurements_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
