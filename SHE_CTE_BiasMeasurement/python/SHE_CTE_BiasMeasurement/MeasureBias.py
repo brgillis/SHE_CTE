@@ -20,11 +20,12 @@
 
 import argparse
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -59,6 +60,8 @@ def defineSpecificProgramOptions():
     # Output data
     parser.add_argument('--shear_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
+    parser.add_argument('--details_table_head', type=str, default=None,
+                        help='Desired head for the filenames of the output details tables')
 
     # Input arguments
     parser.add_argument('--number_threads', type=int, default=None,
@@ -107,7 +110,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MeasureBias",
-                                    store_true=["profile", "debug", "webdav_archive"])
+                                    store_true=["profile", "debug", "webdav_archive", "store_measurements_only"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
