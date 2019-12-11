@@ -30,6 +30,7 @@ from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statist
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
 from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
@@ -432,6 +433,9 @@ def measure_bias_from_args(args):
 
         bias_measurement_prod.set_method_bias_measurements(
             method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
+        
+    # Print the bias measurements
+    print_bias_from_product(bias_measurement_prod,workdir=args.workdir)
 
     logger.info("Writing combined bias measurments to " + os.path.join(args.workdir,args.shear_bias_measurements))
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
@@ -497,17 +501,10 @@ def combine_bias_measurements(l_bias_measurements):
     c_mask = np.logical_or(np.logical_or(np.isnan(lwc),np.isinf(lwc)),lwc<=0)
     mc_mask = np.logical_or(m_mask,c_mask)
     
-    # Create masked arrays of the data
-    mlm = np.ma.masked_array(lm,mc_mask)
-    mlwm = np.ma.masked_array(lwm,mc_mask)
-    mlc = np.ma.masked_array(lc,mc_mask)
-    mlwc = np.ma.masked_array(lwc,mc_mask)
-    mlwmc = np.ma.masked_array(lwmc,mc_mask)
-    
     # Calculate total weights
-    wm = mlwm.sum()
-    wc = mlwc.sum()
-    wmc = mlwmc.sum()
+    wm = lwm[~mc_mask].sum()
+    wc = lwc[~mc_mask].sum()
+    wmc = lwmc[~mc_mask].sum()
     
     # Check for zero weight, otherwise calculate bias values
         
@@ -517,14 +514,14 @@ def combine_bias_measurements(l_bias_measurements):
         bias_measurements.m = 0
         bias_measurements.m_err = np.nan
     else:
-        bias_measurements.m = (mlm*mlwm).sum()/wm
+        bias_measurements.m = (lm*lwm)[~mc_mask].sum()/wm
         bias_measurements.m_err = wm**(-0.5)
     
     if wc<=0:
         bias_measurements.c = 0
         bias_measurements.c_err = np.nan
     else:
-        bias_measurements.c = (mlc*mlwc).sum()/wc
+        bias_measurements.c = (lc*lwc)[~mc_mask].sum()/wc
         bias_measurements.c_err = wc**(-0.5)
         
     if wmc<=0:
