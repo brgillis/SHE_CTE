@@ -30,6 +30,7 @@ from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statist
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
 from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
@@ -432,6 +433,9 @@ def measure_bias_from_args(args):
 
         bias_measurement_prod.set_method_bias_measurements(
             method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
+        
+    # Print the bias measurements
+    print_bias_from_product(bias_measurement_prod,workdir=args.workdir)
 
     logger.info("Writing combined bias measurments to " + os.path.join(args.workdir,args.shear_bias_measurements))
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
