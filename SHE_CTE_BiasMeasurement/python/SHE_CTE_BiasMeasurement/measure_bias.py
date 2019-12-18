@@ -36,7 +36,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-12-11"
+__updated__ = "2019-12-18"
 
 
 bootstrap_threshold = 2
@@ -268,6 +268,8 @@ def measure_bias_from_args(args):
             for item in uncompressed_list:
                 if isinstance(item, list):
                     final_list += item
+                    if len(item)==0:
+                        missing_shear_statistics = True
                 elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
                     final_list.append(item)
                 else:
@@ -279,8 +281,6 @@ def measure_bias_from_args(args):
             len(method_shear_statistics_list.g2_statistics_list) > 0 or
                 len(method_shear_statistics_list.bfd_statistics_list) > 0):
             have_some_data = True
-        else:
-            missing_shear_statistics = True
             
     if missing_shear_statistics:
         
