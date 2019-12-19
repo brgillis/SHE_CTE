@@ -36,7 +36,7 @@ import multiprocessing as mp
 import numpy as np
 
 
-__updated__ = "2019-12-18"
+__updated__ = "2019-12-19"
 
 
 bootstrap_threshold = 2
@@ -83,7 +83,7 @@ class MethodMeasurementsList(object):
         self.g2_measurements_list = []
 
 
-def read_statistics(shear_statistics_file, workdir, recovery_mode):
+def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only=False):
 
     # In recovery mode, adjust the work directory to match where the data will be for each file
     if recovery_mode:
@@ -116,19 +116,29 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
     all_method_measurements = {}
 
     for method in mv.estimation_methods:
+        
+        if not use_bias_only:
 
-        method_statistics = MethodStatistics()
+            method_statistics = MethodStatistics()
+            method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
+    
+            if not method == "BFD":  # get info for method if not BFD
+    
+                method_statistics.g1_statistics = method_shear_statistics[0]
+                method_statistics.g2_statistics = method_shear_statistics[1]
+    
+            elif method_shear_statistics is not None:  # get info for BFD method
+                method_statistics.bfd_statistics = method_shear_statistics
+    
+            all_method_statistics[method] = method_statistics
+            
+        else:
+    
+            all_method_statistics[method] = []
+            
+        
         method_measurements = MethodMeasurements()
-        method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
         method_bias_measurements = shear_statistics_prod.get_method_bias_measurements(method, workdir=workdir)
-
-        if not method == "BFD":  # get info for method if not BFD
-
-            method_statistics.g1_statistics = method_shear_statistics[0]
-            method_statistics.g2_statistics = method_shear_statistics[1]
-
-        elif method_shear_statistics is not None:  # get info for BFD method
-            method_statistics.bfd_statistics = method_shear_statistics
             
         if method_bias_measurements is None:
             method_measurements.g1_measurements = None
@@ -136,8 +146,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode):
         else:
             method_measurements.g1_measurements = method_bias_measurements[0]
             method_measurements.g2_measurements = method_bias_measurements[1]
-
-        all_method_statistics[method] = method_statistics
+            
         all_method_measurements[method] = method_measurements
 
     return all_method_statistics, all_method_measurements
@@ -225,14 +234,15 @@ def measure_bias_from_args(args):
     if number_threads == 1:
 
         lt_method_shear_statistics = [read_statistics(
-            shear_statistics_file, workdir=args.workdir, recovery_mode=recovery_mode) for shear_statistics_file in shear_statistics_files]
+            shear_statistics_file, workdir=args.workdir,
+            recovery_mode=recovery_mode, use_bias_only=args.use_bias_only) for shear_statistics_file in shear_statistics_files]
 
     # Otherwise use multiprocessing
     else:
 
         pool = mp.Pool(processes=number_threads)
         lt_method_shear_statistics = [pool.apply(read_statistics, args=(
-            shear_statistics_file, args.workdir, recovery_mode)) for shear_statistics_file in shear_statistics_files]
+            shear_statistics_file, args.workdir, recovery_mode, args.use_bias_only)) for shear_statistics_file in shear_statistics_files]
         
     l_method_shear_statistics, l_method_bias_measurements = zip(*lt_method_shear_statistics)
 
@@ -245,44 +255,46 @@ def measure_bias_from_args(args):
 
     have_some_data = False
     missing_shear_statistics = False
+    
+    if not args.use_bias_only:
 
-    for method in mv.estimation_methods:
-
-        method_shear_statistics_list = MethodStatisticsList()
-
-        l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                        [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
-        l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                        [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
-        l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                         [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
-
-        method_shear_statistics_list.g1_statistics_list = []
-        method_shear_statistics_list.g2_statistics_list = []
-        method_shear_statistics_list.bfd_statistics_list = []
-
-        # Compress the lists to be 1D
-        for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
-                                              (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
-                                              (l_bfd_statistics_list, method_shear_statistics_list.bfd_statistics_list),):
-            for item in uncompressed_list:
-                if isinstance(item, list):
-                    final_list += item
-                    if len(item)==0:
-                        missing_shear_statistics = True
-                elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
-                    final_list.append(item)
-                else:
-                    raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
-
-        method_shear_statistics_lists[method] = method_shear_statistics_list
-
-        if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
-            len(method_shear_statistics_list.g2_statistics_list) > 0 or
-                len(method_shear_statistics_list.bfd_statistics_list) > 0):
-            have_some_data = True
+        for method in mv.estimation_methods:
+    
+            method_shear_statistics_list = MethodStatisticsList()
+    
+            l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                            [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
+            l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                            [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
+            l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                             [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
+    
+            method_shear_statistics_list.g1_statistics_list = []
+            method_shear_statistics_list.g2_statistics_list = []
+            method_shear_statistics_list.bfd_statistics_list = []
+    
+            # Compress the lists to be 1D
+            for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
+                                                  (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
+                                                  (l_bfd_statistics_list, method_shear_statistics_list.bfd_statistics_list),):
+                for item in uncompressed_list:
+                    if isinstance(item, list):
+                        final_list += item
+                        if len(item)==0:
+                            missing_shear_statistics = True
+                    elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
+                        final_list.append(item)
+                    else:
+                        raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
+    
+            method_shear_statistics_lists[method] = method_shear_statistics_list
+    
+            if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
+                len(method_shear_statistics_list.g2_statistics_list) > 0 or
+                    len(method_shear_statistics_list.bfd_statistics_list) > 0):
+                have_some_data = True
             
-    if missing_shear_statistics:
+    if missing_shear_statistics or args.use_bias_only:
         
         for method in mv.estimation_methods:
         
@@ -306,11 +318,11 @@ def measure_bias_from_args(args):
         
     if not have_some_data:
         raise RuntimeError("No shear bias statistics or measurements are available; aborting.")
-    elif missing_shear_statistics:
+    elif missing_shear_statistics and not args.use_bias_only:
         logger.warn("Some shear statistics are missing; relying on shear bias measurements only.")
 
     # Calculate the bias and compile into a data product
-    if args.store_measurements_only or missing_shear_statistics:
+    if args.store_measurements_only or missing_shear_statistics or args.use_bias_only:
         bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=[],
                                                                             KSB_bias_statistics=([],
                                                                                                  []),
@@ -335,7 +347,7 @@ def measure_bias_from_args(args):
 
     for method in mv.estimation_methods:
         
-        if missing_shear_statistics:
+        if missing_shear_statistics or args.use_bias_only:
             
             # Calculate from bias measurements
             
