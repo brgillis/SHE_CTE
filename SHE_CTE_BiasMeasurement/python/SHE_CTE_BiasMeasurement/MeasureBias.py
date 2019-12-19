@@ -73,6 +73,8 @@ def defineSpecificProgramOptions():
     parser.add_argument('--store_measurements_only', action='store_true',
                         help='If set, the resulting bias measurements file will contain only the measurements. ' +
                              'Otherwise, it will also store data for all individual galaxy measurements.')
+    parser.add_argument('--use_bias_only', action='store_true',
+                        help='If set will calculate using only bias measurements and not full statistics.')
 
     # Archive directory
     parser.add_argument('--archive_dir', type=str, default=None)
