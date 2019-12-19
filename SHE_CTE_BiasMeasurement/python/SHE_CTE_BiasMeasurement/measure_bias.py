@@ -255,42 +255,44 @@ def measure_bias_from_args(args):
 
     have_some_data = False
     missing_shear_statistics = False
+    
+    if not args.use_bias_only:
 
-    for method in mv.estimation_methods:
-
-        method_shear_statistics_list = MethodStatisticsList()
-
-        l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                        [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
-        l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                        [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
-        l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
-                                                         [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
-
-        method_shear_statistics_list.g1_statistics_list = []
-        method_shear_statistics_list.g2_statistics_list = []
-        method_shear_statistics_list.bfd_statistics_list = []
-
-        # Compress the lists to be 1D
-        for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
-                                              (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
-                                              (l_bfd_statistics_list, method_shear_statistics_list.bfd_statistics_list),):
-            for item in uncompressed_list:
-                if isinstance(item, list):
-                    final_list += item
-                    if len(item)==0:
-                        missing_shear_statistics = True
-                elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
-                    final_list.append(item)
-                else:
-                    raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
-
-        method_shear_statistics_lists[method] = method_shear_statistics_list
-
-        if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
-            len(method_shear_statistics_list.g2_statistics_list) > 0 or
-                len(method_shear_statistics_list.bfd_statistics_list) > 0):
-            have_some_data = True
+        for method in mv.estimation_methods:
+    
+            method_shear_statistics_list = MethodStatisticsList()
+    
+            l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                            [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
+            l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                            [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
+            l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
+                                                             [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
+    
+            method_shear_statistics_list.g1_statistics_list = []
+            method_shear_statistics_list.g2_statistics_list = []
+            method_shear_statistics_list.bfd_statistics_list = []
+    
+            # Compress the lists to be 1D
+            for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
+                                                  (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
+                                                  (l_bfd_statistics_list, method_shear_statistics_list.bfd_statistics_list),):
+                for item in uncompressed_list:
+                    if isinstance(item, list):
+                        final_list += item
+                        if len(item)==0:
+                            missing_shear_statistics = True
+                    elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
+                        final_list.append(item)
+                    else:
+                        raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
+    
+            method_shear_statistics_lists[method] = method_shear_statistics_list
+    
+            if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
+                len(method_shear_statistics_list.g2_statistics_list) > 0 or
+                    len(method_shear_statistics_list.bfd_statistics_list) > 0):
+                have_some_data = True
             
     if missing_shear_statistics or args.use_bias_only:
         
