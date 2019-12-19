@@ -322,7 +322,7 @@ def measure_bias_from_args(args):
         logger.warn("Some shear statistics are missing; relying on shear bias measurements only.")
 
     # Calculate the bias and compile into a data product
-    if args.store_measurements_only or missing_shear_statistics:
+    if args.store_measurements_only or missing_shear_statistics or args.use_bias_only:
         bias_measurement_prod = create_dpd_shear_bias_statistics_from_stats(BFD_bias_statistics=[],
                                                                             KSB_bias_statistics=([],
                                                                                                  []),
