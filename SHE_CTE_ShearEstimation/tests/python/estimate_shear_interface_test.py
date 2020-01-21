@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2019-05-02"
+__updated__ = "2020-01-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,20 +21,19 @@ __updated__ = "2019-05-02"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
+import pytest
 import time
 
+from ElementsServices.DataSync import DataSync
+from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
+import SHE_LensMC.SHE_measure_shear
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import mdb
 from SHE_PPT.file_io import read_pickled_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.shear_estimates import tf as setf
-import pytest
-
-from ElementsServices.DataSync import downloadTestData, localTestFile
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
-import SHE_LensMC.SHE_measure_shear
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -62,13 +61,14 @@ class TestCase:
     def setup(self, tmpdir):
 
         # Download the MDB from WebDAV
-        downloadTestData("testdata/sync.conf", "testdata/test_mdb.txt")
-        mdb.init(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml"))
-        assert os.path.isfile(localTestFile(test_data_location, "SHE_PPT/sample_mdb.xml")), f"Cannot find file: SHE_PPT/sample_mdb.xml"
+        self.sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
+        self.sync_mdb.download()
+        self.mdb_filename = self.sync_mdb.absolutePath("SHE_PPT/sample_mdb.xml")
         
         # Download the data stack files from WebDAV
-        downloadTestData("testdata/sync.conf", "testdata/test_data_stack.txt")
-        self.qualified_data_images_filename = localTestFile(test_data_location, "SHE_CTE/data/data_images.json")
+        self.sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
+        self.sync_datastack.download()
+        self.qualified_data_images_filename = self.sync_datastack.absolutePath("SHE_CTE/data/data_images.json")
         assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
         
         # Get the workdir based on where the data images listfile is
