@@ -65,6 +65,8 @@ class TestCase:
         self.sync_mdb.download()
         self.mdb_filename = self.sync_mdb.absolutePath("SHE_PPT/sample_mdb.xml")
         
+        mdb.init(self.mdb_filename)
+        
         # Download the data stack files from WebDAV
         self.sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
         self.sync_datastack.download()
