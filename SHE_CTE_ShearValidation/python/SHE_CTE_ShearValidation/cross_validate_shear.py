@@ -41,11 +41,6 @@ setfs = {"KSB": setf,
          "LensMC": setf,
          "BFD": bfdtf}
 
-products.calibration_parameters.init()
-products.shear_estimates.init()
-products.shear_validation_stats.init()
-products.validated_shear_estimates.init()
-
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
                                    other_shear_estimates_tables=None,
