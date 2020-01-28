@@ -161,7 +161,8 @@ def cross_validate_shear(args, dry_run=False):
         primary_shear_estimates_table.write(join(args.workdir, validated_shear_estimates_filename))
 
     validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
-        validated_shear_estimates_filename)
+        filename=validated_shear_estimates_filename,
+        spatial_footprint=shear_estimates_prod)
 
     write_xml_product(validated_shear_estimates_prod, args.cross_validated_shear_estimates_product,
                       workdir=args.workdir)
