@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2019-12-11"
+__updated__ = "2020-01-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -62,8 +62,8 @@ def print_bias_from_product(p, workdir):
             logger.warn('#')
             continue
 
-        if (np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m) or
-                g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf"):
+        if (g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf" or
+            np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m)):
             logger.warn("Bad bias measurements for method " + method)
             continue
 
