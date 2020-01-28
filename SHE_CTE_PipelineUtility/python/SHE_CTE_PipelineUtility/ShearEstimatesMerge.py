@@ -221,7 +221,7 @@ def shear_estimates_merge_from_args(args):
 
     # Create the output product
     combined_shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
-        spatial_coverage=shear_estimates_table_product_filenames)
+        spatial_footprint=shear_estimates_table_product_filenames)
 
     for method in methods:
 
