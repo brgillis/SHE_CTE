@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2019-10-28"
+__updated__ = "2020-01-28"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -220,7 +220,8 @@ def shear_estimates_merge_from_args(args):
     combined_shear_estimates_tables = dict.fromkeys(methods)
 
     # Create the output product
-    combined_shear_estimates_product = products.shear_estimates.create_shear_estimates_product()
+    combined_shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
+        spatial_footprint=os.path.join(args.workdir, shear_estimates_table_product_filenames[0]))
 
     for method in methods:
 

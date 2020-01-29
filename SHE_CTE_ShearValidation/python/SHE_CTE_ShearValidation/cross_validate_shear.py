@@ -41,11 +41,6 @@ setfs = {"KSB": setf,
          "LensMC": setf,
          "BFD": bfdtf}
 
-products.calibration_parameters.init()
-products.shear_estimates.init()
-products.shear_validation_stats.init()
-products.validated_shear_estimates.init()
-
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
                                    other_shear_estimates_tables=None,
@@ -112,7 +107,7 @@ def cross_validate_shear(args, dry_run=False):
 
         filename = shear_estimates_prod.get_method_filename(method)
 
-        if filename is not None and filename != "None":
+        if filename is not None and filename != "None" and filename != "data/None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, setfs[method]):
                 logger.warn("Shear estimates table from " +
@@ -166,7 +161,8 @@ def cross_validate_shear(args, dry_run=False):
         primary_shear_estimates_table.write(join(args.workdir, validated_shear_estimates_filename))
 
     validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
-        validated_shear_estimates_filename)
+        filename=validated_shear_estimates_filename,
+        spatial_footprint=shear_estimates_prod)
 
     write_xml_product(validated_shear_estimates_prod, args.cross_validated_shear_estimates_product,
                       workdir=args.workdir)
