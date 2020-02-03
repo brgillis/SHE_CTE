@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2019-08-26"
+__updated__ = "2020-01-28"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -24,6 +24,13 @@ __updated__ = "2019-08-26"
 import copy
 import os
 
+import SHE_CTE
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -39,14 +46,6 @@ from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
 from astropy.table import Table
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
@@ -179,7 +178,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                                 subdir=subfolder_name),
         REGAUSS_filename=get_allowed_filename("REGAUSS-SHM", estimates_instance_id,
                                               version=SHE_CTE.__version__,
-                                              subdir=subfolder_name))
+                                              subdir=subfolder_name),
+        spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
     if not dry_run:
 
@@ -196,12 +196,6 @@ def estimate_shears_from_args(args, dry_run=False):
         else:
             # Default to using all methods
             methods = list(estimation_methods.keys())
-
-        # Make sure BFD is the last method run so we can manage memory around it better
-        if "BFD" in methods:
-            methods.remove("BFD")
-            methods.append("BFD")
-            bfd_training_data = None
 
         for method in methods:
 
@@ -231,8 +225,6 @@ def estimate_shears_from_args(args, dry_run=False):
                             raise ValueError(
                                 "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
-                    if method == "BFD":
-                        bfd_training_data = training_data
                 else:
                     training_data = None
 
@@ -300,19 +292,6 @@ def estimate_shears_from_args(args, dry_run=False):
 
             # Output the shear estimates
             hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
-
-            if method == 'BFD':
-                try:
-                    pmem = os.popen('ps -p ' + str(os.getpid()) + ' -o pmem').readlines()[-1].split()[0]
-                    logger.debug("Memory used before deletion: " + pmem + "%")
-                    del data_stack  # try to save memory before SHE_BFD_BoostTest
-                    pmem = os.popen('ps -p ' + str(os.getpid()) + ' -o pmem').readlines()[-1].split()[0]
-                    logger.debug("Memory used after deletion: " + pmem + "%")
-                    bfd_perform_integration(target_file=os.path.join(
-                        args.workdir, shear_estimates_filename), template_file=os.path.join(
-                        args.workdir,bfd_training_data))
-                except Exception as e:
-                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
     else:  # Dry run
 

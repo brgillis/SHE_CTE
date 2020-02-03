@@ -1,0 +1,140 @@
+""" @file BFDIntegrate.py
+
+    Created 03 Dec 2019
+
+    Main program for performing BFD integration
+"""
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+import argparse
+
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+from SHE_CTE.magic_values import force_dry_run
+from SHE_CTE_ShearEstimation.bfd_integrate import perform_bfd_integration
+
+
+def defineSpecificProgramOptions():
+    """
+    @brief
+        Defines options for this program.
+
+    @return
+        An ArgumentParser.
+    """
+
+    logger = getLogger(__name__)
+
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_BFDIntegrate defineSpecificProgramOptions()')
+    logger.debug('#')
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
+    parser.add_argument('--dry_run', action='store_true',
+                        help='Dry run (no data processed).')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enables debug mode - only process first 1000 galaxies.')
+
+    # Required input arguments
+
+    parser.add_argument('--shear_estimates_product', type=str,
+                        help='XML data product to contain file links to the shear estimates tables.')
+
+    parser.add_argument('--bfd_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
+                        help='Data product for BFD training data.')
+
+    parser.add_argument("--pipeline_config", default=None, type=str,
+                        help="Pipeline-wide configuration file.")
+
+    parser.add_argument('--mdb', type=str, default=None,  # Use default to allow simple running with default values
+                        help='Mission Database .xml file')
+
+    # Output arguments
+    parser.add_argument('--shear_estimates_product_update',type=str,
+                        help='XML data product to contain file links to the shear estimates tables after BFD integration.')
+
+    # Optional input arguments (cannot be used in pipeline)
+
+    parser.add_argument('--methods', type=str, nargs='*', default=None,
+                        help='Which shear estimation methods to apply. If not specified, all will be run.')
+
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
+
+    logger.debug('# Exiting SHE_CTE_BFDIntegrate defineSpecificProgramOptions()')
+
+    return parser
+
+
+def mainMethod(args):
+    """
+    @brief
+        The "main" method for this program, to estimate shears.
+
+    @details
+        This method is the entry point to the program. In this sense, it is
+        similar to a main (and it is why it is called mainMethod()).
+    """
+
+    logger = getLogger(__name__)
+
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_BFDIntegrate mainMethod()')
+    logger.debug('#')
+
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_BFDIntegrate",store_true=["profile", "debug", "dry_run"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
+
+    dry_run = args.dry_run or force_dry_run
+
+    if args.profile:
+        import cProfile
+        cProfile.runctx("perform_bfd_integration(args)", {},
+                        {"perform_bfd_integration": perform_bfd_integration,
+                         "args": args,
+                         "dry_run": dry_run},
+                        filename="bfd_integration.prof")
+    else:
+        perform_bfd_integration(args, dry_run)
+
+    logger.debug('# Exiting SHE_CTE_BFDIntegrate mainMethod()')
+
+    return
+
+
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
+
+    parser = defineSpecificProgramOptions()
+
+    args = parser.parse_args()
+
+    mainMethod(args)
+
+    return
+
+
+if __name__ == "__main__":
+    main()
