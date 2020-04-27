@@ -5,7 +5,7 @@
     Performs BFD Integration step
 """
 
-__updated__ = "2019-12-03"
+__updated__ = "2020-04-27"
 
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -42,6 +42,11 @@ from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
 import numpy as np
 
+estimation_methods = ["KSB",
+                      "REGAUSS",
+                      "MomentsML",
+                      "LensMC",
+                      "BFD"]
 
 def perform_bfd_integration(args, dry_run=False):
     """
@@ -99,7 +104,7 @@ def perform_bfd_integration(args, dry_run=False):
             methods = pipeline_config[ConfigKeys.ES_METHODS.value].split()
         else:
             # Default to using all methods
-            methods = list(estimation_methods.keys())
+            methods = estimation_methods
 
         for method in methods:
             print(method)
