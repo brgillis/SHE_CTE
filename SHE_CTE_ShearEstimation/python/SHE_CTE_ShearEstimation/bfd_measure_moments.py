@@ -5,7 +5,7 @@
     Provides functions to measure the BFD moments of galaxies
 """
 
-__updated__ = "2019-05-28"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,32 +19,28 @@ __updated__ = "2019-05-28"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-from math import sqrt
-import os
-import pdb
+
 import subprocess
+
+from SHE_PPT import products
+from SHE_PPT.file_io import find_file, get_data_filename
+from SHE_PPT.logging import getLogger
+from SHE_PPT.magic_values import scale_label
+from SHE_PPT.table_utility import is_in_format
+from astropy.table import Table
 
 from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
 from SHE_BFD_CalculateMoments import bfd
 from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product, find_file, get_data_filename
-from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label, stamp_size_label
-from SHE_PPT.noise import get_var_ADU_per_pixel
-from SHE_PPT.she_image import SHEImage
 from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
 from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_formats.psf import tf as pstf
-from SHE_PPT.table_utility import is_in_format
-from astropy.table import Table
 import numpy as np
 
-
-#bfd = None
-#get_bfd_info = None
-#load_bfd_configuration = None
+# bfd = None
+# get_bfd_info = None
+# load_bfd_configuration = None
 stamp_size = 128  # hardcoded for now
 x_buffer = -5
 y_buffer = -5

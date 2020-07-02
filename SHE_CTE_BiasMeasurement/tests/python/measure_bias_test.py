@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-12-19"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,7 +23,7 @@ __updated__ = "2019-12-19"
 from os.path import join
 
 from SHE_PPT import products
-from SHE_PPT.file_io import write_xml_product, read_xml_product,\
+from SHE_PPT.file_io import write_xml_product, read_xml_product, \
     get_allowed_filename, write_listfile
 from SHE_PPT.math import LinregressStatistics
 from numpy.testing import assert_almost_equal
@@ -128,10 +128,10 @@ class TestMeasureStatistics:
 
         # Set up the files to be read in
 
-        shear_bias_statistics_prod_0 = products.shear_bias_statistics.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_0 = products.she_bias_statistics.create_she_bias_statistics_product()
         shear_bias_statistics_prod_0.set_KSB_bias_statistics(
             (self.g1_0_bias_statistics, self.g2_0_bias_statistics), workdir=self.workdir)
-        shear_bias_statistics_prod_1 = products.shear_bias_statistics.create_shear_bias_statistics_product()
+        shear_bias_statistics_prod_1 = products.she_bias_statistics.create_she_bias_statistics_product()
         shear_bias_statistics_prod_1.set_KSB_bias_statistics(
             (self.g1_1_bias_statistics, self.g2_1_bias_statistics), workdir=self.workdir)
 

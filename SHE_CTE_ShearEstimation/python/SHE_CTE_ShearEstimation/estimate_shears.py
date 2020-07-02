@@ -5,8 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-01-28"
-
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,13 +23,6 @@ __updated__ = "2020-01-28"
 import copy
 import os
 
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -39,22 +31,28 @@ from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_fi
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
 from astropy.table import Table
-import numpy as np
 
+import SHE_CTE
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
+from SHE_PPT.table_formats.detections import tf as detf
+from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+import numpy as np
 
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_control_training_data,
                    "BFD": bfd_load_training_data}
-
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
@@ -115,9 +113,9 @@ def estimate_shears_from_args(args, dry_run=False):
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
     if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
-                                                                  products.calibration_parameters.DpdSheCalibrationParametersProduct):
+                                                                  products.she_psf_calibration_parameters.dpdShePsfCalibrationParameters):
         raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                         + " is invalid type.")
+                         +" is invalid type.")
 
     # Set up method data filenames
 
@@ -163,7 +161,7 @@ def estimate_shears_from_args(args, dry_run=False):
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
         estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
 
-    shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
+    shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
                                           version=SHE_CTE.__version__,
                                           subdir=subfolder_name),

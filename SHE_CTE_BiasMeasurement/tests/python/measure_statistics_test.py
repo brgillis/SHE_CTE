@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2019-09-05"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -15,25 +15,26 @@ __updated__ = "2019-09-05"
 #
 # This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
+# she_simulated_catalog.
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from copy import deepcopy
-from numpy.testing import assert_almost_equal
 import os
 from os.path import join
-import pytest
 
-from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
-from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 from SHE_PPT import products
 from SHE_PPT import table_formats
 from SHE_PPT.file_io import write_xml_product, read_xml_product
 from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
-from SHE_PPT.table_formats.details import tf as datf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
+from numpy.testing import assert_almost_equal
+import pytest
+
+from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
+from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_she_bias_statistics
+from SHE_PPT.table_formats.she_measurements import tf as setf
+from SHE_PPT.table_formats.she_simulated_catalog import tf as datf
 import numpy as np
 
 
@@ -43,9 +44,9 @@ class Args(object):
         self.workdir = None
         self.logdir = None
         self.profile = False
-        self.details_table = None
-        self.shear_estimates = None
-        self.shear_bias_statistics = None
+        self.she_simulated_catalog_table = None
+        self.she_measurements = None
+        self.she_bias_statistics = None
         self.archive_dir = None
         self.webdav_dir = None
         self.webdav_archive = False
@@ -62,10 +63,10 @@ class TestMeasureStatistics:
     def setup_class(cls):
 
         # Set up some mock data for the test
-        cls.details = table_formats.details.initialise_details_table()
-        cls.details_group = table_formats.details.initialise_details_table()
-        cls.shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
-        cls.shear_estimates_group = table_formats.shear_estimates.initialise_shear_estimates_table()
+        cls.she_simulated_catalog = table_formats.she_simulated_catalog.initialise_she_simulated_catalog_table()
+        cls.she_simulated_catalog_group = table_formats.she_simulated_catalog.initialise_she_simulated_catalog_table()
+        cls.she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
+        cls.she_measurements_group = table_formats.she_measurements.initialise_she_measurements_table()
 
         cls.len_group = 2  # Number of galaxies per group
 
@@ -77,7 +78,7 @@ class TestMeasureStatistics:
         g1_true = np.array([-0.02, -0.01, 0.00, 0.01, 0.02])
         g1_est = (1 + cls.ex_m1) * g1_true + cls.ex_c1 + np.array([0.25, -0.25, 0, -0.25, 0.25])
         g1_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
-        cls.ex_w1 = np.sum(g1_err**-2)
+        cls.ex_w1 = np.sum(g1_err ** -2)
 
         g1_true_group = np.concatenate((g1_true, g1_true))
         g1_est_group = np.concatenate((g1_est, g1_est))
@@ -93,7 +94,7 @@ class TestMeasureStatistics:
         g2_true = np.array([0.00, 0.01, 0.02, 0.03, 0.04])
         g2_est = (1 + cls.ex_m2) * g2_true + cls.ex_c2 + np.array([-0.25, 0.25, 0, 0.25, -0.25])
         g2_err = np.array([0.25, 0.25, 0.25, 0.25, 0.25])
-        cls.ex_w2 = np.sum(g2_err**-2)
+        cls.ex_w2 = np.sum(g2_err ** -2)
 
         g2_true_group = np.concatenate((g2_true, g2_true))
         g2_est_group = np.concatenate((g2_est, g2_est))
@@ -102,34 +103,34 @@ class TestMeasureStatistics:
         g2_est_group += np.array([-0.2] * 5 + [0.2] * 5)
 
         for i in range(len(g1_true)):
-            cls.details.add_row(vals={datf.ID: i,
+            cls.she_simulated_catalog.add_row(vals={datf.ID: i,
                                       datf.group_ID: i})
-            cls.shear_estimates.add_row(vals={setf.ID: i})
+            cls.she_measurements.add_row(vals={setf.ID: i})
         for j in range(cls.len_group):
             for i in range(len(g1_true)):
-                cls.details_group.add_row(vals={datf.ID: i * cls.len_group + j,
+                cls.she_simulated_catalog_group.add_row(vals={datf.ID: i * cls.len_group + j,
                                                 datf.group_ID: i})
-                cls.shear_estimates_group.add_row(vals={setf.ID: i * cls.len_group + j})
+                cls.she_measurements_group.add_row(vals={setf.ID: i * cls.len_group + j})
 
-        # Save details data
-        cls.details[datf.g1] = g1_true
-        cls.details[datf.g2] = g2_true
+        # Save she_simulated_catalog data
+        cls.she_simulated_catalog[datf.g1] = g1_true
+        cls.she_simulated_catalog[datf.g2] = g2_true
 
-        # Save details_group data
-        cls.details_group[datf.g1] = g1_true_group
-        cls.details_group[datf.g2] = g2_true_group
+        # Save she_simulated_catalog_group data
+        cls.she_simulated_catalog_group[datf.g1] = g1_true_group
+        cls.she_simulated_catalog_group[datf.g2] = g2_true_group
 
-        # Save shear_estimates data
-        cls.shear_estimates[setf.g1] = g1_est
-        cls.shear_estimates[setf.g2] = g2_est
-        cls.shear_estimates[setf.g1_err] = g1_err
-        cls.shear_estimates[setf.g2_err] = g2_err
+        # Save she_measurements data
+        cls.she_measurements[setf.g1] = g1_est
+        cls.she_measurements[setf.g2] = g2_est
+        cls.she_measurements[setf.g1_err] = g1_err
+        cls.she_measurements[setf.g2_err] = g2_err
 
-        # Save shear_estimates_group data
-        cls.shear_estimates_group[setf.g1] = g1_est_group
-        cls.shear_estimates_group[setf.g2] = g2_est_group
-        cls.shear_estimates_group[setf.g1_err] = g1_err_group
-        cls.shear_estimates_group[setf.g2_err] = g2_err_group
+        # Save she_measurements_group data
+        cls.she_measurements_group[setf.g1] = g1_est_group
+        cls.she_measurements_group[setf.g2] = g2_est_group
+        cls.she_measurements_group[setf.g1_err] = g1_err_group
+        cls.she_measurements_group[setf.g2_err] = g2_err_group
 
         return
 
@@ -145,10 +146,10 @@ class TestMeasureStatistics:
 
         return
 
-    def test_calculate_shear_bias_statistics(self):
-        """Try using the calculate_shear_bias_statistics function and check the results.
+    def test_calculate_she_bias_statistics(self):
+        """Try using the calculate_she_bias_statistics function and check the results.
         """
-        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.shear_estimates, self.details)
+        g1_bias_stats, g2_bias_stats = calculate_she_bias_statistics(self.she_measurements, self.she_simulated_catalog)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
@@ -165,42 +166,42 @@ class TestMeasureStatistics:
         return
 
     def test_bad_shear_bias_input(self):
-        """Tests that the calculate_shear_bias_statistics method is resilient to bad measurements.
+        """Tests that the calculate_she_bias_statistics method is resilient to bad measurements.
         """
 
         # Set up data with some bad input
 
-        somebad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
-        allbad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
+        somebad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
+        allbad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
 
-        for i in range(len(self.shear_estimates)):
-            somebad_shear_estimates.add_row(vals={setf.ID: i})
-            allbad_shear_estimates.add_row(vals={setf.ID: i})
+        for i in range(len(self.she_measurements)):
+            somebad_she_measurements.add_row(vals={setf.ID: i})
+            allbad_she_measurements.add_row(vals={setf.ID: i})
 
-        somebad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
-        somebad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
-        somebad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
-        somebad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+        somebad_she_measurements[setf.g1] = self.she_measurements[setf.g1]
+        somebad_she_measurements[setf.g2] = self.she_measurements[setf.g2]
+        somebad_she_measurements[setf.g1_err] = self.she_measurements[setf.g1_err]
+        somebad_she_measurements[setf.g2_err] = self.she_measurements[setf.g2_err]
 
-        allbad_shear_estimates[setf.g1] = self.shear_estimates[setf.g1]
-        allbad_shear_estimates[setf.g2] = self.shear_estimates[setf.g2]
-        allbad_shear_estimates[setf.g1_err] = self.shear_estimates[setf.g1_err]
-        allbad_shear_estimates[setf.g2_err] = self.shear_estimates[setf.g2_err]
+        allbad_she_measurements[setf.g1] = self.she_measurements[setf.g1]
+        allbad_she_measurements[setf.g2] = self.she_measurements[setf.g2]
+        allbad_she_measurements[setf.g1_err] = self.she_measurements[setf.g1_err]
+        allbad_she_measurements[setf.g2_err] = self.she_measurements[setf.g2_err]
 
         for i in [0, 3]:
-            row = somebad_shear_estimates[i]
+            row = somebad_she_measurements[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
-        for i in range(len(self.shear_estimates)):
-            row = allbad_shear_estimates[i]
+        for i in range(len(self.she_measurements)):
+            row = allbad_she_measurements[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
 
-        # Check that we don't crash by calling calculate_shear_bias_statistics
-        g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
-            somebad_shear_estimates, self.details)
-        g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
-            allbad_shear_estimates, self.details)
+        # Check that we don't crash by calling calculate_she_bias_statistics
+        g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_she_bias_statistics(
+            somebad_she_measurements, self.she_simulated_catalog)
+        g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_she_bias_statistics(
+            allbad_she_measurements, self.she_simulated_catalog)
 
         # Check the statistics all have the expected weight
 
@@ -218,43 +219,43 @@ class TestMeasureStatistics:
         return
 
     def test_bad_shear_bias_input_group(self):
-        """Tests that the calculate_shear_bias_statistics method is resilient to bad measurements.
+        """Tests that the calculate_she_bias_statistics method is resilient to bad measurements.
         """
 
         # Set up data with some bad input
 
-        somebad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
-        allbad_shear_estimates = table_formats.shear_estimates.initialise_shear_estimates_table()
+        somebad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
+        allbad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
 
         for j in range(self.len_group):
-            for i in range(len(self.shear_estimates)):
-                somebad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
-                allbad_shear_estimates.add_row(vals={setf.ID: i * self.len_group + j})
+            for i in range(len(self.she_measurements)):
+                somebad_she_measurements.add_row(vals={setf.ID: i * self.len_group + j})
+                allbad_she_measurements.add_row(vals={setf.ID: i * self.len_group + j})
 
-        somebad_shear_estimates[setf.g1] = self.shear_estimates_group[setf.g1]
-        somebad_shear_estimates[setf.g2] = self.shear_estimates_group[setf.g2]
-        somebad_shear_estimates[setf.g1_err] = self.shear_estimates_group[setf.g1_err]
-        somebad_shear_estimates[setf.g2_err] = self.shear_estimates_group[setf.g2_err]
+        somebad_she_measurements[setf.g1] = self.she_measurements_group[setf.g1]
+        somebad_she_measurements[setf.g2] = self.she_measurements_group[setf.g2]
+        somebad_she_measurements[setf.g1_err] = self.she_measurements_group[setf.g1_err]
+        somebad_she_measurements[setf.g2_err] = self.she_measurements_group[setf.g2_err]
 
-        allbad_shear_estimates[setf.g1] = self.shear_estimates_group[setf.g1]
-        allbad_shear_estimates[setf.g2] = self.shear_estimates_group[setf.g2]
-        allbad_shear_estimates[setf.g1_err] = self.shear_estimates_group[setf.g1_err]
-        allbad_shear_estimates[setf.g2_err] = self.shear_estimates_group[setf.g2_err]
+        allbad_she_measurements[setf.g1] = self.she_measurements_group[setf.g1]
+        allbad_she_measurements[setf.g2] = self.she_measurements_group[setf.g2]
+        allbad_she_measurements[setf.g1_err] = self.she_measurements_group[setf.g1_err]
+        allbad_she_measurements[setf.g2_err] = self.she_measurements_group[setf.g2_err]
 
         for i in [0, 3, 7, 8]:
-            row = somebad_shear_estimates[i]
+            row = somebad_she_measurements[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
-        for i in range(len(self.shear_estimates_group)):
-            row = allbad_shear_estimates[i]
+        for i in range(len(self.she_measurements_group)):
+            row = allbad_she_measurements[i]
             row[setf.g1], row[setf.g2] = np.nan, np.nan
             row[setf.g1_err], row[setf.g2_err] = np.inf, np.inf
 
-        # Check that we don't crash by calling calculate_shear_bias_statistics
-        g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
-            somebad_shear_estimates, self.details_group)
-        g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
-            allbad_shear_estimates, self.details_group)
+        # Check that we don't crash by calling calculate_she_bias_statistics
+        g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_she_bias_statistics(
+            somebad_she_measurements, self.she_simulated_catalog_group)
+        g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_she_bias_statistics(
+            allbad_she_measurements, self.she_simulated_catalog_group)
 
         # Check the statistics all have the expected weight
 
@@ -271,10 +272,10 @@ class TestMeasureStatistics:
 
         return
 
-    def test_calculate_shear_bias_statistics_group(self):
-        """Try using the calculate_shear_bias_statistics function and check the results on grouped data.
+    def test_calculate_she_bias_statistics_group(self):
+        """Try using the calculate_she_bias_statistics function and check the results on grouped data.
         """
-        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.shear_estimates_group, self.details_group)
+        g1_bias_stats, g2_bias_stats = calculate_she_bias_statistics(self.she_measurements_group, self.she_simulated_catalog_group)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
@@ -295,32 +296,32 @@ class TestMeasureStatistics:
         args = Args()
         args.workdir = self.workdir
         args.logdir = self.logdir
-        args.details_table = "test_details_table.xml"
-        args.shear_estimates = "test_shear_estimates.xml"
-        args.shear_bias_statistics = "test_shear_statistics.xml"
+        args.she_simulated_catalog_table = "test_she_simulated_catalog_table.xml"
+        args.she_measurements = "test_she_measurements.xml"
+        args.she_bias_statistics = "test_shear_statistics.xml"
 
         # Set up the files to be read in
 
         os.makedirs(os.path.join(args.workdir, "data"))
 
-        details_filename = "test_details_table.fits"
-        details_product = products.details.create_details_product(details_filename)
-        write_xml_product(details_product, args.details_table, workdir=args.workdir)
-        self.details.write(join(args.workdir, "data/" + details_filename), format="fits")
+        she_simulated_catalog_filename = "test_she_simulated_catalog_table.fits"
+        she_simulated_catalog_product = products.she_simulated_catalog.create_dpd_she_simulated_catalog(she_simulated_catalog_filename)
+        write_xml_product(she_simulated_catalog_product, args.she_simulated_catalog_table, workdir=args.workdir)
+        self.she_simulated_catalog.write(join(args.workdir, "data/" + she_simulated_catalog_filename), format="fits")
 
-        shear_estimates_filename = "test_shear_estimates.fits"
-        shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
-            KSB_filename=shear_estimates_filename)
-        write_xml_product(shear_estimates_product, args.shear_estimates, workdir=args.workdir)
-        self.shear_estimates.write(join(args.workdir, "data/" + shear_estimates_filename), format="fits")
+        she_measurements_filename = "test_she_measurements.fits"
+        she_measurements_product = products.she_measurements.create_she_measurements_product(
+            KSB_filename=she_measurements_filename)
+        write_xml_product(she_measurements_product, args.she_measurements, workdir=args.workdir)
+        self.she_measurements.write(join(args.workdir, "data/" + she_measurements_filename), format="fits")
 
         # Call the function
         measure_statistics_from_args(args)
 
         # Read in and check the results
-        shear_bias_statistics_product = read_xml_product(join(args.workdir, args.shear_bias_statistics))
+        she_bias_statistics_product = read_xml_product(join(args.workdir, args.she_bias_statistics))
 
-        g1_bias_stats, g2_bias_stats = shear_bias_statistics_product.get_KSB_bias_statistics(workdir=self.workdir)
+        g1_bias_stats, g2_bias_stats = she_bias_statistics_product.get_KSB_bias_statistics(workdir=self.workdir)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))

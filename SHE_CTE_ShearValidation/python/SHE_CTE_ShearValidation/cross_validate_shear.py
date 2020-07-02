@@ -18,22 +18,18 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import math
 from os.path import join
 
-import SHE_CTE
-from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.table_utility import is_in_format
+from astropy.table import Table
+
+import SHE_CTE
 from SHE_PPT.table_formats.bfd_moments import tf as bfdtf
 from SHE_PPT.table_formats.shear_estimates import tf as setf
-from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from astropy.io import fits
-from astropy.table import Table
-import numpy as np
-
 
 setfs = {"KSB": setf,
          "REGAUSS": setf,
@@ -96,9 +92,9 @@ def cross_validate_shear(args, dry_run=False):
 
     shear_estimates_prod = read_xml_product(join(args.workdir, args.shear_estimates_product))
 
-    if not isinstance(shear_estimates_prod, products.shear_estimates.dpdShearMeasurement):
+    if not isinstance(shear_estimates_prod, products.she_measurements.dpdSheMeasurements):
         raise ValueError("Shear estimates product from " + join(args.workdir, args.shear_estimates_product)
-                         + " is invalid type.")
+                         +" is invalid type.")
 
     primary_shear_estimates_table = None
     other_shear_estimates_tables = {}
@@ -130,9 +126,9 @@ def cross_validate_shear(args, dry_run=False):
         logger.info("Reading" + dry_label + " shear validation statistics...")
 
         shear_validation_stats_prod = read_xml_product(join(args.workdir, args.shear_validation_statistics_table))
-        if not isinstance(shear_validation_stats_prod, products.shear_validation_stats.DpdSheShearValidationStatsProduct):
+        if not isinstance(shear_validation_stats_prod, products.she_expected_shear_validation_statistics.DpdSheExpectedShearValidationStatistics):
             raise ValueError("Shear validation statistics product from " + join(args.workdir, args.shear_validation_stats_product)
-                             + " is invalid type.")
+                             +" is invalid type.")
 
         shear_validation_stats_filename = shear_validation_stats_prod.get_filename()
 
@@ -160,7 +156,7 @@ def cross_validate_shear(args, dry_run=False):
                                                                   version=SHE_CTE.__version__)
         primary_shear_estimates_table.write(join(args.workdir, validated_shear_estimates_filename))
 
-    validated_shear_estimates_prod = products.validated_shear_estimates.create_validated_shear_estimates_product(
+    validated_shear_estimates_prod = products.she_validated_measurements.create_dpd_she_validated_measurements(
         filename=validated_shear_estimates_filename,
         spatial_footprint=shear_estimates_prod)
 

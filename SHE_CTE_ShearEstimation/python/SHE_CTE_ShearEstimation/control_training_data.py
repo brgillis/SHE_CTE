@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2019-04-19"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,16 +22,14 @@ __updated__ = "2019-04-19"
 
 import os
 
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
-from SHE_PPT.table_formats.ksb_training import tf as kttf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
-import numpy as np
+
+from SHE_PPT.table_formats.ksb_training import tf as kttf
+from SHE_PPT.table_formats.shear_estimates import tf as setf
 
 
 class ControlTraining(object):

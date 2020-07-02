@@ -5,8 +5,7 @@
     Performs BFD Integration step
 """
 
-__updated__ = "2020-04-27"
-
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,32 +20,24 @@ __updated__ = "2020-04-27"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import copy
 import os
-import pdb
-from SHE_PPT import magic_values as ppt_mv
+
 from SHE_PPT import mdb
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
+from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              read_listfile, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
-from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import hash_any
-from astropy.io import fits
-from astropy.table import Table
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config
 
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-import numpy as np
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_perform_integration, bfd_load_training_data
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
 
 estimation_methods = ["KSB",
                       "REGAUSS",
                       "MomentsML",
                       "LensMC",
                       "BFD"]
+
 
 def perform_bfd_integration(args, dry_run=False):
     """
@@ -84,13 +75,12 @@ def perform_bfd_integration(args, dry_run=False):
 
     if not dry_run:
         # Set up BFD training Data
-        
-        bfd_training_data_filename=args.bfd_training_data
-        bfd_training_data=bfd_load_training_data(bfd_training_data_filename,workdir=args.workdir)
+
+        bfd_training_data_filename = args.bfd_training_data
+        bfd_training_data = bfd_load_training_data(bfd_training_data_filename, workdir=args.workdir)
 
         # Read in Shear Estimates Product
-        shear_estimates_prod_table = read_xml_product(os.path.join(args.workdir,args.shear_estimates_product))
-
+        shear_estimates_prod_table = read_xml_product(os.path.join(args.workdir, args.shear_estimates_product))
 
         method_shear_estimates = {}
 
@@ -126,7 +116,7 @@ def perform_bfd_integration(args, dry_run=False):
                 pmem = os.popen('ps -p ' + str(os.getpid()) + ' -o pmem').readlines()[-1].split()[0]
                 logger.debug("Memory used after deletion: " + pmem + "%")
                 bfd_perform_integration(target_file=os.path.join(args.workdir, shear_estimates_filename),
-                                        template_file=os.path.join(args.workdir,bfd_training_data))
+                                        template_file=os.path.join(args.workdir, bfd_training_data))
             except Exception as e:
                 logger.warn("Failsafe exception block triggered with exception: " + str(e))
 
