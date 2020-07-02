@@ -6,16 +6,14 @@
 """
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import get_linregress_statistics, LinregressStatistics
-from SHE_PPT.table_formats.details import tf as datf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 from astropy import table
 from numpy.testing.utils import assert_allclose
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
 import numpy as np
 
-
-__updated__ = "2019-07-17"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -29,8 +27,6 @@ __updated__ = "2019-07-17"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
-
 
 
 def compress_details_and_measurements(combined_table):
@@ -48,7 +44,7 @@ def compress_details_and_measurements(combined_table):
 
     # First go through and see what we need to combine
     for row in combined_table:
-        group_id = row[datf.group_ID]
+        group_id = row[simc_tf.group_ID]
         if not group_id in groups:
             groups[group_id] = [row]
         else:
@@ -60,11 +56,11 @@ def compress_details_and_measurements(combined_table):
         return combined_table
 
     # Create a new table for compressed data
-    compressed_table = table.Table(names=[datf.group_ID, datf.g1, datf.g2,
-                                          setf.g1, setf.g2, setf.g1_err, setf.g2_err],
-                                   dtype=[datf.dtypes[datf.group_ID], datf.dtypes[datf.g1], datf.dtypes[datf.g2],
-                                          setf.dtypes[setf.g1], setf.dtypes[setf.g2],
-                                          setf.dtypes[setf.g1_err], setf.dtypes[setf.g2_err]])
+    compressed_table = table.Table(names=[simc_tf.group_ID, simc_tf.g1, simc_tf.g2,
+                                          sm_tf.g1, sm_tf.g2, sm_tf.g1_err, sm_tf.g2_err],
+                                   dtype=[simc_tf.dtypes[simc_tf.group_ID], simc_tf.dtypes[simc_tf.g1], simc_tf.dtypes[simc_tf.g2],
+                                          sm_tf.dtypes[sm_tf.g1], sm_tf.dtypes[sm_tf.g2],
+                                          sm_tf.dtypes[sm_tf.g1_err], sm_tf.dtypes[sm_tf.g2_err]])
 
     for group_id in groups:
 
@@ -73,7 +69,7 @@ def compress_details_and_measurements(combined_table):
         good_rows = []
 
         for row in all_rows:
-            g1, g2, g1_err, g2_err = row[setf.g1], row[setf.g2], row[setf.g1_err], row[setf.g2_err]
+            g1, g2, g1_err, g2_err = row[sm_tf.g1], row[sm_tf.g2], row[sm_tf.g1_err], row[sm_tf.g2_err]
             if (g1 > -2 and g1 < 2 and g2 > -2 and g2 < 2 and
                     g1_err > 0 and g1_err < 1e99 and g2_err > 0 and g2_err < 1e99):
                 good_rows.append(row)
@@ -81,7 +77,7 @@ def compress_details_and_measurements(combined_table):
         # Sort the data into numpy arrays
         num_good_rows = len(good_rows)
         data = {}
-        for name in [datf.g1, datf.g2, setf.g1, setf.g2, setf.g1_err, setf.g2_err]:
+        for name in [simc_tf.g1, simc_tf.g2, sm_tf.g1, sm_tf.g2, sm_tf.g1_err, sm_tf.g2_err]:
             data[name] = np.zeros(num_good_rows)
             for i in range(num_good_rows):
                 data[name][i] = good_rows[i][name]
@@ -91,13 +87,13 @@ def compress_details_and_measurements(combined_table):
             continue
 
         # Check all real values are close. If not, we shouldn't be grouping
-        assert_allclose(data[datf.g1], data[datf.g1][0])
-        assert_allclose(data[datf.g2], data[datf.g2][0])
+        assert_allclose(data[simc_tf.g1], data[simc_tf.g1][0])
+        assert_allclose(data[simc_tf.g2], data[simc_tf.g2][0])
 
         # Calculate unweighted means of the measurements but retain full weight
         # Must be unweighted to retain benefits of shape noise cancellation
-        g1_weight = data[setf.g1_err]**-2
-        g2_weight = data[setf.g2_err]**-2
+        g1_weight = data[sm_tf.g1_err] ** -2
+        g2_weight = data[sm_tf.g2_err] ** -2
 
         total_g1_weight = g1_weight.sum()
         total_g2_weight = g2_weight.sum()
@@ -105,20 +101,20 @@ def compress_details_and_measurements(combined_table):
         if total_g1_weight <= 0 or total_g2_weight <= 0:
             raise ValueError("Bad weights in combining shear measurements.")
 
-        combined_g1_err = total_g1_weight**-0.5
-        combined_g2_err = total_g2_weight**-0.5
+        combined_g1_err = total_g1_weight ** -0.5
+        combined_g2_err = total_g2_weight ** -0.5
 
-        mean_g1 = np.mean(data[setf.g1])
-        mean_g2 = np.mean(data[setf.g2])
+        mean_g1 = np.mean(data[sm_tf.g1])
+        mean_g2 = np.mean(data[sm_tf.g2])
 
         # Add these to the compressed table
-        compressed_table.add_row(vals={datf.group_ID: group_id,
-                                       datf.g1: data[datf.g1][0],
-                                       datf.g2: data[datf.g2][0],
-                                       setf.g1: mean_g1,
-                                       setf.g2: mean_g2,
-                                       setf.g1_err: combined_g1_err,
-                                       setf.g2_err: combined_g2_err})
+        compressed_table.add_row(vals={simc_tf.group_ID: group_id,
+                                       simc_tf.g1: data[simc_tf.g1][0],
+                                       simc_tf.g2: data[simc_tf.g2][0],
+                                       sm_tf.g1: mean_g1,
+                                       sm_tf.g2: mean_g2,
+                                       sm_tf.g1_err: combined_g1_err,
+                                       sm_tf.g2_err: combined_g2_err})
 
     return compressed_table
 
@@ -153,19 +149,19 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
         return g1_stats, g2_stats
 
     # Create a combined table, joined on galaxy ID
-    if setf.ID != datf.ID:
-        details_table.rename_column(datf.ID, setf.ID)
-    combined_table = table.join(estimates_table, details_table, keys=setf.ID)
-    if setf.ID != datf.ID:
-        details_table.rename_column(setf.ID, datf.ID)
+    if sm_tf.ID != simc_tf.ID:
+        details_table.rename_column(simc_tf.ID, sm_tf.ID)
+    combined_table = table.join(estimates_table, details_table, keys=sm_tf.ID)
+    if sm_tf.ID != simc_tf.ID:
+        details_table.rename_column(sm_tf.ID, simc_tf.ID)
 
     # Compress the table on group ID to properly handle shape noise cancellation
     compressed_table = compress_details_and_measurements(combined_table)
 
     # Get stats for both g1 and g2
     bias_stats = []
-    for g_est_colname, g_err_colname, g_true_colname in ((setf.g1, setf.g1_err, datf.g1,),
-                                                         (setf.g2, setf.g2_err, datf.g2,),):
+    for g_est_colname, g_err_colname, g_true_colname in ((sm_tf.g1, sm_tf.g1_err, simc_tf.g1,),
+                                                         (sm_tf.g2, sm_tf.g2_err, simc_tf.g2,),):
         lx = compressed_table[g_true_colname].data
         ly = compressed_table[g_est_colname].data
         ly_err = compressed_table[g_err_colname].data

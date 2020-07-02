@@ -5,7 +5,7 @@
     Provides functions to measure the BFD moments of galaxies
 """
 
-__updated__ = "2019-10-28"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,32 +20,25 @@ __updated__ = "2019-10-28"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from math import sqrt
-import os
-import pdb
 import subprocess
+
+from SHE_PPT.logging import getLogger
+from SHE_PPT.magic_values import scale_label
+from SHE_PPT.pipeline_utility import get_conditional_product
+from SHE_PPT.table_utility import is_in_format
+from astropy.table import Table
 
 from ElementsKernel.Auxiliary import getAuxiliaryPath, getAuxiliaryLocations
 from SHE_BFD_CalculateMoments import bfd
 from SHE_BFD_CalculateMoments.return_moments import get_bfd_info, load_bfd_configuration
 from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_PPT.file_io import read_xml_product, find_file, get_data_filename
-from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label, stamp_size_label
-from SHE_PPT.noise import get_var_ADU_per_pixel
-from SHE_PPT.pipeline_utility import get_conditional_product
-from SHE_PPT.she_image import SHEImage
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.psf import tf as pstf
-from SHE_PPT.table_utility import is_in_format
-from astropy.table import Table
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.she_bfd_moments import initialise_she_bfd_moments_table, tf as bfdm_tf
 import numpy as np
 
-
-#bfd = None
-#get_bfd_info = None
-#load_bfd_configuration = None
+# bfd = None
+# get_bfd_info = None
+# load_bfd_configuration = None
 stamp_size = 128  # hardcoded for now
 x_buffer = -5
 y_buffer = -5
@@ -62,27 +55,27 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
 #    config_data = load_bfd_configuration(mode='training')
     # initialize the table
     if config_data['isTarget'] == True:
-        bfd_moments_table = initialise_bfd_moments_table(optional_columns=[setf.bfd_moments,
-                                                                           setf.bfd_cov_even,
-                                                                           setf.bfd_cov_odd,
-                                                                           setf.bfd_pqr])
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns=[bfdm_tf.bfd_moments,
+                                                                           bfdm_tf.bfd_cov_even,
+                                                                           bfdm_tf.bfd_cov_odd,
+                                                                           bfdm_tf.bfd_pqr])
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
         nlost = 0
     else:
-        bfd_moments_table = initialise_bfd_moments_table(optional_columns=[setf.bfd_moments,
-                                                                           setf.bfd_deriv_moments_dg1,
-                                                                           setf.bfd_deriv_moments_dg2,
-                                                                           setf.bfd_deriv_moments_dmu,
-                                                                           setf.bfd_2ndderiv_moments_dg1dg1,
-                                                                           setf.bfd_2ndderiv_moments_dg1dg2,
-                                                                           setf.bfd_2ndderiv_moments_dg2dg2,
-                                                                           setf.bfd_2ndderiv_moments_dg1dmu,
-                                                                           setf.bfd_2ndderiv_moments_dg2dmu,
-                                                                           setf.bfd_2ndderiv_moments_dmudmu,
-                                                                           setf.bfd_template_weight,
-                                                                           setf.bfd_jsuppress])
+        bfd_moments_table = initialise_bfd_moments_table(optional_columns=[bfdm_tf.bfd_moments,
+                                                                           bfdm_tf.bfd_deriv_moments_dg1,
+                                                                           bfdm_tf.bfd_deriv_moments_dg2,
+                                                                           bfdm_tf.bfd_deriv_moments_dmu,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dg1dg1,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dg1dg2,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dg2dg2,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dg1dmu,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dg2dmu,
+                                                                           bfdm_tf.bfd_2ndderiv_moments_dmudmu,
+                                                                           bfdm_tf.bfd_template_weight,
+                                                                           bfdm_tf.bfd_jsuppress])
 
         bfd_moments_table.meta['WT_N'] = config_data['WEIGHT']['N']
         bfd_moments_table.meta['WT_SIGMA'] = config_data['WEIGHT']['SIGMA']
@@ -120,9 +113,9 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
     # Loop over galaxies and get an estimate for each one
     for row in data_stack.detections_catalogue:
 
-        gal_id = row[detf.ID]
-        gal_x_world = row[detf.gal_x_world]
-        gal_y_world = row[detf.gal_y_world]
+        gal_id = row[mfc_tf.ID]
+        gal_x_world = row[mfc_tf.gal_x_world]
+        gal_y_world = row[mfc_tf.gal_y_world]
 
         # Get a stack of the galaxy images
         gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
@@ -182,33 +175,33 @@ def bfd_measure_moments(data_stack, training_data, calibration_data, workdir, de
                 xsave = bfd_info.x / 3600. + gal_x_world
                 ysave = bfd_info.y / 3600. + gal_y_world
                 # Add this row to the estimates table
-                bfd_moments_table.add_row({setf.ID: gal_id,
-                                           setf.bfd_moments: bfd_info.m,
-                                           setf.x_world: xsave,
-                                           setf.y_world: ysave,
-                                           setf.bfd_cov_even: cov_even,
-                                           setf.bfd_cov_odd: cov_odd})
+                bfd_moments_table.add_row({bfdm_tf.ID: gal_id,
+                                           bfdm_tf.bfd_moments: bfd_info.m,
+                                           bfdm_tf.x_world: xsave,
+                                           bfdm_tf.y_world: ysave,
+                                           bfdm_tf.bfd_cov_even: cov_even,
+                                           bfdm_tf.bfd_cov_odd: cov_odd})
 
         else:
 
             if (bfd_info.template_lost == False) & (cnt < 200):
                 for i, tmpl in enumerate(bfd_info.templates):
                     bfd_info.get_template(i)
-                    bfd_moments_table.add_row({setf.ID: gal_id,
-                                               setf.x_world: 0.0,
-                                               setf.y_world: 0.0,
-                                               setf.bfd_moments: bfd_info.m,
-                                               setf.bfd_deriv_moments_dg1: bfd_info.dm_dg1,
-                                               setf.bfd_deriv_moments_dg2: bfd_info.dm_dg2,
-                                               setf.bfd_deriv_moments_dmu: bfd_info.dm_dmu,
-                                               setf.bfd_2ndderiv_moments_dg1dg1: bfd_info.d2m_dg1dg1,
-                                               setf.bfd_2ndderiv_moments_dg1dg2: bfd_info.d2m_dg1dg2,
-                                               setf.bfd_2ndderiv_moments_dg2dg2: bfd_info.d2m_dg2dg2,
-                                               setf.bfd_2ndderiv_moments_dg1dmu: bfd_info.d2m_dg1dmu,
-                                               setf.bfd_2ndderiv_moments_dg2dmu: bfd_info.d2m_dg2dmu,
-                                               setf.bfd_2ndderiv_moments_dmudmu: bfd_info.d2m_dmudmu,
-                                               setf.bfd_jsuppress: bfd_info.jsuppression,
-                                               setf.bfd_template_weight: bfd_info.weight})
+                    bfd_moments_table.add_row({bfdm_tf.ID: gal_id,
+                                               bfdm_tf.x_world: 0.0,
+                                               bfdm_tf.y_world: 0.0,
+                                               bfdm_tf.bfd_moments: bfd_info.m,
+                                               bfdm_tf.bfd_deriv_moments_dg1: bfd_info.dm_dg1,
+                                               bfdm_tf.bfd_deriv_moments_dg2: bfd_info.dm_dg2,
+                                               bfdm_tf.bfd_deriv_moments_dmu: bfd_info.dm_dmu,
+                                               bfdm_tf.bfd_2ndderiv_moments_dg1dg1: bfd_info.d2m_dg1dg1,
+                                               bfdm_tf.bfd_2ndderiv_moments_dg1dg2: bfd_info.d2m_dg1dg2,
+                                               bfdm_tf.bfd_2ndderiv_moments_dg2dg2: bfd_info.d2m_dg2dg2,
+                                               bfdm_tf.bfd_2ndderiv_moments_dg1dmu: bfd_info.d2m_dg1dmu,
+                                               bfdm_tf.bfd_2ndderiv_moments_dg2dmu: bfd_info.d2m_dg2dmu,
+                                               bfdm_tf.bfd_2ndderiv_moments_dmudmu: bfd_info.d2m_dmudmu,
+                                               bfdm_tf.bfd_jsuppress: bfd_info.jsuppression,
+                                               bfdm_tf.bfd_template_weight: bfd_info.weight})
         cnt += 1
         if config_data['isTarget'] == True:
             bfd_moments_table.meta['NLOST'] = nlost
@@ -240,7 +233,7 @@ def bfd_perform_integration(target_file=None, template_file=None):
     nthreads = np.int(config_data['INTEGRATE']['INT_nthreads'])
 
     call = ["SHE_BFD_BoostTest", "--targetFile", target_file, "--templateFile", template_file, "--selectSN", str(sn1) + "," + str(
-        sn2) + "," + str(sn3)+","+str(sn4), "--noiseFactor", str(nfactor1) + "," + str(nfactor2)+","+str(nfactor3), "--nThreads", str(nthreads), "--seed", str(12345)]
+        sn2) + "," + str(sn3) + "," + str(sn4), "--noiseFactor", str(nfactor1) + "," + str(nfactor2) + "," + str(nfactor3), "--nThreads", str(nthreads), "--seed", str(12345)]
     returncode = subprocess.run(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     stdout = np.str(returncode.stdout)
@@ -273,7 +266,7 @@ def bfd_load_training_data(training_data_filename=None, workdir="."):
         template_filename = getAuxiliaryPath("SHE_BFD_CalculateMoments/templateall.fits")
 
         t = Table.read(template_filename)
-        if is_in_format(t, setf) == False:
+        if is_in_format(t, bfdm_tf) == False:
             logger.warn("template file is not in correct format")
     else:
         # Read in the training data product

@@ -28,8 +28,8 @@ from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
-from SHE_PPT.table_formats.ksb_training import tf as kttf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
+from SHE_PPT.table_formats.she_ksb_training import tf as ksbt_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 
 
 class ControlTraining(object):
@@ -53,12 +53,12 @@ class ControlTraining(object):
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)
             t = Table.read(qualified_training_data_filename)
 
-            if is_in_format(t, kttf):  # For KSB and REGAUSS
-                self.e1_var = t[kttf.e1].var()
-                self.e2_var = t[kttf.e2].var()
-            elif is_in_format(t, setf):  # For LensMC
-                self.e1_var = t[setf.g1].var()
-                self.e2_var = t[setf.g2].var()
+            if is_in_format(t, ksbt_tf):  # For KSB and REGAUSS
+                self.e1_var = t[ksbt_tf.e1].var()
+                self.e2_var = t[ksbt_tf.e2].var()
+            elif is_in_format(t, sm_tf):  # For LensMC
+                self.e1_var = t[sm_tf.g1].var()
+                self.e2_var = t[sm_tf.g2].var()
 
         logger.debug("Exiting ControlTraining __init__")
         return

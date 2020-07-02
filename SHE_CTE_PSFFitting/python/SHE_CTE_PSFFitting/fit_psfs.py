@@ -36,8 +36,8 @@ from astropy.table import Table
 
 import SHE_CTE
 from SHE_CTE_PSFFitting import magic_values as mv
-from SHE_PPT.table_formats.psf_tm_state import initialise_psf_tm_state_table
-from SHE_PPT.table_formats.she_simulated_catalog import tf as detf
+from SHE_PPT.table_formats.she_psf_tm_state import initialise_psf_field_tm_state_table
+from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
 import numpy as np
 
 products.psf_field_params.init()
@@ -83,7 +83,7 @@ def fit_psfs(args, dry_run=False):
 
         for i, filename in enumerate(aocs_time_series_product_filenames):
             aocs_time_series_products.append(read_pickled_product(join(args.workdir, filename)))
-            if not isinstance(aocs_time_series_products[i], products.aocs_time_series.DpdSheAocsTimeSeriesProduct):
+            if not isinstance(aocs_time_series_products[i], products.le1_aocs_time_series.DpdSheAocsTimeSeriesProduct):
                 raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
 
     else:
@@ -114,7 +114,7 @@ def fit_psfs(args, dry_run=False):
         # Get a filename for the table and write it out
         field_param_table_filename = get_allowed_filename("PSF-TelescopeModel", str(i), extension=".fits",
                                                           version=SHE_CTE.__version__)
-        field_param_table = initialise_psf_tm_state_table()
+        field_param_table = initialise_psf_field_tm_state_table()
         field_param_table.add_row({})  # Add a row of zeros
 
         qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)

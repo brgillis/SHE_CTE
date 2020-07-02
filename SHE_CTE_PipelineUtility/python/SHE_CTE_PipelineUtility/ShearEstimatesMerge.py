@@ -35,7 +35,7 @@ from SHE_PPT.utility import get_arguments_string
 from astropy import table
 
 import SHE_CTE
-from SHE_PPT.table_formats.bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import multiprocessing as mp
 

@@ -18,12 +18,10 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2019-10-28"
+__updated__ = "2020-07-02"
 
 from copy import deepcopy
 from math import sqrt
-
-import galsim
 
 from SHE_PPT import flags
 from SHE_PPT import mdb
@@ -31,11 +29,12 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
 from SHE_PPT.utility import run_only_once
-import numpy as np
+import galsim
 
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.she_measurements import initialise_she_measurements_table, tf as sm_tf
+import numpy as np
 
 stamp_size = 256
 x_buffer = -5
@@ -74,14 +73,13 @@ error_shear_estimate.g1_err = np.inf
 error_shear_estimate.g2_err = np.inf
 error_shear_estimate.g1g1_covar = np.NaN
 
-
 snr_cutoff = 15
 downweight_error = 0.5
 downweight_power = 4
 
 
 def get_downweight_error(snr):
-    return downweight_error / (1 + (snr / snr_cutoff)**downweight_power)
+    return downweight_error / (1 + (snr / snr_cutoff) ** downweight_power)
 
 
 @run_only_once
@@ -328,7 +326,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
             a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
             gain = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
             signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
-                                                                    (gain * np.square(gal_stamp.noisemap.transpose()).mean())**2))
+                                                                    (gain * np.square(gal_stamp.noisemap.transpose()).mean()) ** 2))
             break
 
         except RuntimeError as e:
@@ -399,7 +397,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
         shear_estimate.snr = signal_to_noise
 
         # Adjust the error to apply custom downweighting of low-S/N galaxies
-        shear_estimate.gerr = np.sqrt(shear_estimate.gerr**2 + get_downweight_error(signal_to_noise))
+        shear_estimate.gerr = np.sqrt(shear_estimate.gerr ** 2 + get_downweight_error(signal_to_noise))
 
         # Correct the shear estimate for x and y from resampled stamp
         shear_estimate.x = (gal_stamp.shape[0] / 2 -
@@ -462,7 +460,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
 
-    shear_estimates_table = initialise_shear_estimates_table()
+    shear_estimates_table = initialise_she_measurements_table()
 
     if scale_label in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]
@@ -493,9 +491,9 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
             else:
                 logger.debug("Calculating shear for galaxy " + str(row_index - 1))
 
-        gal_id = row[detf.ID]
-        gal_x_world = row[detf.gal_x_world]
-        gal_y_world = row[detf.gal_y_world]
+        gal_id = row[mfc_tf.ID]
+        gal_x_world = row[mfc_tf.gal_x_world]
+        gal_y_world = row[mfc_tf.gal_y_world]
 
         # Get a stack of the galaxy images
         gal_stamp_stack = data_stack.extract_stamp_stack(x_world=gal_x_world,
@@ -633,18 +631,18 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                 y_world = inv_var_stack(y_worlds, gerrs)
 
         # Add this row to the estimates table (for now just using stack values)
-        shear_estimates_table.add_row({setf.ID: gal_id,
-                                       setf.g1: stack_shear_estimate.g1,
-                                       setf.g2: stack_shear_estimate.g2,
-                                       setf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
-                                       setf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
-                                       setf.g1g2_covar: stack_shear_estimate.g1g2_covar,
-                                       setf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
-                                       setf.flags: stack_shear_estimate.flags,
-                                       setf.re: stack_shear_estimate.re,
-                                       setf.snr: stack_shear_estimate.snr,
-                                       setf.x_world: stack_x_world,
-                                       setf.y_world: stack_y_world,
+        shear_estimates_table.add_row({sm_tf.ID: gal_id,
+                                       sm_tf.g1: stack_shear_estimate.g1,
+                                       sm_tf.g2: stack_shear_estimate.g2,
+                                       sm_tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
+                                       sm_tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
+                                       sm_tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
+                                       sm_tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
+                                       sm_tf.flags: stack_shear_estimate.flags,
+                                       sm_tf.re: stack_shear_estimate.re,
+                                       sm_tf.snr: stack_shear_estimate.snr,
+                                       sm_tf.x_world: stack_x_world,
+                                       sm_tf.y_world: stack_y_world,
                                        })
 
     logger.info("Finished estimating shear.")

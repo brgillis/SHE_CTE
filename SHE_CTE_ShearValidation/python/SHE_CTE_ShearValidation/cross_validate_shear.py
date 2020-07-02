@@ -28,14 +28,14 @@ from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
 import SHE_CTE
-from SHE_PPT.table_formats.bfd_moments import tf as bfdtf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 
-setfs = {"KSB": setf,
-         "REGAUSS": setf,
-         "MomentsML": setf,
-         "LensMC": setf,
-         "BFD": bfdtf}
+sm_tfs = {"KSB": sm_tf,
+         "REGAUSS": sm_tf,
+         "MomentsML": sm_tf,
+         "LensMC": sm_tf,
+         "BFD": bfdm_tf}
 
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
@@ -65,7 +65,7 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
     # TODO analyse comparisons somehow
 
     # For now, just say it passed
-    primary_shear_estimates_table.meta[setf.m.validated] = 1
+    primary_shear_estimates_table.meta[sm_tf.m.validated] = 1
 
     logger.debug("Exiting validate_shear_estimates")
 
@@ -99,13 +99,13 @@ def cross_validate_shear(args, dry_run=False):
     primary_shear_estimates_table = None
     other_shear_estimates_tables = {}
 
-    for method in setfs:
+    for method in sm_tfs:
 
         filename = shear_estimates_prod.get_method_filename(method)
 
         if filename is not None and filename != "None" and filename != "data/None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
-            if not is_in_format(shear_estimates_table, setfs[method]):
+            if not is_in_format(shear_estimates_table, sm_tfs[method]):
                 logger.warn("Shear estimates table from " +
                             join(args.workdir, filename) + " is in invalid format.")
                 continue
@@ -134,7 +134,7 @@ def cross_validate_shear(args, dry_run=False):
 
         shear_validation_statistics_table = Table.read(join(args.workdir, shear_validation_stats_filename))
 
-        if not is_in_format(shear_validation_statistics_table, setf):
+        if not is_in_format(shear_validation_statistics_table, sm_tf):
             raise ValueError("Shear validation statistics table from " +
                              join(args.workdir, filename) + " is in invalid format.")
     else:

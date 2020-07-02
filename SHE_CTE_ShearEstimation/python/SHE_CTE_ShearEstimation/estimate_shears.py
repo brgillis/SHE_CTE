@@ -20,13 +20,12 @@ __updated__ = "2020-07-02"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import copy
 import os
 
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
+from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
@@ -34,18 +33,16 @@ from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
 from astropy.io import fits
-from astropy.table import Table
 
 import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
+from SHE_PPT.table_formats.she_measurements import initialise_shear_estimates_table, tf as sm_tf
 import numpy as np
 
 loading_methods = {"KSB": load_control_training_data,
@@ -246,7 +243,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        debug=args.debug,
                                                        sim_sc4_fix=True)
 
-                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
+                if not (is_in_format(shear_estimates_table, sm_tf) or is_in_format(shear_estimates_table, bfdm_tf)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
                                      "for method " + method + ".")
 
@@ -268,21 +265,21 @@ def estimate_shears_from_args(args, dry_run=False):
                 # Create an empty estimates table
                 shear_estimates_table = initialise_shear_estimates_table()
 
-                for r in range(len(data_stack.detections_catalogue[detf.ID])):
+                for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
 
                     # Fill it with NaN measurements and 1e99 errors
 
-                    shear_estimates_table.add_row({setf.ID: data_stack.detections_catalogue[detf.ID][r],
-                                                   setf.g1: np.NaN,
-                                                   setf.g2: np.NaN,
-                                                   setf.g1_err: 1e99,
-                                                   setf.g2_err: 1e99,
-                                                   setf.g1g2_covar: np.NaN,
-                                                   setf.fit_class: 2,
-                                                   setf.re: np.NaN,
-                                                   setf.snr: np.NaN,
-                                                   setf.x_world: data_stack.detections_catalogue[detf.gal_x_world][r],
-                                                   setf.y_world: data_stack.detections_catalogue[detf.gal_y_world][r], })
+                    shear_estimates_table.add_row({sm_tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
+                                                   sm_tf.g1: np.NaN,
+                                                   sm_tf.g2: np.NaN,
+                                                   sm_tf.g1_err: 1e99,
+                                                   sm_tf.g2_err: 1e99,
+                                                   sm_tf.g1g2_covar: np.NaN,
+                                                   sm_tf.fit_class: 2,
+                                                   sm_tf.re: np.NaN,
+                                                   sm_tf.snr: np.NaN,
+                                                   sm_tf.x_world: data_stack.detections_catalogue[mfc_tf.gal_x_world][r],
+                                                   sm_tf.y_world: data_stack.detections_catalogue[mfc_tf.gal_y_world][r], })
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
