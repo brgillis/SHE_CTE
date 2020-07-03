@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-07-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -35,11 +35,11 @@ from SHE_PPT.utility import hash_any
 from astropy.io import fits
 
 import SHE_CTE
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data
+# from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN 2.1
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
 from SHE_PPT.table_formats.she_measurements import initialise_shear_estimates_table, tf as sm_tf
@@ -49,13 +49,16 @@ loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_control_training_data,
-                   "BFD": bfd_load_training_data}
+                   # "BFD": bfd_load_training_data} # FIXME - uncomment when BFD is integrated
+                   "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
-                      "MomentsML": ML_estimate_shear,
+                      # "MomentsML": ML_estimate_shear, # FIXME - uncomment when MomentsML is updated to EDEN 2.1
+                      "MomentsML": None,
                       "LensMC": fit_frame_stack,
-                      "BFD": bfd_measure_moments}
+                      # "BFD": bfd_measure_moments} # FIXME - uncomment when BFD is integrated
+                      "BFD": None}
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -147,8 +150,8 @@ def estimate_shears_from_args(args, dry_run=False):
         header = f[0].header
         if ppt_mv.model_hash_label in header:
             estimates_instance_id = header[ppt_mv.model_hash_label]
-        elif ppt_mv.field_id_label in header:
-            estimates_instance_id = str(header[ppt_mv.field_id_label])
+        elif ppt_mv.obs_id_label in header:
+            estimates_instance_id = str(header[ppt_mv.obs_id_label])
         else:
             logger.warn("Cannot determine proper instance ID for filenames. Using hash of image header.")
             estimates_instance_id = hash_any(header, format="base64")

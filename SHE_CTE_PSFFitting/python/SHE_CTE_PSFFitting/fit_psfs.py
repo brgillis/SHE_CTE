@@ -18,29 +18,19 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from copy import deepcopy
-import os
 from os.path import join
 
-from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_pickled_product, write_pickled_product,
-                             get_allowed_filename, find_file_in_path)
+                             get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from astropy.io import fits
-from astropy.table import Table
 
 import SHE_CTE
-from SHE_CTE_PSFFitting import magic_values as mv
 from SHE_PPT.table_formats.she_psf_tm_state import initialise_psf_field_tm_state_table
 from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
-import numpy as np
-
-products.psf_field_params.init()
 
 test_mode = True
 
