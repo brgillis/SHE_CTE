@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-07-09"
 
 from copy import deepcopy
 from math import sqrt
@@ -29,11 +29,12 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.utility import run_only_once
 import galsim
 
-from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_formats.she_measurements import initialise_she_measurements_table, tf as sm_tf
 import numpy as np
 
 stamp_size = 256
@@ -43,6 +44,12 @@ get_exposure_estimates = False
 
 default_galaxy_scale = 0.1 / 3600
 default_psf_scale = 0.02 / 3600
+
+initialisation_methods = {"KSB": initialise_ksb_measurements_table,
+                          "REGAUSS": initialise_regauss_measurements_table}
+
+table_formats = {"KSB": ksbm_tf,
+                 "REGAUSS": regm_tf}
 
 
 class ShearEstimate(object):
@@ -460,7 +467,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
 
-    shear_estimates_table = initialise_she_measurements_table()
+    shear_estimates_table = initialisation_methods[method]()
+    tf = table_formats[method]
 
     if scale_label in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]
@@ -631,18 +639,18 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                 y_world = inv_var_stack(y_worlds, gerrs)
 
         # Add this row to the estimates table (for now just using stack values)
-        shear_estimates_table.add_row({sm_tf.ID: gal_id,
-                                       sm_tf.g1: stack_shear_estimate.g1,
-                                       sm_tf.g2: stack_shear_estimate.g2,
-                                       sm_tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
-                                       sm_tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
-                                       sm_tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
-                                       sm_tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
-                                       sm_tf.flags: stack_shear_estimate.flags,
-                                       sm_tf.re: stack_shear_estimate.re,
-                                       sm_tf.snr: stack_shear_estimate.snr,
-                                       sm_tf.x_world: stack_x_world,
-                                       sm_tf.y_world: stack_y_world,
+        shear_estimates_table.add_row({tf.ID: gal_id,
+                                       tf.g1: stack_shear_estimate.g1,
+                                       tf.g2: stack_shear_estimate.g2,
+                                       tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
+                                       tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
+                                       tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
+                                       tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
+                                       tf.flags: stack_shear_estimate.flags,
+                                       tf.re: stack_shear_estimate.re,
+                                       tf.snr: stack_shear_estimate.snr,
+                                       tf.x_world: stack_x_world,
+                                       tf.y_world: stack_y_world,
                                        })
 
     logger.info("Finished estimating shear.")

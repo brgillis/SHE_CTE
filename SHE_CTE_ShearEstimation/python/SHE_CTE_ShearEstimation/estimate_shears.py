@@ -71,10 +71,10 @@ initialisation_methods = {"KSB": initialise_ksb_measurements_table,
                           "BFD": initialise_bfd_moments_table}
 
 table_formats = {"KSB": ksbm_tf,
-                          "REGAUSS": regm_tf,
-                          "MomentsML": mmlm_tf,
-                          "LensMC": lmcm_tf,
-                          "BFD": bfdm_tf}
+                 "REGAUSS": regm_tf,
+                 "MomentsML": mmlm_tf,
+                 "LensMC": lmcm_tf,
+                 "BFD": bfdm_tf}
 
 
 def estimate_shears_from_args(args, dry_run=False):
