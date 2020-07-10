@@ -33,8 +33,8 @@ import pytest
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
-import SHE_LensMC.SHE_measure_shear
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+import SHE_LensMC.she_measure_shear
+# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
 import numpy as np
 
 ksb_training_location = "AUX/SHE_CTE/mock_ksb_training_product.xml"
@@ -62,7 +62,7 @@ class TestCase:
         # Download the MDB from WebDAV
         self.sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
         self.sync_mdb.download()
-        self.mdb_filename = self.sync_mdb.absolutePath("SHE_PPT/sample_mdb.xml")
+        self.mdb_filename = self.sync_mdb.absolutePath("SHE_CTE_8_1/sample_mdb.xml")
 
         mdb.init(self.mdb_filename)
 

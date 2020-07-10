@@ -20,18 +20,18 @@
 
 from copy import deepcopy
 import gc
-import pytest
 
-import galsim
-
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
-                                                           get_shear_estimate, ShearEstimate)
 from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.file_io import find_file
 from SHE_PPT.magic_values import scale_label, gain_label
 from SHE_PPT.she_image import SHEImage
 from astropy.io import fits
+import galsim
+import pytest
+
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
+                                                           get_shear_estimate, ShearEstimate)
 import numpy as np
 
 
@@ -46,7 +46,7 @@ class TestCase:
         """ Set up a default galaxy stamp and PSF stamp for testing.
         """
 
-        mdb.init(mdb_files=find_file("WEB/SHE_PPT/sample_mdb.xml"))
+        mdb.init(mdb_files=find_file("WEB/SHE_CTE_8_1/sample_mdb.xml"))
 
         self.sky_var = 0
         self.bkg_level = 1000
