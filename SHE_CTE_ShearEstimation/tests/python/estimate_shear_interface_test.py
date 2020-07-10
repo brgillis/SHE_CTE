@@ -37,8 +37,8 @@ import SHE_LensMC.she_measure_shear
 # from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
 import numpy as np
 
-ksb_training_location = "AUX/SHE_CTE/mock_ksb_training_product.xml"
-regauss_training_location = "AUX/SHE_CTE/mock_regauss_training_product.xml"
+ksb_training_location = "AUX/SHE_CTE_ShearEstimation/mock_ksb_training_product.xml"
+regauss_training_location = "AUX/SHE_CTE_ShearEstimation/mock_regauss_training_product.xml"
 
 test_data_location = "/tmp"
 
@@ -69,12 +69,11 @@ class TestCase:
         # Download the data stack files from WebDAV
         self.sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
         self.sync_datastack.download()
-        self.qualified_data_images_filename = self.sync_datastack.absolutePath("SHE_CTE/data/data_images.json")
+        self.qualified_data_images_filename = self.sync_datastack.absolutePath("SHE_CTE_8_1/vis_calibrated_frames.json")
         assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
-        self.workdir, datadir = os.path.split(os.path.split(self.qualified_data_images_filename)[0])
-        assert datadir == "data", f"Data directory is not as expected in {self.qualified_data_images_filename}"
+        self.workdir = os.path.split(self.qualified_data_images_filename)[0]
         self.logdir = os.path.join(self.workdir, "logs")
 
         # Read in the test data
