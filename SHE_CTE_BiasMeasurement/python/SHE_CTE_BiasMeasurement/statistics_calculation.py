@@ -67,7 +67,7 @@ def compress_details_and_measurements(combined_table):
         # No need to combine; just return original table
         return combined_table
 
-    tf = table_formats[combined_table.meta[sm_tf.m.table_format]]
+    tf = table_formats[combined_table.meta[sm_tf.m.fits_def]]
 
     # Create a new table for compressed data
     compressed_table = table.Table(names=[simc_tf.group_ID, simc_tf.g1, simc_tf.g2,
@@ -162,7 +162,7 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
             stats.xym = 0
         return g1_stats, g2_stats
 
-    tf = table_formats[estimates_table.meta[sm_tf.m.table_format]]
+    tf = table_formats[estimates_table.meta[sm_tf.m.fits_def]]
 
     # Create a combined table, joined on galaxy ID
     if tf.ID != simc_tf.ID:
