@@ -27,7 +27,8 @@ from SHE_PPT import mdb
 from SHE_PPT.file_io import read_pickled_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import pytest
 
 from ElementsServices.DataSync import DataSync
@@ -107,7 +108,7 @@ class TestCase:
 
         # Check that we have valid data
         for row in ksb_cat:
-            for colname in (sm_tf.g1, sm_tf.g2, sm_tf.g1_err, sm_tf.g2_err):
+            for colname in (ksbm_tf.g1, ksbm_tf.g2, ksbm_tf.g1_err, ksbm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
@@ -128,62 +129,10 @@ class TestCase:
 
         # Check that we have valid data
         for row in regauss_cat:
-            for colname in (sm_tf.g1, sm_tf.g2, sm_tf.g1_err, sm_tf.g2_err):
+            for colname in (regm_tf.g1, regm_tf.g2, regm_tf.g1_err, regm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
-
-        return
-
-    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
-    def test_lensmc(self):
-        """Test that the interface for the LensMC method works properly.
-        """
-
-        # define logger object
-        logger = getLogger(__name__)
-
-        logger.debug('Load auxiliary data.')
-
-        # access mock data in PPT
-        she_frame = read_pickled_product(find_file(she_frame_location))
-        training_data = read_pickled_product(find_file('AUX/SHE_LensMC/test_LensMC_training_data.bin'))
-
-        original_she_frame = deepcopy(she_frame)
-
-        # make sure we seed the random number generator to produce consistent results
-        seed = 67794
-
-        logger.debug('Call fit_frame_stack().')
-
-        t0 = time.time()
-
-        # call the SHE wrapper of LensMC
-        shear_estimates = SHE_LensMC.SHE_measure_shear.fit_frame_stack(
-            she_frame, training_data=training_data, seed=seed)
-
-        logger.info('Runtime = {:.3f}'.format(time.time() - t0))
-
-        for row in shear_estimates:
-            logger.info('ID = {}, chi2 = {:.3f}'.format(row[sm_tf.ID], row[sm_tf.chi2]))
-
-        logger.debug('Check results.')
-
-        # check results
-        for row in shear_estimates:
-            for colname in (sm_tf.g1, sm_tf.g2):
-                g = row[colname]
-                assert (g > -1 and g < 1)
-            assert row[sm_tf.g1_err] > 0
-            assert row[sm_tf.g2_err] > 0
-            assert row[sm_tf.re] > 0
-            assert row[sm_tf.flux] > 0
-            assert row[sm_tf.snr] > 0
-            assert row[sm_tf.chi2] > 0
-            assert row[sm_tf.dof] > 0
-
-        # Check that the input data isn't changed by the method
-        assert she_frame == original_she_frame
 
         return
 

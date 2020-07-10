@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-07-09"
+__updated__ = "2020-07-10"
 
 from copy import deepcopy
 from math import sqrt
@@ -646,11 +646,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                                        tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
                                        tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
                                        tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
-                                       tf.flags: stack_shear_estimate.flags,
+                                       tf.fit_flags: stack_shear_estimate.flags,
                                        tf.re: stack_shear_estimate.re,
                                        tf.snr: stack_shear_estimate.snr,
-                                       tf.x_world: stack_x_world,
-                                       tf.y_world: stack_y_world,
+                                       tf.ra: stack_x_world,
+                                       tf.dec: stack_y_world,
                                        })
 
     logger.info("Finished estimating shear.")
