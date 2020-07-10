@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-07-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -27,28 +27,28 @@ from SHE_PPT import mdb
 from SHE_PPT.file_io import read_pickled_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import pytest
 
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
 from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import numpy as np
 
-she_frame_location = "WEB/SHE_PPT/test_data_stack.bin"
-ksb_training_location = "AUX/SHE_PPT/test_KSB_training_data.bin"
-regauss_training_location = "AUX/SHE_PPT/test_REGAUSS_training_data.bin"
+ksb_training_location = "AUX/SHE_CTE/mock_ksb_training_product.xml"
+regauss_training_location = "AUX/SHE_CTE/mock_regauss_training_product.xml"
 
 test_data_location = "/tmp"
 
-data_images_filename = "data/data_images.json"
-segmentation_images_filename = "data/segmentation_images.json"
-stacked_image_filename = "data/stacked_image.xml"
-stacked_segmentation_image_filename = "data/stacked_segm_image.xml"
-psf_images_and_tables_filename = "data/psf_images_and_tables.json"
-detections_tables_filename = "data/detections_tables.json"
+data_images_filename = "vis_calibrated_frames.json"
+segmentation_images_filename = "she_exposure_reprojected_segmentation_maps.json"
+stacked_image_filename = "vis_stacked_image.xml"
+stacked_segmentation_image_filename = "she_stack_reprojected_segmentation_map.xml"
+psf_images_and_tables_filename = "she_psf_model_images.json"
+detections_tables_filename = "mer_final_catalogs.json"
 
 
 class TestCase:
@@ -96,7 +96,7 @@ class TestCase:
         """Test that the interface for the KSB method works properly.
         """
 
-        ksb_training_data = read_pickled_product(find_file(ksb_training_location))
+        ksb_training_data = load_control_training_data(find_file(ksb_training_location), workdir=self.workdir)
 
         ksb_cat = KSB_estimate_shear(self.data_stack,
                                      training_data=ksb_training_data,
@@ -116,7 +116,7 @@ class TestCase:
         """Test that the interface for the REGAUSS method works properly.
         """
 
-        regauss_training_data = read_pickled_product(find_file(regauss_training_location))
+        regauss_training_data = load_control_training_data(find_file(regauss_training_location), workdir=self.workdir)
 
         regauss_cat = REGAUSS_estimate_shear(self.data_stack,
                                              training_data=regauss_training_data,
