@@ -92,7 +92,7 @@ def object_id_split_from_args(args):
 
     # Read in the pipeline configuration if present
     if args.pipeline_config is None or args.pipeline_config == "None":
-        logger.warn("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
+        logger.warning("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
         batch_size = default_batch_size
         max_batches = default_max_batches
         ids_to_use = None
@@ -312,7 +312,7 @@ def mainMethod(args):
         else:
             object_id_split_from_args(args)
     except Exception as e:
-        # logger.warn("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
         raise
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')

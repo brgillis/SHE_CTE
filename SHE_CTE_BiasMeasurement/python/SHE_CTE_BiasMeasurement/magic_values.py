@@ -21,7 +21,7 @@
 
 logger_name = "SHE_CTE_MeasureBias"
 
-estimation_methods = ["KSB", "REGAUSS", "LensMC", "MomentsML", "BFD"]
+estimation_methods = ["KSB", "REGAUSS", "LensMC", "MomentsML"]
 
 var_e = {"m2": 0.30241731263684996,
          "m1": 0.27099491059570091,

@@ -49,7 +49,7 @@ class MethodStatistics(object):
 
     def __init__(self):
         self.g1_statistics = None
-        self.g2_statistics = Non
+        self.g2_statistics = None
 
 
 class MethodMeasurements(object):
@@ -105,7 +105,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
     try:
         shear_statistics_prod = read_xml_product(os.path.join(workdir, shear_statistics_file))
     except (EOFError, UnpicklingError) as e:
-        logger.warn("File " + os.path.join(workdir, shear_statistics_file) + " seems to be corrupted: " + str(e))
+        logger.warning("File " + os.path.join(workdir, shear_statistics_file) + " seems to be corrupted: " + str(e))
         return
 
     all_method_statistics = {}
@@ -118,8 +118,15 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
             method_statistics = MethodStatistics()
             method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
 
-            method_statistics.g1_statistics = method_shear_statistics[0]
-            method_statistics.g2_statistics = method_shear_statistics[1]
+            if method_shear_statistics is None:
+
+                method_statistics.g1_statistics = None
+                method_statistics.g2_statistics = None
+
+            else:
+
+                method_statistics.g1_statistics = method_shear_statistics[0]
+                method_statistics.g2_statistics = method_shear_statistics[1]
 
             all_method_statistics[method] = method_statistics
 
@@ -159,7 +166,7 @@ def measure_bias_from_args(args):
         if pipeline_config is None:
             pipeline_config = {}
     except Exception as e:
-        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
         pipeline_config = {}
 
@@ -304,7 +311,7 @@ def measure_bias_from_args(args):
     if not have_some_data:
         raise RuntimeError("No shear bias statistics or measurements are available; aborting.")
     elif missing_shear_statistics and not args.use_bias_only:
-        logger.warn("Some shear statistics are missing; relying on shear bias measurements only.")
+        logger.warning("Some shear statistics are missing; relying on shear bias measurements only.")
 
     # Calculate the bias and compile into a data product
     if args.store_measurements_only or missing_shear_statistics or args.use_bias_only:
@@ -319,7 +326,7 @@ def measure_bias_from_args(args):
                                                                                                      []),
                                                                             workdir=args.workdir)
     else:
-        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(BFD_bias_statistics=method_shear_statistics_lists["BFD"].bfd_statistics_list,
+        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(BFD_bias_statistics=[],
                                                                             KSB_bias_statistics=(method_shear_statistics_lists["KSB"].g1_statistics_list,
                                                                                                  method_shear_statistics_lists["KSB"].g2_statistics_list),
                                                                             LensMC_bias_statistics=(method_shear_statistics_lists["LensMC"].g1_statistics_list,
@@ -331,6 +338,9 @@ def measure_bias_from_args(args):
                                                                             workdir=args.workdir)
 
     for method in mv.estimation_methods:
+
+        if method == "BFD":
+            continue
 
         if missing_shear_statistics or args.use_bias_only:
 
@@ -422,7 +432,7 @@ def measure_bias_from_args(args):
                             archive_dir=full_archive_dir,
                             workdir=args.workdir)
         except Exception as e:
-            logger.warn("Failsafe exception block triggered when trying to save bias product in archive. " +
+            logger.warning("Failsafe exception block triggered when trying to save bias product in archive. " +
                         "Exception was: " + str(e))
 
     logger.debug("Exiting measure_bias_from_args.")
@@ -532,7 +542,7 @@ def calculate_bootstrap_bias_measurements(objects_list, combine_func, n_bootstra
     c_bs = np.empty(n_bootstrap)
     objects_array = np.array(objects_list)
     for i in range(n_bootstrap):
-        u = np.random.random_integers(0, n_sample - 1, n_sample)
+        u = np.random.randint(0, n_sample, n_sample)
         bias_measurements_bs = combine_func(objects_array[u])
         m_bs[i] = bias_measurements_bs.m
         c_bs[i] = bias_measurements_bs.c

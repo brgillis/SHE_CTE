@@ -106,13 +106,13 @@ def cross_validate_shear(args, dry_run=False):
         if filename is not None and filename != "None" and filename != "data/None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, sm_tfs[method]):
-                logger.warn("Shear estimates table from " +
+                logger.warning("Shear estimates table from " +
                             join(args.workdir, filename) + " is in invalid format.")
                 continue
         else:
             shear_estimates_table = None
             if method == args.primary_method:
-                logger.warn("Primary shear estimates file is not available.")
+                logger.warning("Primary shear estimates file is not available.")
 
         if method == args.primary_method:
             primary_shear_estimates_table = shear_estimates_table

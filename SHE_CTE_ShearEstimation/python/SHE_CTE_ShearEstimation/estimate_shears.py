@@ -102,7 +102,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Load in the MDB
     if args.mdb is None:
-        logger.warn("No MDB file provided as input. Default values will be used where necessary.")
+        logger.warning("No MDB file provided as input. Default values will be used where necessary.")
         mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
@@ -110,7 +110,7 @@ def estimate_shears_from_args(args, dry_run=False):
     elif args.mdb[-4:] == ".xml":
         mdb.init(mdb_files=args.mdb, path=args.workdir)
     else:
-        logger.warn("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
+        logger.warning("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
                     ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
     logger.info("Reading " + dry_label + "data images...")
@@ -169,7 +169,7 @@ def estimate_shears_from_args(args, dry_run=False):
         elif ppt_mv.obs_id_label in header:
             estimates_instance_id = str(header[ppt_mv.obs_id_label])
         else:
-            logger.warn("Cannot determine proper instance ID for filenames. Using hash of image header.")
+            logger.warning("Cannot determine proper instance ID for filenames. Using hash of image header.")
             estimates_instance_id = hash_any(header, format="base64")
 
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
@@ -275,9 +275,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 if isinstance(e, NotImplementedError) or (isinstance(e, ValueError) and
                                                           "Invalid implementation:" in str(e)):
-                    logger.warn(str(e))
+                    logger.warning(str(e))
                 else:
-                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
+                    logger.warning("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
 

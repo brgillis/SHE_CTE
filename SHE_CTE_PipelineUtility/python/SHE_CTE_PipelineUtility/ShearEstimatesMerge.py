@@ -101,7 +101,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
     except Exception as e:
 
-        logger.warn("Failsafe block encountered exception: " + str(e))
+        logger.warning("Failsafe block encountered exception: " + str(e))
         return
 
     # Loop over methods and read in the table
@@ -129,7 +129,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
         except Exception as e:
 
-            logger.warn("Failsafe block encountered exception: " + str(e))
+            logger.warning("Failsafe block encountered exception: " + str(e))
             return
 
         logger.debug("Finished loading shear estimates from file: " + she_measurements_table_product_filename)
@@ -149,7 +149,7 @@ def she_measurements_merge_from_args(args):
         if pipeline_config is None:
             pipeline_config = {}
     except Exception as e:
-        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
         pipeline_config = {}
 
@@ -288,7 +288,7 @@ def mainMethod(args):
         else:
             she_measurements_merge_from_args(args)
     except Exception as e:
-        # logger.warn("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
         raise
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')

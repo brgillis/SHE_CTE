@@ -93,13 +93,13 @@ def cleanup_bias_measurement_from_args(args):
 
     # Read in the pipeline config, which tells us whether to clean up or not
     if args.pipeline_config is None:
-        logger.warn("No pipeline configuration found. Being safe and not cleaning up.")
+        logger.warning("No pipeline configuration found. Being safe and not cleaning up.")
         return
     pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
 
     # Check for the cleanup key
     if ConfigKeys.CBM_CLEANUP.value not in pipeline_config:
-        logger.warn("Key " + ConfigKeys.CBM_CLEANUP.value + " not found in pipeline config " + args.pipeline_config + ". " +
+        logger.warning("Key " + ConfigKeys.CBM_CLEANUP.value + " not found in pipeline config " + args.pipeline_config + ". " +
                     "Being safe and not cleaning up.")
         return
     clean_up = pipeline_config[ConfigKeys.CBM_CLEANUP.value]
@@ -117,10 +117,10 @@ def cleanup_bias_measurement_from_args(args):
 
     def remove_file(qualified_filename):
         if qualified_filename[-1] == "/":
-            logger.warn("Attempted to remove directory " + qualified_filename)
+            logger.warning("Attempted to remove directory " + qualified_filename)
             return 1
         if not os.path.exists(qualified_filename):
-            logger.warn("Expected file '" + qualified_filename + "' does not exist.")
+            logger.warning("Expected file '" + qualified_filename + "' does not exist.")
             return 1
         os.remove(qualified_filename)
         return 0
@@ -128,12 +128,12 @@ def cleanup_bias_measurement_from_args(args):
     def remove_product(qualified_filename):
 
         if qualified_filename[-1] == "/":
-            logger.warn("Attempted to remove directory " + qualified_filename)
+            logger.warning("Attempted to remove directory " + qualified_filename)
             return
 
         # Load the product
         if not os.path.exists(qualified_filename):
-            logger.warn("Expected file '" + qualified_filename + "' does not exist.")
+            logger.warning("Expected file '" + qualified_filename + "' does not exist.")
             return
         p = read_xml_product(qualified_filename)
 
@@ -144,7 +144,7 @@ def cleanup_bias_measurement_from_args(args):
                 if (data_filename is not None and data_filename != "default_filename.fits" and
                         data_filename != "" and data_filename != "None"):
                     if remove_file(os.path.join(args.workdir, data_filename)):
-                        logger.warn("...in removal of product " + qualified_filename)
+                        logger.warning("...in removal of product " + qualified_filename)
         else:
             logger.error("Product " + qualified_filename + " has no 'get_all_filenames' method.")
             if not args.debug:
@@ -162,7 +162,7 @@ def cleanup_bias_measurement_from_args(args):
         qualified_listfile_name = os.path.join(args.workdir, listfile_name)
 
         if not os.path.exists(qualified_listfile_name):
-            logger.warn("Expected file '" + qualified_listfile_name + "' does not exist.")
+            logger.warning("Expected file '" + qualified_listfile_name + "' does not exist.")
             continue
 
         filenames = read_listfile(qualified_listfile_name)
@@ -215,7 +215,7 @@ def mainMethod(args):
         else:
             cleanup_bias_measurement_from_args(args)
     except Exception as e:
-        logger.warn("Failsafe exception block triggered with exception: " + str(e))
+        logger.warning("Failsafe exception block triggered with exception: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
 

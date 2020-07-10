@@ -92,13 +92,13 @@ def get_downweight_error(snr):
 @run_only_once
 def log_no_galaxy_scale():
     logger = getLogger(__name__)
-    logger.warn("Cannot find pixel scale in image header. Using default value of " + str(default_galaxy_scale))
+    logger.warning("Cannot find pixel scale in image header. Using default value of " + str(default_galaxy_scale))
 
 
 @run_only_once
 def log_no_psf_scale():
     logger = getLogger(__name__)
-    logger.warn("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
+    logger.warning("Cannot find pixel scale in PSF header. Using default value of " + str(default_psf_scale))
 
 
 def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny, stacked=False):
@@ -237,7 +237,7 @@ def get_KSB_shear_estimate(galsim_shear_estimate, scale):
 
         # Flag an error if the shear is too large
 
-        logger.warn("Magnitude of g shear is too large: " + str(mag))
+        logger.warning("Magnitude of g shear is too large: " + str(mag))
         shear_estimate.flags |= flags.flag_too_large_shear
 
     logger.debug("Exiting get_KSB_shear_estimate")
@@ -265,7 +265,7 @@ def get_REGAUSS_shear_estimate(galsim_shear_estimate, scale):
         # Can't calculate a shear to return if the magnitude is greater than 1,
         # so flag an error
 
-        logger.warn("Magnitude of g shear is too large: " + str(mag))
+        logger.warning("Magnitude of g shear is too large: " + str(mag))
         shear_estimate.flags |= flags.flag_too_large_shear
 
     else:
@@ -418,7 +418,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
                                                sim_sc4_fix=sim_sc4_fix)
         except RuntimeError as e:
             # Report the error
-            logger.warn(str(e))
+            logger.warning(str(e))
             # Flag that we couldn't correct for the distortion
             shear_estimate.flags |= flags.flag_cannot_correct_distortion
 
@@ -554,7 +554,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                                                           sim_sc4_fix=sim_sc4_fix)
             except RuntimeError as e:
                 # For any unidentified errors, flag as such and return appropriate values
-                logger.warn("Per-galaxy failsafe block triggered with exception: " + str(e))
+                logger.warning("Per-galaxy failsafe block triggered with exception: " + str(e))
                 stack_shear_estimate = deepcopy(error_shear_estimate)
                 stack_shear_estimate.flags |= flags.flag_unclassified_failure
 

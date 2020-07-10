@@ -81,7 +81,7 @@ def measure_statistics_from_args(args):
 
         except Exception as e:
 
-            logger.warn("Failsafe exception block triggered with exception: " + str(e))
+            logger.warning("Failsafe exception block triggered with exception: " + str(e))
             shear_bias_statistics_product.set_method_bias_statistics(method, None, workdir=args.workdir)
 
     # Write out the statistics product
@@ -93,7 +93,7 @@ def measure_statistics_from_args(args):
     try:
         pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
     except Exception as e:
-        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
         pipeline_config = {}
 
@@ -126,7 +126,7 @@ def measure_statistics_from_args(args):
                             archive_dir=full_archive_dir,
                             workdir=args.workdir)
         except Exception as e:
-            logger.warn("Failsafe exception block triggered when trying to save statistics product in archive. " +
+            logger.warning("Failsafe exception block triggered when trying to save statistics product in archive. " +
                         "Exception was: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')

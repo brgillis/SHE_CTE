@@ -44,7 +44,7 @@ class ControlTraining(object):
         p = get_conditional_product(training_product_filename, workdir)
 
         if p is None:
-            logger.warn("No training data provided; using default shape noise of 0.")
+            logger.warning("No training data provided; using default shape noise of 0.")
             self.e1_var = 0.
             self.e2_var = 0.
         else:

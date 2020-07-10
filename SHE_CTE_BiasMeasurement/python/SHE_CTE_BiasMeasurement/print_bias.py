@@ -54,14 +54,14 @@ def print_bias_from_product(p, workdir):
 
         if (g1_bias is None or g2_bias is None or g1_bias.m is None or g2_bias.m is None or
                 g1_bias.m == "" or g2_bias.m == ""):
-            logger.warn('#')
-            logger.warn("No bias measurements available for method " + method)
-            logger.warn('#')
+            logger.warning('#')
+            logger.warning("No bias measurements available for method " + method)
+            logger.warning('#')
             continue
 
         if (g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf" or
             np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m)):
-            logger.warn("Bad bias measurements for method " + method)
+            logger.warning("Bad bias measurements for method " + method)
             continue
 
         logger.info('#')

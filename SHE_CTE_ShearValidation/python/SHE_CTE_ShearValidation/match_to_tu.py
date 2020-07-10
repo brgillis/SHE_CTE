@@ -118,7 +118,7 @@ def match_to_tu_from_args(args):
         fn = shear_estimates_product.get_method_filename(method)
         if fn is None or fn == "None":
             shear_tables[method] = None
-            logger.warn("No filename for method " + method + ".")
+            logger.warning("No filename for method " + method + ".")
         else:
             qualified_filename = os.path.join(args.workdir, fn)
             logger.debug("Reading in shear estimates table from " + qualified_filename)
