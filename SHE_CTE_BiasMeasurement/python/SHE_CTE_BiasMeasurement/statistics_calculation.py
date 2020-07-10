@@ -170,6 +170,7 @@ def calculate_shear_bias_statistics(estimates_table, details_table):
     combined_table = table.join(estimates_table, details_table, keys=tf.ID)
     if tf.ID != simc_tf.ID:
         details_table.rename_column(tf.ID, simc_tf.ID)
+    combined_table.meta[tf.m.fits_def] = estimates_table.meta[sm_tf.m.fits_def]
 
     # Compress the table on group ID to properly handle shape noise cancellation
     compressed_table = compress_details_and_measurements(combined_table)

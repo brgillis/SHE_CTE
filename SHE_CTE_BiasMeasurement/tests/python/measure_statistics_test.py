@@ -171,8 +171,8 @@ class TestMeasureStatistics:
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
-        allbad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
 
         for i in range(len(self.she_measurements)):
             somebad_she_measurements.add_row(vals={ksbm_tf.ID: i})
@@ -224,8 +224,8 @@ class TestMeasureStatistics:
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
-        allbad_she_measurements = table_formats.she_measurements.initialise_she_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
 
         for j in range(self.len_group):
             for i in range(len(self.she_measurements)):
