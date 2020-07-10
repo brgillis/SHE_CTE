@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-07-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,11 +25,11 @@ import os
 from SHE_PPT import products
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
+from SHE_PPT.table_formats.she_ksb_training import tf as ksbt_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_regauss_training import tf as regt_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
-
-from SHE_PPT.table_formats.she_ksb_training import tf as ksbt_tf
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 
 
 class ControlTraining(object):
@@ -53,12 +53,17 @@ class ControlTraining(object):
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)
             t = Table.read(qualified_training_data_filename)
 
-            if is_in_format(t, ksbt_tf):  # For KSB and REGAUSS
+            if is_in_format(t, ksbt_tf, verbose=True):  # For KSB
                 self.e1_var = t[ksbt_tf.e1].var()
                 self.e2_var = t[ksbt_tf.e2].var()
-            elif is_in_format(t, sm_tf):  # For LensMC
-                self.e1_var = t[sm_tf.g1].var()
-                self.e2_var = t[sm_tf.g2].var()
+            elif is_in_format(t, regt_tf, verbose=True):  # For REGAUSS
+                self.e1_var = t[regt_tf.e1].var()
+                self.e2_var = t[regt_tf.e2].var()
+            elif is_in_format(t, lmcm_tf):  # For LensMC
+                self.e1_var = t[lmcm_tf.g1].var()
+                self.e2_var = t[lmcm_tf.g2].var()
+            else:
+                raise ValueError("Unrecognized table format for training data in file: " + qualified_training_data_filename)
 
         logger.debug("Exiting ControlTraining __init__")
         return
