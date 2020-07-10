@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-07-09"
+__updated__ = "2020-07-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -262,7 +262,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                        debug=args.debug,
                                                        sim_sc4_fix=True)
 
-                if not (is_in_format(shear_estimates_table, sm_tf) or is_in_format(shear_estimates_table, bfdm_tf)):
+                if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
                                      "for method " + method + ".")
 
