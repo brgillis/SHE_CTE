@@ -20,18 +20,15 @@
 
 from copy import deepcopy
 
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 import astropy.table
 import astropy.wcs
 from scipy.stats import linregress
 
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import numpy as np
 
-x_pix = sm_tf.x_pix_stacked
-y_pix = sm_tf.y_pix_stacked
-
-reg_pix = y_pix # Readout register - believed to be y, but might have to fix later
+reg_pix = 1 # Readout register - believed to be y, but might have to fix later
 
 readout_split = 4134.5 # Maximum pixel position for which values are read out downward (in stacked frame)
 
