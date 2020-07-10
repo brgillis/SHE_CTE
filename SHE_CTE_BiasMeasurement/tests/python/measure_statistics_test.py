@@ -154,14 +154,14 @@ class TestMeasureStatistics:
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
 
-        assert_almost_equal(g1_bias_stats.w, self.ex_w1)
-        assert_almost_equal(g2_bias_stats.w, self.ex_w2)
+        assert_almost_equal(g1_bias_stats.w, self.ex_w1, decimal=4)
+        assert_almost_equal(g2_bias_stats.w, self.ex_w2, decimal=4)
 
-        assert_almost_equal(g1_bias.m, self.ex_m1)
-        assert_almost_equal(g1_bias.c, self.ex_c1)
+        assert_almost_equal(g1_bias.m, self.ex_m1, decimal=4)
+        assert_almost_equal(g1_bias.c, self.ex_c1, decimal=4)
 
-        assert_almost_equal(g2_bias.m, self.ex_m2)
-        assert_almost_equal(g2_bias.c, self.ex_c2)
+        assert_almost_equal(g2_bias.m, self.ex_m2, decimal=4)
+        assert_almost_equal(g2_bias.c, self.ex_c2, decimal=4)
 
         return
 
@@ -205,16 +205,16 @@ class TestMeasureStatistics:
 
         # Check the statistics all have the expected weight
 
-        assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1)
-        assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2)
+        assert_almost_equal(g1_somebad_bias_stats.w, 0.6 * self.ex_w1, decimal=4)
+        assert_almost_equal(g2_somebad_bias_stats.w, 0.6 * self.ex_w2, decimal=4)
 
         assert not np.isnan(g1_somebad_bias_stats.xm)
         assert not np.isnan(g1_somebad_bias_stats.x2m)
         assert not np.isnan(g1_somebad_bias_stats.ym)
         assert not np.isnan(g1_somebad_bias_stats.xym)
 
-        assert_almost_equal(g1_allbad_bias_stats.w, 0.)
-        assert_almost_equal(g2_allbad_bias_stats.w, 0.)
+        assert_almost_equal(g1_allbad_bias_stats.w, 0., decimal=4)
+        assert_almost_equal(g2_allbad_bias_stats.w, 0., decimal=4)
 
         return
 
@@ -259,16 +259,16 @@ class TestMeasureStatistics:
 
         # Check the statistics all have the expected weight
 
-        assert_almost_equal(g1_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w1)
-        assert_almost_equal(g2_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w2)
+        assert_almost_equal(g1_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w1, decimal=4)
+        assert_almost_equal(g2_somebad_bias_stats.w, self.len_group * 0.6 * self.ex_w2, decimal=4)
 
         assert not np.isnan(g1_somebad_bias_stats.xm)
         assert not np.isnan(g1_somebad_bias_stats.x2m)
         assert not np.isnan(g1_somebad_bias_stats.ym)
         assert not np.isnan(g1_somebad_bias_stats.xym)
 
-        assert_almost_equal(g1_allbad_bias_stats.w, 0.)
-        assert_almost_equal(g2_allbad_bias_stats.w, 0.)
+        assert_almost_equal(g1_allbad_bias_stats.w, 0., decimal=4)
+        assert_almost_equal(g2_allbad_bias_stats.w, 0., decimal=4)
 
         return
 
@@ -280,11 +280,11 @@ class TestMeasureStatistics:
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
 
-        assert_almost_equal(g1_bias.m, self.ex_m1)
-        assert_almost_equal(g1_bias.c, self.ex_c1)
+        assert_almost_equal(g1_bias.m, self.ex_m1, decimal=4)
+        assert_almost_equal(g1_bias.c, self.ex_c1, decimal=4)
 
-        assert_almost_equal(g2_bias.m, self.ex_m2)
-        assert_almost_equal(g2_bias.c, self.ex_c2)
+        assert_almost_equal(g2_bias.m, self.ex_m2, decimal=4)
+        assert_almost_equal(g2_bias.c, self.ex_c2, decimal=4)
 
         return
 
@@ -326,8 +326,8 @@ class TestMeasureStatistics:
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
 
-        assert_almost_equal(g1_bias.m, self.ex_m1)
-        assert_almost_equal(g1_bias.c, self.ex_c1)
+        assert_almost_equal(g1_bias.m, self.ex_m1, decimal=4)
+        assert_almost_equal(g1_bias.c, self.ex_c1, decimal=4)
 
-        assert_almost_equal(g2_bias.m, self.ex_m2)
-        assert_almost_equal(g2_bias.c, self.ex_c2)
+        assert_almost_equal(g2_bias.m, self.ex_m2, decimal=4)
+        assert_almost_equal(g2_bias.c, self.ex_c2, decimal=4)
