@@ -53,10 +53,10 @@ class ControlTraining(object):
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)
             t = Table.read(qualified_training_data_filename)
 
-            if is_in_format(t, ksbt_tf, verbose=True):  # For KSB
+            if is_in_format(t, ksbt_tf):  # For KSB
                 self.e1_var = t[ksbt_tf.e1].var()
                 self.e2_var = t[ksbt_tf.e2].var()
-            elif is_in_format(t, regt_tf, verbose=True):  # For REGAUSS
+            elif is_in_format(t, regt_tf):  # For REGAUSS
                 self.e1_var = t[regt_tf.e1].var()
                 self.e2_var = t[regt_tf.e2].var()
             elif is_in_format(t, lmcm_tf):  # For LensMC
