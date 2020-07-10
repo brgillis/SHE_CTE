@@ -32,7 +32,7 @@ from astropy.io import fits
 from astropy.table import Table, Column, join, vstack, unique
 
 import SHE_CTE
-from SHE_PPT.table_formats.shear_estimates import tf as sm_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import numpy as np
 
 logger = getLogger(__name__)
@@ -107,7 +107,7 @@ def match_to_tu_from_args(args):
     galaxy_catalog_filenames = galaxy_catalog_product.get_data_filenames()
 
     # Read in the shear estimates data product, and get the filenames of the tables for each method from it.
-    qualified_shear_estimates_product_filename = file_io.find_file(args.shear_estimates_product,
+    qualified_shear_estimates_product_filename = file_io.find_file(args.she_measurements_product,
                                                                    path=args.workdir)
     logger.info("Reading in Shear Estimates product from " + qualified_shear_estimates_product_filename)
     shear_estimates_product = file_io.read_xml_product(qualified_shear_estimates_product_filename)

@@ -90,10 +90,10 @@ def cross_validate_shear(args, dry_run=False):
 
     logger.info("Reading" + dry_label + " shear estimates product...")
 
-    shear_estimates_prod = read_xml_product(join(args.workdir, args.shear_estimates_product))
+    shear_estimates_prod = read_xml_product(join(args.workdir, args.she_measurements_product))
 
     if not isinstance(shear_estimates_prod, products.she_measurements.dpdSheMeasurements):
-        raise ValueError("Shear estimates product from " + join(args.workdir, args.shear_estimates_product)
+        raise ValueError("Shear estimates product from " + join(args.workdir, args.she_measurements_product)
                          +" is invalid type.")
 
     primary_shear_estimates_table = None

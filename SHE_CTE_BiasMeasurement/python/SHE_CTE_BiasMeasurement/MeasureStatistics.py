@@ -63,7 +63,7 @@ def defineSpecificProgramOptions():
                         help="Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--shear_bias_statistics', type=str,
+    parser.add_argument('--she_bias_statistics', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
     # Archive directory - only default value can be used in pipeline

@@ -56,7 +56,7 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
 
     # Input data
-    parser.add_argument('--shear_bias_measurements', type=str,
+    parser.add_argument('--she_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
     # Arguments needed by the pipeline runner
@@ -89,7 +89,7 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    print_bias_from_product_filename(args.shear_bias_measurements, args.workdir)
+    print_bias_from_product_filename(args.she_bias_measurements, args.workdir)
 
     logger.debug('# Exiting SHE_CTE_PrintBias mainMethod()')
 

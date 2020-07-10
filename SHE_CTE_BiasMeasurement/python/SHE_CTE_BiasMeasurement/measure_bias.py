@@ -212,17 +212,17 @@ def measure_bias_from_args(args):
 
     # Get a list of input files
 
-    if args.shear_bias_statistics is None or args.shear_bias_statistics == "None":
+    if args.she_bias_statistics is None or args.she_bias_statistics == "None":
         # Working in recovery mode, so search within the workdir to find the files
         logger.info("No list of statistics files supplied, so searching for files which match the filename '" +
-                    "shear_bias_statistics.xml" + "'.")
+                    "she_bias_statistics.xml" + "'.")
         shear_statistics_files = recursive_find_files(base_dir=args.workdir,
                                                       bias_statistics_filename=args.recovery_bias_statistics_filename,
                                                       bias_measurements_filename=args.recovery_bias_measurements_filename,
                                                       number_threads=number_threads)
         recovery_mode = True
     else:
-        shear_statistics_files = read_listfile(os.path.join(args.workdir, args.shear_bias_statistics))
+        shear_statistics_files = read_listfile(os.path.join(args.workdir, args.she_bias_statistics))
         recovery_mode = False
 
     # Load in statistics from each file
@@ -414,8 +414,8 @@ def measure_bias_from_args(args):
     # Print the bias measurements
     print_bias_from_product(bias_measurement_prod, workdir=args.workdir)
 
-    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.shear_bias_measurements))
-    write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
+    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.she_bias_measurements))
+    write_xml_product(bias_measurement_prod, args.she_bias_measurements, workdir=args.workdir)
 
     # Try to archive the product
 
@@ -427,8 +427,8 @@ def measure_bias_from_args(args):
 
     if archive_dir is not None:
         try:
-            logger.info("Archiving combined bias measurments to " + os.path.join(full_archive_dir, args.workdir, args.shear_bias_measurements))
-            archive_product(product_filename=args.shear_bias_measurements,
+            logger.info("Archiving combined bias measurments to " + os.path.join(full_archive_dir, args.workdir, args.she_bias_measurements))
+            archive_product(product_filename=args.she_bias_measurements,
                             archive_dir=full_archive_dir,
                             workdir=args.workdir)
         except Exception as e:

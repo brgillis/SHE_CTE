@@ -40,7 +40,7 @@ class Args(object):
         self.workdir = None
         self.logdir = None
         self.profile = False
-        self.shear_bias_statistics = None
+        self.she_bias_statistics = None
         self.shear_bias_measurement = None
         self.archive_dir = None
         self.webdav_dir = None
@@ -123,8 +123,8 @@ class TestMeasureStatistics:
         args = Args()
         args.workdir = self.workdir
         args.logdir = self.logdir
-        args.shear_bias_statistics = "test_shear_statistics.json"
-        args.shear_bias_measurements = "test_shear_bias_measurements.xml"
+        args.she_bias_statistics = "test_shear_statistics.json"
+        args.she_bias_measurements = "test_shear_bias_measurements.xml"
 
         # Set up the files to be read in
 
@@ -158,13 +158,13 @@ class TestMeasureStatistics:
 
         # Test for bias 0
 
-        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_0)
+        write_listfile(join(args.workdir, args.she_bias_statistics), shear_bias_statistics_filenames_0)
 
         # Call the function
         measure_bias_from_args(args)
 
         # Read in and check the results
-        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
+        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
         g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 
@@ -176,13 +176,13 @@ class TestMeasureStatistics:
 
         # Test for bias 1
 
-        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_1)
+        write_listfile(join(args.workdir, args.she_bias_statistics), shear_bias_statistics_filenames_1)
 
         # Call the function
         measure_bias_from_args(args)
 
         # Read in and check the results
-        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
+        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
         g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 
@@ -194,13 +194,13 @@ class TestMeasureStatistics:
 
         # Test for bias 01
 
-        write_listfile(join(args.workdir, args.shear_bias_statistics), shear_bias_statistics_filenames_01)
+        write_listfile(join(args.workdir, args.she_bias_statistics), shear_bias_statistics_filenames_01)
 
         # Call the function
         measure_bias_from_args(args)
 
         # Read in and check the results
-        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.shear_bias_measurements))
+        shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
         g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
 

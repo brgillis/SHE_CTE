@@ -176,8 +176,8 @@ def cleanup_bias_measurement_from_args(args):
     for product_filename in (args.simulation_config,
                              args.stacked_data_image,
                              args.stacked_segmentation_image,
-                             args.details_table,
-                             args.shear_estimates):
+                             argsshe_simulated_catalog,
+                             args.she_measurements):
         remove_product(os.path.join(args.workdir, product_filename))
 
     return

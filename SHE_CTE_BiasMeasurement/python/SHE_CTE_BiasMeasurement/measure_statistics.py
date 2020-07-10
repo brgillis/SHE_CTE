@@ -47,16 +47,16 @@ def measure_statistics_from_args(args):
 
     # Get the details table
 
-    details_table_product = read_xml_product(os.path.join(args.workdir, args.details_table))
+    details_table_product = read_xml_product(os.path.join(args.workdir, args.she_simulated_catalog))
     details_table = Table.read(os.path.join(args.workdir, details_table_product.get_data_filename()))
 
     # Get the shear estimates product
 
-    shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, args.shear_estimates))
+    shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, args.she_measurements))
 
     # Initialise the output product
 
-    shear_bias_statistics_product = products.shear_bias_statistics.create_shear_bias_statistics_product()
+    shear_bias_statistics_product = products.she_bias_statistics.create_she_bias_statistics_product()
 
     # Read in shear estimates, and calculate statistics for each method
 
@@ -74,10 +74,10 @@ def measure_statistics_from_args(args):
                 os.path.join(args.workdir, estimates_table_filename))
 
             # Calculate statistics
-            shear_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
+            she_bias_statistics = calculate_shear_bias_statistics(estimates_table, details_table)
 
             # Save these in the data product
-            shear_bias_statistics_product.set_method_bias_statistics(method, shear_bias_statistics, workdir=args.workdir)
+            shear_bias_statistics_product.set_method_bias_statistics(method, she_bias_statistics, workdir=args.workdir)
 
         except Exception as e:
 
@@ -85,7 +85,7 @@ def measure_statistics_from_args(args):
             shear_bias_statistics_product.set_method_bias_statistics(method, None, workdir=args.workdir)
 
     # Write out the statistics product
-    write_xml_product(shear_bias_statistics_product, args.shear_bias_statistics, workdir=args.workdir)
+    write_xml_product(shear_bias_statistics_product, args.she_bias_statistics, workdir=args.workdir)
 
     # Try to archive the product
 
@@ -122,7 +122,7 @@ def measure_statistics_from_args(args):
 
     if archive_dir is not None:
         try:
-            archive_product(product_filename=args.shear_bias_statistics,
+            archive_product(product_filename=args.she_bias_statistics,
                             archive_dir=full_archive_dir,
                             workdir=args.workdir)
         except Exception as e:

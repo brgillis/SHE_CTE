@@ -326,7 +326,7 @@ def estimate_shears_from_args(args, dry_run=False):
         if method not in methods:
             shear_estimates_prod.set_method_filename(method, None)
 
-    write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
+    write_xml_product(shear_estimates_prod, args.she_measurements_product, workdir=args.workdir)
 
     logger.info("Finished shear estimation.")
 

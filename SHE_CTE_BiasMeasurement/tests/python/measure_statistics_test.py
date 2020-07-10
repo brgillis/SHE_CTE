@@ -44,7 +44,7 @@ class Args(object):
         self.workdir = None
         self.logdir = None
         self.profile = False
-        self.she_simulated_catalog_table = None
+        self.she_simulated_catalog = None
         self.she_measurements = None
         self.she_bias_statistics = None
         self.archive_dir = None
@@ -296,7 +296,7 @@ class TestMeasureStatistics:
         args = Args()
         args.workdir = self.workdir
         args.logdir = self.logdir
-        args.she_simulated_catalog_table = "test_she_simulated_catalog_table.xml"
+        args.she_simulated_catalog = "test_she_simulated_catalog.xml"
         args.she_measurements = "test_she_measurements.xml"
         args.she_bias_statistics = "test_shear_statistics.xml"
 
@@ -304,9 +304,9 @@ class TestMeasureStatistics:
 
         os.makedirs(os.path.join(args.workdir, "data"))
 
-        she_simulated_catalog_filename = "test_she_simulated_catalog_table.fits"
+        she_simulated_catalog_filename = "test_she_simulated_catalog.fits"
         she_simulated_catalog_product = products.she_simulated_catalog.create_dpd_she_simulated_catalog(she_simulated_catalog_filename)
-        write_xml_product(she_simulated_catalog_product, args.she_simulated_catalog_table, workdir=args.workdir)
+        write_xml_product(she_simulated_catalog_product, args.she_simulated_catalog, workdir=args.workdir)
         self.she_simulated_catalog.write(join(args.workdir, "data/" + she_simulated_catalog_filename), format="fits")
 
         she_measurements_filename = "test_she_measurements.fits"
