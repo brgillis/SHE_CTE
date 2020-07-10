@@ -1,185 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ns1:DpdRegaussTraining xmlns:ns1="http://euclid.esa.org/schema/dpd/she/regausstraining">
+<ns1:DpdSheRegaussTraining xmlns:ns1="http://euclid.esa.org/schema/dpd/she/regausstraining">
 	<Header>
-		<ProductId>1542639697.8278558</ProductId>
-		<ProductType>XXXX</ProductType>
-		<SoftwareName>XXXX</SoftwareName>
-		<SoftwareRelease>XXXX</SoftwareRelease>
+		<ProductId>f97e9592-175d-4571-be14-a1eb783920d7</ProductId>
+		<ProductType>SHE</ProductType>
+		<SoftwareName>NA</SoftwareName>
+		<SoftwareRelease>0.0</SoftwareRelease>
+		<EuclidPipelineSoftwareRelease>0.0</EuclidPipelineSoftwareRelease>
+		<ProdSDC>SDC-IT</ProdSDC>
+		<DataSetRelease>NA</DataSetRelease>
+		<Purpose>UNKNOWN</Purpose>
+		<PlanId>e7e031a7-3303-426b-9d18-b6aad7860d9d</PlanId>
+		<PPOId>1e33608d-3d44-4f6c-a079-4c925b320814</PPOId>
+		<PipelineDefinitionId>PipelineDefinitionId</PipelineDefinitionId>
+		<PipelineRun>NA</PipelineRun>
+		<ExitStatusCode>NA</ExitStatusCode>
 		<ManualValidationStatus>UNKNOWN</ManualValidationStatus>
-		<PipelineRun>XXXX</PipelineRun>
-		<ExitStatusCode>0</ExitStatusCode>
-		<DataModelVersion>1.8.2</DataModelVersion>
-		<MinDataModelVersion>1.8.2</MinDataModelVersion>
-		<ScientificCustodian>SHE</ScientificCustodian>
-		<AccessRights>
-			<EuclidConsortiumRead>true</EuclidConsortiumRead>
-			<EuclidConsortiumWrite>true</EuclidConsortiumWrite>
-			<ScientificGroupRead>true</ScientificGroupRead>
-			<ScientificGroupWrite>true</ScientificGroupWrite>
-		</AccessRights>
-		<Curator/>
-		<Creator>LOCAL</Creator>
-		<CreationDate>2018-11-19T15:01:37.828Z</CreationDate>
+		<ExpirationDate>2020-06-30T14:36:47.228Z</ExpirationDate>
+		<ToBePublished>false</ToBePublished>
+		<Published>false</Published>
+		<Curator>Curator0</Curator>
+		<CreationDate>2020-06-30T14:36:47.228Z</CreationDate>
 	</Header>
 	<Data>
-		<IdCatalog>1903999959</IdCatalog>
-		<CatalogCoverage>
-			<SpatialCoverage>
-				<Polygon>
-					<Vertex>
-						<Position coordUnit="TeV">
-							<C1 unit="solLum">0.0</C1>
-							<C2 unit="km/s/kpc">1.0</C2>
-						</Position>
-						<SmallCircle>
-							<Pole coordUnit="J/m3/K4">
-								<C1 unit="pc">1.0</C1>
-								<C2 unit="km">1.0</C2>
-							</Pole>
-						</SmallCircle>
-					</Vertex>
-				</Polygon>
-			</SpatialCoverage>
-			<SpectralCoverage>
-				<Filter>
-					<Name>BLANCO</Name>
-					<MagId>L</MagId>
-					<CentralWavelength>2.0</CentralWavelength>
-					<MinWavelength>6.0</MinWavelength>
-					<MaxWavelength>3.0</MaxWavelength>
-					<Reference>X92</Reference>
-					<HasFringes>-1233920772</HasFringes>
-				</Filter>
-			</SpectralCoverage>
-		</CatalogCoverage>
-		<CatalogStorage>
-			<CatalogFileStorage>
-				<Id>L00</Id>
-				<PartitioningColumn>
-					<Name>s7n</Name>
-					<Label>Yb4</Label>
-					<Type>float32</Type>
-					<VariableLength>
-						<FieldNumber>1041682324</FieldNumber>
-						<MaxElements>-1784056362</MaxElements>
-						<Offset>-75078045</Offset>
-						<CatalogPropertyDataType>float64</CatalogPropertyDataType>
-					</VariableLength>
-					<Cardinality>654097460</Cardinality>
-					<NullValue>gjg</NullValue>
-					<Unit>mK</Unit>
-					<Description>K2J</Description>
-					<UCD>Q|phys.pressure</UCD>
-					<Utype>lIO</Utype>
-				</PartitioningColumn>
-				<CatalogMetadataStorage>
-					<Id>1979488068</Id>
-					<CatalogMetadataElement>
-						<Key>lmA</Key>
-						<Value>cxq</Value>
-					</CatalogMetadataElement>
-				</CatalogMetadataStorage>
-				<FileFormat>gzippedCSV</FileFormat>
-				<FileNumber>-835806348</FileNumber>
-				<StorageSpace>
-					<Id>C6R</Id>
-					<Range>
-						<MinValue>t5Z</MinValue>
-						<MaxValue>Feu</MaxValue>
-						<SelectionFilter>tNZ</SelectionFilter>
-					</Range>
-					<DataContainer filestatus="COMMITTED">
-						<FileName>JoOUTTteKKD4ymeG1oU80SGl1zLnz98Lq2q67syx3mP2o3T7oImnjLYANdsFvM2d6ozVSnYHJCm</FileName>
-					</DataContainer>
-				</StorageSpace>
-			</CatalogFileStorage>
-			<CatalogDBStorage>
-				<Id>9zG</Id>
-				<IdType>
-					<Name>fWa</Name>
-					<Label>pq8</Label>
-					<Type>multicharacter</Type>
-					<VariableLength>
-						<FieldNumber>670238361</FieldNumber>
-						<MaxElements>-213487086</MaxElements>
-						<Offset>-1167619981</Offset>
-						<CatalogPropertyDataType>multicharacter</CatalogPropertyDataType>
-					</VariableLength>
-					<Cardinality>317012508</Cardinality>
-					<NullValue>Uzs</NullValue>
-					<Unit>arcsec/um</Unit>
-					<Description>Xiv</Description>
-					<UCD>Q|phys.damping</UCD>
-					<Utype>xsh</Utype>
-				</IdType>
-				<TableName>OhO</TableName>
-				<ConnectionString>lbA</ConnectionString>
-				<StorageDataType>dTU</StorageDataType>
-				<IndexColumn>
-					<Name>2XW</Name>
-					<Label>OXS</Label>
-					<Type>float64</Type>
-					<VariableLength>
-						<FieldNumber>-1367494450</FieldNumber>
-						<MaxElements>913883830</MaxElements>
-						<Offset>-900982519</Offset>
-						<CatalogPropertyDataType>int32</CatalogPropertyDataType>
-					</VariableLength>
-					<Cardinality>-377418331</Cardinality>
-					<NullValue>hOF</NullValue>
-					<Unit>solRad</Unit>
-					<Description>RC2</Description>
-					<UCD>S|em.opt.I</UCD>
-					<Utype>SOI</Utype>
-				</IndexColumn>
-				<ParentCatalogId>509103569</ParentCatalogId>
-				<SelectionRange>
-					<MinValue>wlC</MinValue>
-					<MaxValue>4Eg</MaxValue>
-					<SelectionFilter>bMV</SelectionFilter>
-				</SelectionRange>
-			</CatalogDBStorage>
-		</CatalogStorage>
+		<SpatialCoverage>
+			<Polygon>
+				<Vertex>
+					<Position coordUnit="pix">
+						<C1 unit="J/K/kg">1.0</C1>
+						<C2 unit="sr">1.0</C2>
+					</Position>
+					<SmallCircle>
+						<Pole coordUnit="pixel">
+							<C1 unit="solRad">1.0</C1>
+							<C2 unit="deg/minute">1.0</C2>
+						</Pole>
+					</SmallCircle>
+				</Vertex>
+			</Polygon>
+			<Circle>
+				<Center coordUnit="d">
+					<C1 unit="count">0.0</C1>
+					<C2 unit="lyr">0.0</C2>
+				</Center>
+				<Radius unit="stars">1.0</Radius>
+			</Circle>
+			<BBox>
+				<RaCenter unit="m/s2">1.0</RaCenter>
+				<DecCenter unit="pixel**2">1.0</DecCenter>
+				<RaHalfWidth unit="N">0.0</RaHalfWidth>
+				<DecHalfWidth unit="arcsec/yr">1.0</DecHalfWidth>
+			</BBox>
+		</SpatialCoverage>
+		<SpectralCoverage>
+			<Filter>
+				<Name>LSST_Y</Name>
+				<MagId>Q</MagId>
+				<CentralWavelength>2.0</CentralWavelength>
+				<MinWavelength>5.0</MinWavelength>
+				<MaxWavelength>9.0</MaxWavelength>
+				<Reference>jOl8y</Reference>
+				<HasFringes>2078411945</HasFringes>
+			</Filter>
+		</SpectralCoverage>
 		<CatalogDescription>
-			<CatalogDataProduct>gbr</CatalogDataProduct>
-			<PathToCatalogDefinition>7yD</PathToCatalogDefinition>
-			<CatalogFormatBase>le3.gc.2pcf.pair.1D</CatalogFormatBase>
-			<CatalogFormatHDU>841020122</CatalogFormatHDU>
-			<CatalogFitsColumnsDefinition>9mVTmXCFirNsT3z6wAyteuFmBy17MaZs2RmGIeOs3JhzmaseM3s1IcYSBeezhspuRnt2lBvnBNFxYsNuu7AOvCZqKKzH81uhLZdzgbpia3tR1PYoNFgCl7NIrvDfwO</CatalogFitsColumnsDefinition>
-			<PartitioningColumn>
-				<Name>lxT</Name>
-				<Label>Is9</Label>
-				<Type>float64</Type>
-				<VariableLength>
-					<FieldNumber>270999726</FieldNumber>
-					<MaxElements>809697556</MaxElements>
-					<Offset>818740617</Offset>
-					<CatalogPropertyDataType>int64</CatalogPropertyDataType>
-				</VariableLength>
-				<Cardinality>-505451832</Cardinality>
-				<NullValue>unn</NullValue>
-				<Unit>arcsec/um</Unit>
-				<Description>wkU</Description>
-				<UCD>P|meta.bib.page</UCD>
-				<Utype>rLq</Utype>
-			</PartitioningColumn>
+			<CatalogOrigin>MASTER_DEEP</CatalogOrigin>
+			<CatalogType>PROXY</CatalogType>
+			<PathToCatalogFile>Data.DataStorage.DataContainer.FileName</PathToCatalogFile>
+			<CatalogName>She-Regauss-Training</CatalogName>
+			<CatalogFormatHDU>1</CatalogFormatHDU>
 		</CatalogDescription>
-		<RegaussTrainingFile format="she.regaussTraining" version="0.1">
-			<DataContainer filestatus="ARCHIVED">
-				<FileName>mock_regauss_training_data.fits</FileName>
+		<ValidityRange>
+			<Name>Dummy</Name>
+			<Type>sheRegaussTraining</Type>
+			<TimestampStart>2020-06-04T14:40:08.195Z</TimestampStart>
+			<TimestampEnd>9999-06-04T14:40:08.196Z</TimestampEnd>
+		</ValidityRange>
+		<DataStorage format="she.regaussTraining" version="8.0">
+			<DataContainer filestatus="ARCHIVED_ONLINE">
+				<FileName>mock_regauss_training.fits</FileName>
 			</DataContainer>
-		</RegaussTrainingFile>
+		</DataStorage>
 	</Data>
 	<QualityFlags>
-		<DummyFlag flagged="false" maxLimit="10.0" minLimit="0.05" xpath="//Data/Some/Path/To/Quality/Parameter">false</DummyFlag>
-		<AuxiliaryFlags flagName="2e3" flagged="true" maxLimit="5.0" minLimit="6.0" xpath="VPB">false</AuxiliaryFlags>
+		<DummyFlag flagged="true" maxLimit="10.0" minLimit="0.05" xpath="//Data/Some/Path/To/Quality/Parameter">true</DummyFlag>
+		<AuxiliaryFlags flagName="PmMrF" flagged="false" maxLimit="-5.0" minLimit="7.0" xpath="0y1ey">false</AuxiliaryFlags>
 	</QualityFlags>
 	<Parameters>
-		<Param>
-			<Key>Peb</Key>
-			<Description>i3f</Description>
-			<StringValue>nnO</StringValue>
-			<Unit>E0j</Unit>
-		</Param>
+		<Parameter>
+			<Key>VH5m4</Key>
+			<Description>5KKdA</Description>
+			<StringValue>dKIQj</StringValue>
+			<Unit>Qqulr</Unit>
+		</Parameter>
 	</Parameters>
-</ns1:DpdRegaussTraining>
+</ns1:DpdSheRegaussTraining>
