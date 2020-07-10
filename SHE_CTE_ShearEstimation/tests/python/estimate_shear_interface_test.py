@@ -37,9 +37,6 @@ import SHE_LensMC.she_measure_shear
 # from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
 import numpy as np
 
-ksb_training_location = "AUX/SHE_CTE_ShearEstimation/mock_ksb_training_product.xml"
-regauss_training_location = "AUX/SHE_CTE_ShearEstimation/mock_regauss_training_product.xml"
-
 test_data_location = "/tmp"
 
 data_images_filename = "vis_calibrated_frames.json"
@@ -48,6 +45,8 @@ stacked_image_filename = "vis_stacked_image.xml"
 stacked_segmentation_image_filename = "she_stack_reprojected_segmentation_map.xml"
 psf_images_and_tables_filename = "she_psf_model_images.json"
 detections_tables_filename = "mer_final_catalogs.json"
+ksb_training_filename = "test_ksb_training.xml"
+regauss_training_filename = "test_regauss_training.xml"
 
 
 class TestCase:
@@ -60,20 +59,24 @@ class TestCase:
     def setup(self, tmpdir):
 
         # Download the MDB from WebDAV
-        self.sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
-        self.sync_mdb.download()
-        self.mdb_filename = self.sync_mdb.absolutePath("SHE_CTE_8_1/sample_mdb.xml")
+        sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
+        sync_mdb.download()
+        mdb_filename = sync_mdb.absolutePath("SHE_CTE_8_1/sample_mdb.xml")
 
-        mdb.init(self.mdb_filename)
+        mdb.init(mdb_filename)
+
+        # Download the training data files from WebDAV
+        sync_training = DataSync("testdata/sync.conf", "testdata/test_control_training_data.txt")
+        sync_training.download()
 
         # Download the data stack files from WebDAV
-        self.sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
-        self.sync_datastack.download()
-        self.qualified_data_images_filename = self.sync_datastack.absolutePath("SHE_CTE_8_1/vis_calibrated_frames.json")
-        assert os.path.isfile(self.qualified_data_images_filename), f"Cannot find file: {self.qualified_data_images_filename}"
+        sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
+        sync_datastack.download()
+        qualified_data_images_filename = sync_datastack.absolutePath("SHE_CTE_8_1/vis_calibrated_frames.json")
+        assert os.path.isfile(qualified_data_images_filename), f"Cannot find file: {qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
-        self.workdir = os.path.split(self.qualified_data_images_filename)[0]
+        self.workdir = os.path.split(qualified_data_images_filename)[0]
         self.logdir = os.path.join(self.workdir, "logs")
 
         # Read in the test data
@@ -94,7 +97,8 @@ class TestCase:
         """Test that the interface for the KSB method works properly.
         """
 
-        ksb_training_data = load_control_training_data(find_file(ksb_training_location), workdir=self.workdir)
+        ksb_training_data = load_control_training_data(find_file(ksb_training_filename, self.workdir),
+                                                       workdir=self.workdir)
 
         ksb_cat = KSB_estimate_shear(self.data_stack,
                                      training_data=ksb_training_data,
@@ -114,7 +118,8 @@ class TestCase:
         """Test that the interface for the REGAUSS method works properly.
         """
 
-        regauss_training_data = load_control_training_data(find_file(regauss_training_location), workdir=self.workdir)
+        regauss_training_data = load_control_training_data(find_file(regauss_training_filename, self.workdir),
+                                                           workdir=self.workdir)
 
         regauss_cat = REGAUSS_estimate_shear(self.data_stack,
                                              training_data=regauss_training_data,
