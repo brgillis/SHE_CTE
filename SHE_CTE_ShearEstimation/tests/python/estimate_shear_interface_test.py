@@ -31,7 +31,6 @@ from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import pytest
 
 from ElementsServices.DataSync import DataSync
-from SHE_CTE_ShearEstimation.bfd_measure_moments import bfd_measure_moments
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.SHE_measure_shear
@@ -204,27 +203,6 @@ class TestCase:
                 g = row[colname]
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
-
-        # Check that the input data isn't changed by the method
-        assert she_frame == original_she_frame
-
-        return
-
-    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
-    def test_bfd(self):
-        """Test that the interface for the BFD method works properly.
-        """
-
-        # Read in the test data
-        she_frame = read_pickled_product(find_file(she_frame_location))
-        original_she_frame = deepcopy(she_frame)
-
-        bfd_cat = bfd_measure_moments(she_frame,
-                                      training_data=None,
-                                      calibration_data=None,
-                                      workdir=self.workdir)
-
-        # TODO: Add test that values in the catalogue are reasonable
 
         # Check that the input data isn't changed by the method
         assert she_frame == original_she_frame
