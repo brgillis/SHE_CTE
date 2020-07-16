@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2019-06-27"
+__updated__ = "2020-06-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -35,7 +35,6 @@ from astropy.table import Table, Column, join, vstack, unique
 import SHE_CTE
 import numpy as np
 
-
 logger = getLogger(__name__)
 
 methods = ("BFD", "KSB", "LensMC", "MomentsML", "REGAUSS")
@@ -63,11 +62,16 @@ def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
         logger.debug("Reading overlapping sources from " + qualified_filename + ".")
 
         # Load the catalog table
-        catalog = Table.read(qualified_filename, format="fits")
+
+        try:
+            catalog = Table.read(qualified_filename, format="fits")
+        except OSError as e:
+            logger.error(filename + " is corrupt or missing")
+            raise
 
         # Get the (RA, Dec) columns
-        ra = catalog["ra_mag"] if "ra_mag" in catalog.colnames else catalog["RA"]
-        dec = catalog["dec_mag"] if "dec_mag" in catalog.colnames else catalog["DEC"]
+        ra = catalog["RA_MAG"] if "RA_MAG" in catalog.colnames else catalog["RA"]
+        dec = catalog["DEC_MAG"] if "DEC_MAG" in catalog.colnames else catalog["DEC"]
 
         # Check which sources fall inside the given (RA, Dec) ranges
         cond_ra = np.logical_and(ra > ra_range[0], ra < ra_range[1])
@@ -205,37 +209,34 @@ def match_to_tu_from_args(args):
 
             # Remove unused columns in the star table
 
-            overlapping_star_catalog.remove_columns(['H', 'J-H', 'z-H', 'i-H', 'r-H', 'g-H', 'g-G', 'g-BP', 'g-RP', 'V-Ic',
-                                                     'mux', 'muy', 'Vr', 'UU', 'VV', 'WW', 'Mv', 'CL', 'Typ', 'Teff', 'logg',
-                                                     'Age', 'Mass', 'Mbol', 'Radius', '[Fe/H]', 'l(deg)', 'b(deg)',
-                                                     'RA2000.0', 'DEC2000.0', 'Dist', 'x(kpc)', 'y(kpc)', 'z(kpc)', 'Av',
-                                                     '[alpha/Fe]', 'Parallax(microarsec)', 'errparallax(micro)', 'Gmag',
-                                                     'error_dist(kpc)', 'RA2000(Gaia)', 'DEC2000(Gaia)', 'i', 'ORIGIN',
-                                                     'TU_FLUX_Y_NISP', 'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
-                                                     'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
-                                                     'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
-                                                     'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
-                                                     'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
-                                                     'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
-                                                     'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
-                                                     'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS', ])
+            overlapping_star_catalog.remove_columns(['DIST', 'TU_MAG_H_2MASS', 'SED_TEMPLATE', 'AV', 'TU_FNU_VIS',
+                                                     'TU_FNU_Y_NISP', 'TU_FNU_J_NISP', 'TU_FNU_H_NISP', 'TU_FNU_G_DECAM',
+                                                     'TU_FNU_R_DECAM', 'TU_FNU_I_DECAM', 'TU_FNU_Z_DECAM',
+                                                     'TU_FNU_U_MEGACAM', 'TU_FNU_R_MEGACAM', 'TU_FNU_G_JPCAM',
+                                                     'TU_FNU_I_PANSTARRS', 'TU_FNU_Z_PANSTARRS', 'TU_FNU_Z_HSC',
+                                                     'TU_FNU_G_GAIA', 'TU_FNU_BP_GAIA', 'TU_FNU_RP_GAIA', 'TU_FNU_U_LSST',
+                                                     'TU_FNU_G_LSST', 'TU_FNU_R_LSST', 'TU_FNU_I_LSST', 'TU_FNU_Z_LSST',
+                                                     'TU_FNU_Y_LSST', 'TU_FNU_U_KIDS', 'TU_FNU_G_KIDS', 'TU_FNU_R_KIDS',
+                                                     'TU_FNU_I_KIDS', 'TU_FNU_J_2MASS', 'TU_FNU_H_2MASS',
+                                                     'TU_FNU_KS_2MASS', ])
 
             # Remove unused columns in the galaxy table
 
-            overlapping_galaxy_catalog.remove_columns(['id', 'ra', 'dec', 'ref_mag_r01', 'euclid_nisp_h', 'ext_law', 'ebv',
-                                                       'lsfr', 'metallicity', 'lmstellar', 'logf_halpha_ext', 'logf_hbeta_ext',
-                                                       'logf_o2_ext', 'logf_o3_ext', 'logf_n2_ext', 'logf_s2_ext',
-                                                       'stamp_file_id', 'stamp_index', 'spectra_index', 'Av', 'TU_FLUX_Y_NISP',
-                                                       'TU_FLUX_J_NISP', 'TU_FLUX_H_NISP', 'TU_FLUX_G_DECAM',
-                                                       'TU_FLUX_R_DECAM', 'TU_FLUX_I_DECAM', 'TU_FLUX_Z_DECAM',
-                                                       'TU_FLUX_U_MEGACAM', 'TU_FLUX_R_MEGACAM', 'TU_FLUX_G_JPCAM',
-                                                       'TU_FLUX_I_PANSTARRS', 'TU_FLUX_Z_PANSTARRS', 'TU_FLUX_Z_HSC',
-                                                       'TU_FLUX_G_GAIA', 'TU_FLUX_BP_GAIA', 'TU_FLUX_RP_GAIA',
-                                                       'TU_FLUX_U_LSST', 'TU_FLUX_G_LSST', 'TU_FLUX_R_LSST', 'TU_FLUX_I_LSST',
-                                                       'TU_FLUX_Z_LSST', 'TU_FLUX_Y_LSST', 'TU_FLUX_U_KIDS', 'TU_FLUX_G_KIDS',
-                                                       'TU_FLUX_R_KIDS', 'TU_FLUX_I_KIDS',
+            overlapping_galaxy_catalog.remove_columns(['SOURCE_ID', 'RA', 'DEC', 'TU_MAG_R01_SDSS_ABS', 'TU_MAG_R01_SDSS',
+                                                       'EXT_LAW', 'EBV', 'HALPHA_LOGFLAM_EXT', 'HBETA_LOGFLAM_EXT',
+                                                       'O2_LOGFLAM_EXT', 'O3_LOGFLAM_EXT', 'N2_LOGFLAM_EXT',
+                                                       'S2_LOGFLAM_EXT', 'AV', 'TU_FNU_VIS', 'TU_FNU_Y_NISP',
+                                                       'TU_FNU_J_NISP', 'TU_FNU_H_NISP', 'TU_FNU_G_DECAM',
+                                                       'TU_FNU_R_DECAM', 'TU_FNU_I_DECAM', 'TU_FNU_Z_DECAM',
+                                                       'TU_FNU_U_MEGACAM', 'TU_FNU_R_MEGACAM', 'TU_FNU_G_JPCAM',
+                                                       'TU_FNU_I_PANSTARRS', 'TU_FNU_Z_PANSTARRS', 'TU_FNU_Z_HSC',
+                                                       'TU_FNU_G_GAIA', 'TU_FNU_BP_GAIA', 'TU_FNU_RP_GAIA',
+                                                       'TU_FNU_U_LSST', 'TU_FNU_G_LSST', 'TU_FNU_R_LSST',
+                                                       'TU_FNU_I_LSST', 'TU_FNU_Z_LSST', 'TU_FNU_Y_LSST',
+                                                       'TU_FNU_U_KIDS', 'TU_FNU_G_KIDS', 'TU_FNU_R_KIDS',
+                                                       'TU_FNU_I_KIDS', 'TU_FNU_J_2MASS', 'TU_FNU_H_2MASS',
+                                                       'TU_FNU_KS_2MASS',
                                                        ])
-
             # Set up star and galaxy tables for matching
 
             ra_star = overlapping_star_catalog["RA"]
@@ -244,8 +245,8 @@ def match_to_tu_from_args(args):
 
             overlapping_star_catalog.add_column(Column(np.arange(len(ra_star)), name=star_index_colname))
 
-            ra_gal = overlapping_galaxy_catalog["ra_mag"]
-            dec_gal = overlapping_galaxy_catalog["dec_mag"]
+            ra_gal = overlapping_galaxy_catalog["RA_MAG"]
+            dec_gal = overlapping_galaxy_catalog["DEC_MAG"]
             sky_coord_gal = SkyCoord(ra=ra_gal * units.degree, dec=dec_gal * units.degree)
 
             overlapping_galaxy_catalog.add_column(Column(np.arange(len(ra_gal)), name=gal_index_colname))
@@ -269,8 +270,8 @@ def match_to_tu_from_args(args):
                 best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
 
                 # Perform the reverse match as well, and only use a symmetric best-match table
-                best_obj_id_from_star, best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(sky_coord_se)
-                best_obj_id_from_gal, best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
+                best_obj_id_from_star, _best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(sky_coord_se)
+                best_obj_id_from_gal, _best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
 
                 # Check that the overall best distance is less than the threshold
                 best_distance = np.where(best_gal_distance <= best_star_distance,
@@ -345,31 +346,31 @@ def match_to_tu_from_args(args):
                         Column(np.arctan2(gal_matched_table["G2"].data, gal_matched_table["G1"].data) * 90 / np.pi,
                                name="Beta_Est_Shear"))
 
-                    g_mag = np.sqrt(gal_matched_table["G1"].data**2 + gal_matched_table["G2"].data**2)
+                    g_mag = np.sqrt(gal_matched_table["G1"].data ** 2 + gal_matched_table["G2"].data ** 2)
                     gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
 
                     gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
 
                 # Details about the input shear
 
-                g1_in = gal_matched_table["gamma1"]
-                g2_in = gal_matched_table["gamma2"]
+                g1_in = gal_matched_table["GAMMA1"]
+                g2_in = gal_matched_table["GAMMA2"]
 
                 gal_matched_table.add_column(
                     Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
 
                 gal_matched_table.add_column(
-                    Column(np.sqrt(g1_in**2 + g2_in**2) * 90 / np.pi, name="Mag_Input_Shear"))
+                    Column(np.sqrt(g1_in ** 2 + g2_in ** 2) * 90 / np.pi, name="Mag_Input_Shear"))
 
                 # Details about the input bulge shape
 
-                bulge_angle = gal_matched_table["bulge_angle"] + 90
+                bulge_angle = gal_matched_table["DISK_ANGLE"] + 90
                 regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
                                                    np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
                 gal_matched_table.add_column(Column(regularized_bulge_angle,
                                                     name="Beta_Input_Bulge_Unsheared_Shape"))
 
-                bulge_axis_ratio = gal_matched_table["bulge_axis_ratio"]
+                bulge_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
                 bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
                 gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
 
@@ -380,13 +381,13 @@ def match_to_tu_from_args(args):
 
                 # Details about the input disk shape
 
-                disk_angle = gal_matched_table["disk_angle"] + 90
+                disk_angle = gal_matched_table["DISK_ANGLE"] + 90
                 regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
                                                   np.where(disk_angle > 90, disk_angle - 180, disk_angle))
                 gal_matched_table.add_column(Column(regularized_disk_angle,
                                                     name="Beta_Input_Disk_Unsheared_Shape"))
 
-                disk_axis_ratio = gal_matched_table["disk_axis_ratio"]
+                disk_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
                 disk_g_mag = (1 - disk_axis_ratio) / (1 + disk_axis_ratio)
                 gal_matched_table.add_column(Column(disk_g_mag, name="Mag_Input_Disk_Unsheared_Shape"))
 
