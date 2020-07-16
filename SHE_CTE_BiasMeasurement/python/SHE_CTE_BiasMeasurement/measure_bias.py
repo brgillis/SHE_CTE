@@ -35,9 +35,7 @@ from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
 
-
-__updated__ = "2019-12-19"
-
+__updated__ = "2020-07-16"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -110,43 +108,42 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
         shear_statistics_prod = read_xml_product(os.path.join(workdir, shear_statistics_file))
     except (EOFError, UnpicklingError) as e:
         logger.warn("File " + os.path.join(workdir, shear_statistics_file) + " seems to be corrupted: " + str(e))
-        return
+        return None, None
 
     all_method_statistics = {}
     all_method_measurements = {}
 
     for method in mv.estimation_methods:
-        
+
         if not use_bias_only:
 
             method_statistics = MethodStatistics()
             method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
-    
+
             if not method == "BFD":  # get info for method if not BFD
-    
+
                 method_statistics.g1_statistics = method_shear_statistics[0]
                 method_statistics.g2_statistics = method_shear_statistics[1]
-    
+
             elif method_shear_statistics is not None:  # get info for BFD method
                 method_statistics.bfd_statistics = method_shear_statistics
-    
+
             all_method_statistics[method] = method_statistics
-            
+
         else:
-    
+
             all_method_statistics[method] = []
-            
-        
+
         method_measurements = MethodMeasurements()
         method_bias_measurements = shear_statistics_prod.get_method_bias_measurements(method, workdir=workdir)
-            
+
         if method_bias_measurements is None:
             method_measurements.g1_measurements = None
             method_measurements.g2_measurements = None
         else:
             method_measurements.g1_measurements = method_bias_measurements[0]
             method_measurements.g2_measurements = method_bias_measurements[1]
-            
+
         all_method_measurements[method] = method_measurements
 
     return all_method_statistics, all_method_measurements
@@ -243,7 +240,7 @@ def measure_bias_from_args(args):
         pool = mp.Pool(processes=number_threads)
         lt_method_shear_statistics = [pool.apply(read_statistics, args=(
             shear_statistics_file, args.workdir, recovery_mode, args.use_bias_only)) for shear_statistics_file in shear_statistics_files]
-        
+
     l_method_shear_statistics, l_method_bias_measurements = zip(*lt_method_shear_statistics)
 
     # Combine the statistics into a single list for each method
@@ -255,24 +252,24 @@ def measure_bias_from_args(args):
 
     have_some_data = False
     missing_shear_statistics = False
-    
+
     if not args.use_bias_only:
 
         for method in mv.estimation_methods:
-    
+
             method_shear_statistics_list = MethodStatisticsList()
-    
+
             l_g1_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
                                                             [method].g1_statistics for i in range(len(l_method_shear_statistics))], None)
             l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
                                                             [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
             l_bfd_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
                                                              [method].bfd_statistics for i in range(len(l_method_shear_statistics))], None)
-    
+
             method_shear_statistics_list.g1_statistics_list = []
             method_shear_statistics_list.g2_statistics_list = []
             method_shear_statistics_list.bfd_statistics_list = []
-    
+
             # Compress the lists to be 1D
             for uncompressed_list, final_list in ((l_g1_statistics_list, method_shear_statistics_list.g1_statistics_list),
                                                   (l_g2_statistics_list, method_shear_statistics_list.g2_statistics_list),
@@ -280,42 +277,42 @@ def measure_bias_from_args(args):
                 for item in uncompressed_list:
                     if isinstance(item, list):
                         final_list += item
-                        if len(item)==0:
+                        if len(item) == 0:
                             missing_shear_statistics = True
                     elif isinstance(item, LinregressStatistics) or isinstance(item, BFDSumStatistics):
                         final_list.append(item)
                     else:
                         raise ValueError("Unexpected type of bias statistics: " + str(type(item)))
-    
+
             method_shear_statistics_lists[method] = method_shear_statistics_list
-    
+
             if (len(method_shear_statistics_list.g1_statistics_list) > 0 or
                 len(method_shear_statistics_list.g2_statistics_list) > 0 or
                     len(method_shear_statistics_list.bfd_statistics_list) > 0):
                 have_some_data = True
-            
+
     if missing_shear_statistics or args.use_bias_only:
-        
+
         for method in mv.estimation_methods:
-        
+
             # Check if we have some bias measurements
-                
+
             def remove_missing_bms_from_list(the_list):
-                return [value for value in the_list if value.m!='']
-        
+                return [value for value in the_list if value.m != '']
+
             method_bias_measurements_list = MethodMeasurementsList()
-        
+
             method_bias_measurements_list.g1_measurements_list = remove_missing_bms_from_list(remove_values_from_list([l_method_bias_measurements[i]
                                                             [method].g1_measurements for i in range(len(l_method_bias_measurements))], None))
             method_bias_measurements_list.g2_measurements_list = remove_missing_bms_from_list(remove_values_from_list([l_method_bias_measurements[i]
                                                             [method].g2_measurements for i in range(len(l_method_bias_measurements))], None))
-        
+
             method_bias_measurements_lists[method] = method_bias_measurements_list
-        
+
             if (len(method_bias_measurements_list.g1_measurements_list) > 0 or
                 len(method_bias_measurements_list.g2_measurements_list) > 0):
                 have_some_data = True
-        
+
     if not have_some_data:
         raise RuntimeError("No shear bias statistics or measurements are available; aborting.")
     elif missing_shear_statistics and not args.use_bias_only:
@@ -346,30 +343,30 @@ def measure_bias_from_args(args):
                                                                             workdir=args.workdir)
 
     for method in mv.estimation_methods:
-        
+
         if missing_shear_statistics or args.use_bias_only:
-            
+
             # Calculate from bias measurements
-            
+
             if len(method_bias_measurements_lists[method].g1_measurements_list) >= bootstrap_threshold:
-                
+
                 logger.info("Calculating bootstrap bias measurements for method " + method + " from list of bias measurements.")
-                
+
                 # We have enough data to calculate bootstrap errors
                 g1_bias_measurements = calculate_bootstrap_bias_measurements_from_measurements(
                     method_bias_measurements_lists[method].g1_measurements_list, seed=args.bootstrap_seed)
-                
+
             elif len(method_bias_measurements_lists[method].g1_measurements_list) >= 0:
-                
+
                 logger.info("Calculating non-bootstrap bias measurements for method " + method + " from list of bias measurements.")
-                
+
                 # Not enough for bootstrap errors - calculate simply
                 g1_bias_measurements = combine_bias_measurements(
                     method_bias_measurements_lists[method].g1_measurements_list)
-                
+
             else:
                 g1_bias_measurements = None
-            
+
             if len(method_bias_measurements_lists[method].g2_measurements_list) >= bootstrap_threshold:
                 # We have enough data to calculate bootstrap errors
                 g2_bias_measurements = calculate_bootstrap_bias_measurements_from_measurements(
@@ -384,17 +381,17 @@ def measure_bias_from_args(args):
         elif not method == "BFD":
             # do bias measurement for all methods but BFD
             if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
-                
+
                 logger.info("Calculating bootstrap bias measurements for method " + method + " from list of bias statistics.")
-                
+
                 # We have enough data to calculate bootstrap errors
                 g1_bias_measurements = calculate_bootstrap_bias_measurements_from_statistics(
                     method_shear_statistics_lists[method].g1_statistics_list, seed=args.bootstrap_seed)
 
             elif len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
-                
+
                 logger.info("Calculating non-bootstrap bias measurements for method " + method + " from list of bias statistics.")
-                
+
                 # Not enough for bootstrap errors - calculate simply
                 g1_bias_measurements = BiasMeasurements(
                     combine_linregress_statistics(method_shear_statistics_lists[method].g1_statistics_list))
@@ -417,27 +414,27 @@ def measure_bias_from_args(args):
             # do bias measurement for BFD
             try:
                 if len(method_shear_statistics_lists[method].bfd_statistics_list) >= bootstrap_threshold:
-                
+
                     logger.info("Calculating bootstrap bias measurements for method " + method + " from list of bias statistics.")
-                
+
                     # We have enough data to calculate bootstrap errors
                     g1_bias_measurements, g2_bias_measurements = calculate_bfd_bootstrap_bias_measurements_from_statistics(
                         method_shear_statistics_lists[method].bfd_statistics_list, seed=args.bootstrap_seed)
-                    
+
                 elif len(method_shear_statistics_lists[method].bfd_statistics_list) > 0:
-                
+
                     logger.info("Calculating bootstrap bias measurements for method " + method + " from list of bias statistics.")
-                    
+
                     g1_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
                         method_shear_statistics_lists[method].bfd_statistics_list, do_g1=True))
                     g2_bias_measurements = BiasMeasurements(combine_bfd_sum_statistics(
                         method_shear_statistics_lists[method].bfd_statistics_list, do_g1=False))
-                    
+
                 else:
-                    
+
                     g1_bias_measurements = None
                     g2_bias_measurements = None
-                    
+
             except np.linalg.linalg.LinAlgError as e:
                 logger.warn("Unable to calculate bias for BFD. Exception was: " + str(e))
                 g1_bias_measurements = None
@@ -445,11 +442,11 @@ def measure_bias_from_args(args):
 
         bias_measurement_prod.set_method_bias_measurements(
             method, (g1_bias_measurements, g2_bias_measurements), workdir=args.workdir)
-        
-    # Print the bias measurements
-    print_bias_from_product(bias_measurement_prod,workdir=args.workdir)
 
-    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir,args.shear_bias_measurements))
+    # Print the bias measurements
+    print_bias_from_product(bias_measurement_prod, workdir=args.workdir)
+
+    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.shear_bias_measurements))
     write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
 
     # Try to archive the product
@@ -462,7 +459,7 @@ def measure_bias_from_args(args):
 
     if archive_dir is not None:
         try:
-            logger.info("Archiving combined bias measurments to " + os.path.join(full_archive_dir,args.workdir,args.shear_bias_measurements))
+            logger.info("Archiving combined bias measurments to " + os.path.join(full_archive_dir, args.workdir, args.shear_bias_measurements))
             archive_product(product_filename=args.shear_bias_measurements,
                             archive_dir=full_archive_dir,
                             workdir=args.workdir)
@@ -474,12 +471,14 @@ def measure_bias_from_args(args):
 
     return
 
+
 def combine_bias_statistics(l_bias_statistics):
     """ Simple passthrough function to combine stats into a BiasMeasurements object.
     """
-    
+
     return BiasMeasurements(combine_linregress_statistics(l_bias_statistics))
-    
+
+
 def combine_bias_measurements(l_bias_measurements):
     """Function to combine a list of bias measurements into a single value, trusting the errors and weights are all correct
     and there aren't any correlations between errors and bias values.
@@ -494,53 +493,53 @@ def combine_bias_measurements(l_bias_measurements):
     bias_measurements : <BiasMeasurements>
     
     """
-    
+
     num_bias_measurements = len(l_bias_measurements)
-    
+
     lm = np.array([l_bias_measurements[i].m for i in range(num_bias_measurements)])
     lm_err = np.array([l_bias_measurements[i].m_err for i in range(num_bias_measurements)])
     lc = np.array([l_bias_measurements[i].c for i in range(num_bias_measurements)])
     lc_err = np.array([l_bias_measurements[i].c_err for i in range(num_bias_measurements)])
     lmc_covar = np.array([l_bias_measurements[i].mc_covar for i in range(num_bias_measurements)])
-    
+
     # Calculate weight arrays
-    lwm = lm_err**(-2)
-    lwc = lc_err**(-2)
-    lwmc = lmc_covar**(-1)
-    
+    lwm = lm_err ** (-2)
+    lwc = lc_err ** (-2)
+    lwmc = lmc_covar ** (-1)
+
     # Determine a mask for both m and c
-    m_mask = np.logical_or(np.logical_or(np.isnan(lwm),np.isinf(lwm)),lwm<=0)
-    c_mask = np.logical_or(np.logical_or(np.isnan(lwc),np.isinf(lwc)),lwc<=0)
-    mc_mask = np.logical_or(m_mask,c_mask)
-    
+    m_mask = np.logical_or(np.logical_or(np.isnan(lwm), np.isinf(lwm)), lwm <= 0)
+    c_mask = np.logical_or(np.logical_or(np.isnan(lwc), np.isinf(lwc)), lwc <= 0)
+    mc_mask = np.logical_or(m_mask, c_mask)
+
     # Calculate total weights
     wm = lwm[~mc_mask].sum()
     wc = lwc[~mc_mask].sum()
     wmc = lwmc[~mc_mask].sum()
-    
+
     # Check for zero weight, otherwise calculate bias values
-        
+
     bias_measurements = BiasMeasurements()
-    
-    if wm<=0:
+
+    if wm <= 0:
         bias_measurements.m = 0
         bias_measurements.m_err = np.nan
     else:
-        bias_measurements.m = (lm*lwm)[~mc_mask].sum()/wm
-        bias_measurements.m_err = wm**(-0.5)
-    
-    if wc<=0:
+        bias_measurements.m = (lm * lwm)[~mc_mask].sum() / wm
+        bias_measurements.m_err = wm ** (-0.5)
+
+    if wc <= 0:
         bias_measurements.c = 0
         bias_measurements.c_err = np.nan
     else:
-        bias_measurements.c = (lc*lwc)[~mc_mask].sum()/wc
-        bias_measurements.c_err = wc**(-0.5)
-        
-    if wmc<=0:
+        bias_measurements.c = (lc * lwc)[~mc_mask].sum() / wc
+        bias_measurements.c_err = wc ** (-0.5)
+
+    if wmc <= 0:
         bias_measurements.mc_covar = np.nan
     else:
-        bias_measurements.mc_covar = wmc**(-1)
-        
+        bias_measurements.mc_covar = wmc ** (-1)
+
     return bias_measurements
 
 
@@ -549,13 +548,15 @@ def calculate_bootstrap_bias_measurements_from_statistics(statistics_list, n_boo
     """
     return calculate_bootstrap_bias_measurements(objects_list=statistics_list, combine_func=combine_bias_statistics,
                                                  n_bootstrap=n_bootstrap, seed=seed)
-    
+
+
 def calculate_bootstrap_bias_measurements_from_measurements(measurements_list, n_bootstrap=1000, seed=0):
     """Calculates a BiasMeasurements object using bootstrap errors from a list of measurements objects.
     """
     return calculate_bootstrap_bias_measurements(objects_list=measurements_list, combine_func=combine_bias_measurements,
                                                  n_bootstrap=n_bootstrap, seed=seed)
-    
+
+
 def calculate_bootstrap_bias_measurements(objects_list, combine_func, n_bootstrap=1000, seed=0):
     """Calculates a BiasMeasurements object using bootstrap errors from a list of statistics objects.
     """
