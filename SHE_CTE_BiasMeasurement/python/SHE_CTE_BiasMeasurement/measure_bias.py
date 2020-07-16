@@ -21,6 +21,9 @@
 from _pickle import UnpicklingError
 import os
 
+from SHE_CTE_BiasMeasurement import magic_values as mv
+from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
+from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
@@ -28,14 +31,11 @@ from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
                           LinregressStatistics)
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
 from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_from_stats
-
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
-from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
 import multiprocessing as mp
 import numpy as np
 
-__updated__ = "2020-07-10"
+
+__updated__ = "2020-07-16"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -106,7 +106,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
         shear_statistics_prod = read_xml_product(os.path.join(workdir, shear_statistics_file))
     except (EOFError, UnpicklingError) as e:
         logger.warning("File " + os.path.join(workdir, shear_statistics_file) + " seems to be corrupted: " + str(e))
-        return
+        return None, None
 
     all_method_statistics = {}
     all_method_measurements = {}
@@ -264,6 +264,7 @@ def measure_bias_from_args(args):
             l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
                                                             [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
 
+
             method_shear_statistics_list.g1_statistics_list = []
             method_shear_statistics_list.g2_statistics_list = []
 
@@ -341,7 +342,7 @@ def measure_bias_from_args(args):
 
         if method == "BFD":
             continue
-
+        
         if missing_shear_statistics or args.use_bias_only:
 
             # Calculate from bias measurements
@@ -414,8 +415,13 @@ def measure_bias_from_args(args):
     # Print the bias measurements
     print_bias_from_product(bias_measurement_prod, workdir=args.workdir)
 
+<<<<<<< HEAD
     logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.she_bias_measurements))
     write_xml_product(bias_measurement_prod, args.she_bias_measurements, workdir=args.workdir)
+=======
+    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.shear_bias_measurements))
+    write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
+>>>>>>> refs/heads/develop
 
     # Try to archive the product
 
