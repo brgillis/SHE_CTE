@@ -4,9 +4,35 @@
 
     Primary execution loop for measuring galaxy shapes from an image file.
 """
+import copy
+import os
 
-__updated__ = "2020-01-28"
+from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT import mdb
+from SHE_PPT import products
+from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
+                             read_listfile, find_file)
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from SHE_PPT.utility import hash_any
+from astropy.io import fits
+from astropy.table import Table
 
+import SHE_CTE
+from SHE_CTE_ShearEstimation import magic_values as mv
+from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.SHE_measure_shear import fit_frame_stack
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
+from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
+from SHE_PPT.table_formats.detections import tf as detf
+from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
+import numpy as np
+
+__updated__ = "2020-07-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,46 +47,19 @@ __updated__ = "2020-01-28"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import copy
-import os
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import mdb
-from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file)
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
-from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import hash_any
-from astropy.io import fits
-from astropy.table import Table
-import numpy as np
-
-
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_control_training_data,
                    "BFD": bfd_load_training_data}
 
-
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       "MomentsML": ML_estimate_shear,
                       "LensMC": fit_frame_stack,
                       "BFD": bfd_measure_moments}
+
+default_chains_method = "LensMC"
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -117,7 +116,7 @@ def estimate_shears_from_args(args, dry_run=False):
     if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
                                                                   products.calibration_parameters.DpdSheCalibrationParametersProduct):
         raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                         + " is invalid type.")
+                         +" is invalid type.")
 
     # Set up method data filenames
 
@@ -197,6 +196,19 @@ def estimate_shears_from_args(args, dry_run=False):
             # Default to using all methods
             methods = list(estimation_methods.keys())
 
+        # Determine which method we want chains from
+        if args.chains_method is not None:
+            chains_method = args.methods
+        elif ConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
+            chains_method = pipeline_config[ConfigKeys.ES_CHAINS_METHOD.value]
+        else:
+            # Default to using all methods
+            chains_method = default_chains_method
+
+        if not chains_method in methods:
+            raise ValueError("chains_method (" + str(chains_method) + ") not in methods to run (" +
+                             str(methods) + ").")
+
         for method in methods:
 
             logger.info("Estimating shear with method " + method + "...")
@@ -206,6 +218,11 @@ def estimate_shears_from_args(args, dry_run=False):
             estimate_shear = estimation_methods[method]
 
             shear_estimates_filename = shear_estimates_prod.get_method_filename(method)
+
+            if method == chains_method:
+                return_chains = True
+            else:
+                return_chains = False
 
             hdulist = fits.HDUList()
 
@@ -241,12 +258,27 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 # need to add ids to iterate over
 
-                shear_estimates_table = estimate_shear(data_stack,
-                                                       training_data=training_data,
-                                                       calibration_data=calibration_data,
-                                                       workdir=args.workdir,
-                                                       debug=args.debug,
-                                                       sim_sc4_fix=True)
+                shear_estimates_results = estimate_shear(data_stack,
+                                                         training_data=training_data,
+                                                         calibration_data=calibration_data,
+                                                         workdir=args.workdir,
+                                                         debug=args.debug,
+                                                         return_chains=return_chains)
+
+                if return_chains:
+                    shear_estimates_table, chains_table = shear_estimates_results
+
+                    chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
+                                                                version=SHE_CTE.__version__,
+                                                                subdir=subfolder_name),
+
+                    chains_table.write(os.path.join(args.workdir, chains_data_filename))
+
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+
+                    write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
+                else:
+                    shear_estimates_table = shear_estimates_results
 
                 if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
