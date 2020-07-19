@@ -34,8 +34,7 @@ from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_
 import multiprocessing as mp
 import numpy as np
 
-
-__updated__ = "2020-07-16"
+__updated__ = "2020-07-19"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -264,7 +263,6 @@ def measure_bias_from_args(args):
             l_g2_statistics_list = remove_values_from_list([l_method_shear_statistics[i]
                                                             [method].g2_statistics for i in range(len(l_method_shear_statistics))], None)
 
-
             method_shear_statistics_list.g1_statistics_list = []
             method_shear_statistics_list.g2_statistics_list = []
 
@@ -342,7 +340,7 @@ def measure_bias_from_args(args):
 
         if method == "BFD":
             continue
-        
+
         if missing_shear_statistics or args.use_bias_only:
 
             # Calculate from bias measurements
@@ -415,13 +413,8 @@ def measure_bias_from_args(args):
     # Print the bias measurements
     print_bias_from_product(bias_measurement_prod, workdir=args.workdir)
 
-<<<<<<< HEAD
     logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.she_bias_measurements))
     write_xml_product(bias_measurement_prod, args.she_bias_measurements, workdir=args.workdir)
-=======
-    logger.info("Writing combined bias measurments to " + os.path.join(args.workdir, args.shear_bias_measurements))
-    write_xml_product(bias_measurement_prod, args.shear_bias_measurements, workdir=args.workdir)
->>>>>>> refs/heads/develop
 
     # Try to archive the product
 
