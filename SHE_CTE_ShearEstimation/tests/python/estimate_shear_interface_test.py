@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-07-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,21 +23,21 @@ __updated__ = "2020-07-10"
 import os
 import time
 
-from SHE_PPT import mdb
-from SHE_PPT.file_io import read_pickled_product, find_file
-from SHE_PPT.logging import getLogger
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import pytest
 
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.she_measure_shear
-# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
+from SHE_PPT import mdb
+from SHE_PPT.file_io import read_pickled_product, find_file
+from SHE_PPT.logging import getLogger
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import numpy as np
 
+# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
 test_data_location = "/tmp"
 
 data_images_filename = "vis_calibrated_frames.json"
@@ -62,7 +62,7 @@ class TestCase:
         # Download the MDB from WebDAV
         sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
         sync_mdb.download()
-        mdb_filename = sync_mdb.absolutePath("SHE_CTE_8_1/sample_mdb.xml")
+        mdb_filename = sync_mdb.absolutePath("SHE_PPT_8_2/sample_mdb-SC8.xml")
 
         mdb.init(mdb_filename)
 

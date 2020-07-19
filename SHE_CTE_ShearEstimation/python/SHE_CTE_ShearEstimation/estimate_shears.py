@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-07-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,6 +22,12 @@ __updated__ = "2020-07-10"
 
 import os
 
+from astropy.io import fits
+
+import SHE_CTE
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.she_measure_shear import fit_frame_stack
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -39,12 +45,6 @@ from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsm
 from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
-from astropy.io import fits
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.she_measure_shear import fit_frame_stack
 import numpy as np
 
 # from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
@@ -103,7 +103,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warning("No MDB file provided as input. Default values will be used where necessary.")
-        mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
+        mdb.init(find_file("WEB/SHE_PPT_8_2/sample_mdb-SC8.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
