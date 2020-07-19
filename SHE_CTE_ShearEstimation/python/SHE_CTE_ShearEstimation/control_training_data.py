@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2019-04-19"
+__updated__ = "2020-07-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,16 +22,14 @@ __updated__ = "2019-04-19"
 
 import os
 
-from SHE_CTE_ShearEstimation import magic_values as mv
 from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product, find_file
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
-from SHE_PPT.table_formats.ksb_training import tf as kttf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
+from SHE_PPT.table_formats.she_ksb_training import tf as ksbt_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_regauss_training import tf as regt_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
-import numpy as np
 
 
 class ControlTraining(object):
@@ -46,7 +44,7 @@ class ControlTraining(object):
         p = get_conditional_product(training_product_filename, workdir)
 
         if p is None:
-            logger.warn("No training data provided; using default shape noise of 0.")
+            logger.warning("No training data provided; using default shape noise of 0.")
             self.e1_var = 0.
             self.e2_var = 0.
         else:
@@ -55,12 +53,17 @@ class ControlTraining(object):
             qualified_training_data_filename = os.path.join(workdir, training_data_filename)
             t = Table.read(qualified_training_data_filename)
 
-            if is_in_format(t, kttf):  # For KSB and REGAUSS
-                self.e1_var = t[kttf.e1].var()
-                self.e2_var = t[kttf.e2].var()
-            elif is_in_format(t, setf):  # For LensMC
-                self.e1_var = t[setf.g1].var()
-                self.e2_var = t[setf.g2].var()
+            if is_in_format(t, ksbt_tf):  # For KSB
+                self.e1_var = t[ksbt_tf.e1].var()
+                self.e2_var = t[ksbt_tf.e2].var()
+            elif is_in_format(t, regt_tf):  # For REGAUSS
+                self.e1_var = t[regt_tf.e1].var()
+                self.e2_var = t[regt_tf.e2].var()
+            elif is_in_format(t, lmcm_tf):  # For LensMC
+                self.e1_var = t[lmcm_tf.g1].var()
+                self.e2_var = t[lmcm_tf.g2].var()
+            else:
+                raise ValueError("Unrecognized table format for training data in file: " + qualified_training_data_filename)
 
         logger.debug("Exiting ControlTraining __init__")
         return

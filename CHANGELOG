@@ -1,5 +1,32 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes from v0.8 to v8.0
+=========================
+
+API Changes
+-----------
+- Now requests and expects separate chains and measurements tables from LensMC
+
+Dependency Changes
+------------------
+- Now depends directly only on SHE_LensMC 2.11 (inheriting dependencies on SHE_PPT and Elements)
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+- Updated to work in EDEN 2.1 environment, including updates for SHE_PPT 8.2
+
 Changes from v0.6 to v0.8
 =========================
 
@@ -15,6 +42,8 @@ Deprecated Features
 Bug Fixes
 ---------
 
+- Fixed bug when running BFD with no pipeline config file
+
 New Features
 ------------
 
@@ -22,7 +51,6 @@ New Features
 
 New Config Features
 -------------------
-
 
 Miscellaneous
 -------------

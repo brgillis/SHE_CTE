@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2020-01-28"
+__updated__ = "2020-07-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,20 +24,19 @@ __updated__ = "2020-01-28"
 import argparse
 import os
 
-import SHE_CTE
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, ConfigKeys
-from SHE_PPT.table_formats.bfd_moments import tf as bfdtf
-from SHE_PPT.table_formats.shear_estimates import tf as setf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy import table
-import multiprocessing as mp
 
+import SHE_CTE
+import multiprocessing as mp
 
 logger = getLogger(__name__)
 
@@ -62,13 +61,13 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input data
-    parser.add_argument('--input_shear_estimates_listfile', type=str)
+    parser.add_argument('--input_she_measurements_listfile', type=str)
 
     parser.add_argument("--pipeline_config", default=None, type=str,
                         help="Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--output_shear_estimates', type=str)
+    parser.add_argument('--output_she_measurements', type=str)
 
     # Input arguments
     parser.add_argument('--number_threads', type=int, default=None,
@@ -86,64 +85,63 @@ def defineSpecificProgramOptions():
     return parser
 
 
-def read_method_estimates_tables(shear_estimates_table_product_filename, workdir):
+def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
 
     try:
 
-        logger.debug("Loading shear estimates from file: " + shear_estimates_table_product_filename)
+        logger.debug("Loading shear estimates from file: " + she_measurements_table_product_filename)
 
         # Read in the product and get the filename of the table
 
-        shear_estimates_table_product = read_xml_product(
-            os.path.join(workdir, shear_estimates_table_product_filename))
+        she_measurements_table_product = read_xml_product(
+            os.path.join(workdir, she_measurements_table_product_filename))
 
-        if not isinstance(shear_estimates_table_product, products.shear_estimates.dpdShearMeasurement):
-            raise TypeError("Shear product is of invalid type: " + type(shear_estimates_table_product))
+        if not isinstance(she_measurements_table_product, products.she_measurements.dpdShearMeasurement):
+            raise TypeError("Shear product is of invalid type: " + type(she_measurements_table_product))
 
     except Exception as e:
 
-        logger.warn("Failsafe block encountered exception: " + str(e))
+        logger.warning("Failsafe block encountered exception: " + str(e))
         return
 
     # Loop over methods and read in the table
 
-    shear_estimates_tables = {}
+    she_measurements_tables = {}
 
     for method in methods:
 
         try:
 
-            shear_estimates_method_table_filename = shear_estimates_table_product.get_method_filename(method)
+            she_measurements_method_table_filename = she_measurements_table_product.get_method_filename(method)
 
-            if shear_estimates_method_table_filename is None or shear_estimates_method_table_filename == "None":
+            if she_measurements_method_table_filename is None or she_measurements_method_table_filename == "None":
                 logger.debug("No shear estimates available for method: " + method)
                 continue
 
-            shear_estimates_method_table = table.Table.read(os.path.join(
-                workdir, shear_estimates_method_table_filename))
+            she_measurements_method_table = table.Table.read(os.path.join(
+                workdir, she_measurements_method_table_filename))
 
-            if not (is_in_format(shear_estimates_method_table, setf, verbose=True, ignore_metadata=True) or
-                    is_in_format(shear_estimates_method_table, bfdtf, verbose=True, ignore_metadata=True)):
+            if not is_in_format(she_measurements_method_table, sm_tf, verbose=True, ignore_metadata=True):
                 raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
 
             # Append the table to the list of tables
-            shear_estimates_tables[method] = shear_estimates_method_table
+            she_measurements_tables[method] = she_measurements_method_table
 
         except Exception as e:
 
-            logger.warn("Failsafe block encountered exception: " + str(e))
+            logger.warning("Failsafe block encountered exception: " + str(e))
             return
 
-        logger.debug("Finished loading shear estimates from file: " + shear_estimates_table_product_filename)
+        logger.debug("Finished loading shear estimates from file: " + she_measurements_table_product_filename)
 
-    return shear_estimates_tables
+    return she_measurements_tables
 
 
-def shear_estimates_merge_from_args(args):
+def she_measurements_merge_from_args(args):
     """ Core function for implementing a merge of shear estimates tables
     """
 
-    logger.debug('# Entering shear_estimates_merge_from_args(args)')
+    logger.debug('# Entering she_measurements_merge_from_args(args)')
 
     # Read in the pipeline config
     try:
@@ -151,7 +149,7 @@ def shear_estimates_merge_from_args(args):
         if pipeline_config is None:
             pipeline_config = {}
     except Exception as e:
-        logger.warn("Failsafe exception block triggered when trying to read pipeline config. " +
+        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))
         pipeline_config = {}
 
@@ -170,92 +168,92 @@ def shear_estimates_merge_from_args(args):
         number_threads = max(1, mp.cpu_count() + number_threads)
 
     # Keep a list of all shear estimates tables for each method
-    shear_estimates_tables = dict.fromkeys(methods)
+    she_measurements_tables = dict.fromkeys(methods)
     for method in methods:
         # Start with an empty list of the tables
-        shear_estimates_tables[method] = []
+        she_measurements_tables[method] = []
 
-    logger.info("Loading shear estimates from files listed in: " + args.input_shear_estimates_listfile)
+    logger.info("Loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
 
-    shear_estimates_table_product_filenames = read_listfile(
-        os.path.join(args.workdir, args.input_shear_estimates_listfile))
+    she_measurements_table_product_filenames = read_listfile(
+        os.path.join(args.workdir, args.input_she_measurements_listfile))
 
     # If using just one thread, don't bother with multiprocessing to read tables
 
     if number_threads == 1:
 
-        full_l_shear_estimates_tables = [read_method_estimates_tables(
-            f, args.workdir) for f in shear_estimates_table_product_filenames]
+        full_l_she_measurements_tables = [read_method_estimates_tables(
+            f, args.workdir) for f in she_measurements_table_product_filenames]
 
-        l_shear_estimates_tables = [t for t in full_l_shear_estimates_tables if t is not None]
+        l_she_measurements_tables = [t for t in full_l_she_measurements_tables if t is not None]
 
     else:
 
         pool = mp.Pool(processes=number_threads)
-        pool_shear_estimates_tables = [pool.apply_async(read_method_estimates_tables, args=(
-            shear_estimates_table_product_filename, args.workdir)) for shear_estimates_table_product_filename in shear_estimates_table_product_filenames]
+        pool_she_measurements_tables = [pool.apply_async(read_method_estimates_tables, args=(
+            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename in she_measurements_table_product_filenames]
 
         pool.close()
         pool.join()
 
-        l_shear_estimates_tables = [a.get() for a in pool_shear_estimates_tables if a.get() is not None]
+        l_she_measurements_tables = [a.get() for a in pool_she_measurements_tables if a.get() is not None]
 
     # Sort the tables into the expected format
     for method in methods:
 
-        for i in range(len(l_shear_estimates_tables)):
-            if method not in l_shear_estimates_tables[i]:
+        for i in range(len(l_she_measurements_tables)):
+            if method not in l_she_measurements_tables[i]:
                 continue
-            t = l_shear_estimates_tables[i][method]
+            t = l_she_measurements_tables[i][method]
             if t is None or len(t) == 0:
                 continue
-            shear_estimates_tables[method].append(t)
+            she_measurements_tables[method].append(t)
 
-    logger.info("Finished loading shear estimates from files listed in: " + args.input_shear_estimates_listfile)
+    logger.info("Finished loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
 
     logger.info("Combining shear estimates tables.")
 
     # Combine the shear estimates tables for each method and output them
 
-    combined_shear_estimates_tables = dict.fromkeys(methods)
+    combined_she_measurements_tables = dict.fromkeys(methods)
 
     # Create the output product
-    combined_shear_estimates_product = products.shear_estimates.create_shear_estimates_product(
-        spatial_footprint=os.path.join(args.workdir, shear_estimates_table_product_filenames[0]))
+    combined_she_measurements_product = products.she_measurements.create_she_measurements_product(
+        spatial_footprint=os.path.join(args.workdir, she_measurements_table_product_filenames[0]))
 
     for method in methods:
 
         # Skip if no data for this method
-        if len(shear_estimates_tables[method]) == 0:
-            combined_shear_estimates_product.set_method_filename(method, "None")
+        if len(she_measurements_tables[method]) == 0:
+            combined_she_measurements_product.set_method_filename(method, "None")
             continue
 
         # Combine the tables
-        combined_shear_estimates_tables[method] = table.vstack(shear_estimates_tables[method])
+        combined_she_measurements_tables[method] = table.vstack(she_measurements_tables[method])
 
         # Get a filename for the table
-        combined_shear_estimates_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.upper(),
+        combined_she_measurements_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.upper(),
                                                                        instance_id='MERGED',
                                                                        extension=".fits",
                                                                        version=SHE_CTE.__version__,
                                                                        subdir="data",
                                                                        processing_function="SHE")
-        combined_shear_estimates_product.set_method_filename(method, combined_shear_estimates_table_filename)
+        combined_she_measurements_product.set_method_filename(method, combined_she_measurements_table_filename)
 
         # Output the table
-        combined_shear_estimates_tables[method].write(os.path.join(args.workdir,
-                                                                   combined_shear_estimates_table_filename),
+        combined_she_measurements_tables[method].write(os.path.join(args.workdir,
+                                                                   combined_she_measurements_table_filename),
                                                       format="fits")
 
         logger.info("Combined shear estimates for method " + method +
-                    " output to: " + combined_shear_estimates_table_filename)
+                    " output to: " + combined_she_measurements_table_filename)
 
     # Save the product
-    write_xml_product(combined_shear_estimates_product, args.output_shear_estimates, args.workdir)
+    write_xml_product(combined_she_measurements_product, args.output_she_measurements, args.workdir)
 
-    logger.info("Combined shear estimates product output to: " + args.output_shear_estimates)
+    logger.info("Combined shear estimates product output to: " + args.output_she_measurements)
 
-    logger.debug('# Exiting shear_estimates_merge_from_args normally')
+    logger.debug('# Exiting she_measurements_merge_from_args normally')
 
     return
 
@@ -283,14 +281,14 @@ def mainMethod(args):
 
         if args.profile:
             import cProfile
-            cProfile.runctx("shear_estimates_merge_from_args(args)", {},
-                            {"shear_estimates_merge_from_args": shear_estimates_merge_from_args,
+            cProfile.runctx("she_measurements_merge_from_args(args)", {},
+                            {"she_measurements_merge_from_args": she_measurements_merge_from_args,
                              "args": args, },
-                            filename="shear_estimates_merge.prof")
+                            filename="she_measurements_merge.prof")
         else:
-            shear_estimates_merge_from_args(args)
+            she_measurements_merge_from_args(args)
     except Exception as e:
-        # logger.warn("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
         raise
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')

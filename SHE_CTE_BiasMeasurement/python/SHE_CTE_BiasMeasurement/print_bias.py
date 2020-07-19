@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2020-01-27"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,18 +20,13 @@ __updated__ = "2020-01-27"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement import magic_values as mv
 import numpy as np
-
 
 methods = ["BFD",
            "KSB",
@@ -41,13 +36,15 @@ methods = ["BFD",
 
 logger = getLogger(__name__)
 
+
 def print_bias_from_product_filename(product_filename, workdir):
 
     p = read_xml_product(os.path.join(workdir, product_filename), allow_pickled=True)
-    
+
     print_bias_from_product(p, workdir)
-    
+
     return
+
 
 def print_bias_from_product(p, workdir):
 
@@ -57,14 +54,14 @@ def print_bias_from_product(p, workdir):
 
         if (g1_bias is None or g2_bias is None or g1_bias.m is None or g2_bias.m is None or
                 g1_bias.m == "" or g2_bias.m == ""):
-            logger.warn('#')
-            logger.warn("No bias measurements available for method " + method)
-            logger.warn('#')
+            logger.warning('#')
+            logger.warning("No bias measurements available for method " + method)
+            logger.warning('#')
             continue
 
         if (g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf" or
             np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m)):
-            logger.warn("Bad bias measurements for method " + method)
+            logger.warning("Bad bias measurements for method " + method)
             continue
 
         logger.info('#')

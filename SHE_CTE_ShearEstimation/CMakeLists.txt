@@ -6,7 +6,6 @@ elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(SHE_CTE)
 elements_depends_on_subdirs(SHE_PPT)
 elements_depends_on_subdirs(SHE_MomentsML)
-elements_depends_on_subdirs(SHE_BFD_CalculateMoments)
 elements_depends_on_subdirs(SHE_LensMC)
 
 # Instruction for Python module installation
@@ -14,7 +13,6 @@ elements_install_python_modules()
 
 # Instruction for creating a Python executable
 elements_add_python_program(SHE_CTE_EstimateShear SHE_CTE_ShearEstimation.EstimateShear)
-elements_add_python_program(SHE_CTE_BFDIntegrate SHE_CTE_ShearEstimation.BFDIntegrate)
 
 # Install the configuration files
 elements_install_conf_files()

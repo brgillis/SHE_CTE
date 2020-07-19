@@ -4,35 +4,8 @@
 
     Primary execution loop for measuring galaxy shapes from an image file.
 """
-import copy
-import os
 
-from SHE_PPT import magic_values as ppt_mv
-from SHE_PPT import mdb
-from SHE_PPT import products
-from SHE_PPT.file_io import (read_xml_product, write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file)
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_utility import is_in_format, table_to_hdu
-from SHE_PPT.utility import hash_any
-from astropy.io import fits
-from astropy.table import Table
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation import magic_values as mv
-from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_perform_integration, bfd_load_training_data
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.SHE_measure_shear import fit_frame_stack
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
-from SHE_PPT.table_formats.bfd_moments import initialise_bfd_moments_table, tf as setf_bfd
-from SHE_PPT.table_formats.detections import tf as detf
-from SHE_PPT.table_formats.shear_estimates import initialise_shear_estimates_table, tf as setf
-import numpy as np
-
-__updated__ = "2020-07-17"
+__updated__ = "2020-07-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -47,17 +20,62 @@ __updated__ = "2020-07-17"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+import copy
+import os
+
+from astropy.io import fits
+
+import SHE_CTE
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.she_measure_shear import fit_frame_stack
+from SHE_PPT import magic_values as ppt_mv
+from SHE_PPT import mdb
+from SHE_PPT import products
+from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
+                             read_listfile, find_file)
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
+from SHE_PPT.table_utility import is_in_format, table_to_hdu
+from SHE_PPT.utility import hash_any
+import numpy as np
+
+# from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
+# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN 2.1
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_control_training_data,
-                   "BFD": bfd_load_training_data}
+                   # "BFD": bfd_load_training_data} # FIXME - uncomment when BFD is integrated
+                   "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
-                      "MomentsML": ML_estimate_shear,
+                      # "MomentsML": ML_estimate_shear, # FIXME - uncomment when MomentsML is updated to EDEN 2.1
+                      "MomentsML": None,
                       "LensMC": fit_frame_stack,
-                      "BFD": bfd_measure_moments}
+                      # "BFD": bfd_measure_moments} # FIXME - uncomment when BFD is integrated
+                      "BFD": None}
+
+initialisation_methods = {"KSB": initialise_ksb_measurements_table,
+                          "REGAUSS": initialise_regauss_measurements_table,
+                          "MomentsML": initialise_momentsml_measurements_table,
+                          "LensMC": initialise_lensmc_measurements_table,
+                          "BFD": initialise_bfd_moments_table}
+
+table_formats = {"KSB": ksbm_tf,
+                 "REGAUSS": regm_tf,
+                 "MomentsML": mmlm_tf,
+                 "LensMC": lmcm_tf,
+                 "BFD": bfdm_tf}
 
 default_chains_method = "LensMC"
 
@@ -87,15 +105,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Load in the MDB
     if args.mdb is None:
-        logger.warn("No MDB file provided as input. Default values will be used where necessary.")
-        mdb.init(find_file("WEB/SHE_PPT/sample_mdb.xml"))
+        logger.warning("No MDB file provided as input. Default values will be used where necessary.")
+        mdb.init(find_file("WEB/SHE_PPT_8_2/sample_mdb-SC8.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
     elif args.mdb[-4:] == ".xml":
         mdb.init(mdb_files=args.mdb, path=args.workdir)
     else:
-        logger.warn("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
+        logger.warning("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
                     ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
     logger.info("Reading " + dry_label + "data images...")
@@ -114,7 +132,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
     if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
-                                                                  products.calibration_parameters.DpdSheCalibrationParametersProduct):
+                                                                  products.she_psf_calibration_parameters.dpdShePsfCalibrationParameters):
         raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
                          +" is invalid type.")
 
@@ -151,10 +169,10 @@ def estimate_shears_from_args(args, dry_run=False):
         header = f[0].header
         if ppt_mv.model_hash_label in header:
             estimates_instance_id = header[ppt_mv.model_hash_label]
-        elif ppt_mv.field_id_label in header:
-            estimates_instance_id = str(header[ppt_mv.field_id_label])
+        elif ppt_mv.obs_id_label in header:
+            estimates_instance_id = str(header[ppt_mv.obs_id_label])
         else:
-            logger.warn("Cannot determine proper instance ID for filenames. Using hash of image header.")
+            logger.warning("Cannot determine proper instance ID for filenames. Using hash of image header.")
             estimates_instance_id = hash_any(header, format="base64")
 
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
@@ -162,7 +180,7 @@ def estimate_shears_from_args(args, dry_run=False):
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
         estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
 
-    shear_estimates_prod = products.shear_estimates.create_shear_estimates_product(
+    shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
         BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
                                           version=SHE_CTE.__version__,
                                           subdir=subfolder_name),
@@ -280,7 +298,7 @@ def estimate_shears_from_args(args, dry_run=False):
                 else:
                     shear_estimates_table = shear_estimates_results
 
-                if not (is_in_format(shear_estimates_table, setf) or is_in_format(shear_estimates_table, setf_bfd)):
+                if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
                                      "for method " + method + ".")
 
@@ -293,30 +311,29 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 if isinstance(e, NotImplementedError) or (isinstance(e, ValueError) and
                                                           "Invalid implementation:" in str(e)):
-                    logger.warn(str(e))
+                    logger.warning(str(e))
                 else:
-                    logger.warn("Failsafe exception block triggered with exception: " + str(e))
+                    logger.warning("Failsafe exception block triggered with exception: " + str(e))
 
                 hdulist = fits.HDUList()
 
                 # Create an empty estimates table
-                shear_estimates_table = initialise_shear_estimates_table()
+                shear_estimates_table = initialisation_methods[method]()
+                tf = table_formats[method]
 
-                for r in range(len(data_stack.detections_catalogue[detf.ID])):
+                for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
 
                     # Fill it with NaN measurements and 1e99 errors
 
-                    shear_estimates_table.add_row({setf.ID: data_stack.detections_catalogue[detf.ID][r],
-                                                   setf.g1: np.NaN,
-                                                   setf.g2: np.NaN,
-                                                   setf.g1_err: 1e99,
-                                                   setf.g2_err: 1e99,
-                                                   setf.g1g2_covar: np.NaN,
-                                                   setf.fit_class: 2,
-                                                   setf.re: np.NaN,
-                                                   setf.snr: np.NaN,
-                                                   setf.x_world: data_stack.detections_catalogue[detf.gal_x_world][r],
-                                                   setf.y_world: data_stack.detections_catalogue[detf.gal_y_world][r], })
+                    shear_estimates_table.add_row({tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
+                                                   tf.g1: np.NaN,
+                                                   tf.g2: np.NaN,
+                                                   tf.g1_err: 1e99,
+                                                   tf.g2_err: 1e99,
+                                                   tf.g1g2_covar: np.NaN,
+                                                   tf.fit_class: 2,
+                                                   tf.ra: data_stack.detections_catalogue[mfc_tf.gal_x_world][r],
+                                                   tf.dec: data_stack.detections_catalogue[mfc_tf.gal_y_world][r], })
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
@@ -327,11 +344,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
     else:  # Dry run
 
-        for filename in shear_estimates_prod.get_all_filenames():
+        for method in methods:
+
+            filename = shear_estimates_prod.get_method_filename(method)
 
             hdulist = fits.HDUList()
 
-            shm_hdu = table_to_hdu(initialise_shear_estimates_table())
+            shear_estimates_table = initialisation_methods[method]()
+
+            shm_hdu = table_to_hdu(shear_estimates_table)
             hdulist.append(shm_hdu)
 
             hdulist.writeto(os.path.join(args.workdir, filename), clobber=True)
@@ -341,7 +362,7 @@ def estimate_shears_from_args(args, dry_run=False):
         if method not in methods:
             shear_estimates_prod.set_method_filename(method, None)
 
-    write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
+    write_xml_product(shear_estimates_prod, args.she_measurements_product, workdir=args.workdir)
 
     logger.info("Finished shear estimation.")
 

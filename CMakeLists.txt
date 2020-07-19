@@ -5,5 +5,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5)
 find_package(ElementsProject)
 #---------------------------------------------------------------
 
-# Declare project name and version
-elements_project(SHE_CTE 0.9 USE Elements 5.8 SHE_PPT 1.3 SHE_BFD 0.9 SHE_LensMC 2.11 SHE_MomentsML 1.9)
+# Declare project name, version, and dependencies.
+# We only explicitly depend on direct dependencies, and inherit from them dependencies on SHE_PPT and Elements
+elements_project(SHE_CTE 8.0 USE SHE_LensMC 2.11) # SHE_BFD 0.9 SHE_MomentsML 1.9)
+
+# elements_project(SHE_CTE 8.0 USE SHE_BFD 0.9 SHE_LensMC 2.11 SHE_MomentsML 1.9)
