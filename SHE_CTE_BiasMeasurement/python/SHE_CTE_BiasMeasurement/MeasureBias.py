@@ -49,7 +49,7 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
 
     # Input data
-    parser.add_argument('--shear_bias_statistics', type=str,
+    parser.add_argument('--she_bias_statistics', type=str,
                         help='Listfile pointing to shear bias statistics objects.')
     parser.add_argument('--bootstrap_seed', type=int, default=0,
                         help='Seed for bootstrapping of errors')
@@ -58,7 +58,7 @@ def defineSpecificProgramOptions():
                         help="Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--shear_bias_measurements', type=str,
+    parser.add_argument('--she_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
     parser.add_argument('--details_table_head', type=str, default=None,
                         help='Desired head for the filenames of the output details tables')
@@ -66,9 +66,9 @@ def defineSpecificProgramOptions():
     # Input arguments
     parser.add_argument('--number_threads', type=int, default=None,
                         help='Number of parallel threads to use.')
-    parser.add_argument('--recovery_bias_statistics_filename', type=str, default="shear_bias_statistics.xml",
+    parser.add_argument('--recovery_bias_statistics_filename', type=str, default="she_bias_statistics.xml",
                         help='Expected name of bias statistics files for when operating in recovery mode')
-    parser.add_argument('--recovery_bias_measurements_filename', type=str, default="shear_bias_measurements.xml",
+    parser.add_argument('--recovery_bias_measurements_filename', type=str, default="she_bias_measurements.xml",
                         help='Expected name of bias measurements files for when operating in recovery mode')
     parser.add_argument('--store_measurements_only', action='store_true',
                         help='If set, the resulting bias measurements file will contain only the measurements. ' +

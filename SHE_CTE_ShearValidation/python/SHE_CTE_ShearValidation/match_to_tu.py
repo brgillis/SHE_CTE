@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2020-06-17"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,7 +25,6 @@ import os
 from SHE_PPT import file_io
 from SHE_PPT import products
 from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.shear_estimates import tf as setf
 from SHE_PPT.table_utility import table_to_hdu
 from astropy import units
 from astropy.coordinates import SkyCoord
@@ -33,6 +32,7 @@ from astropy.io import fits
 from astropy.table import Table, Column, join, vstack, unique
 
 import SHE_CTE
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 import numpy as np
 
 logger = getLogger(__name__)
@@ -107,7 +107,7 @@ def match_to_tu_from_args(args):
     galaxy_catalog_filenames = galaxy_catalog_product.get_data_filenames()
 
     # Read in the shear estimates data product, and get the filenames of the tables for each method from it.
-    qualified_shear_estimates_product_filename = file_io.find_file(args.shear_estimates_product,
+    qualified_shear_estimates_product_filename = file_io.find_file(args.she_measurements_product,
                                                                    path=args.workdir)
     logger.info("Reading in Shear Estimates product from " + qualified_shear_estimates_product_filename)
     shear_estimates_product = file_io.read_xml_product(qualified_shear_estimates_product_filename)
@@ -118,7 +118,7 @@ def match_to_tu_from_args(args):
         fn = shear_estimates_product.get_method_filename(method)
         if fn is None or fn == "None":
             shear_tables[method] = None
-            logger.warn("No filename for method " + method + ".")
+            logger.warning("No filename for method " + method + ".")
         else:
             qualified_filename = os.path.join(args.workdir, fn)
             logger.debug("Reading in shear estimates table from " + qualified_filename)
@@ -139,10 +139,10 @@ def match_to_tu_from_args(args):
         if shear_table is None:
             continue
 
-        ra_col = shear_table[setf.x_world]
-        dec_col = shear_table[setf.y_world]
+        ra_col = shear_table[sm_tf.x_world]
+        dec_col = shear_table[sm_tf.y_world]
 
-        flags_col = shear_table[setf.flags]
+        flags_col = shear_table[sm_tf.flags]
 
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
@@ -261,8 +261,8 @@ def match_to_tu_from_args(args):
 
                 logger.info("Performing match for method " + method + ".")
 
-                ra_se = shear_table[setf.x_world]
-                dec_se = shear_table[setf.y_world]
+                ra_se = shear_table[sm_tf.x_world]
+                dec_se = shear_table[sm_tf.y_world]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
                 # Match to both star and galaxy tables, and determine which is best match
@@ -280,9 +280,9 @@ def match_to_tu_from_args(args):
                 # Mask rows where the match isn't close enough, or to the other type of object, with -99
 
                 in_ra_range = np.logical_and(
-                    shear_table[setf.x_world] >= local_ra_range[0], shear_table[setf.x_world] < local_ra_range[1])
+                    shear_table[sm_tf.x_world] >= local_ra_range[0], shear_table[sm_tf.x_world] < local_ra_range[1])
                 in_dec_range = np.logical_and(
-                    shear_table[setf.y_world] >= local_dec_range[0], shear_table[setf.y_world] < local_dec_range[1])
+                    shear_table[sm_tf.y_world] >= local_dec_range[0], shear_table[sm_tf.y_world] < local_dec_range[1])
 
                 in_range = np.logical_and(in_ra_range, in_dec_range)
 
@@ -401,7 +401,7 @@ def match_to_tu_from_args(args):
                 gal_matched_tables[method].append(gal_matched_table)
 
     # Create output data product
-    matched_catalog_product = products.shear_estimates.create_shear_estimates_product()
+    matched_catalog_product = products.she_measurements.create_dpd_she_measurements()
     for method in methods:
 
         if len(gal_matched_tables[method]) == 0:

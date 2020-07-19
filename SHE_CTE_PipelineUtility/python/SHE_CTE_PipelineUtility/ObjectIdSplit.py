@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2019-09-05"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,20 +24,20 @@ import argparse
 import math
 import os
 
-import SHE_CTE
 from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
-                             get_allowed_filename, find_file)
+                             get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, ConfigKeys
-from SHE_PPT.products import object_id_list, detections
+from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.detections import tf as detf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
-import numpy as np
 
+import SHE_CTE
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+import numpy as np
 
 default_batch_size = 20
 default_max_batches = 0
@@ -61,7 +61,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input arguments
-    parser.add_argument('--detections_tables', type=str)
+    parser.add_argument('--mer_final_catalog_tables', type=str)
 
     parser.add_argument('--data_images', type=str, default=None,
                         help='.json listfile containing filenames of data image products.')
@@ -92,7 +92,7 @@ def object_id_split_from_args(args):
 
     # Read in the pipeline configuration if present
     if args.pipeline_config is None or args.pipeline_config == "None":
-        logger.warn("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
+        logger.warning("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
         batch_size = default_batch_size
         max_batches = default_max_batches
         ids_to_use = None
@@ -142,14 +142,14 @@ def object_id_split_from_args(args):
 
     if args.data_images is not None:
         data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
-                                        detections_listfile_filename=args.detections_tables,
+                                        mer_final_catalog_listfile_filename=args.mer_final_catalog_tables,
                                         workdir=args.workdir,
                                         memmap=True,
                                         mode='denywrite')
     else:
         data_stack = None
 
-    # Read in each detections table and add the IDs in it to a global set
+    # Read in each mer_final_catalog table and add the IDs in it to a global set
 
     if ids_to_use is not None:
 
@@ -159,33 +159,33 @@ def object_id_split_from_args(args):
 
         all_ids = set()
 
-        logger.info("Reading in IDs from detections tables from: " + args.detections_tables)
+        logger.info("Reading in IDs from mer_final_catalog from: " + args.mer_final_catalog_tables)
 
-        detections_table_product_filenames = read_listfile(os.path.join(args.workdir, args.detections_tables))
+        mer_final_catalog_table_product_filenames = read_listfile(os.path.join(args.workdir, args.mer_final_catalog_tables))
 
-        for tile_detections_table_product_filename in detections_table_product_filenames:
+        for tile_mer_final_catalog_table_product_filename in mer_final_catalog_table_product_filenames:
 
             # Read in the product and get the filename of the table
 
-            tile_detections_table_product = read_xml_product(os.path.join(args.workdir,
-                                                                          tile_detections_table_product_filename))
+            tile_mer_final_catalog_table_product = read_xml_product(os.path.join(args.workdir,
+                                                                          tile_mer_final_catalog_table_product_filename))
 
-            if not isinstance(tile_detections_table_product, detections.dpdMerFinalCatalog):
-                raise TypeError("Detections product is of invalid type: " + type(tile_detections_table_product))
+            if not isinstance(tile_mer_final_catalog_table_product, mer_final_catalog.dpdMerFinalCatalog):
+                raise TypeError("mer_final_catalog product is of invalid type: " + type(tile_mer_final_catalog_table_product))
 
-            tile_detections_table_filename = tile_detections_table_product.get_data_filename()
+            tile_mer_final_catalog_table_filename = tile_mer_final_catalog_table_product.get_data_filename()
 
             # Read in the table
 
-            tile_detections_table = Table.read(os.path.join(args.workdir, tile_detections_table_filename))
+            tile_mer_final_catalog_table = Table.read(os.path.join(args.workdir, tile_mer_final_catalog_table_filename))
 
-            if not is_in_format(tile_detections_table, detf, verbose=True, ignore_metadata=True):
-                raise TypeError("Input detections table is of invalid format.")
+            if not is_in_format(tile_mer_final_catalog_table, mfc_tf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input mer_final_catalog table is of invalid format.")
 
             # Get the ID list from it and add it to the set
-            all_ids.update(tile_detections_table[detf.ID].data)
+            all_ids.update(tile_mer_final_catalog_table[mfc_tf.ID].data)
 
-        logger.info("Finished reading in IDs from detections table.")
+        logger.info("Finished reading in IDs from mer_final_catalog.")
 
         # If supplied with data images, prune IDs that aren't in the images
         if data_stack is not None:
@@ -268,7 +268,7 @@ def object_id_split_from_args(args):
         id_list_product_filename_list.append(batch_id_list_product_filename)
 
         # Create and save the product
-        batch_id_list_product = object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
+        batch_id_list_product = she_object_id_list.create_dpd_she_she_object_id_list(id_list=list(id_arrays[i]))
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
         logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
@@ -312,7 +312,7 @@ def mainMethod(args):
         else:
             object_id_split_from_args(args)
     except Exception as e:
-        # logger.warn("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
         raise
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')

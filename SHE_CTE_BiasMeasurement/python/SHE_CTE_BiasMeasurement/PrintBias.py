@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2019-12-11"
+__updated__ = "2020-07-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,18 +21,12 @@ __updated__ = "2019-12-11"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
-import os
 
-from SHE_PPT import products
-from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product_filename
-import numpy as np
-
 
 methods = ["BFD",
            "KSB",
@@ -62,7 +56,7 @@ def defineSpecificProgramOptions():
                         help='Store profiling data for execution.')
 
     # Input data
-    parser.add_argument('--shear_bias_measurements', type=str,
+    parser.add_argument('--she_bias_measurements', type=str,
                         help='Desired name of the output shear bias statistics data product')
 
     # Arguments needed by the pipeline runner
@@ -95,7 +89,7 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    print_bias_from_product_filename(args.shear_bias_measurements, args.workdir)
+    print_bias_from_product_filename(args.she_bias_measurements, args.workdir)
 
     logger.debug('# Exiting SHE_CTE_PrintBias mainMethod()')
 

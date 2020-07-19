@@ -112,6 +112,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--shear_estimates_product', type=str,
                         help='XML data product to contain file links to the shear estimates tables.')
 
+    parser.add_argument('--she_lensmc_chains', type=str,
+                        help='XML data product to contain LensMC chains data.')
+
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
     parser.add_argument('--logdir', type=str, default=".")

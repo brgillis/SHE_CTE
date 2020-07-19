@@ -153,7 +153,7 @@ def plot_psf_sensitivity_from_args(args):
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
             tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(dir + "/shear_bias_measurements.xml")
+            all_bias_measurements[tag] = read_xml_product(dir + "/she_bias_measurements.xml")
             all_bias_measurements_dirs[tag] = tagdir
 
     # Do a loop of reading for each property
