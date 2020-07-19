@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-07-19"
 
 from copy import deepcopy
 from math import sqrt
@@ -331,7 +331,7 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
             resampled_gal_stamp_size = int(20 * gal_mom.moments_sigma * gal_scale /
                                            psf_scale)    # Calculate the galaxy's S/N
             a_eff = np.pi * (3 * gal_mom.moments_sigma * np.sqrt(2 * np.log(2)))
-            gain = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+            gain = mdb.get_gain()
             signal_to_noise = (gain * gal_mom.moments_amp / np.sqrt(gain * gal_mom.moments_amp + a_eff *
                                                                     (gain * np.square(gal_stamp.noisemap.transpose()).mean()) ** 2))
             break
@@ -541,7 +541,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                 stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
             else:
                 stacked_gal_stamp.header[scale_label] = default_galaxy_scale
-            stacked_gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+            stacked_gal_stamp.header[gain_label] = mdb.get_gain()
 
             try:
                 stack_shear_estimate = get_shear_estimate(stacked_gal_stamp,
@@ -591,7 +591,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
                     if gal_stamp is None:
                         continue
                     gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
-                    gal_stamp.header[gain_label] = mdb.get_mdb_value(mdb.mdb_keys.vis_gain)
+                    gal_stamp.header[gain_label] = mdb.get_gain()
 
                     # Make sure the wcs is correct
                     gal_stamp.wcs = gal_stamp.parent_image.wcs
