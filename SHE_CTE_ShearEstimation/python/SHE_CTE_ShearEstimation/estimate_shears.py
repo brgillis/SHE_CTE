@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-07-19"
+__updated__ = "2020-07-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,17 +23,11 @@ __updated__ = "2020-07-19"
 import copy
 import os
 
-from astropy.io import fits
-
-import SHE_CTE
-from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
-from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.she_measure_shear import fit_frame_stack
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file)
+                             read_listfile, find_file, read_xml_product)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import ConfigKeys, read_config, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
@@ -46,7 +40,15 @@ from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsm
 from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.table_utility import is_in_format, table_to_hdu
 from SHE_PPT.utility import hash_any
+from astropy.io import fits
+
+import SHE_CTE
+from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
+from SHE_LensMC.she_measure_shear import fit_frame_stack
 import numpy as np
+
+logger = getLogger(__name__)
 
 # from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
 # from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN 2.1
@@ -80,6 +82,56 @@ table_formats = {"KSB": ksbm_tf,
 default_chains_method = "LensMC"
 
 
+def fill_measurements_table_meta(t, mer_final_catalog_products, vis_calibrated_frame_products):
+    """ A function to get the Observation ID, Observation Time, Field ID, and Tile IDs from data products
+        and add them to a table's meta.
+    """
+
+    # Get a list of the tile IDs from the met catalogs
+    tile_ids = np.empty_like(mer_final_catalog_products, dtype=str)
+    for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
+        tile_ids.append(str(mer_final_catalog_product.Data.TileIndex))
+
+    # Turn the Tile ID list into a spaced string
+    tile_id_list = " ".join(tile_ids)
+
+    # Get the observation data from the exposure products
+
+    observation_times = np.empty_like(vis_calibrated_frame_products, dtype=str)
+    observation_ids = np.empty_like(vis_calibrated_frame_products, dtype=str)
+    field_ids = np.empty_like(vis_calibrated_frame_products, dtype=str)
+
+    for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
+        observation_times[i] = str(vis_calibrated_frame_product.Data.ObservationDateTime.OBT)
+        observation_ids[i] = str(vis_calibrated_frame_product.Data.ObservationSequence.ObservationId)
+        field_ids[i] = str(vis_calibrated_frame_product.Data.ObservationSequence.FieldId)
+
+    # Turn the Observation ID list into a spaced string
+    observation_id_list = " ".join(observation_ids)
+
+    # Get the most recent observation time
+    observation_times.sort()
+    observation_time_value = observation_times[-1]
+
+    # Check that all field IDs are the same
+    if not (field_ids == field_ids[0]):
+        # Make a string of the list, but warn about it
+        field_id_value = " ".join(field_ids)
+        logger.warning("Not all exposures have the same field ID. Found field IDs: " + field_id_value + ". " +
+                       "This list will be output to the table headers.")
+    else:
+        # All are the same, so just report one value
+        field_id_value = int(field_ids[0])
+
+    # Update the table's meta with the observation and tile data
+    t.meta[sm_tf.m.observation_id] = observation_id_list
+    t.meta[sm_tf.m.observation_time] = observation_time_value
+    t.meta[sm_tf.m.tile_id] = tile_id_list
+    # t.meta[sm_tf.m.field_id] = field_id_value # TODO: Add Field ID as well when it's added to the data model
+
+    return
+
+
 def estimate_shears_from_args(args, dry_run=False):
     """
     @brief
@@ -89,8 +141,6 @@ def estimate_shears_from_args(args, dry_run=False):
 
     @return None
     """
-
-    logger = getLogger(__name__)
 
     logger.debug("Entering estimate_shears_from_args")
 
@@ -128,6 +178,15 @@ def estimate_shears_from_args(args, dry_run=False):
                                     object_id_list_product_filename=args.object_ids,
                                     memmap=True,
                                     mode='denywrite')
+
+    # Read in the catalog and exposure data products, which we'll need for updating metadata
+    mer_final_catalog_products = []
+    for mer_final_catalog_filename in read_listfile(args.detections_tables):
+        mer_final_catalog_products.append(read_xml_product(os.path.join(args.workdir, mer_final_catalog_filename)))
+
+    vis_calibrated_frame_products = []
+    for vis_calibrated_frame_filename in read_listfile(args.data_images):
+        vis_calibrated_frame_products.append(read_xml_product(os.path.join(args.workdir, vis_calibrated_frame_filename)))
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
@@ -301,6 +360,11 @@ def estimate_shears_from_args(args, dry_run=False):
                 if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
                                      "for method " + method + ".")
+
+                # Update the table meta with observation and tile info
+                fill_measurements_table_meta(t=shear_estimates_table,
+                                             mer_final_catalog_products=mer_final_catalog_products,
+                                             vis_calibrated_frame_products=vis_calibrated_frame_products)
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
