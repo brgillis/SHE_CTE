@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2020-07-19"
+__updated__ = "2020-07-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,18 +23,21 @@ __updated__ = "2020-07-19"
 import os
 import time
 
+from SHE_PPT import mdb
+from SHE_PPT.file_io import read_xml_product, find_file, read_listfile
+from SHE_PPT.logging import getLogger
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.she_ksb_measurements import (tf as ksbm_tf,
+                                                        initialise_ksb_measurements_table)
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import pytest
 
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
+from SHE_CTE_ShearEstimation.estimate_shears import fill_measurements_table_meta
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
 import SHE_LensMC.she_measure_shear
-from SHE_PPT import mdb
-from SHE_PPT.file_io import read_pickled_product, find_file
-from SHE_PPT.logging import getLogger
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import numpy as np
 
 # from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
@@ -48,6 +51,10 @@ psf_images_and_tables_filename = "she_psf_model_images.json"
 detections_tables_filename = "mer_final_catalogs.json"
 ksb_training_filename = "test_ksb_training.xml"
 regauss_training_filename = "test_regauss_training.xml"
+
+expected_observation_id = '-1 -1 -1 -1'
+expected_observation_time = "2020-06-10 15:00:36.660000+00:00"
+expected_tile_id = '-1'
 
 
 class TestCase:
@@ -136,28 +143,25 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip(reason="Too extensive for a unit test - should be turned into a smoke test")
-    def test_momentsml(self):
-        """Test that the interface for the MomentsML method works properly.
+    def test_fill_measurements_table_meta(self):
+        """Test that the fill_measurements_table_meta utility function works as expected.
         """
+        mer_final_catalog_products = []
+        for mer_final_catalog_filename in read_listfile(os.path.join(self.workdir, detections_tables_filename)):
+            mer_final_catalog_products.append(read_xml_product(os.path.join(self.workdir, mer_final_catalog_filename)))
 
-        # Read in the test data
-        she_frame = read_pickled_product(find_file(she_frame_location))
-        original_she_frame = deepcopy(she_frame)
+        vis_calibrated_frame_products = []
+        for vis_calibrated_frame_filename in read_listfile(os.path.join(self.workdir, data_images_filename)):
+            vis_calibrated_frame_products.append(read_xml_product(os.path.join(self.workdir, vis_calibrated_frame_filename)))
 
-        momentsml_cat = ML_estimate_shear(she_frame,
-                                          training_data=None,
-                                          calibration_data=None,
-                                          workdir=self.workdir)
+        t = initialise_ksb_measurements_table()
 
-        # Check that we have valid data
-        for row in momentsml_cat:
-            for colname in (sm_tf.g1, sm_tf.g2, sm_tf.g1_err, sm_tf.g2_err):
-                g = row[colname]
-                if not (g > -1 and g < 1):
-                    raise Exception("Bad value for " + colname + ": " + str(g))
+        fill_measurements_table_meta(t=t,
+                                     mer_final_catalog_products=mer_final_catalog_products,
+                                     vis_calibrated_frame_products=vis_calibrated_frame_products)
 
-        # Check that the input data isn't changed by the method
-        assert she_frame == original_she_frame
+        assert t.meta[sm_tf.m.observation_id] == expected_observation_id
+        assert t.meta[sm_tf.m.observation_time] == expected_observation_time
+        assert t.meta[sm_tf.m.tile_id] == expected_tile_id
 
         return

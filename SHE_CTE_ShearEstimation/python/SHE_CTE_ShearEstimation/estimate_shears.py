@@ -88,18 +88,18 @@ def fill_measurements_table_meta(t, mer_final_catalog_products, vis_calibrated_f
     """
 
     # Get a list of the tile IDs from the met catalogs
-    tile_ids = np.empty_like(mer_final_catalog_products, dtype=str)
+    tile_ids = np.empty_like(mer_final_catalog_products, dtype='<U20')
     for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
-        tile_ids.append(str(mer_final_catalog_product.Data.TileIndex))
+        tile_ids[i] = str(mer_final_catalog_product.Data.TileIndex)
 
     # Turn the Tile ID list into a spaced string
     tile_id_list = " ".join(tile_ids)
 
     # Get the observation data from the exposure products
 
-    observation_times = np.empty_like(vis_calibrated_frame_products, dtype=str)
-    observation_ids = np.empty_like(vis_calibrated_frame_products, dtype=str)
-    field_ids = np.empty_like(vis_calibrated_frame_products, dtype=str)
+    observation_times = np.empty_like(vis_calibrated_frame_products, dtype='<U40')
+    observation_ids = np.empty_like(vis_calibrated_frame_products, dtype='<U20')
+    field_ids = np.empty_like(vis_calibrated_frame_products, dtype='<U20')
 
     for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
         observation_times[i] = str(vis_calibrated_frame_product.Data.ObservationDateTime.OBT)
@@ -114,7 +114,7 @@ def fill_measurements_table_meta(t, mer_final_catalog_products, vis_calibrated_f
     observation_time_value = observation_times[-1]
 
     # Check that all field IDs are the same
-    if not (field_ids == field_ids[0]):
+    if not (field_ids == field_ids[0]).all():
         # Make a string of the list, but warn about it
         field_id_value = " ".join(field_ids)
         logger.warning("Not all exposures have the same field ID. Found field IDs: " + field_id_value + ". " +
@@ -181,11 +181,11 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Read in the catalog and exposure data products, which we'll need for updating metadata
     mer_final_catalog_products = []
-    for mer_final_catalog_filename in read_listfile(args.detections_tables):
+    for mer_final_catalog_filename in read_listfile(os.path.join(args.workdir, args.detections_tables)):
         mer_final_catalog_products.append(read_xml_product(os.path.join(args.workdir, mer_final_catalog_filename)))
 
     vis_calibrated_frame_products = []
-    for vis_calibrated_frame_filename in read_listfile(args.data_images):
+    for vis_calibrated_frame_filename in read_listfile(os.path.join(args.workdir, args.data_images)):
         vis_calibrated_frame_products.append(read_xml_product(os.path.join(args.workdir, vis_calibrated_frame_filename)))
 
     # Calibration parameters product
