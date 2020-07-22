@@ -26,7 +26,7 @@ import os
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, ConfigKeys
 from astropy.table import Table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -91,7 +91,7 @@ def measure_statistics_from_args(args):
 
     # First get the pipeline config so we can figure out where to archive it
     try:
-        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
     except Exception as e:
         logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
                     "Exception was: " + str(e))

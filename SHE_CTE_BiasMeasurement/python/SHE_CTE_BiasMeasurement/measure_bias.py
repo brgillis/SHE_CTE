@@ -29,7 +29,7 @@ from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
                           LinregressStatistics)
-from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, ConfigKeys
 from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_from_stats
 import multiprocessing as mp
 import numpy as np
@@ -161,7 +161,7 @@ def measure_bias_from_args(args):
 
     # Read in the pipeline config
     try:
-        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
         if pipeline_config is None:
             pipeline_config = {}
     except Exception as e:

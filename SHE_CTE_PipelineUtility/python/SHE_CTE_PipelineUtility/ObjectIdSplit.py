@@ -28,7 +28,7 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_config, ConfigKeys
+from SHE_PPT.pipeline_utility import read_analysis_config, ConfigKeys
 from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_utility import is_in_format
@@ -97,7 +97,7 @@ def object_id_split_from_args(args):
         max_batches = default_max_batches
         ids_to_use = None
     else:
-        pipeline_config = read_config(args.pipeline_config, workdir=args.workdir)
+        pipeline_config = read_analysis_config(args.pipeline_config, workdir=args.workdir)
 
         # Check for the batch size key
         if ConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
