@@ -35,7 +35,7 @@ from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
 
-__updated__ = "2020-07-16"
+__updated__ = "2020-07-29"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -298,7 +298,15 @@ def measure_bias_from_args(args):
             # Check if we have some bias measurements
 
             def remove_missing_bms_from_list(the_list):
-                return [value for value in the_list if value.m != '']
+                new_list = []
+                for value in the_list:
+                    try:
+                        if (value.m != '' and value.m_err != '' and value.m_err > 0
+                            and value.c != '' and value.c_err != '' and value.c_err > 0):
+                            new_list.append(value)
+                    except TypeError, ValueError as _:
+                        pass:
+                return new_list
 
             method_bias_measurements_list = MethodMeasurementsList()
 

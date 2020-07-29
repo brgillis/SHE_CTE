@@ -20,4 +20,4 @@ __updated__ = "2020-02-03"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "0.10.2"
+__version__ = "0.10.4"
