@@ -307,7 +307,7 @@ def measure_bias_from_args(args):
                         if (value.m != '' and value.m_err != '' and value.m_err > 0
                             and value.c != '' and value.c_err != '' and value.c_err > 0):
                             new_list.append(value)
-                    except TypeError, ValueError as _:
+                    except (TypeError, ValueError) as _:
                         pass:
                 return new_list
 
