@@ -249,6 +249,9 @@ def measure_bias_from_args(args):
 
     def remove_values_from_list(the_list, val):
         return [value for value in the_list if value != val]
+    
+    l_method_shear_statistics = remove_values_from_list(l_method_shear_statistics, None)
+    l_method_bias_measurements = remove_values_from_list(l_method_bias_measurements, None)
 
     have_some_data = False
     missing_shear_statistics = False
