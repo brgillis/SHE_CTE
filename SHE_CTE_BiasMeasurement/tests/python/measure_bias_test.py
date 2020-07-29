@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-07-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,8 +23,8 @@ __updated__ = "2020-07-02"
 from os.path import join
 
 from SHE_PPT import products
-from SHE_PPT.file_io import write_xml_product, read_xml_product, \
-    get_allowed_filename, write_listfile
+from SHE_PPT.file_io import (write_xml_product, read_xml_product,
+                             get_allowed_filename, write_listfile)
 from SHE_PPT.math import LinregressStatistics
 from numpy.testing import assert_almost_equal
 import pytest

@@ -26,7 +26,7 @@ import os
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, ConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, CalibrationConfigKeys
 from astropy.table import Table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -97,20 +97,20 @@ def measure_statistics_from_args(args):
                     "Exception was: " + str(e))
         pipeline_config = {}
 
-    if ConfigKeys.MS_ARCHIVE_DIR.value in pipeline_config:
-        archive_dir = pipeline_config[ConfigKeys.MS_ARCHIVE_DIR.value]
+    if CalibrationConfigKeys.MS_ARCHIVE_DIR.value in pipeline_config:
+        archive_dir = pipeline_config[CalibrationConfigKeys.MS_ARCHIVE_DIR.value]
         if archive_dir == "None":
             archive_dir = None
     else:
         archive_dir = args.archive_dir
 
-    if ConfigKeys.MS_WEBDAV_ARCHIVE.value in pipeline_config:
-        webdav_dir = pipeline_config[ConfigKeys.MS_WEBDAV_ARCHIVE.value]
+    if CalibrationConfigKeys.MS_WEBDAV_ARCHIVE.value in pipeline_config:
+        webdav_dir = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_ARCHIVE.value]
     else:
         webdav_dir = args.webdav_dir
 
-    if ConfigKeys.MS_WEBDAV_DIR.value in pipeline_config:
-        webdav_archive = pipeline_config[ConfigKeys.MS_WEBDAV_DIR.value].lower() == "true"
+    if CalibrationConfigKeys.MS_WEBDAV_DIR.value in pipeline_config:
+        webdav_archive = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_DIR.value].lower() == "true"
     else:
         webdav_archive = args.webdav_archive
 

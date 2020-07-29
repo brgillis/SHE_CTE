@@ -29,7 +29,7 @@ from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
                           LinregressStatistics)
-from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, ConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, CalibrationConfigKeys
 from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_from_stats
 import multiprocessing as mp
 import numpy as np
@@ -171,8 +171,8 @@ def measure_bias_from_args(args):
 
     if args.number_threads is not None:
         number_threads = args.number_threads
-    elif ConfigKeys.MB_NUM_THREADS.value in pipeline_config:
-        number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
+    elif CalibrationConfigKeys.MB_NUM_THREADS.value in pipeline_config:
+        number_threads = pipeline_config[CalibrationConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
             number_threads = default_number_threads
     else:
@@ -184,8 +184,8 @@ def measure_bias_from_args(args):
 
     if args.archive_dir is not None:
         archive_dir = args.archive_dir
-    elif ConfigKeys.MB_ARCHIVE_DIR.value in pipeline_config:
-        archive_dir = pipeline_config[ConfigKeys.MB_ARCHIVE_DIR.value]
+    elif CalibrationConfigKeys.MB_ARCHIVE_DIR.value in pipeline_config:
+        archive_dir = pipeline_config[CalibrationConfigKeys.MB_ARCHIVE_DIR.value]
         if archive_dir.lower() == "none":
             archive_dir = None
     else:
@@ -193,8 +193,8 @@ def measure_bias_from_args(args):
 
     if args.webdav_dir is not None:
         webdav_dir = args.webdav_dir
-    elif ConfigKeys.MB_WEBDAV_DIR.value in pipeline_config:
-        webdav_dir = pipeline_config[ConfigKeys.MB_WEBDAV_DIR.value]
+    elif CalibrationConfigKeys.MB_WEBDAV_DIR.value in pipeline_config:
+        webdav_dir = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_DIR.value]
         if webdav_dir.lower() == "none":
             webdav_dir = None
     else:
@@ -202,8 +202,8 @@ def measure_bias_from_args(args):
 
     if args.webdav_archive is not None:
         webdav_archive = args.webdav_archive
-    elif ConfigKeys.MB_WEBDAV_ARCHIVE.value in pipeline_config:
-        webdav_archive = pipeline_config[ConfigKeys.MB_WEBDAV_ARCHIVE.value]
+    elif CalibrationConfigKeys.MB_WEBDAV_ARCHIVE.value in pipeline_config:
+        webdav_archive = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_ARCHIVE.value]
         if webdav_archive.lower() == "none":
             webdav_archive = None
     else:
