@@ -35,7 +35,7 @@ from _pickle import UnpicklingError
 import multiprocessing as mp
 import numpy as np
 
-__updated__ = "2020-07-29"
+__updated__ = "2020-07-30"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -118,7 +118,12 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
         if not use_bias_only:
 
             method_statistics = MethodStatistics()
-            method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
+            try:
+                method_shear_statistics = shear_statistics_prod.get_method_bias_statistics(method, workdir=workdir)
+            except Exception as e:
+                logger.warning("Shear bias statistics in product " + os.path.join(workdir, shear_statistics_file) +
+                               " for method " + method + " appear to be corrupted. Exception was: " + str(e))
+                return None, None
 
             if not method == "BFD":  # get info for method if not BFD
 
