@@ -31,7 +31,7 @@ from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_ShearReconciliation.reconcile_shears import reconcile_shears_from_args
+from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
 
 logger = log.getLogger('SHE_CTE_ReconcileShear')
 
@@ -66,7 +66,7 @@ def defineSpecificProgramOptions():
                         help='DpdMerFinalCatalog data product for this tile, which is used to determine the objects ' +
                              'to include in the output catalog.')
 
-    parser.add_argument('--she_reconciliation_config', type=str,
+    parser.add_argument('--she_reconciliation_config', type=str, default=None,
                         help='DpdSheReconciliationConfig data product, which stores configuration options for this ' +
                              'executable, such as the reconciliation method to use.')
 
@@ -106,13 +106,13 @@ def mainMethod(args):
 
     if args.profile:
         import cProfile
-        cProfile.runctx("reconcile_shears_from_args(args)", {},
-                        {"reconcile_shears_from_args": reconcile_shears_from_args,
+        cProfile.runctx("reconcile_shear_from_args(args)", {},
+                        {"reconcile_shear_from_args": reconcile_shear_from_args,
                          "args": args,
                          "dry_run": dry_run},
-                        filename="reconcile_shears.prof")
+                        filename="reconcile_shear.prof")
     else:
-        reconcile_shears_from_args(args, dry_run)
+        reconcile_shear_from_args(args, dry_run)
 
     logger.debug('#')
     logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod()')
