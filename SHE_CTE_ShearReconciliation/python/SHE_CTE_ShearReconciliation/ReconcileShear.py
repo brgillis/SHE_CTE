@@ -16,16 +16,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-
 """
-File: python/SHE_CTE_ShearReconciliation/SHE_CTE_ReconcileShear.py
+File: python/SHE_CTE_ShearReconciliation/ReconcileShear.py
 
 Created on: 08/03/20
-Author: user
+Author: Bryan Gillis
 """
 
 import argparse
 import ElementsKernel.Logging as log
+
 
 def defineSpecificProgramOptions():
     """

@@ -62,7 +62,7 @@ elements_install_python_modules()
 # elements_add_python_program(PythonProgramExample
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
-elements_add_python_program(SHE_CTE_ReconcileShear SHE_CTE_ShearReconciliation.SHE_CTE_ReconcileShear)
+elements_add_python_program(SHE_CTE_ReconcileShear SHE_CTE_ShearReconciliation.ReconcileShear)
 
 #===============================================================================
 # Add the elements_install_conf_files macro
