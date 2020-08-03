@@ -1,5 +1,30 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes from v8.0 to v8.1
+=========================
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+- Added SHE_CTE_ShearReconciliation module and SHE_CTE_ReconcileShear executable
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
 Changes from v0.8 to v8.0
 =========================
 
