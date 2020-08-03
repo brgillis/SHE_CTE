@@ -5,6 +5,8 @@
     Main program for estimating shears on simulation data.
 """
 
+__updated__ = "2020-08-03"
+
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General

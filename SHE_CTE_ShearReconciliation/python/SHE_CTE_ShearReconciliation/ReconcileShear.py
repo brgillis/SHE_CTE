@@ -1,3 +1,11 @@
+""" File: python/SHE_CTE_ShearReconciliation/ReconcileShear.py
+    
+    Created on: 3 August 2020
+    Author: Bryan Gillis
+"""
+
+__updated__ = "2020-08-03"
+
 #
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -16,15 +24,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-"""
-File: python/SHE_CTE_ShearReconciliation/ReconcileShear.py
-
-Created on: 08/03/20
-Author: Bryan Gillis
-"""
-
 import argparse
-import ElementsKernel.Logging as log
+
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+from SHE_CTE.magic_values import force_dry_run
+from SHE_CTE_ShearReconciliation.reconcile_shears import reconcile_shears_from_args
+
+logger = log.getLogger('SHE_CTE_ReconcileShear')
 
 
 def defineSpecificProgramOptions():
@@ -40,10 +49,38 @@ def defineSpecificProgramOptions():
 
     parser = argparse.ArgumentParser()
 
-    #
-    # !!! Write your program options here !!!
-    # e.g. parser.add_argument('--string-value', type=str, help='A string option')
-    #
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
+    parser.add_argument('--dry_run', action='store_true',
+                        help='Dry run (no data processed).')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enables debug mode - currently no functional difference.')
+
+    # Required input arguments
+
+    parser.add_argument('--she_validated_measurements_listfile', type=str,
+                        help='.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
+                             'to be reconciled and combined.')
+
+    parser.add_argument('--mer_final_catalog', type=str,
+                        help='DpdMerFinalCatalog data product for this tile, which is used to determine the objects ' +
+                             'to include in the output catalog.')
+
+    parser.add_argument('--she_reconciliation_config', type=str,
+                        help='DpdSheReconciliationConfig data product, which stores configuration options for this ' +
+                             'executable, such as the reconciliation method to use.')
+
+    # Optional input arguments (cannot be used in pipeline)
+
+    parser.add_argument('--method', type=str, default=None,
+                        help="Which reconciliation method to use. If not specified, will take value from pipeline " +
+                             "config if available. If that's not available either, will use default of InvVar " +
+                             "(Inverse Variance) combination.")
+
+    # Output arguments
+
+    parser.add_argument('--she_reconciled_measurements', type=str,
+                        help='Desired filename to contain the output DpdSheReconciledMeasurements data product.')
 
     return parser
 
@@ -56,19 +93,27 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = log.getLogger('SHE_CTE_ReconcileShear')
+    logger.debug('#')
+    logger.debug('# Entering SHE_CTE_ReconcileShear mainMethod()')
+    logger.debug('#')
 
-    logger.info('#')
-    logger.info('# Entering SHE_CTE_ReconcileShear mainMethod()')
-    logger.info('#')
+    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ReconcileShear",
+                                    store_true=["profile", "debug", "dry_run"])
+    logger.info('Execution command for this step:')
+    logger.info(exec_cmd)
 
-    # !! Getting the option from the example option in defineSpecificProgramOption
-    # !! e.g string_option = args.string_value
+    dry_run = args.dry_run or force_dry_run
 
-    #
-    # !!! Write you main code here !!!
-    #
+    if args.profile:
+        import cProfile
+        cProfile.runctx("reconcile_shears_from_args(args)", {},
+                        {"reconcile_shears_from_args": reconcile_shears_from_args,
+                         "args": args,
+                         "dry_run": dry_run},
+                        filename="reconcile_shears.prof")
+    else:
+        reconcile_shears_from_args(args, dry_run)
 
-    logger.info('#')
-    logger.info('# Exiting SHE_CTE_ReconcileShear mainMethod()')
-    logger.info('#')
+    logger.debug('#')
+    logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod()')
+    logger.debug('#')
