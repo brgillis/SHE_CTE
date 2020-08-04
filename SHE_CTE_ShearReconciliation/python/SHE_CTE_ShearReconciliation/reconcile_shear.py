@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-08-03"
+__updated__ = "2020-08-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -37,6 +37,7 @@ from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_me
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
+from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_inv_var
 import numpy as np
 
 logger = getLogger(__name__)
@@ -59,6 +60,29 @@ shear_estimation_method_table_initialisers = {"KSB": initialise_ksb_measurements
                                               "BFD": initialise_bfd_moments_table}
 
 assert default_reconciliation_method in reconciliation_methods
+
+
+def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, table_initialiser):
+    """ Stores an object's info (from its row) in the proper table within the ids_to_reconcile dict, so it
+        can be handled later.
+    """
+
+    id = new_row[sem_tf.ID]
+    assert id == existing_row[sem_tf.ID]
+
+    # Is this the first conflict with this ID?
+    if not id in ids_to_reconcile:
+        # First conflict, so add the id with a table using the existing row
+        t = table_initialiser()
+        t.add_row(existing_row)
+        ids_to_reconcile[id] = t
+    else:
+        t = ids_to_reconcile[id]
+
+    # Add the new row to the table for this ID's conflicts
+    t.add_row(new_row)
+
+    return
 
 
 def reconcile_shear_from_args(args):
@@ -86,6 +110,14 @@ def reconcile_shear_from_args(args):
         # If we get here, it isn't yet determined, so use the default
         method = default_reconciliation_method
         logger.info("Using default reconciliation method: '" + str(method) + "'.")
+
+    if not method in reconciliation_methods:
+        allowed_method_str = ""
+        for allowed_method in reconciliation_methods:
+            allowed_method_str += "\n" + allowed_method
+        raise ValueError("Reconciliation method " + method + " is not recognized. Allowed methods are:" +
+                         allowed_method_str)
+    reconciliation_function = reconciliation_methods[method]
 
     # Load in the final catalog from MER to get the IDs of objects in this tile
     mer_final_catalog_product = read_xml_product(args.mer_final_catalog, workdir=args.workdir)
@@ -117,10 +149,16 @@ def reconcile_shear_from_args(args):
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in shear_estimation_method_table_formats:
 
+        sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
+        table_initialiser = shear_estimation_method_table_initialisers[shear_estimation_method]
+
         # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
         # this will store the first temporarily and later be updated with the reconciled result
         # TODO - set tile ID in header
-        reconciled_catalog = shear_estimation_method_table_initialisers[shear_estimation_method]()
+        reconciled_catalog = table_initialiser()
+
+        # Set up the object ID to be used as an index for this catalog
+        reconciled_catalog.add_index(sem_tf.ID)
 
         # Create a dict of objects needing reconciliation. Keys are object IDs, and values are tables containing
         # one row for each separate measurement
@@ -129,14 +167,45 @@ def reconcile_shear_from_args(args):
         # Create a set of IDs we've added to the table (faster to access than column indices)
         ids_in_reconciled_catalog = {}
 
-        sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
-
         # Loop through each table
         for estimates_table_filename in validated_shear_estimates_table_filenames[shear_estimation_method]:
-            estimates_table = Table.read(args.workdir, estimates_table_filename)
 
-            if not is_in_format(estimates_table, sem_tf):
-                pass
+            # Read in the table and ensure it's in the right format
+            qualified_estimates_table_filename = os.path.join(args.workdir, estimates_table_filename)
+            estimates_table = Table.read(qualified_estimates_table_filename)
+            if not is_in_format(estimates_table, sem_tf, verbose=True):
+                raise ValueError("Table " + qualified_estimates_table_filename + " is not in expected table format (" +
+                                 sem_tf.m.table_format + "). See log for details of error.")
+
+            # Loop over the rows of the table
+            for row in estimates_table:
+                id = row[sem_tf.ID]
+
+                # Skip if this ID isn't in the MER catalog for the Tile
+                if id not in object_ids_in_tile:
+                    continue
+
+                # Check if this ID is already in the reconciled catalog
+                if id in ids_in_reconciled_catalog:
+                    store_object_info(new_row=row,
+                                      existing_row=reconciled_catalog.loc[id],
+                                      ids_to_reconcile=ids_to_reconcile,
+                                      sem_tf=sem_tf,
+                                      table_initialiser=table_initialiser)
+
+                else:
+                    # Otherwise, add it to the reconciled catalog
+                    reconciled_catalog.add_row(row)
+                    ids_in_reconciled_catalog.add(id)
+
+            # End looping through rows of this table
+        # End looping through tables
+
+        # Now, we need to perform the reconciliation of each id
+        for id in ids_to_reconcile:
+            reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
+                                    output_row=reconciled_catalog.loc[id],
+                                    sem_tf=sem_tf)
 
     return
 
