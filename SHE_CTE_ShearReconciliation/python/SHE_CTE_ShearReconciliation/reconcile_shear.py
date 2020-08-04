@@ -4,22 +4,6 @@
 
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
-
-__updated__ = "2020-08-04"
-
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
-#
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
-# any later version.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
 import os
 
 from SHE_PPT import products
@@ -36,9 +20,25 @@ from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsm
 from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
+from galsim import shear
 
 from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_inv_var
 import numpy as np
+
+__updated__ = "2020-08-04"
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 logger = getLogger(__name__)
 
@@ -146,6 +146,10 @@ def reconcile_shear_from_args(args):
             if estimates_table_filename is not None:
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
+    # Create a data product for the output
+    reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
+        spatial_footprint=mer_final_catalog_product)
+
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in shear_estimation_method_table_formats:
 
@@ -206,6 +210,23 @@ def reconcile_shear_from_args(args):
             reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
                                     output_row=reconciled_catalog.loc[id],
                                     sem_tf=sem_tf)
+
+        # The output table is now finalized, so output it and store the filename in the output data product
+        reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),
+                                                           instance_id=str(tile_id),
+                                                           extension=".fits",
+                                                           version=SHE_CTE.__version__)
+        reconciled_catalog.write(os.path.join(args.workdir, reconciled_catalog_filename))
+
+        reconciled_catalog_product.set_method_filename(method=shear_estimation_method,
+                                                       filename=reconciled_catalog_filename)
+
+    # End looping over methods
+
+    # Output the finalized data product to the desired filename
+    write_xml_product(reconciled_catalog_product, args.she_reconciled_measurements, workdir=args.workdir)
+
+    logger.debug("# Exiting reconcile_shear_from_args() successfully.")
 
     return
 

@@ -4,7 +4,7 @@
     Author: Bryan Gillis
 """
 
-__updated__ = "2020-08-03"
+__updated__ = "2020-08-04"
 
 #
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -114,6 +114,4 @@ def mainMethod(args):
     else:
         reconcile_shear_from_args(args, dry_run)
 
-    logger.debug('#')
-    logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod()')
-    logger.debug('#')
+    logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod() successfully.')
