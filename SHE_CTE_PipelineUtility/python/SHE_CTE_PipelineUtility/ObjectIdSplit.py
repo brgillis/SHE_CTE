@@ -142,7 +142,7 @@ def object_id_split_from_args(args):
 
     if args.data_images is not None:
         data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
-                                        mer_final_catalog_listfile_filename=args.mer_final_catalog_tables,
+                                        detections_listfile_filename=args.mer_final_catalog_tables,
                                         workdir=args.workdir,
                                         memmap=True,
                                         mode='denywrite')
