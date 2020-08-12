@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2020-08-10"
+__updated__ = "2020-08-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -268,7 +268,7 @@ def object_id_split_from_args(args):
         id_list_product_filename_list.append(batch_id_list_product_filename)
 
         # Create and save the product
-        batch_id_list_product = she_object_id_list.create_dpd_she_she_object_id_list(id_list=list(id_arrays[i]))
+        batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
         logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
