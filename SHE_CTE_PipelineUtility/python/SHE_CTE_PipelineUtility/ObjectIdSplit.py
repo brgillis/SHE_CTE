@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2020-08-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,15 +28,15 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, ConfigKeys
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
 from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
 
 import SHE_CTE
-from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 import numpy as np
 
 default_batch_size = 20
@@ -100,34 +100,34 @@ def object_id_split_from_args(args):
         pipeline_config = read_analysis_config(args.pipeline_config, workdir=args.workdir)
 
         # Check for the batch size key
-        if ConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
-            logger.info("Key " + ConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
+        if AnalysisConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
+            logger.info("Key " + AnalysisConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default batch size of " + str(default_batch_size))
             batch_size = default_batch_size
         else:
-            batch_size = int(pipeline_config[ConfigKeys.OID_BATCH_SIZE.value])
+            batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
             if batch_size < 0:
                 raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
             logger.info("Using batch size of: " + str(batch_size))
 
         # Check for the max_batches key
-        if ConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
-            logger.info("Key " + ConfigKeys.OID_MAX_BATCHES.value + " not found in pipeline config " + args.pipeline_config + ". " +
+        if AnalysisConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
+            logger.info("Key " + AnalysisConfigKeys.OID_MAX_BATCHES.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default max batches of " + str(default_max_batches))
             max_batches = default_max_batches
         else:
-            max_batches = int(pipeline_config[ConfigKeys.OID_MAX_BATCHES.value])
+            max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
             if max_batches < 0:
                 raise ValueError("Invalid max batches: " + str(max_batches) + ". Must be >= 0.")
             logger.info("Using max batches of: " + str(max_batches))
 
         # Check for the IDs key
-        if ConfigKeys.OID_IDS.value not in pipeline_config:
-            logger.info("Key " + ConfigKeys.OID_IDS.value + " not found in pipeline config " + args.pipeline_config + ". " +
+        if AnalysisConfigKeys.OID_IDS.value not in pipeline_config:
+            logger.info("Key " + AnalysisConfigKeys.OID_IDS.value + " not found in pipeline config " + args.pipeline_config + ". " +
                         "Using default of using all IDs")
             ids_to_use = None
         else:
-            ids_to_use_str = pipeline_config[ConfigKeys.OID_IDS.value].split()
+            ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
 
             if len(ids_to_use_str) == 0:
                 ids_to_use = None
@@ -142,7 +142,7 @@ def object_id_split_from_args(args):
 
     if args.data_images is not None:
         data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
-                                        mer_final_catalog_listfile_filename=args.mer_final_catalog_tables,
+                                        detections_listfile_filename=args.mer_final_catalog_tables,
                                         workdir=args.workdir,
                                         memmap=True,
                                         mode='denywrite')
@@ -268,7 +268,7 @@ def object_id_split_from_args(args):
         id_list_product_filename_list.append(batch_id_list_product_filename)
 
         # Create and save the product
-        batch_id_list_product = she_object_id_list.create_dpd_she_she_object_id_list(id_list=list(id_arrays[i]))
+        batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
         logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
