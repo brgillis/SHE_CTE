@@ -22,7 +22,7 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
-                             read_pickled_product, write_pickled_product,
+                             read_pickled_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
@@ -73,7 +73,7 @@ def fit_psfs(args, dry_run=False):
 
         for i, filename in enumerate(aocs_time_series_product_filenames):
             aocs_time_series_products.append(read_pickled_product(join(args.workdir, filename)))
-            if not isinstance(aocs_time_series_products[i], products.le1_aocs_time_series.DpdSheAocsTimeSeriesProduct):
+            if not isinstance(aocs_time_series_products[i], products.le1_aocs_time_series.dpdLe1AocsTimeSeries):
                 raise ValueError("AocsTimeSeries product from " + filename + " is invalid type.")
 
     else:
@@ -115,10 +115,10 @@ def fit_psfs(args, dry_run=False):
 
         # Create and write the data product
         field_param_product = products.she_psf_field_parameters.create_dpd_she_psf_field_parameters()
-        field_param_product.set_zernike_mode_filename(field_param_table_filename)
+        field_param_product.set_filename(field_param_table_filename)
 
         qualified_field_param_product_filename = join(args.workdir, field_param_product_filename)
-        write_pickled_product(field_param_product, qualified_field_param_product_filename)
+        write_xml_product(field_param_product, qualified_field_param_product_filename)
 
         logger.info("Wrote field params product to " + qualified_field_param_product_filename)
 
