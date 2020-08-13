@@ -127,7 +127,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop_err in vars(sem_tf):
             continue
         colname_err = getattr(sem_tf, prop_err)
-        new_props[colname_err] = np.sqrt(np.sum(np.pow(measurements_to_reconcile_table[colname]*weights,2))/tot_weight)
+        new_props[colname_err] = np.sqrt(np.sum(np.pow(measurements_to_reconcile_table[colname_err]*weights,2))/tot_weight)
 
     # Combine properties we sum up
     for prop in props_to_bitwise_or:
