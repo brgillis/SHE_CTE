@@ -27,10 +27,10 @@ from SHE_PPT.file_io import (read_listfile, write_listfile,
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
-
-import SHE_CTE
 from SHE_PPT.table_formats.she_psf_tm_state import initialise_psf_field_tm_state_table
 from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
+
+import SHE_CTE
 
 test_mode = True
 
@@ -55,7 +55,7 @@ def fit_psfs(args, dry_run=False):
 
     frame_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
                                      seg_listfile_filename=args.segmentation_images,
-                                     detections_listfile_filename=args.she_simulated_catalog_listfile,
+                                     detections_listfile_filename=args.detections_tables,
                                      workdir=args.workdir,
                                      clean_detections=True,
                                      apply_sc3_fix=True,
