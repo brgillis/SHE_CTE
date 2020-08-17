@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from _pickle import UnpicklingError
 import os
 
 from SHE_PPT import products
@@ -26,16 +27,15 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements, combine_bfd_sum_statistics,
                           LinregressStatistics, BFDSumStatistics)
 from SHE_PPT.pipeline_utility import archive_product, read_config, ConfigKeys
-from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
-from _pickle import UnpicklingError
+from SHE_PPT.products.shear_bias_statistics import create_dpd_shear_bias_statistics_from_stats
 import multiprocessing as mp
 import numpy as np
 
-__updated__ = "2020-07-30"
+__updated__ = "2020-08-17"
 
 bootstrap_threshold = 2
 default_number_threads = 8
@@ -521,7 +521,12 @@ def combine_bias_measurements(l_bias_measurements):
     # Calculate weight arrays
     lwm = lm_err ** (-2)
     lwc = lc_err ** (-2)
-    lwmc = lmc_covar ** (-1)
+    try:
+        lwmc = np.where(np.logical_or(np.isinf(lmc_covar), np.isnan(lmc_covar)), 0, lmc_covar ** (-1))
+        bad_covar = False
+    except TypeError as e:
+        # If we have bad covars, get covar weighting from regular vars
+        bad_covar = True
 
     # Determine a mask for both m and c
     m_mask = np.logical_or(np.logical_or(np.isnan(lwm), np.isinf(lwm)), lwm <= 0)
@@ -531,7 +536,8 @@ def combine_bias_measurements(l_bias_measurements):
     # Calculate total weights
     wm = lwm[~mc_mask].sum()
     wc = lwc[~mc_mask].sum()
-    wmc = lwmc[~mc_mask].sum()
+    if not bad_covar:
+        wmc = lwmc[~mc_mask].sum()
 
     # Check for zero weight, otherwise calculate bias values
 
@@ -551,7 +557,7 @@ def combine_bias_measurements(l_bias_measurements):
         bias_measurements.c = (lc * lwc)[~mc_mask].sum() / wc
         bias_measurements.c_err = wc ** (-0.5)
 
-    if wmc <= 0:
+    if bad_covar or wmc <= 0:
         bias_measurements.mc_covar = np.nan
     else:
         bias_measurements.mc_covar = wmc ** (-1)
