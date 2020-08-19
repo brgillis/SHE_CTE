@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-08-04"
+__updated__ = "2020-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -86,6 +86,72 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, table_ini
     return
 
 
+def reconcile_tables(shear_estimates_tables,
+                     shear_estimation_method,
+                     object_ids_in_tile,
+                     reconciliation_function,
+                     workdir=None):
+
+    sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
+    table_initialiser = shear_estimation_method_table_initialisers[shear_estimation_method]
+
+    # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
+    # this will store the first temporarily and later be updated with the reconciled result
+    # TODO - set tile ID in header
+    reconciled_catalog = table_initialiser()
+
+    # Set up the object ID to be used as an index for this catalog
+    reconciled_catalog.add_index(sem_tf.ID)
+
+    # Create a dict of objects needing reconciliation. Keys are object IDs, and values are tables containing
+    # one row for each separate measurement
+    ids_to_reconcile = {}
+
+    # Create a set of IDs we've added to the table (faster to access than column indices)
+    ids_in_reconciled_catalog = {}
+
+    # Loop through each table
+    for estimates_table_filename in shear_estimates_tables:
+
+        # Read in the table and ensure it's in the right format
+        qualified_estimates_table_filename = os.path.join(workdir, estimates_table_filename)
+        estimates_table = Table.read(qualified_estimates_table_filename)
+        if not is_in_format(estimates_table, sem_tf, verbose=True):
+            raise ValueError("Table " + qualified_estimates_table_filename + " is not in expected table format (" +
+                             sem_tf.m.table_format + "). See log for details of error.")
+
+        # Loop over the rows of the table
+        for row in estimates_table:
+            id = row[sem_tf.ID]
+
+            # Skip if this ID isn't in the MER catalog for the Tile
+            if id not in object_ids_in_tile:
+                continue
+
+            # Check if this ID is already in the reconciled catalog
+            if id in ids_in_reconciled_catalog:
+                store_object_info(new_row=row,
+                                  existing_row=reconciled_catalog.loc[id],
+                                  ids_to_reconcile=ids_to_reconcile,
+                                  sem_tf=sem_tf,
+                                  table_initialiser=table_initialiser)
+
+            else:
+                # Otherwise, add it to the reconciled catalog
+                reconciled_catalog.add_row(row)
+                ids_in_reconciled_catalog.add(id)
+
+        # End looping through rows of this table
+    # End looping through tables
+
+    # Now, we need to perform the reconciliation of each id
+    for id in ids_to_reconcile:
+        reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
+                                output_row=reconciled_catalog.loc[id],
+                                sem_tf=sem_tf)
+    return reconciled_catalog
+
+
 def reconcile_shear_from_args(args):
     """ Primary function for performing shear reconciliation
     """
@@ -154,63 +220,11 @@ def reconcile_shear_from_args(args):
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in shear_estimation_method_table_formats:
 
-        sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
-        table_initialiser = shear_estimation_method_table_initialisers[shear_estimation_method]
-
-        # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
-        # this will store the first temporarily and later be updated with the reconciled result
-        # TODO - set tile ID in header
-        reconciled_catalog = table_initialiser()
-
-        # Set up the object ID to be used as an index for this catalog
-        reconciled_catalog.add_index(sem_tf.ID)
-
-        # Create a dict of objects needing reconciliation. Keys are object IDs, and values are tables containing
-        # one row for each separate measurement
-        ids_to_reconcile = {}
-
-        # Create a set of IDs we've added to the table (faster to access than column indices)
-        ids_in_reconciled_catalog = {}
-
-        # Loop through each table
-        for estimates_table_filename in validated_shear_estimates_table_filenames[shear_estimation_method]:
-
-            # Read in the table and ensure it's in the right format
-            qualified_estimates_table_filename = os.path.join(args.workdir, estimates_table_filename)
-            estimates_table = Table.read(qualified_estimates_table_filename)
-            if not is_in_format(estimates_table, sem_tf, verbose=True):
-                raise ValueError("Table " + qualified_estimates_table_filename + " is not in expected table format (" +
-                                 sem_tf.m.table_format + "). See log for details of error.")
-
-            # Loop over the rows of the table
-            for row in estimates_table:
-                id = row[sem_tf.ID]
-
-                # Skip if this ID isn't in the MER catalog for the Tile
-                if id not in object_ids_in_tile:
-                    continue
-
-                # Check if this ID is already in the reconciled catalog
-                if id in ids_in_reconciled_catalog:
-                    store_object_info(new_row=row,
-                                      existing_row=reconciled_catalog.loc[id],
-                                      ids_to_reconcile=ids_to_reconcile,
-                                      sem_tf=sem_tf,
-                                      table_initialiser=table_initialiser)
-
-                else:
-                    # Otherwise, add it to the reconciled catalog
-                    reconciled_catalog.add_row(row)
-                    ids_in_reconciled_catalog.add(id)
-
-            # End looping through rows of this table
-        # End looping through tables
-
-        # Now, we need to perform the reconciliation of each id
-        for id in ids_to_reconcile:
-            reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
-                                    output_row=reconciled_catalog.loc[id],
-                                    sem_tf=sem_tf)
+        reconciled_catalog = reconcile_tables(shear_estimates_tables=validated_shear_estimates_table_filenames[shear_estimation_method],
+                                              shear_estimation_method=shear_estimation_method,
+                                              object_ids_in_tile=object_ids_in_tile,
+                                              reconciliation_function=reconciliation_function,
+                                              workdir=args.workdir)
 
         # The output table is now finalized, so output it and store the filename in the output data product
         reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),

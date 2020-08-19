@@ -27,6 +27,10 @@ from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf, initia
 from SHE_PPT.table_utility import is_in_format, add_row
 import pytest
 
+from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_tables
+from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
+                                                                  reconcile_shape_weight,
+                                                                  reconcile_invvar)
 import numpy as np
 
 sem_names = ("KSB",
@@ -54,9 +58,8 @@ class TestCase:
 
         self.workdir = tmpdir.strpath
 
-        # Set up a mock catalogue with 20 objects
-        self.mer_final_catalog = initialise_mer_final_catalog(size=20)
-        self.mer_final_catalog[mfc_tf.ID] = np.arange(20, dtype=int)
+        # Set up a mock catalogue with 20 objects, but say only the first 19 are in the tile
+        self.object_ids_in_tile = frozenset(np.arange(19, dtype=int))
 
         # Set up "true" values for g1 and g2, which each other table will be biased from
         true_g1 = np.linspace(-0.8, 0.8, num=20)
@@ -94,7 +97,18 @@ class TestCase:
         return
 
     def test_reconcile_best(self):
-        pass
+
+        for sem in sem_names:
+
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_tables[sem],
+                                                  shear_estimation_method=sem,
+                                                  object_ids_in_tile=self.object_ids_in_tile,
+                                                  reconciliation_function=reconcile_best,
+                                                  workdir=self.workdir)
+
+            assert(len(reconciled_catalog) == 19)
+
+        return
 
     def test_reconcile_shape_weight(self):
         pass
