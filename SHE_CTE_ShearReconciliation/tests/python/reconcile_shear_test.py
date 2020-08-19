@@ -62,7 +62,7 @@ class TestCase:
         self.object_ids_in_tile = frozenset(np.arange(19, dtype=int))
 
         # Set up "true" values for g1 and g2, which each other table will be biased from
-        true_g1 = np.linspace(-0.8, 0.8, num=20)
+        true_g1 = np.linspace(-0.8, 0.8, num=20, dtype=">f4")
         true_g2 = np.where(true_g1 < 0, 0.8 + true_g1, -0.8 + true_g1)
 
         # We'll set up some mock tables from each method, using the same values for each method
@@ -84,12 +84,16 @@ class TestCase:
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
 
                 l = i_max - i_min + 1
-                t = sem_initialisers(size=l)
+                t = sem_initialisers[sem]()
+                for _ in range(l):
+                    t.add_row()
+
                 t[tf.ID] = np.arange(l) + i_min
                 t[tf.g1] = true_g1[i_min:i_max + 1] + g1_offset
                 t[tf.g2] = true_g2[i_min:i_max + 1] + g2_offset
-                t[tf.g1] = np.ones(l) * g1_err
-                t[tf.g2] = np.ones(l) * g2_err
+                t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
+                t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
+                t[tf.weight] = np.ones(l, dtype=">f4") * weight
                 tables.append(t)
 
             self.sem_tables[sem] = tables

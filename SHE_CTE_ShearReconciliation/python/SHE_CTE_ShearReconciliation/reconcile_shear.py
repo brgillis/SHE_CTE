@@ -38,13 +38,14 @@ from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 from galsim import shear
 
-from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_inv_var
+from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_invvar, reconcile_shape_weight
 import numpy as np
 
 logger = getLogger(__name__)
 
 reconciliation_methods = {"Best": reconcile_best,
-                          "InvVar": reconcile_inv_var}
+                          "InvVar": reconcile_invvar,
+                          "ShapeWeight": reconcile_shape_weight}
 
 default_reconciliation_method = "InvVar"
 
@@ -108,7 +109,7 @@ def reconcile_tables(shear_estimates_tables,
     ids_to_reconcile = {}
 
     # Create a set of IDs we've added to the table (faster to access than column indices)
-    ids_in_reconciled_catalog = {}
+    ids_in_reconciled_catalog = set()
 
     # Loop through each table
     for estimates_table in shear_estimates_tables:
@@ -120,6 +121,8 @@ def reconcile_tables(shear_estimates_tables,
             # It's a filename, so load it in
             qualified_estimates_table_filename = os.path.join(workdir, estimates_table)
             estimates_table = Table.read(qualified_estimates_table_filename)
+        else:
+            qualified_estimates_table_filename = str(estimates_table)
 
         # Ensure it's in the right format
         if not is_in_format(estimates_table, sem_tf, verbose=True):
