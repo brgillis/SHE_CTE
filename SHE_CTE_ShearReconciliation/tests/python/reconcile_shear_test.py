@@ -66,7 +66,7 @@ class TestCase:
         true_g2 = np.where(true_g1 < 0, 0.8 + true_g1, -0.8 + true_g1)
 
         # We'll set up some mock tables from each method, using the same values for each method
-        self.sem_tables = {}
+        self.sem_table_lists = {}
         for sem in sem_names:
 
             tf = sem_tfs[sem]
@@ -94,9 +94,10 @@ class TestCase:
                 t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
                 t[tf.weight] = np.ones(l, dtype=">f4") * weight
+                t.add_index(tf.ID)
                 tables.append(t)
 
-            self.sem_tables[sem] = tables
+            self.sem_table_lists[sem] = tables
 
         return
 
@@ -104,13 +105,27 @@ class TestCase:
 
         for sem in sem_names:
 
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_tables[sem],
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
                                                   reconciliation_function=reconcile_best,
                                                   workdir=self.workdir)
 
             assert(len(reconciled_catalog) == 19)
+
+            sem_tf = sem_tfs[sem]
+            sem_table_list = self.sem_table_lists[sem]
+
+            reconciled_catalog.add_index(sem_tf.ID)
+
+            # Index 1 should exactly match results from table 0
+            test_row_1 = reconciled_catalog.loc[1]
+            ex_row_1 = sem_table_list[0].loc[1]
+            assert(test_row_1[sem_tf.g1] == ex_row_1[sem_tf.g1])
+            assert(test_row_1[sem_tf.g2] == ex_row_1[sem_tf.g2])
+            assert(test_row_1[sem_tf.g1_err] == ex_row_1[sem_tf.g1_err])
+            assert(test_row_1[sem_tf.g2_err] == ex_row_1[sem_tf.g2_err])
+            assert(test_row_1[sem_tf.weight] == ex_row_1[sem_tf.weight])
 
         return
 
