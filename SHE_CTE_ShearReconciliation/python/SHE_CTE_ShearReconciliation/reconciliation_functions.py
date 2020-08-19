@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2020-08-13"
+__updated__ = "2020-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -54,7 +54,18 @@ def reconcile_best(measurements_to_reconcile_table,
 
     measurements_to_reconcile_table.sort(sem_tf.weight)
 
-    best_row = measurements_to_reconcile_table[-1]
+    best_row = None
+
+    for i in range(len(measurements_to_reconcile_table)):
+        i_from_end = -1 - i
+        test_row = measurements_to_reconcile_table[i_from_end]
+        if not (np.isnan(test_row[sem_tf.weight]) or np.isinf(test_row[sem_tf.weight])):
+            best_row = test_row
+            break
+
+    # If we didn't find any good row, just use the last
+    if best_row == None:
+        best_row = measurements_to_reconcile_table[-1]
 
     # Update the output row
     for colname in output_row.colnames:
