@@ -111,11 +111,17 @@ def reconcile_tables(shear_estimates_tables,
     ids_in_reconciled_catalog = {}
 
     # Loop through each table
-    for estimates_table_filename in shear_estimates_tables:
+    for estimates_table in shear_estimates_tables:
 
-        # Read in the table and ensure it's in the right format
-        qualified_estimates_table_filename = os.path.join(workdir, estimates_table_filename)
-        estimates_table = Table.read(qualified_estimates_table_filename)
+        if isinstance(estimates_table, str):
+            if workdir is None:
+                raise ValueError("If a filename is passed to reconcile_tables (\"" + estimates_table + "\"), " +
+                                 "the workdir must also be supplied.")
+            # It's a filename, so load it in
+            qualified_estimates_table_filename = os.path.join(workdir, estimates_table)
+            estimates_table = Table.read(qualified_estimates_table_filename)
+
+        # Ensure it's in the right format
         if not is_in_format(estimates_table, sem_tf, verbose=True):
             raise ValueError("Table " + qualified_estimates_table_filename + " is not in expected table format (" +
                              sem_tf.m.table_format + "). See log for details of error.")
