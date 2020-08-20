@@ -55,11 +55,11 @@ def assert_rows_equal(t1, t2, i, sem_tf):
 
     r1 = t1.loc[i]
     r2 = t2.loc[i]
-    assert r1[sem_tf.g1] == r2[sem_tf.g1], "Row " + str(i) + " doesn't match expected value for g1."
-    assert r1[sem_tf.g2] == r2[sem_tf.g2], "Row " + str(i) + " doesn't match expected value for g2."
-    assert r1[sem_tf.g1_err] == r2[sem_tf.g1_err], "Row " + str(i) + " doesn't match expected value for g1_err."
-    assert r1[sem_tf.g2_err] == r2[sem_tf.g2_err], "Row " + str(i) + " doesn't match expected value for g2_err."
-    assert r1[sem_tf.weight] == r2[sem_tf.weight], "Row " + str(i) + " doesn't match expected value for weight."
+    assert np.isclose(r1[sem_tf.g1], r2[sem_tf.g1]), "Row " + str(i) + " doesn't match expected value for g1."
+    assert np.isclose(r1[sem_tf.g2], r2[sem_tf.g2]), "Row " + str(i) + " doesn't match expected value for g2."
+    assert np.isclose(r1[sem_tf.g1_err], r2[sem_tf.g1_err]), "Row " + str(i) + " doesn't match expected value for g1_err."
+    assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + str(i) + " doesn't match expected value for g2_err."
+    assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + str(i) + " doesn't match expected value for weight."
 
     return
 
