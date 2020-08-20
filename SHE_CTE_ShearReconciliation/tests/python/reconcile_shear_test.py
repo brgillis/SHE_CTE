@@ -118,14 +118,24 @@ class TestCase:
 
             reconciled_catalog.add_index(sem_tf.ID)
 
-            # Index 1 should exactly match results from table 0
-            test_row_1 = reconciled_catalog.loc[1]
-            ex_row_1 = sem_table_list[0].loc[1]
-            assert(test_row_1[sem_tf.g1] == ex_row_1[sem_tf.g1])
-            assert(test_row_1[sem_tf.g2] == ex_row_1[sem_tf.g2])
-            assert(test_row_1[sem_tf.g1_err] == ex_row_1[sem_tf.g1_err])
-            assert(test_row_1[sem_tf.g2_err] == ex_row_1[sem_tf.g2_err])
-            assert(test_row_1[sem_tf.weight] == ex_row_1[sem_tf.weight])
+            # Define a function to test that two rows match
+            def assert_rows_equal(t1, t2, i):
+                r1 = t1.loc[i]
+                r2 = t2.loc[i]
+                assert r1[sem_tf.g1] == r2[sem_tf.g1], "Row " + str(i) + " doesn't match expected value for g1."
+                assert r1[sem_tf.g2] == r2[sem_tf.g2], "Row " + str(i) + " doesn't match expected value for g2."
+                assert r1[sem_tf.g1_err] == r2[sem_tf.g1_err], "Row " + str(i) + " doesn't match expected value for g1_err."
+                assert r1[sem_tf.g2_err] == r2[sem_tf.g2_err], "Row " + str(i) + " doesn't match expected value for g2_err."
+                assert r1[sem_tf.weight] == r2[sem_tf.weight], "Row " + str(i) + " doesn't match expected value for weight."
+
+            # Row 1 should exactly match results from table 0
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1)
+
+            # Also for 6, which overlaps with table 1, but table 0 has higher weight
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 6)
+
+            # Row 8 should be from table 2, which has the highest weight
+            assert_rows_equal(reconciled_catalog, sem_table_list[2], 8)
 
         return
 
