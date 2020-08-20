@@ -201,7 +201,9 @@ def reconcile_weight(measurements_to_reconcile_table,
     """
 
     # For any instances of NaN, set the weight to zero
-    weights = np.where(np.logical_or.reduce((np.isnan(weights), np.isinf(weights), weights < 0)), 0, weights)
+    weights = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
+    # Also for any negative weights (we do this in a separate step to avoid a warning)
+    weights = np.where(weights < 0, 0, weights)
 
     # Make a mask of objects with zero weight
     m = weights <= 0
