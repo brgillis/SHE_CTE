@@ -78,6 +78,9 @@ class TestCase:
         cls.true_g1 = np.linspace(-0.8, 0.8, num=20, dtype=">f4")
         cls.true_g2 = np.where(cls.true_g1 < 0, 0.8 + cls.true_g1, -0.8 + cls.true_g1)
 
+        cls.shape_noise = 0.25
+        cls.max_weight = 1 / cls.shape_noise ** 2
+
         # We'll set up some mock tables from each method, using the same values for each method
         cls.sem_table_lists = {}
         for sem in sem_names:
@@ -85,8 +88,6 @@ class TestCase:
             tf = sem_tfs[sem]
 
             tables = []
-
-            shape_noise = 0.25
 
             # In brief - Table 1 and 2 cancel out for invvar weighting, but not shape weighting. Table 3 dominates,
             # Table 4 has NaN errors and 0 estimates, Table 5 has NaN estimates and errors and Inf weight,
@@ -99,7 +100,7 @@ class TestCase:
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
 
                 if weight is None:
-                    weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + shape_noise ** 2)
+                    weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + cls.shape_noise ** 2)
 
                 l = i_max - i_min + 1
                 t = sem_initialisers[sem]()
@@ -209,6 +210,12 @@ class TestCase:
             assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
 
             # Check combination of tables 0 and 1 is sensible
-            assert np.isclose(reconciled_catalog.loc[6][sem_tf.g1], self.true_g1[6])
+            test_row = reconciled_catalog.loc[6]
+            assert np.isclose(test_row[sem_tf.g1], self.true_g1[6])
+
+            # Weight should be less than the max weight, but higher than either individual weight
+            assert test_row[sem_tf.weight] < self.max_weight
+            assert test_row[sem_tf.weight] > sem_table_list[0].loc[6][sem_tf.weight]
+            assert test_row[sem_tf.weight] > sem_table_list[1].loc[6][sem_tf.weight]
 
         return
