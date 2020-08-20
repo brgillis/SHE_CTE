@@ -75,8 +75,8 @@ class TestCase:
         cls.object_ids_in_tile = frozenset(np.arange(19, dtype=int))
 
         # Set up "true" values for g1 and g2, which each other table will be biased from
-        true_g1 = np.linspace(-0.8, 0.8, num=20, dtype=">f4")
-        true_g2 = np.where(true_g1 < 0, 0.8 + true_g1, -0.8 + true_g1)
+        cls.true_g1 = np.linspace(-0.8, 0.8, num=20, dtype=">f4")
+        cls.true_g2 = np.where(cls.true_g1 < 0, 0.8 + cls.true_g1, -0.8 + cls.true_g1)
 
         # We'll set up some mock tables from each method, using the same values for each method
         cls.sem_table_lists = {}
@@ -102,8 +102,8 @@ class TestCase:
                     t.add_row()
 
                 t[tf.ID] = np.arange(l) + i_min
-                t[tf.g1] = true_g1[i_min:i_max + 1] + g1_offset
-                t[tf.g2] = true_g2[i_min:i_max + 1] + g2_offset
+                t[tf.g1] = cls.true_g1[i_min:i_max + 1] + g1_offset
+                t[tf.g2] = cls.true_g2[i_min:i_max + 1] + g2_offset
                 t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
                 t[tf.weight] = np.ones(l, dtype=">f4") * weight
@@ -188,7 +188,7 @@ class TestCase:
             reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
-                                                  reconciliation_function=reconcile_shape_weight,
+                                                  reconciliation_function=reconcile_invvar,
                                                   workdir=self.workdir)
 
             assert(len(reconciled_catalog) == 19)
@@ -202,5 +202,8 @@ class TestCase:
 
             # Row 18 should exactly match results from table 2, since there's no other data for it
             assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
+
+            # Check combination of tables 0 and 1 is sensible
+            assert np.isclose(reconciled_catalog.loc[6][sem_tf.g1], self.true_g1[6])
 
         return
