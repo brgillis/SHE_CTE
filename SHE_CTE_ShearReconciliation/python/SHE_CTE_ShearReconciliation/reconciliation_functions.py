@@ -268,16 +268,6 @@ def reconcile_weight(measurements_to_reconcile_table,
         colname = getattr(sem_tf, prop)
         new_props[colname] = np.NaN
 
-    # Check for any missing properties, and warn and set them to NaN, while we update the output row
-    for prop in measurements_to_reconcile_table.colnames:
-        missing_props = []
-        if prop in new_props:
-            output_row[prop] = new_props[prop]
-        else:
-            missing_props.append(prop)
-            output_row[prop] = np.NaN
-        warn_missing_props(missing_props)
-
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
 
     masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
@@ -286,7 +276,7 @@ def reconcile_weight(measurements_to_reconcile_table,
 
     masked_shape_var = (0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2))
 
-    if not len(masked_inv_weight_column[~m]) > 0 and (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
+    if not (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
         logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
                        "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
                        "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
@@ -296,6 +286,16 @@ def reconcile_weight(measurements_to_reconcile_table,
     else:
         shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
         new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 + new_props[sem_tf.g2_err] ** 2) + shape_var)
+
+    # Check for any missing properties, and warn and set them to NaN, while we update the output row
+    for prop in measurements_to_reconcile_table.colnames:
+        missing_props = []
+        if prop in new_props:
+            output_row[prop] = new_props[prop]
+        else:
+            missing_props.append(prop)
+            output_row[prop] = np.NaN
+        warn_missing_props(missing_props)
 
     return
 
