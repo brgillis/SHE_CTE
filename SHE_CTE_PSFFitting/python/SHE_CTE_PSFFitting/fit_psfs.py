@@ -98,7 +98,7 @@ def fit_psfs(args, dry_run=False):
 
         # Get a filename for the product
         field_param_product_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml",
-                                                            version=SHE_CTE.__version__)
+                                                            version=SHE_CTE.__version__, subdir=None)
         field_param_product_filenames.append(field_param_product_filename)
 
         # Get a filename for the table and write it out
