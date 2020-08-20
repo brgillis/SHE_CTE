@@ -53,20 +53,18 @@ class TestCase:
     """
     """
 
-    @pytest.fixture(autouse=True)
-    def setup(self, tmpdir):
-
-        self.workdir = tmpdir.strpath
+    @classmethod
+    def setup_class(cls):
 
         # Set up a mock catalogue with 20 objects, but say only the first 19 are in the tile
-        self.object_ids_in_tile = frozenset(np.arange(19, dtype=int))
+        cls.object_ids_in_tile = frozenset(np.arange(19, dtype=int))
 
         # Set up "true" values for g1 and g2, which each other table will be biased from
         true_g1 = np.linspace(-0.8, 0.8, num=20, dtype=">f4")
         true_g2 = np.where(true_g1 < 0, 0.8 + true_g1, -0.8 + true_g1)
 
         # We'll set up some mock tables from each method, using the same values for each method
-        self.sem_table_lists = {}
+        cls.sem_table_lists = {}
         for sem in sem_names:
 
             tf = sem_tfs[sem]
@@ -76,9 +74,9 @@ class TestCase:
             # In brief - Table 1 and 2 cancel out for invvar weighting, but not shape weighting. Table 3 dominates,
             # Table 4 has NaN errors and 0 estimates, Table 5 has NaN estimates and errors and Inf weight,
             # Table 6 has impossible (negative) values for weight and errors
-            for i_min, i_max, g1_offset, g2_offset, g1_err, g2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, 1.0),
-                                                                               (6, 12, -0.04, 0.04, 0.02, 0.02, 0.5),
-                                                                               (8, 19, 0.1, 0.2, 0.001, 0.001, 100),
+            for i_min, i_max, g1_offset, g2_offset, g1_err, g2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, 15.974440894568689),
+                                                                               (6, 12, -0.04, 0.04, 0.02, 0.02, 15.89825119236884),
+                                                                               (8, 19, 0.1, 0.2, 0.001, 0.001, 99.9900009999),
                                                                                (0, 19, 0, 0, np.nan, np.nan, np.nan),
                                                                                (0, 19, np.nan, np.nan, np.nan, np.nan, np.inf),
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
@@ -97,8 +95,19 @@ class TestCase:
                 t.add_index(tf.ID)
                 tables.append(t)
 
-            self.sem_table_lists[sem] = tables
+            cls.sem_table_lists[sem] = tables
 
+        return
+
+    @classmethod
+    def teardown_class(cls):
+
+        return
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+
+        self.workdir = tmpdir.strpath
         return
 
     def test_reconcile_best(self):
@@ -140,7 +149,43 @@ class TestCase:
         return
 
     def test_reconcile_shape_weight(self):
-        pass
+
+        for sem in sem_names:
+
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
+                                                  shear_estimation_method=sem,
+                                                  object_ids_in_tile=self.object_ids_in_tile,
+                                                  reconciliation_function=reconcile_shape_weight,
+                                                  workdir=self.workdir)
+
+            assert(len(reconciled_catalog) == 19)
+
+            sem_tf = sem_tfs[sem]
+            sem_table_list = self.sem_table_lists[sem]
+
+            reconciled_catalog.add_index(sem_tf.ID)
+
+            # TODO - add tests of results here
+
+        return
 
     def test_reconcile_invvar(self):
-        pass
+
+        for sem in sem_names:
+
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
+                                                  shear_estimation_method=sem,
+                                                  object_ids_in_tile=self.object_ids_in_tile,
+                                                  reconciliation_function=reconcile_shape_weight,
+                                                  workdir=self.workdir)
+
+            assert(len(reconciled_catalog) == 19)
+
+            sem_tf = sem_tfs[sem]
+            sem_table_list = self.sem_table_lists[sem]
+
+            reconciled_catalog.add_index(sem_tf.ID)
+
+            # TODO - add tests of results here
+
+        return

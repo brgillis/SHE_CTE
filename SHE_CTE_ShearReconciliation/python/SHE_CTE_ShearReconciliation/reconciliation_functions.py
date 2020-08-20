@@ -4,8 +4,13 @@
 
     Functions to handle different ways of reconciling different shear estimates.
 """
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import run_only_once
+from astropy.io.ascii.core import masked
 
-__updated__ = "2020-08-19"
+import numpy as np
+
+__updated__ = "2020-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,9 +25,7 @@ __updated__ = "2020-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from SHE_PPT.utility import run_only_once
-
-import numpy as np
+logger = getLogger(__name__)
 
 
 def reconcile_best(measurements_to_reconcile_table,
@@ -212,25 +215,25 @@ def reconcile_weight(measurements_to_reconcile_table,
         new_props[colname] = np.sum(measurements_to_reconcile_table[colname] * weights) / tot_weight
 
         # If this property has an error, calculate that too
-        prop_err = colname + "_err"
+        prop_err = prop + "_err"
         if not prop_err in vars(sem_tf):
             continue
         colname_err = getattr(sem_tf, prop_err)
-        new_props[colname_err] = np.sqrt(np.sum(np.pow(measurements_to_reconcile_table[colname_err] * weights, 2)) / tot_weight)
+        new_props[colname_err] = np.sqrt(np.sum(np.power(measurements_to_reconcile_table[colname_err] * weights, 2)) / tot_weight)
 
     # Combine properties we sum up
-    for prop in props_to_bitwise_or:
+    for prop in props_to_sum:
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
         new_props[colname] = np.sum(measurements_to_reconcile_table[colname])
 
     # Combine properties bitwise or
-    for prop in props_to_sum:
+    for prop in props_to_bitwise_or:
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = np.vectorize(np.bitwise_or)(measurements_to_reconcile_table[colname])
+        new_props[colname] = np.bitwise_or.reduce(measurements_to_reconcile_table[colname], axis=0)
 
     # Copy the highest-weight property when we just copy
     for prop in props_to_copy:
@@ -257,18 +260,25 @@ def reconcile_weight(measurements_to_reconcile_table,
         warn_missing_props(missing_props)
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-    inv_weight_column = 1 / measurements_to_reconcile_table[sem_tf.weight]
-    average_shape_var = (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
-                         measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
-    if not (inv_weight_column > average_shape_var).all():
-        logger.warn("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
-                    "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
-                    "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
-                    "\ng2_err = " + str(measurements_to_reconcile_table[sem_tf.g2_err]) +
-                    "\nSetting weight to 0.")
+
+    # Make a mask of objects with zero weight
+    m = weights <= 0
+
+    masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
+    masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
+    masked_g2_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g2_err], m)
+
+    masked_shape_var = (0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2))
+
+    if not len(masked_inv_weight_column[~m]) > 0 and (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
+        logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
+                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
+                       "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
+                       "\ng2_err = " + str(measurements_to_reconcile_table[sem_tf.g2_err]) +
+                       "\nSetting weight to 0.")
         new_props[sem_tf.weight] = 0.
     else:
-        shape_var = inv_weight_column - average_shape_var
+        shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
         new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 + new_props[sem_tf.g2_err] ** 2) + shape_var)
 
     return
