@@ -176,13 +176,21 @@ class TestCase:
 
         reconciled_catalog.add_index(sem_tf.ID)
 
-        # TODO - add tests of results here
-
         # Row 1 should exactly match results from table 0, since there's no other data for it
         assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
 
         # Row 18 should exactly match results from table 2, since there's no other data for it
         assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
+
+        # Check combination of tables 0 and 1 is sensible
+        test_row = reconciled_catalog.loc[6]
+        assert test_row[sem_tf.g1] < self.true_g1[6]
+        assert test_row[sem_tf.g2] > self.true_g2[6]
+
+        # Weight should be less than the max weight, but higher than at least one individual weight
+        assert test_row[sem_tf.weight] < self.max_weight
+        assert (test_row[sem_tf.weight] > sem_table_list[0].loc[6][sem_tf.weight] or
+                test_row[sem_tf.weight] > sem_table_list[1].loc[6][sem_tf.weight])
 
         return
 
@@ -212,6 +220,7 @@ class TestCase:
             # Check combination of tables 0 and 1 is sensible
             test_row = reconciled_catalog.loc[6]
             assert np.isclose(test_row[sem_tf.g1], self.true_g1[6])
+            assert np.isclose(test_row[sem_tf.g2], self.true_g2[6])
 
             # Weight should be less than the max weight, but higher than either individual weight
             assert test_row[sem_tf.weight] < self.max_weight
