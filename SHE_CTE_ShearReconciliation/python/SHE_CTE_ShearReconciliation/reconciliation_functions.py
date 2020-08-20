@@ -207,7 +207,7 @@ def reconcile_weight(measurements_to_reconcile_table,
     m = weights <= 0
     masked_weights = np.ma.masked_array(weights, m)
 
-    tot_weight = np.masked_sum(weights)
+    tot_weight = weights.sum()
     highest_weight_index = np.argmax(weights)
 
     if tot_weight <= 0:
@@ -228,7 +228,7 @@ def reconcile_weight(measurements_to_reconcile_table,
             continue
         colname = getattr(sem_tf, prop)
         masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
-        new_props[colname] = np.masked_sum(masked_column * masked_weights) / tot_weight
+        new_props[colname] = (masked_column * masked_weights).sum() / tot_weight
 
         # If this property has an error, calculate that too
         prop_err = prop + "_err"
@@ -236,7 +236,7 @@ def reconcile_weight(measurements_to_reconcile_table,
             continue
         colname_err = getattr(sem_tf, prop_err)
         masked_column_err = np.ma.masked_array(measurements_to_reconcile_table[colname_err], m)
-        new_props[colname_err] = np.sqrt(np.masked_sum(np.power(masked_column_err * masked_weights, 2)) / tot_weight)
+        new_props[colname_err] = np.sqrt((np.power(masked_column_err * masked_weights, 2)).sum() / tot_weight)
 
     # Combine properties we sum up
     for prop in props_to_sum:
@@ -244,7 +244,7 @@ def reconcile_weight(measurements_to_reconcile_table,
             continue
         colname = getattr(sem_tf, prop)
         masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
-        new_props[colname] = np.masked_sum(masked_column)
+        new_props[colname] = masked_column.sum()
 
     # Combine properties bitwise or
     for prop in props_to_bitwise_or:
