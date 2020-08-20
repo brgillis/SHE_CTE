@@ -236,7 +236,7 @@ def reconcile_weight(measurements_to_reconcile_table,
             continue
         colname_err = getattr(sem_tf, prop_err)
         masked_column_err = np.ma.masked_array(measurements_to_reconcile_table[colname_err], m)
-        new_props[colname_err] = np.sqrt((np.power(masked_column_err * masked_weights, 2)).sum() / tot_weight)
+        new_props[colname_err] = np.sqrt((np.power(masked_column_err * masked_weights, 2)).sum()) / tot_weight
 
     # Combine properties we sum up
     for prop in props_to_sum:
