@@ -86,15 +86,20 @@ class TestCase:
 
             tables = []
 
+            shape_noise = 0.25
+
             # In brief - Table 1 and 2 cancel out for invvar weighting, but not shape weighting. Table 3 dominates,
             # Table 4 has NaN errors and 0 estimates, Table 5 has NaN estimates and errors and Inf weight,
             # Table 6 has impossible (negative) values for weight and errors
-            for i_min, i_max, g1_offset, g2_offset, g1_err, g2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, 15.974440894568689),
-                                                                               (6, 12, -0.04, 0.04, 0.02, 0.02, 15.89825119236884),
-                                                                               (8, 19, 0.1, 0.2, 0.001, 0.001, 99.9900009999),
+            for i_min, i_max, g1_offset, g2_offset, g1_err, g2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, None),
+                                                                               (6, 12, -0.04, 0.04, 0.02, 0.02, None),
+                                                                               (8, 19, 0.1, 0.2, 0.001, 0.001, None),
                                                                                (0, 19, 0, 0, np.nan, np.nan, np.nan),
                                                                                (0, 19, np.nan, np.nan, np.nan, np.nan, np.inf),
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
+
+                if weight is None:
+                    weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + shape_noise ** 2)
 
                 l = i_max - i_min + 1
                 t = sem_initialisers[sem]()
@@ -127,56 +132,56 @@ class TestCase:
 
     def test_reconcile_best(self):
 
-        for sem in sem_names:
+        sem = "LensMC"
 
-            sem_table_list = self.sem_table_lists[sem]
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
-                                                  shear_estimation_method=sem,
-                                                  object_ids_in_tile=self.object_ids_in_tile,
-                                                  reconciliation_function=reconcile_best,
-                                                  workdir=self.workdir)
+        sem_table_list = self.sem_table_lists[sem]
+        reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
+                                              shear_estimation_method=sem,
+                                              object_ids_in_tile=self.object_ids_in_tile,
+                                              reconciliation_function=reconcile_best,
+                                              workdir=self.workdir)
 
-            assert(len(reconciled_catalog) == 19)
+        assert(len(reconciled_catalog) == 19)
 
-            sem_tf = sem_tfs[sem]
+        sem_tf = sem_tfs[sem]
 
-            reconciled_catalog.add_index(sem_tf.ID)
+        reconciled_catalog.add_index(sem_tf.ID)
 
-            # Row 1 should exactly match results from table 0
-            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
+        # Row 1 should exactly match results from table 0
+        assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
 
-            # Also for 6, which overlaps with table 1, but table 0 has higher weight
-            assert_rows_equal(reconciled_catalog, sem_table_list[0], 6, sem_tf)
+        # Also for 6, which overlaps with table 1, but table 0 has higher weight
+        assert_rows_equal(reconciled_catalog, sem_table_list[0], 6, sem_tf)
 
-            # Row 8 should be from table 2, which has the highest weight
-            assert_rows_equal(reconciled_catalog, sem_table_list[2], 8, sem_tf)
+        # Row 8 should be from table 2, which has the highest weight
+        assert_rows_equal(reconciled_catalog, sem_table_list[2], 8, sem_tf)
 
         return
 
     def test_reconcile_shape_weight(self):
 
-        for sem in sem_names:
+        sem = "LensMC"
 
-            sem_table_list = self.sem_table_lists[sem]
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
-                                                  shear_estimation_method=sem,
-                                                  object_ids_in_tile=self.object_ids_in_tile,
-                                                  reconciliation_function=reconcile_shape_weight,
-                                                  workdir=self.workdir)
+        sem_table_list = self.sem_table_lists[sem]
+        reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
+                                              shear_estimation_method=sem,
+                                              object_ids_in_tile=self.object_ids_in_tile,
+                                              reconciliation_function=reconcile_shape_weight,
+                                              workdir=self.workdir)
 
-            assert(len(reconciled_catalog) == 19)
+        assert(len(reconciled_catalog) == 19)
 
-            sem_tf = sem_tfs[sem]
+        sem_tf = sem_tfs[sem]
 
-            reconciled_catalog.add_index(sem_tf.ID)
+        reconciled_catalog.add_index(sem_tf.ID)
 
-            # TODO - add tests of results here
+        # TODO - add tests of results here
 
-            # Row 1 should exactly match results from table 0, since there's no other data for it
-            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
+        # Row 1 should exactly match results from table 0, since there's no other data for it
+        assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
 
-            # Row 18 should exactly match results from table 2, since there's no other data for it
-            assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
+        # Row 18 should exactly match results from table 2, since there's no other data for it
+        assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
 
         return
 
