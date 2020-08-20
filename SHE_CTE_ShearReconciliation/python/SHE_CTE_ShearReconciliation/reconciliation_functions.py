@@ -202,8 +202,23 @@ def reconcile_weight(measurements_to_reconcile_table,
 
     # For any instances of NaN, set the weight to zero
     weights = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
-    tot_weight = np.sum(weights)
+
+    # Make a mask of objects with zero weight
+    m = weights <= 0
+    masked_weights = np.ma.masked_array(weights, m)
+
+    tot_weight = np.masked_sum(weights)
     highest_weight_index = np.argmax(weights)
+
+    if tot_weight <= 0:
+        logger.warning("Total weight for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
+                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) + " is not positive. " +
+                       "Will output copy of 'best' row.")
+        return reconcile_best(measurements_to_reconcile_table,
+                              output_row,
+                              em_tf,
+                              weights,
+                              *args, **kwargs)
 
     new_props = {}
 
@@ -212,28 +227,32 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = np.sum(measurements_to_reconcile_table[colname] * weights) / tot_weight
+        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        new_props[colname] = np.masked_sum(masked_column * masked_weights) / tot_weight
 
         # If this property has an error, calculate that too
         prop_err = prop + "_err"
         if not prop_err in vars(sem_tf):
             continue
         colname_err = getattr(sem_tf, prop_err)
-        new_props[colname_err] = np.sqrt(np.sum(np.power(measurements_to_reconcile_table[colname_err] * weights, 2)) / tot_weight)
+        masked_column_err = np.ma.masked_array(measurements_to_reconcile_table[colname_err], m)
+        new_props[colname_err] = np.sqrt(np.masked_sum(np.power(masked_column_err * masked_weights, 2)) / tot_weight)
 
     # Combine properties we sum up
     for prop in props_to_sum:
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = np.sum(measurements_to_reconcile_table[colname])
+        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        new_props[colname] = np.masked_sum(masked_column)
 
     # Combine properties bitwise or
     for prop in props_to_bitwise_or:
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = np.bitwise_or.reduce(measurements_to_reconcile_table[colname], axis=0)
+        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        new_props[colname] = np.bitwise_or.reduce(masked_column[~m], axis=0)
 
     # Copy the highest-weight property when we just copy
     for prop in props_to_copy:
@@ -260,9 +279,6 @@ def reconcile_weight(measurements_to_reconcile_table,
         warn_missing_props(missing_props)
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-
-    # Make a mask of objects with zero weight
-    m = weights <= 0
 
     masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
     masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
