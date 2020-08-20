@@ -49,6 +49,21 @@ sem_initialisers = {"KSB":initialise_ksb_measurements_table,
                     "REGAUSS":initialise_regauss_measurements_table}
 
 
+def assert_rows_equal(t1, t2, i, sem_tf):
+    """ Check that two rows match in shear parameters
+    """
+
+    r1 = t1.loc[i]
+    r2 = t2.loc[i]
+    assert r1[sem_tf.g1] == r2[sem_tf.g1], "Row " + str(i) + " doesn't match expected value for g1."
+    assert r1[sem_tf.g2] == r2[sem_tf.g2], "Row " + str(i) + " doesn't match expected value for g2."
+    assert r1[sem_tf.g1_err] == r2[sem_tf.g1_err], "Row " + str(i) + " doesn't match expected value for g1_err."
+    assert r1[sem_tf.g2_err] == r2[sem_tf.g2_err], "Row " + str(i) + " doesn't match expected value for g2_err."
+    assert r1[sem_tf.weight] == r2[sem_tf.weight], "Row " + str(i) + " doesn't match expected value for weight."
+
+    return
+
+
 class TestCase:
     """
     """
@@ -114,7 +129,8 @@ class TestCase:
 
         for sem in sem_names:
 
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
+            sem_table_list = self.sem_table_lists[sem]
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
                                                   reconciliation_function=reconcile_best,
@@ -123,28 +139,17 @@ class TestCase:
             assert(len(reconciled_catalog) == 19)
 
             sem_tf = sem_tfs[sem]
-            sem_table_list = self.sem_table_lists[sem]
 
             reconciled_catalog.add_index(sem_tf.ID)
 
-            # Define a function to test that two rows match
-            def assert_rows_equal(t1, t2, i):
-                r1 = t1.loc[i]
-                r2 = t2.loc[i]
-                assert r1[sem_tf.g1] == r2[sem_tf.g1], "Row " + str(i) + " doesn't match expected value for g1."
-                assert r1[sem_tf.g2] == r2[sem_tf.g2], "Row " + str(i) + " doesn't match expected value for g2."
-                assert r1[sem_tf.g1_err] == r2[sem_tf.g1_err], "Row " + str(i) + " doesn't match expected value for g1_err."
-                assert r1[sem_tf.g2_err] == r2[sem_tf.g2_err], "Row " + str(i) + " doesn't match expected value for g2_err."
-                assert r1[sem_tf.weight] == r2[sem_tf.weight], "Row " + str(i) + " doesn't match expected value for weight."
-
             # Row 1 should exactly match results from table 0
-            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1)
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
 
             # Also for 6, which overlaps with table 1, but table 0 has higher weight
-            assert_rows_equal(reconciled_catalog, sem_table_list[0], 6)
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 6, sem_tf)
 
             # Row 8 should be from table 2, which has the highest weight
-            assert_rows_equal(reconciled_catalog, sem_table_list[2], 8)
+            assert_rows_equal(reconciled_catalog, sem_table_list[2], 8, sem_tf)
 
         return
 
@@ -152,7 +157,8 @@ class TestCase:
 
         for sem in sem_names:
 
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
+            sem_table_list = self.sem_table_lists[sem]
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
                                                   reconciliation_function=reconcile_shape_weight,
@@ -161,11 +167,16 @@ class TestCase:
             assert(len(reconciled_catalog) == 19)
 
             sem_tf = sem_tfs[sem]
-            sem_table_list = self.sem_table_lists[sem]
 
             reconciled_catalog.add_index(sem_tf.ID)
 
             # TODO - add tests of results here
+
+            # Row 1 should exactly match results from table 0, since there's no other data for it
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
+
+            # Row 18 should exactly match results from table 2, since there's no other data for it
+            assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
 
         return
 
@@ -173,7 +184,8 @@ class TestCase:
 
         for sem in sem_names:
 
-            reconciled_catalog = reconcile_tables(shear_estimates_tables=self.sem_table_lists[sem],
+            sem_table_list = self.sem_table_lists[sem]
+            reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
                                                   reconciliation_function=reconcile_shape_weight,
@@ -182,10 +194,13 @@ class TestCase:
             assert(len(reconciled_catalog) == 19)
 
             sem_tf = sem_tfs[sem]
-            sem_table_list = self.sem_table_lists[sem]
 
             reconciled_catalog.add_index(sem_tf.ID)
 
-            # TODO - add tests of results here
+            # Row 1 should exactly match results from table 0, since there's no other data for it
+            assert_rows_equal(reconciled_catalog, sem_table_list[0], 1, sem_tf)
+
+            # Row 18 should exactly match results from table 2, since there's no other data for it
+            assert_rows_equal(reconciled_catalog, sem_table_list[2], 18, sem_tf)
 
         return
