@@ -38,6 +38,7 @@ from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 from galsim import shear
 
+import SHE_CTE
 from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_invvar, reconcile_shape_weight
 import numpy as np
 
@@ -225,6 +226,10 @@ def reconcile_shear_from_args(args):
     # Create a data product for the output
     reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
         spatial_footprint=mer_final_catalog_product)
+
+    # Get the tile_id and set it for the new product
+    tile_id = mer_final_catalog_product.Data.TileIndex
+    reconciled_catalog_product.Data.TileIndex = tile_id
 
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in shear_estimation_method_table_formats:

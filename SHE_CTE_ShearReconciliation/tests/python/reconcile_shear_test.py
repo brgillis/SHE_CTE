@@ -29,6 +29,7 @@ from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf, initialise_momentsml_measurements_table
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf, initialise_regauss_measurements_table
 from SHE_PPT.table_utility import is_in_format, add_row
+from astropy.table import Table
 import pytest
 
 import SHE_CTE
@@ -147,7 +148,6 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip()
     def test_reconcile_best(self):
 
         sem = "LensMC"
@@ -176,7 +176,6 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip()
     def test_reconcile_shape_weight(self):
 
         sem = "LensMC"
@@ -212,7 +211,6 @@ class TestCase:
 
         return
 
-    @pytest.mark.skip()
     def test_reconcile_invvar(self):
 
         for sem in sem_names:
@@ -304,6 +302,7 @@ class TestCase:
         for sem in sem_names:
             sem_table_filename = srm_product.get_method_filename(sem)
             loaded_sem_table = Table.read(os.path.join(self.workdir, sem_table_filename))
+            loaded_sem_table.add_index(sem_tfs[sem].ID)
 
             # Just a quick test on results, since we do detailed tests elsewhere
             assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem][0], 1, sem_tfs[sem])
