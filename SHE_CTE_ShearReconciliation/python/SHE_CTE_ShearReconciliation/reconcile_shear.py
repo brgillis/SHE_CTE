@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-08-19"
+__updated__ = "2020-08-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -169,13 +169,13 @@ def reconcile_shear_from_args(args):
 
     method = None
 
-    if args.method is None:
+    if args.method is not None:
         method = str(args.method)
         logger.info("Using reconciliation method: '" + str(method) + "', passed from command-line.")
-    elif args.pipeline_config is not None:
+    elif args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
         # Load in the pipeline configuration and see if the method is supplied there
 
-        pipeline_config = read_reconciliation_config(args.pipeline_config,
+        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
                                                      workdir=args.workdir)
 
         if ReconciliationConfigKeys.REC_METHOD.value in pipeline_config:
