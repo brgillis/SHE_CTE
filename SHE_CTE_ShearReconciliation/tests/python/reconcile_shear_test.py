@@ -32,6 +32,7 @@ from SHE_PPT.table_utility import is_in_format, add_row
 import pytest
 
 import SHE_CTE
+from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_tables
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
                                                                   reconcile_shape_weight,
@@ -52,6 +53,13 @@ sem_initialisers = {"KSB":initialise_ksb_measurements_table,
                     "LensMC":initialise_lensmc_measurements_table,
                     "MomentsML":initialise_momentsml_measurements_table,
                     "REGAUSS":initialise_regauss_measurements_table}
+
+
+class Args(object):
+
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
 
 
 def assert_rows_equal(t1, t2, i, sem_tf):
@@ -276,5 +284,28 @@ class TestCase:
         write_listfile(os.path.join(self.workdir, sem_listfile_filename), sem_product_filename_list)
 
         # Set up arguments to call the main reconciliation function
+        srm_product_filename = get_allowed_filename("SRM-P", "TEST", version=SHE_CTE.__version__, subdir="",)
+        args = Args(profile=False,
+                    dry_run=False,
+                    debug=False,
+                    she_validated_measurements_listfile=sem_listfile_filename,
+                    mer_final_catalog=mer_final_catalog_product_filename,
+                    she_reconciliation_config="None",
+                    method=None,
+                    she_reconciled_measurements=srm_product_filename,
+                    workdir=self.workdir,
+                    logdir="logs")
+
+        # Call the program, then check the results
+        reconcile_shear_from_args(args)
+
+        srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
+
+        for sem in sem_names:
+            sem_table_filename = srm_product.get_method_filename(sem)
+            loaded_sem_table = Table.read(os.path.join(self.workdir, sem_table_filename))
+
+            # Just a quick test on results, since we do detailed tests elsewhere
+            assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem][0], 1, sem_tfs[sem])
 
         return
