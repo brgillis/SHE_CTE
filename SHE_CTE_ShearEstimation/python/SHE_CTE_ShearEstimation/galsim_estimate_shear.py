@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-07-19"
+__updated__ = "2020-08-25"
 
 from copy import deepcopy
 from math import sqrt
@@ -462,7 +462,7 @@ def inv_var_stack(a, a_err):
     return a_m, a_m_err
 
 
-def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=False, debug=False):
+def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=False, debug=False, return_chains=False):
 
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
