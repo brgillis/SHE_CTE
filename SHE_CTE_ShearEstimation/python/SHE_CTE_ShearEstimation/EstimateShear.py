@@ -107,6 +107,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--methods', type=str, nargs='*', default=None,
                         help='Which shear estimation methods to apply. If not specified, all will be run.')
 
+    parser.add_argument('--chains_method', type=str, default=None,
+                        help='Which shear estimation method to generate chains with.')
+
     # Output arguments
 
     parser.add_argument('--shear_estimates_product', type=str,
