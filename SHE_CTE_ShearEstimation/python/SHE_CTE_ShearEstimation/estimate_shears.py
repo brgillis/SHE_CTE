@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-07-22"
+__updated__ = "2020-08-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -306,7 +306,7 @@ def estimate_shears_from_args(args, dry_run=False):
             chains_method = default_chains_method
 
         if not chains_method in methods:
-            raise ValueError("chains_method (" + str(chains_method) + ") not in methods to run (" +
+            raise ValueError("chains_method (\"" + str(chains_method) + "\") not in methods to run (" +
                              str(methods) + ").")
 
         for method in methods:
@@ -449,7 +449,7 @@ def estimate_shears_from_args(args, dry_run=False):
         if method not in methods:
             shear_estimates_prod.set_method_filename(method, None)
 
-    write_xml_product(shear_estimates_prod, args.she_measurements_product, workdir=args.workdir)
+    write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 
     logger.info("Finished shear estimation.")
 
