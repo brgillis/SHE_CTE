@@ -178,13 +178,13 @@ class TestCase:
                 ex_stddev = estimates_row[getattr(ksbm_tf, param + "_err")]
 
                 assert len(vals) == len_chain
-                assert len(vals) == ksb_chains.meta[lmcctf.m.len_chain]
+                assert len(vals) == ksb_chains.meta[lmcc_tf.m.len_chain]
 
                 mean_val = np.mean(vals)
                 stddev_val = np.std(vals)
 
-                assert np.isclose(mean_val, ex_mean, rtol=1e-1, atol=ex_stddev * 1e-1), "Error matching mean for parameter " + param
-                assert np.isclose(stddev_val, ex_stddev, rtol=1e-1, atol=ex_stddev * 1e-1), "Error matching stddev for parameter " + param
+                assert np.isclose(mean_val, ex_mean, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching mean for parameter " + param
+                assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching stddev for parameter " + param
 
         return
 

@@ -663,7 +663,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
         return shear_estimates_table
 
     # If requested, make a mock chains table
-    chains_table = initialise_lensmc_chains_table()
+    chains_table = initialise_lensmc_chains_table(optional_columns=(lmcc_tf.ra,
+                                                                    lmcc_tf.dec,
+                                                                    lmcc_tf.snr,
+                                                                    ))
 
     # Add rows matching each row in the estimates table
     for estimates_row in shear_estimates_table:
@@ -675,7 +678,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
 
             # Check that this refers to a column name
             chains_colname = getattr(lmcc_tf, param)
-            if not isinstance(chains_colname, str):
+            if not chains_colname in chains_row.colnames:
                 continue
 
             estimates_colname = getattr(tf, param)
