@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-08-25"
+__updated__ = "2020-08-26"
 
 from copy import deepcopy
 from math import sqrt
@@ -31,6 +31,7 @@ from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.utility import run_only_once
 import galsim
@@ -655,6 +656,51 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
 
     logger.info("Finished estimating shear.")
 
+    if not return_chains:
+
+        logger.debug("Exiting GS_estimate_shear")
+
+        return shear_estimates_table
+
+    # If requested, make a mock chains table
+    chains_table = initialise_lensmc_chains_table()
+
+    # Add rows matching each row in the estimates table
+    for estimates_row in shear_estimates_table:
+
+        chains_table.add_row()
+        chains_row = chains_table[-1]
+
+        # Copy over values that simply need to be copied
+        for param in ("ID", "fit_flags", "val_flags", "fit_class", "chi2", "dof", "acc", "nexp"):
+
+            estimates_colname = getattr(tf, param)
+            chains_colname = getattr(lmcc_tf, param)
+
+            if estimates_colname in estimates_row.colnames:
+                chains_row[chains_colname] = estimates_row[estimates_colname]
+            else:
+                chains_row[chains_colname] = np.NaN
+
+        # Generate mock chains for each desired parameter
+        for param in ("g1", "g2", "ra", "dec", "re", "flux", "bulge_frac", "lr", "snr"):
+
+            estimates_colname = getattr(tf, param)
+            chains_colname = getattr(lmcc_tf, param)
+
+            if estimates_colname in estimates_row.colnames:
+
+                mean_value = estimates_row[getattr(tf, param)]
+                stddev = estimates_row[getattr(tf, param + "_err")]
+
+                mock_values = mean_value + stddev * np.random.standard_normal(len_chain)
+
+            else:
+
+                mock_values = np.NaN * np.ones_like(chains_row[chains_colname])
+
+            chains_row[chains_colname] = mock_values
+
     logger.debug("Exiting GS_estimate_shear")
 
-    return shear_estimates_table
+    return shear_estimates_table, chains_table
