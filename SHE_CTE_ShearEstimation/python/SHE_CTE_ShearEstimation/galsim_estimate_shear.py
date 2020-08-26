@@ -671,35 +671,48 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, sim_sc4_fix=Fa
         chains_table.add_row()
         chains_row = chains_table[-1]
 
-        # Copy over values that simply need to be copied
-        for param in ("ID", "fit_flags", "val_flags", "fit_class", "chi2", "dof", "acc", "nexp"):
+        for param in vars(lmcc_tf):
+
+            # Check that this refers to a column name
+            chains_colname = getattr(lmcc_tf, param)
+            if not isinstance(chains_colname, str):
+                continue
 
             estimates_colname = getattr(tf, param)
-            chains_colname = getattr(lmcc_tf, param)
 
-            if estimates_colname in estimates_row.colnames:
-                chains_row[chains_colname] = estimates_row[estimates_colname]
+            # If it's a chain column, create mock values for the chain
+            if chains_colname[-6:] == "_CHAIN":
+
+                estimates_colname = getattr(tf, param)
+                chains_colname = getattr(lmcc_tf, param)
+
+                if estimates_colname in estimates_row.colnames:
+
+                    mean_value = estimates_row[getattr(tf, param)]
+                    stddev = estimates_row[getattr(tf, param + "_err")]
+
+                    mock_values = mean_value + stddev * np.random.standard_normal(len_chain)
+
+                else:
+
+                    mock_values = np.NaN * np.ones_like(chains_row[chains_colname])
+
+                chains_row[chains_colname] = mock_values
+
+            # Else simply copy over values
             else:
-                chains_row[chains_colname] = np.NaN
 
-        # Generate mock chains for each desired parameter
-        for param in ("g1", "g2", "ra", "dec", "re", "flux", "bulge_frac", "lr", "snr"):
+                estimates_colname = getattr(tf, param)
+                chains_colname = getattr(lmcc_tf, param)
 
-            estimates_colname = getattr(tf, param)
-            chains_colname = getattr(lmcc_tf, param)
+                if estimates_colname in estimates_row.colnames:
+                    chains_row[chains_colname] = estimates_row[estimates_colname]
+                else:
+                    chains_row[chains_colname] = np.NaN
 
-            if estimates_colname in estimates_row.colnames:
+        # End for param in vars(lmcc_tf)
 
-                mean_value = estimates_row[getattr(tf, param)]
-                stddev = estimates_row[getattr(tf, param + "_err")]
-
-                mock_values = mean_value + stddev * np.random.standard_normal(len_chain)
-
-            else:
-
-                mock_values = np.NaN * np.ones_like(chains_row[chains_colname])
-
-            chains_row[chains_colname] = mock_values
+    # End for estimates_row in shear_estimates_table
 
     logger.debug("Exiting GS_estimate_shear")
 
