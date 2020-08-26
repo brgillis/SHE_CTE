@@ -19,6 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from os.path import join
+from astropy.io import fits
 
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
@@ -29,6 +30,9 @@ from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.she_psf_tm_state import initialise_psf_field_tm_state_table
 from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
+import SHE_PPT.table_formats.she_psf_zm_state as zm
+import SHE_PPT.table_formats.she_psf_om_state as om
+import SHE_PPT.table_formats.she_psf_dm_state as dm
 
 import SHE_CTE
 
@@ -98,18 +102,37 @@ def fit_psfs(args, dry_run=False):
 
         # Get a filename for the product
         field_param_product_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".xml",
-                                                            version=SHE_CTE.__version__)
+                                                            version=SHE_CTE.__version__, subdir=None)
         field_param_product_filenames.append(field_param_product_filename)
 
         # Get a filename for the table and write it out
-        field_param_table_filename = get_allowed_filename("PSF-TelescopeModel", str(i), extension=".fits",
+        # @FIXME: create full field param MEF FITS....
+        
+        field_param_table_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".fits",
                                                           version=SHE_CTE.__version__)
-        field_param_table = initialise_psf_field_tm_state_table()
-        field_param_table.add_row({})  # Add a row of zeros
+        
+        hdulist = fits.HDUList()
+        tel_mode_table = initialise_psf_field_tm_state_table()
+        tel_mode_table.add_row({})  # Add a row of zeros
+        tel_mode_hdu = fits.BinTableHDU(tel_mode_table)
+        hdulist.append(tel_mode_hdu)
+        # Add Zernike modes
+        zern_mode_table = zm.initialise_psf_field_zm_state_table()
+        zern_mode_hdu=fits.BinTableHDU(zern_mode_table)
+        hdulist.append(zern_mode_hdu)
+        # Add Other modes
+        oth_mode_table = om.initialise_psf_field_om_state_table()
+        oth_mode_hdu=fits.BinTableHDU(oth_mode_table)
+        hdulist.append(oth_mode_hdu)
+        # Add diagnostic
+        diag_mode_table = dm.initialise_psf_field_dm_state_table()
+        diag_mode_hdu=fits.BinTableHDU(diag_mode_table)
+        hdulist.append(diag_mode_hdu)
+        
 
         qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)
 
-        field_param_table.write(join(args.workdir, field_param_table_filename))
+        hdulist.writeto(join(args.workdir, field_param_table_filename))
 
         logger.info("Wrote field params table to " + qualified_field_param_table_filename)
 

@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2020-07-21"
+__updated__ = "2020-08-26"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -29,6 +29,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.she_ksb_measurements import (tf as ksbm_tf,
                                                         initialise_ksb_measurements_table)
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import pytest
@@ -63,8 +64,8 @@ class TestCase:
 
     """
 
-    @pytest.fixture(autouse=True)
-    def setup(self, tmpdir):
+    @classmethod
+    def setup_class(cls):
 
         # Download the MDB from WebDAV
         sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
@@ -84,20 +85,25 @@ class TestCase:
         assert os.path.isfile(qualified_data_images_filename), f"Cannot find file: {qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
-        self.workdir = os.path.split(qualified_data_images_filename)[0]
-        self.logdir = os.path.join(self.workdir, "logs")
+        cls.workdir = os.path.split(qualified_data_images_filename)[0]
+        cls.logdir = os.path.join(cls.workdir, "logs")
 
         # Read in the test data
-        self.data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images_filename,
+        cls.data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images_filename,
                                              seg_listfile_filename=segmentation_images_filename,
                                              stacked_image_product_filename=stacked_image_filename,
                                              stacked_seg_product_filename=stacked_segmentation_image_filename,
                                              psf_listfile_filename=psf_images_and_tables_filename,
                                              detections_listfile_filename=detections_tables_filename,
-                                             workdir=self.workdir,
+                                             workdir=cls.workdir,
                                              clean_detections=True,
                                              memmap=True,
                                              mode='denywrite')
+
+        return
+
+    @classmethod
+    def teardown_class(cls):
 
         return
 
@@ -140,6 +146,45 @@ class TestCase:
                 g = row[colname]
                 if not (g > -1 and g < 1):
                     raise Exception("Bad value for " + colname + ": " + str(g))
+
+        return
+
+    def test_return_chains(self):
+
+        ksb_training_data = load_control_training_data(find_file(ksb_training_filename, self.workdir),
+                                                       workdir=self.workdir)
+
+        # Seed the random number generator for consistent test results
+        np.random.seed(1234)
+
+        ksb_cat, ksb_chains = KSB_estimate_shear(self.data_stack,
+                                                 training_data=ksb_training_data,
+                                                 calibration_data=None,
+                                                 workdir=self.workdir,
+                                                 return_chains=True)
+
+        # Check that we have valid data
+        assert len(ksb_cat) == len(ksb_chains)
+
+        for i in range(len(ksb_cat)):
+
+            estimates_row = ksb_cat[i]
+            chains_row = ksb_chains[i]
+
+            for param in ("g1", "g2", "ra", "dec"):
+
+                vals = chains_row[getattr(lmcc_tf, param)]
+                ex_mean = estimates_row[getattr(ksbm_tf, param)]
+                ex_stddev = estimates_row[getattr(ksbm_tf, param + "_err")]
+
+                assert len(vals) == len_chain
+                assert len(vals) == ksb_chains.meta[lmcc_tf.m.len_chain]
+
+                mean_val = np.mean(vals)
+                stddev_val = np.std(vals)
+
+                assert np.isclose(mean_val, ex_mean, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching mean for parameter " + param
+                assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching stddev for parameter " + param
 
         return
 
