@@ -130,7 +130,8 @@ def fit_psfs(args, dry_run=False):
         diag_mode_hdu=fits.BinTableHDU(diag_mode_table)
         hdulist.append(diag_mode_hdu)
         # @TODO: Update primary header
-        # Add in other headers..
+        # Add in other headers..e.g. EXP_PID, OBS_ID, PNT_ID
+        
         hdulist[0].header.set('DATE_OBS',datetime.datetime.now().isoformat())
 
         qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)
