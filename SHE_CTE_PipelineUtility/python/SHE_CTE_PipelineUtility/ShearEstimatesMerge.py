@@ -29,7 +29,8 @@ from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, ConfigKeys
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
@@ -37,6 +38,7 @@ from astropy import table
 
 import SHE_CTE
 import multiprocessing as mp
+
 
 logger = getLogger(__name__)
 
@@ -88,6 +90,51 @@ def defineSpecificProgramOptions():
     return parser
 
 
+def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir):
+
+    try:
+
+        logger.debug("Loading chains from file: " + she_lensmc_chains_table_product_filename)
+
+        # Read in the product and get the filename of the table
+
+        she_lensmc_chains_product = read_xml_product(
+            os.path.join(workdir, she_lensmc_chains_table_product_filename))
+
+        if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensmcChains):
+            raise TypeError("Shear product is of invalid type: " + type(she_lensmc_chains_product))
+
+    except Exception as e:
+
+        logger.warning("Failsafe block encountered exception: " + str(e))
+        return
+
+    # Loop over methods and read in the table
+
+    try:
+
+        she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
+
+        if she_lensmc_chains_table_filename is None or she_lensmc_chains_table_filename == "None":
+            logger.debug("No chains avaialble from file: " + she_lensmc_chains_table_product_filename)
+            continue
+
+        she_lensmc_chains_table = table.Table.read(os.path.join(
+            workdir, she_lensmc_chains_table_filename))
+
+        if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
+            raise TypeError("Input chains table is of invalid format.")
+
+    except Exception as e:
+
+        logger.warning("Failsafe block encountered exception: " + str(e))
+        return
+
+    logger.debug("Finished loading chains from file: " + she_lensmc_chains_table_product_filename)
+
+    return she_lensmc_chains_table
+
+
 def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
 
     try:
@@ -99,7 +146,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
         she_measurements_table_product = read_xml_product(
             os.path.join(workdir, she_measurements_table_product_filename))
 
-        if not isinstance(she_measurements_table_product, products.she_measurements.dpdShearMeasurement):
+        if not isinstance(she_measurements_table_product, products.she_measurements.dpdSheMeasurements):
             raise TypeError("Shear product is of invalid type: " + type(she_measurements_table_product))
 
     except Exception as e:
@@ -159,8 +206,8 @@ def she_measurements_merge_from_args(args):
     # Determine how many threads we'll use
     if args.number_threads is not None:
         number_threads = args.number_threads
-    elif ConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
-        number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
+    elif AnalysisConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
+        number_threads = pipeline_config[AnalysisConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
             number_threads = default_number_threads
     else:
@@ -193,7 +240,7 @@ def she_measurements_merge_from_args(args):
 
         l_she_measurements_tables = [t for t in full_l_she_measurements_tables if t is not None]
 
-        full_l_she_lensmc_chains_tables = [read_chains_tables(
+        full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
             f, args.workdir) for f in chains_product_filenames]
 
         she_lensmc_chains_tables = [t for t in full_l_she_lensmc_chains_tables if t is not None]
@@ -214,7 +261,7 @@ def she_measurements_merge_from_args(args):
         # Read the chains tables
 
         pool = mp.Pool(processes=number_threads)
-        pool_she_lensmc_chains_tables = [pool.apply_async(read_chains_tables, args=(
+        pool_she_lensmc_chains_tables = [pool.apply_async(read_lensmc_chains_tables, args=(
             she_lensmc_chains_table_product_filename, args.workdir)) for she_lensmc_chains_table_product_filename in chains_product_filenames]
 
         pool.close()
