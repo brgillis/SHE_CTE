@@ -226,8 +226,7 @@ def she_measurements_merge_from_args(args):
     measurements_and_chains_product_filenames = read_listfile(
         os.path.join(args.workdir, args.she_measurements_and_chains_listfile))
 
-    measurements_product_filenames = measurements_and_chains_product_filenames[0]
-    chains_product_filenames = measurements_and_chains_product_filenames[0]
+    measurements_product_filenames, chains_product_filenames = zip(*measurements_and_chains_product_filenames)
 
     # If using just one thread, don't bother with multiprocessing to read tables
 
