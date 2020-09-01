@@ -35,6 +35,7 @@ from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
@@ -48,6 +49,7 @@ from SHE_CTE_ShearEstimation.control_training_data import load_control_training_
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.she_measure_shear import fit_frame_stack
 import numpy as np
+
 
 logger = getLogger(__name__)
 
@@ -426,6 +428,32 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    tf.dec: data_stack.detections_catalogue[mfc_tf.gal_y_world][r], })
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
+
+                if return_chains:
+                    chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
+                                                                version=SHE_CTE.__version__,
+                                                                subdir=subfolder_name),
+
+                    # Create an empty chains table
+                    chains_table = initialisation_methods[method]()
+                    tf = table_formats[method]
+
+                    for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
+
+                        # Fill it with NaN measurements and 1e99 errors
+
+                        chains_table.add_row({tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
+                                              lmcc_tf.g1: [np.NaN] * len_chain,
+                                              lmcc_tf.g2: [np.NaN] * len_chain,
+                                              lmcc_tf.fit_class: 2,
+                                              lmcc_tf.ra: [data_stack.detections_catalogue[mfc_tf.gal_x_world][r]] * len_chain,
+                                              lmcc_tf.dec: [data_stack.detections_catalogue[mfc_tf.gal_y_world][r]] * len_chain, })
+
+                    chains_table.write(os.path.join(args.workdir, chains_data_filename))
+
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+
+                    write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
             method_shear_estimates[method] = shear_estimates_table
 
