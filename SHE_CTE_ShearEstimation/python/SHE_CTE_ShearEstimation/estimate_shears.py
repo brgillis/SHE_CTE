@@ -49,6 +49,7 @@ import SHE_CTE
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.she_measure_shear import fit_frame_stack
+from SHE_LensMC.training_data import load_training_data
 import numpy as np
 
 
@@ -61,7 +62,7 @@ logger = getLogger(__name__)
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": load_control_training_data,
+                   "LensMC": load_training_data,
                    # "BFD": bfd_load_training_data} # FIXME - uncomment when BFD is integrated
                    "BFD": None}
 
