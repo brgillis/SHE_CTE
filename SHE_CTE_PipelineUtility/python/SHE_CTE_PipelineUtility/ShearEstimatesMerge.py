@@ -288,7 +288,7 @@ def she_measurements_merge_from_args(args):
     # Create the output products
     combined_she_measurements_product = products.she_measurements.create_she_measurements_product(
         spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
-    combined_she_lensmc_chains_product = products.she_lensmc_chains.create_she_lensmc_chains_product(
+    combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
         spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
 
     for method in methods:
