@@ -460,7 +460,7 @@ def estimate_shears_from_args(args, dry_run=False):
             method_shear_estimates[method] = shear_estimates_table
 
             # Output the shear estimates
-            hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), overwrite=True)
 
     else:  # Dry run
 
@@ -475,7 +475,7 @@ def estimate_shears_from_args(args, dry_run=False):
             shm_hdu = table_to_hdu(shear_estimates_table)
             hdulist.append(shm_hdu)
 
-            hdulist.writeto(os.path.join(args.workdir, filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, filename), overwrite=True)
 
     # If we're not using all methods, don't write unused ones in the product
     for method in estimation_methods:
