@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2020-08-31"
+__updated__ = "2020-09-01"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -109,21 +109,21 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
         logger.warning("Failsafe block encountered exception: " + str(e))
         return
 
-    # Loop over methods and read in the table
-
     try:
 
         she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
 
         if she_lensmc_chains_table_filename is None or she_lensmc_chains_table_filename == "None":
+
             logger.debug("No chains avaialble from file: " + she_lensmc_chains_table_product_filename)
-            continue
 
-        she_lensmc_chains_table = table.Table.read(os.path.join(
-            workdir, she_lensmc_chains_table_filename))
+        else:
 
-        if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
-            raise TypeError("Input chains table is of invalid format.")
+            she_lensmc_chains_table = table.Table.read(os.path.join(
+                workdir, she_lensmc_chains_table_filename))
+
+            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input chains table is of invalid format.")
 
     except Exception as e:
 

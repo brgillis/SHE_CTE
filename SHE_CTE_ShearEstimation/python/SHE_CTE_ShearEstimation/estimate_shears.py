@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-08-25"
+__updated__ = "2020-09-01"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -52,7 +52,9 @@ import numpy as np
 logger = getLogger(__name__)
 
 # from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
-# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN 2.1
+# from SHE_MomentsML.estimate_shear import estimate_shear as
+# ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN
+# 2.1
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
@@ -165,7 +167,7 @@ def estimate_shears_from_args(args, dry_run=False):
         mdb.init(mdb_files=args.mdb, path=args.workdir)
     else:
         logger.warning("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
-                    ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
+                       ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
     logger.info("Reading " + dry_label + "data images...")
 
@@ -187,14 +189,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
     vis_calibrated_frame_products = []
     for vis_calibrated_frame_filename in read_listfile(os.path.join(args.workdir, args.data_images)):
-        vis_calibrated_frame_products.append(read_xml_product(os.path.join(args.workdir, vis_calibrated_frame_filename)))
+        vis_calibrated_frame_products.append(read_xml_product(
+            os.path.join(args.workdir, vis_calibrated_frame_filename)))
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
     if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
                                                                   products.she_psf_calibration_parameters.dpdShePsfCalibrationParameters):
         raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                         +" is invalid type.")
+                         + " is invalid type.")
 
     # Set up method data filenames
 
