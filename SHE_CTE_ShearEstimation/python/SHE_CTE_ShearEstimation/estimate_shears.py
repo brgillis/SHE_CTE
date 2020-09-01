@@ -434,7 +434,7 @@ def estimate_shears_from_args(args, dry_run=False):
                 if return_chains:
                     chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
                                                                 version=SHE_CTE.__version__,
-                                                                subdir=subfolder_name),
+                                                                subdir=subfolder_name)
 
                     # Create an empty chains table
                     chains_table = initialise_lensmc_chains_table(optional_columns=[lmcc_tf.ra, lmcc_tf.dec])
