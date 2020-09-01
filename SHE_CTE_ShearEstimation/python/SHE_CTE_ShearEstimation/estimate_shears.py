@@ -23,6 +23,7 @@ __updated__ = "2020-09-01"
 import copy
 import os
 
+from SHE_PPT import flags
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -424,6 +425,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    tf.g2_err: 1e99,
                                                    tf.g1g2_covar: np.NaN,
                                                    tf.fit_class: 2,
+                                                   tf.fit_flags: flags.flag_unclassified_failure,
                                                    tf.ra: data_stack.detections_catalogue[mfc_tf.gal_x_world][r],
                                                    tf.dec: data_stack.detections_catalogue[mfc_tf.gal_y_world][r], })
 
@@ -435,8 +437,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                                 subdir=subfolder_name),
 
                     # Create an empty chains table
-                    chains_table = initialise_lensmc_chains_table()
-                    tf = table_formats[method]
+                    chains_table = initialise_lensmc_chains_table(optional_columns=[lmcc_tf.ra, lmcc_tf.dec])
 
                     for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
 
@@ -445,7 +446,7 @@ def estimate_shears_from_args(args, dry_run=False):
                         chains_table.add_row({lmcc_tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
                                               lmcc_tf.g1: [np.NaN] * len_chain,
                                               lmcc_tf.g2: [np.NaN] * len_chain,
-                                              lmcc_tf.fit_class: 2,
+                                              lmcc_tf.fit_flags: flags.flag_unclassified_failure,
                                               lmcc_tf.ra: [data_stack.detections_catalogue[mfc_tf.gal_x_world][r]] * len_chain,
                                               lmcc_tf.dec: [data_stack.detections_catalogue[mfc_tf.gal_y_world][r]] * len_chain, })
 
