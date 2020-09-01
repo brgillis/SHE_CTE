@@ -223,10 +223,10 @@ def she_measurements_merge_from_args(args):
         # Start with an empty list of the tables
         she_measurements_tables[method] = []
 
-    logger.info("Loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
+    logger.info("Loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
 
     measurements_and_chains_product_filenames = read_listfile(
-        os.path.join(args.workdir, args.input_she_measurements_listfile))
+        os.path.join(args.workdir, args.she_measurements_and_chains_listfile))
 
     measurements_product_filenames = measurements_and_chains_product_filenames[0]
     chains_product_filenames = measurements_and_chains_product_filenames[0]
@@ -280,7 +280,7 @@ def she_measurements_merge_from_args(args):
                 continue
             she_measurements_tables[method].append(t)
 
-    logger.info("Finished loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
+    logger.info("Finished loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
 
     logger.info("Combining shear estimates tables.")
 
