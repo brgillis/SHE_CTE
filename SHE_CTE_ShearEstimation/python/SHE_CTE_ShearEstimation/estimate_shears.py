@@ -442,7 +442,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                         # Fill it with NaN measurements and 1e99 errors
 
-                        chains_table.add_row({tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
+                        chains_table.add_row({lmcc_tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
                                               lmcc_tf.g1: [np.NaN] * len_chain,
                                               lmcc_tf.g2: [np.NaN] * len_chain,
                                               lmcc_tf.fit_class: 2,
