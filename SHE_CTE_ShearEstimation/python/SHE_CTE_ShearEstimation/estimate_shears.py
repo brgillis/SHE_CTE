@@ -435,7 +435,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                                 subdir=subfolder_name),
 
                     # Create an empty chains table
-                    chains_table = initialisation_methods[method]()
+                    chains_table = initialise_lensmc_chains_table()
                     tf = table_formats[method]
 
                     for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
