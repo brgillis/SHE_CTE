@@ -65,14 +65,14 @@ def defineSpecificProgramOptions():
     # Input data
     parser.add_argument('--she_measurements_and_chains_listfile', type=str)
 
+    parser.add_argument('--she_lensmc_chains', type=str,
+                        help='XML data product to contain LensMC chains data.')
+
     parser.add_argument("--pipeline_config", default=None, type=str,
                         help="Pipeline-wide configuration file.")
 
     # Output data
     parser.add_argument('--output_she_measurements', type=str)
-
-    parser.add_argument('--she_lensmc_chains', type=str,
-                        help='XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
     parser.add_argument('--number_threads', type=int, default=None,
