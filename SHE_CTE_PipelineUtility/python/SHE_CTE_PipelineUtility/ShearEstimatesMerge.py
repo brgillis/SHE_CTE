@@ -68,8 +68,8 @@ def defineSpecificProgramOptions():
                         help="Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--output_she_measurements', type=str)
-    parser.add_argument('--she_lensmc_chains', type=str,
+    parser.add_argument('--merged_she_measurements', type=str)
+    parser.add_argument('--merged_she_lensmc_chains', type=str,
                         help='XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
