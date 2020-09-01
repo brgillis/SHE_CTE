@@ -20,12 +20,13 @@
 
 import argparse
 
+from SHE_PPT.utility import get_arguments_string
+
 from ElementsKernel.Logging import getLogger
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearValidation import magic_values as mv
 from SHE_CTE_ShearValidation.cross_validate_shear import cross_validate_shear
-from SHE_PPT.utility import get_arguments_string
 
 
 def defineSpecificProgramOptions():
@@ -54,6 +55,8 @@ def defineSpecificProgramOptions():
     # Input filenames
     parser.add_argument('--shear_estimates_product', type=str,
                         help='Filename for shear estimates data product (XML data product)')
+    parser.add_argument('--she_lensmc_chains', type=str,
+                        help='Filename for LensMC chains data product (XML data product)')
 
 #     parser.add_argument('--shear_validation_statistics_table',type=str, # Disabled until it exists
 #                         help='Filename for table of shear validation statistics.')
