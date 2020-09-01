@@ -99,7 +99,7 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
         she_lensmc_chains_product = read_xml_product(
             os.path.join(workdir, she_lensmc_chains_table_product_filename))
 
-        if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensmcChains):
+        if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensMcChains):
             raise TypeError("Shear product is of invalid type: " + type(she_lensmc_chains_product))
 
     except Exception as e:
@@ -341,11 +341,11 @@ def she_measurements_merge_from_args(args):
                 " output to: " + combined_she_measurements_table_filename)
 
     # Save the products
-    write_xml_product(combined_she_measurements_product, args.output_she_measurements, args.workdir)
-    logger.info("Combined shear estimates product output to: " + args.output_she_measurements)
+    write_xml_product(combined_she_measurements_product, args.merged_she_measurements, args.workdir)
+    logger.info("Combined shear estimates product output to: " + args.merged_she_measurements)
 
-    write_xml_product(combined_she_lensmc_chains_product, args.she_lensmc_chains, args.workdir)
-    logger.info("Combined chains product output to: " + args.she_lensmc_chains)
+    write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
+    logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
 
     logger.debug('# Exiting she_measurements_merge_from_args normally')
 
