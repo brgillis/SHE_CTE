@@ -160,6 +160,7 @@ def cross_validate_shear(args, dry_run=False):
                                                                           ".fits", version=SHE_CTE.__version__)
         primary_shear_estimates_table.write(
             join(args.workdir, validated_primary_shear_estimates_filename))
+        logger.info("Wrote primary shear estimates table to " + validated_primary_shear_estimates_filename)
     method_table_filenames[args.primary_method] = validated_primary_shear_estimates_filename
 
     # Write out the other tables
@@ -171,7 +172,8 @@ def cross_validate_shear(args, dry_run=False):
             method_table_filename = get_allowed_filename("VAL-SHM-" + method.upper(), "0", ".fits",
                                                          version=SHE_CTE.__version__)
             method_table.write(join(args.workdir, method_table_filename))
-            method_table_filenames[method] = method_table_filename
+            logger.info("Wrote shear estimates table to " + method_table_filename)
+        method_table_filenames[method] = method_table_filename
 
     validated_shear_estimates_prod = products.she_validated_measurements.create_dpd_she_validated_measurements(
         spatial_footprint=shear_estimates_prod)
@@ -181,6 +183,8 @@ def cross_validate_shear(args, dry_run=False):
 
     write_xml_product(validated_shear_estimates_prod, args.cross_validated_shear_estimates_product,
                       workdir=args.workdir)
+
+    logger.info("Wrote cross-validated shear measurements product to " + args.cross_validated_shear_estimates_product)
 
     logger.info("Finished" + dry_label + " shear validation.")
 
