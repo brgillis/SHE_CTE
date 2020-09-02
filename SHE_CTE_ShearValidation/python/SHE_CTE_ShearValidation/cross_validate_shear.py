@@ -24,18 +24,19 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
 import SHE_CTE
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+
 
 sm_tfs = {"KSB": sm_tf,
-         "REGAUSS": sm_tf,
-         "MomentsML": sm_tf,
-         "LensMC": sm_tf,
-         "BFD": bfdm_tf}
+          "REGAUSS": sm_tf,
+          "MomentsML": sm_tf,
+          "LensMC": sm_tf,
+          "BFD": bfdm_tf}
 
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
@@ -90,11 +91,11 @@ def cross_validate_shear(args, dry_run=False):
 
     logger.info("Reading" + dry_label + " shear estimates product...")
 
-    shear_estimates_prod = read_xml_product(join(args.workdir, args.she_measurements_product))
+    shear_estimates_prod = read_xml_product(join(args.workdir, args.shear_estimates_product))
 
     if not isinstance(shear_estimates_prod, products.she_measurements.dpdSheMeasurements):
-        raise ValueError("Shear estimates product from " + join(args.workdir, args.she_measurements_product)
-                         +" is invalid type.")
+        raise ValueError("Shear estimates product from " + join(args.workdir, args.shear_estimates_product)
+                         + " is invalid type.")
 
     primary_shear_estimates_table = None
     other_shear_estimates_tables = {}
@@ -107,7 +108,7 @@ def cross_validate_shear(args, dry_run=False):
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, sm_tfs[method]):
                 logger.warning("Shear estimates table from " +
-                            join(args.workdir, filename) + " is in invalid format.")
+                               join(args.workdir, filename) + " is in invalid format.")
                 continue
         else:
             shear_estimates_table = None
@@ -128,7 +129,7 @@ def cross_validate_shear(args, dry_run=False):
         shear_validation_stats_prod = read_xml_product(join(args.workdir, args.shear_validation_statistics_table))
         if not isinstance(shear_validation_stats_prod, products.she_expected_shear_validation_statistics.DpdSheExpectedShearValidationStatistics):
             raise ValueError("Shear validation statistics product from " + join(args.workdir, args.shear_validation_stats_product)
-                             +" is invalid type.")
+                             + " is invalid type.")
 
         shear_validation_stats_filename = shear_validation_stats_prod.get_filename()
 
