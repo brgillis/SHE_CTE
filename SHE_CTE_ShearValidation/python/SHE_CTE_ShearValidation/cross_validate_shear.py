@@ -66,7 +66,7 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
     # TODO analyse comparisons somehow
 
     # For now, just say it passed
-    primary_shear_estimates_table.meta[sm_tf.m.validated] = 1
+    primary_shear_estimates_table.meta[sm_tf.m.valid] = 1
 
     logger.debug("Exiting validate_shear_estimates")
 
