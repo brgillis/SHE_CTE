@@ -62,6 +62,10 @@ def defineSpecificProgramOptions():
                         help='.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
                              'to be reconciled and combined.')
 
+    parser.add_argument('--she_lensmc_chains_listfile', type=str,
+                        help='.json listfile containing filenames of DpdSheLensMcChains data products ' +
+                             'to be reconciled and combined.')
+
     parser.add_argument('--mer_final_catalog', type=str,
                         help='DpdMerFinalCatalog data product for this tile, which is used to determine the objects ' +
                              'to include in the output catalog.')
@@ -81,6 +85,10 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--she_reconciled_measurements', type=str,
                         help='Desired filename to contain the output DpdSheReconciledMeasurements data product.')
+
+    # Arguments needed by the pipeline runner
+    parser.add_argument('--workdir', type=str, default=".")
+    parser.add_argument('--logdir', type=str, default=".")
 
     return parser
 
