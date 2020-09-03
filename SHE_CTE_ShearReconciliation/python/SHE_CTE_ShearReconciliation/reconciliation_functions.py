@@ -4,13 +4,8 @@
 
     Functions to handle different ways of reconciling different shear estimates.
 """
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import run_only_once
-from astropy.io.ascii.core import masked
 
-import numpy as np
-
-__updated__ = "2020-08-20"
+__updated__ = "2020-09-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,6 +20,12 @@ __updated__ = "2020-08-20"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import run_only_once
+from astropy.io.ascii.core import masked
+
+import numpy as np
+
 logger = getLogger(__name__)
 
 
@@ -33,7 +34,7 @@ def reconcile_best(measurements_to_reconcile_table,
                    sem_tf,
                    *args, **kwargs):
     """ Reconciliation method which selects the best (highest-weight) measurement.
-    
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -44,12 +45,12 @@ def reconcile_best(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
         - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
@@ -83,8 +84,8 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
                            *args, **kwargs):
     """ Reconciliation method which combines measurements based on supplied shape
         measurement weights.
-    
-    
+
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -95,12 +96,12 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
         - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
@@ -121,8 +122,8 @@ def reconcile_invvar(measurements_to_reconcile_table,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on inverse-shape-variance
         weighting.
-    
-    
+
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -133,19 +134,19 @@ def reconcile_invvar(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
         - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
     """
 
     weights = 1 / (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
-                        measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
+                          measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
@@ -189,12 +190,12 @@ def reconcile_weight(measurements_to_reconcile_table,
             The weights to use for each row of the table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
         - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
@@ -287,7 +288,8 @@ def reconcile_weight(measurements_to_reconcile_table,
         new_props[sem_tf.weight] = 0.
     else:
         shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
-        new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 + new_props[sem_tf.g2_err] ** 2) + shape_var)
+        new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
+                                                new_props[sem_tf.g2_err] ** 2) + shape_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in measurements_to_reconcile_table.colnames:
@@ -300,4 +302,3 @@ def reconcile_weight(measurements_to_reconcile_table,
         warn_missing_props(missing_props)
 
     return
-
