@@ -20,6 +20,7 @@
 
 from os.path import join
 from astropy.io import fits
+import datetime
 
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
@@ -128,7 +129,10 @@ def fit_psfs(args, dry_run=False):
         diag_mode_table = dm.initialise_psf_field_dm_state_table()
         diag_mode_hdu=fits.BinTableHDU(diag_mode_table)
         hdulist.append(diag_mode_hdu)
+        # @TODO: Update primary header
+        # Add in other headers..e.g. EXP_PID, OBS_ID, PNT_ID
         
+        hdulist[0].header.set('DATE_OBS',datetime.datetime.now().isoformat())
 
         qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)
 

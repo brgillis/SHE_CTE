@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-08-26"
+__updated__ = "2020-09-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,6 +23,7 @@ __updated__ = "2020-08-26"
 import copy
 import os
 
+from SHE_PPT import flags
 from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
@@ -35,6 +36,7 @@ from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
@@ -47,16 +49,20 @@ import SHE_CTE
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC.she_measure_shear import fit_frame_stack
+from SHE_LensMC.training_data import load_training_data
 import numpy as np
+
 
 logger = getLogger(__name__)
 
 # from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
-# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN 2.1
+# from SHE_MomentsML.estimate_shear import estimate_shear as
+# ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN
+# 2.1
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": load_control_training_data,
+                   "LensMC": load_training_data,
                    # "BFD": bfd_load_training_data} # FIXME - uncomment when BFD is integrated
                    "BFD": None}
 
@@ -165,7 +171,7 @@ def estimate_shears_from_args(args, dry_run=False):
         mdb.init(mdb_files=args.mdb, path=args.workdir)
     else:
         logger.warning("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
-                    ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
+                       ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
     logger.info("Reading " + dry_label + "data images...")
 
@@ -187,14 +193,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
     vis_calibrated_frame_products = []
     for vis_calibrated_frame_filename in read_listfile(os.path.join(args.workdir, args.data_images)):
-        vis_calibrated_frame_products.append(read_xml_product(os.path.join(args.workdir, vis_calibrated_frame_filename)))
+        vis_calibrated_frame_products.append(read_xml_product(
+            os.path.join(args.workdir, vis_calibrated_frame_filename)))
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
     if calibration_parameters_prod is not None and not isinstance(calibration_parameters_prod,
                                                                   products.she_psf_calibration_parameters.dpdShePsfCalibrationParameters):
         raise ValueError("CalibrationParameters product from " + os.path.join(args.workdir, args.calibration_parameters_product)
-                         +" is invalid type.")
+                         + " is invalid type.")
 
     # Set up method data filenames
 
@@ -419,15 +426,41 @@ def estimate_shears_from_args(args, dry_run=False):
                                                    tf.g2_err: 1e99,
                                                    tf.g1g2_covar: np.NaN,
                                                    tf.fit_class: 2,
+                                                   tf.fit_flags: flags.flag_unclassified_failure,
                                                    tf.ra: data_stack.detections_catalogue[mfc_tf.gal_x_world][r],
                                                    tf.dec: data_stack.detections_catalogue[mfc_tf.gal_y_world][r], })
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
+                if return_chains:
+                    chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
+                                                                version=SHE_CTE.__version__,
+                                                                subdir=subfolder_name)
+
+                    # Create an empty chains table
+                    chains_table = initialise_lensmc_chains_table(optional_columns=[lmcc_tf.ra, lmcc_tf.dec])
+
+                    for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
+
+                        # Fill it with NaN measurements and 1e99 errors
+
+                        chains_table.add_row({lmcc_tf.ID: data_stack.detections_catalogue[mfc_tf.ID][r],
+                                              lmcc_tf.g1: [np.NaN] * len_chain,
+                                              lmcc_tf.g2: [np.NaN] * len_chain,
+                                              lmcc_tf.fit_flags: flags.flag_unclassified_failure,
+                                              lmcc_tf.ra: [data_stack.detections_catalogue[mfc_tf.gal_x_world][r]] * len_chain,
+                                              lmcc_tf.dec: [data_stack.detections_catalogue[mfc_tf.gal_y_world][r]] * len_chain, })
+
+                    chains_table.write(os.path.join(args.workdir, chains_data_filename))
+
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+
+                    write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
+
             method_shear_estimates[method] = shear_estimates_table
 
             # Output the shear estimates
-            hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, shear_estimates_filename), overwrite=True)
 
     else:  # Dry run
 
@@ -442,7 +475,7 @@ def estimate_shears_from_args(args, dry_run=False):
             shm_hdu = table_to_hdu(shear_estimates_table)
             hdulist.append(shm_hdu)
 
-            hdulist.writeto(os.path.join(args.workdir, filename), clobber=True)
+            hdulist.writeto(os.path.join(args.workdir, filename), overwrite=True)
 
     # If we're not using all methods, don't write unused ones in the product
     for method in estimation_methods:

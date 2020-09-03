@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-09-01"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -29,7 +29,8 @@ from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, ConfigKeys
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
@@ -37,6 +38,7 @@ from astropy import table
 
 import SHE_CTE
 import multiprocessing as mp
+
 
 logger = getLogger(__name__)
 
@@ -61,15 +63,16 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input data
-    parser.add_argument('--input_she_measurements_listfile', type=str)
-
+    parser.add_argument('--she_measurements_and_chains_listfile', type=str)
     parser.add_argument("--pipeline_config", default=None, type=str,
                         help="Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--output_she_measurements', type=str)
+    parser.add_argument('--merged_she_measurements', type=str)
+    parser.add_argument('--merged_she_lensmc_chains', type=str,
+                        help='XML data product to contain LensMC chains data.')
 
-    # Input arguments
+    # Input arguments (can't be used in pipeline)
     parser.add_argument('--number_threads', type=int, default=None,
                         help='Number of parallel threads to use.')
 
@@ -85,6 +88,51 @@ def defineSpecificProgramOptions():
     return parser
 
 
+def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir):
+
+    try:
+
+        logger.debug("Loading chains from file: " + she_lensmc_chains_table_product_filename)
+
+        # Read in the product and get the filename of the table
+
+        she_lensmc_chains_product = read_xml_product(
+            os.path.join(workdir, she_lensmc_chains_table_product_filename))
+
+        if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensMcChains):
+            raise TypeError("Shear product is of invalid type: " + type(she_lensmc_chains_product))
+
+    except Exception as e:
+
+        logger.warning("Failsafe block encountered exception: " + str(e))
+        return
+
+    try:
+
+        she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
+
+        if she_lensmc_chains_table_filename is None or she_lensmc_chains_table_filename == "None":
+
+            logger.debug("No chains avaialble from file: " + she_lensmc_chains_table_product_filename)
+
+        else:
+
+            she_lensmc_chains_table = table.Table.read(os.path.join(
+                workdir, she_lensmc_chains_table_filename))
+
+            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
+                raise TypeError("Input chains table is of invalid format.")
+
+    except Exception as e:
+
+        logger.warning("Failsafe block encountered exception: " + str(e))
+        return
+
+    logger.debug("Finished loading chains from file: " + she_lensmc_chains_table_product_filename)
+
+    return she_lensmc_chains_table
+
+
 def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
 
     try:
@@ -96,7 +144,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
         she_measurements_table_product = read_xml_product(
             os.path.join(workdir, she_measurements_table_product_filename))
 
-        if not isinstance(she_measurements_table_product, products.she_measurements.dpdShearMeasurement):
+        if not isinstance(she_measurements_table_product, products.she_measurements.dpdSheMeasurements):
             raise TypeError("Shear product is of invalid type: " + type(she_measurements_table_product))
 
     except Exception as e:
@@ -150,14 +198,14 @@ def she_measurements_merge_from_args(args):
             pipeline_config = {}
     except Exception as e:
         logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
-                    "Exception was: " + str(e))
+                       "Exception was: " + str(e))
         pipeline_config = {}
 
     # Determine how many threads we'll use
     if args.number_threads is not None:
         number_threads = args.number_threads
-    elif ConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
-        number_threads = pipeline_config[ConfigKeys.MB_NUM_THREADS.value]
+    elif AnalysisConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
+        number_threads = pipeline_config[AnalysisConfigKeys.MB_NUM_THREADS.value]
         if number_threads.lower() == "none":
             number_threads = default_number_threads
     else:
@@ -173,30 +221,50 @@ def she_measurements_merge_from_args(args):
         # Start with an empty list of the tables
         she_measurements_tables[method] = []
 
-    logger.info("Loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
+    logger.info("Loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
 
-    she_measurements_table_product_filenames = read_listfile(
-        os.path.join(args.workdir, args.input_she_measurements_listfile))
+    measurements_and_chains_product_filenames = read_listfile(
+        os.path.join(args.workdir, args.she_measurements_and_chains_listfile))
+
+    measurements_product_filenames, chains_product_filenames = zip(*measurements_and_chains_product_filenames)
 
     # If using just one thread, don't bother with multiprocessing to read tables
 
     if number_threads == 1:
 
         full_l_she_measurements_tables = [read_method_estimates_tables(
-            f, args.workdir) for f in she_measurements_table_product_filenames]
+            f, args.workdir) for f in measurements_product_filenames]
 
         l_she_measurements_tables = [t for t in full_l_she_measurements_tables if t is not None]
 
+        full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
+            f, args.workdir) for f in chains_product_filenames]
+
+        she_lensmc_chains_tables = [t for t in full_l_she_lensmc_chains_tables if t is not None]
+
     else:
+
+        # Read the measurements tables
 
         pool = mp.Pool(processes=number_threads)
         pool_she_measurements_tables = [pool.apply_async(read_method_estimates_tables, args=(
-            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename in she_measurements_table_product_filenames]
+            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename in measurements_product_filenames]
 
         pool.close()
         pool.join()
 
         l_she_measurements_tables = [a.get() for a in pool_she_measurements_tables if a.get() is not None]
+
+        # Read the chains tables
+
+        pool = mp.Pool(processes=number_threads)
+        pool_she_lensmc_chains_tables = [pool.apply_async(read_lensmc_chains_tables, args=(
+            she_lensmc_chains_table_product_filename, args.workdir)) for she_lensmc_chains_table_product_filename in chains_product_filenames]
+
+        pool.close()
+        pool.join()
+
+        she_lensmc_chains_tables = [a.get() for a in pool_she_lensmc_chains_tables if a.get() is not None]
 
     # Sort the tables into the expected format
     for method in methods:
@@ -209,7 +277,7 @@ def she_measurements_merge_from_args(args):
                 continue
             she_measurements_tables[method].append(t)
 
-    logger.info("Finished loading shear estimates from files listed in: " + args.input_she_measurements_listfile)
+    logger.info("Finished loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
 
     logger.info("Combining shear estimates tables.")
 
@@ -217,9 +285,11 @@ def she_measurements_merge_from_args(args):
 
     combined_she_measurements_tables = dict.fromkeys(methods)
 
-    # Create the output product
+    # Create the output products
     combined_she_measurements_product = products.she_measurements.create_she_measurements_product(
-        spatial_footprint=os.path.join(args.workdir, she_measurements_table_product_filenames[0]))
+        spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
+    combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
+        spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
 
     for method in methods:
 
@@ -233,25 +303,49 @@ def she_measurements_merge_from_args(args):
 
         # Get a filename for the table
         combined_she_measurements_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.upper(),
-                                                                       instance_id='MERGED',
-                                                                       extension=".fits",
-                                                                       version=SHE_CTE.__version__,
-                                                                       subdir="data",
-                                                                       processing_function="SHE")
+                                                                        instance_id='MERGED',
+                                                                        extension=".fits",
+                                                                        version=SHE_CTE.__version__,
+                                                                        subdir="data",
+                                                                        processing_function="SHE")
         combined_she_measurements_product.set_method_filename(method, combined_she_measurements_table_filename)
 
-        # Output the table
+        # Output the combined table
         combined_she_measurements_tables[method].write(os.path.join(args.workdir,
-                                                                   combined_she_measurements_table_filename),
-                                                      format="fits")
+                                                                    combined_she_measurements_table_filename),
+                                                       format="fits")
 
         logger.info("Combined shear estimates for method " + method +
                     " output to: " + combined_she_measurements_table_filename)
 
-    # Save the product
-    write_xml_product(combined_she_measurements_product, args.output_she_measurements, args.workdir)
+    # Combine the chains tables
 
-    logger.info("Combined shear estimates product output to: " + args.output_she_measurements)
+    # Combine the tables
+    combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables)
+
+    # Get a filename for the table
+    combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name="SHEAR-CHAIN",
+                                                                     instance_id='MERGED',
+                                                                     extension=".fits",
+                                                                     version=SHE_CTE.__version__,
+                                                                     subdir="data",
+                                                                     processing_function="SHE")
+    combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)
+
+    # Output the combined table
+    combined_she_lensmc_chains_tables.write(os.path.join(args.workdir,
+                                                         combined_she_lensmc_chains_table_filename),
+                                            format="fits")
+
+    logger.info("Combined shear estimates for method " + method +
+                " output to: " + combined_she_measurements_table_filename)
+
+    # Save the products
+    write_xml_product(combined_she_measurements_product, args.merged_she_measurements, args.workdir)
+    logger.info("Combined shear estimates product output to: " + args.merged_she_measurements)
+
+    write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
+    logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
 
     logger.debug('# Exiting she_measurements_merge_from_args normally')
 

@@ -24,18 +24,19 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
 import SHE_CTE
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+
 
 sm_tfs = {"KSB": sm_tf,
-         "REGAUSS": sm_tf,
-         "MomentsML": sm_tf,
-         "LensMC": sm_tf,
-         "BFD": bfdm_tf}
+          "REGAUSS": sm_tf,
+          "MomentsML": sm_tf,
+          "LensMC": sm_tf,
+          "BFD": bfdm_tf}
 
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
@@ -65,7 +66,7 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
     # TODO analyse comparisons somehow
 
     # For now, just say it passed
-    primary_shear_estimates_table.meta[sm_tf.m.validated] = 1
+    primary_shear_estimates_table.meta[sm_tf.m.valid] = 1
 
     logger.debug("Exiting validate_shear_estimates")
 
@@ -90,11 +91,11 @@ def cross_validate_shear(args, dry_run=False):
 
     logger.info("Reading" + dry_label + " shear estimates product...")
 
-    shear_estimates_prod = read_xml_product(join(args.workdir, args.she_measurements_product))
+    shear_estimates_prod = read_xml_product(join(args.workdir, args.shear_estimates_product))
 
     if not isinstance(shear_estimates_prod, products.she_measurements.dpdSheMeasurements):
-        raise ValueError("Shear estimates product from " + join(args.workdir, args.she_measurements_product)
-                         +" is invalid type.")
+        raise ValueError("Shear estimates product from " + join(args.workdir, args.shear_estimates_product)
+                         + " is invalid type.")
 
     primary_shear_estimates_table = None
     other_shear_estimates_tables = {}
@@ -105,9 +106,9 @@ def cross_validate_shear(args, dry_run=False):
 
         if filename is not None and filename != "None" and filename != "data/None":
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
-            if not is_in_format(shear_estimates_table, sm_tfs[method]):
+            if not is_in_format(shear_estimates_table, sm_tfs[method], strict=False):
                 logger.warning("Shear estimates table from " +
-                            join(args.workdir, filename) + " is in invalid format.")
+                               join(args.workdir, filename) + " is in invalid format.")
                 continue
         else:
             shear_estimates_table = None
@@ -128,7 +129,7 @@ def cross_validate_shear(args, dry_run=False):
         shear_validation_stats_prod = read_xml_product(join(args.workdir, args.shear_validation_statistics_table))
         if not isinstance(shear_validation_stats_prod, products.she_expected_shear_validation_statistics.DpdSheExpectedShearValidationStatistics):
             raise ValueError("Shear validation statistics product from " + join(args.workdir, args.shear_validation_stats_product)
-                             +" is invalid type.")
+                             + " is invalid type.")
 
         shear_validation_stats_filename = shear_validation_stats_prod.get_filename()
 
@@ -149,19 +150,41 @@ def cross_validate_shear(args, dry_run=False):
 
     logger.info("Generating" + dry_label + " validated shear estimates...")
 
+    method_table_filenames = {}
+
+    # Write out the primary table
     if primary_shear_estimates_table is None:
-        validated_shear_estimates_filename = "None"
+        validated_primary_shear_estimates_filename = "None"
     else:
-        validated_shear_estimates_filename = get_allowed_filename("VAL-SHM", "0", ".fits",
-                                                                  version=SHE_CTE.__version__)
-        primary_shear_estimates_table.write(join(args.workdir, validated_shear_estimates_filename))
+        validated_primary_shear_estimates_filename = get_allowed_filename("VAL-SHM-" + args.primary_method.upper(), "0",
+                                                                          ".fits", version=SHE_CTE.__version__)
+        primary_shear_estimates_table.write(
+            join(args.workdir, validated_primary_shear_estimates_filename))
+        logger.info("Wrote primary shear estimates table to " + validated_primary_shear_estimates_filename)
+    method_table_filenames[args.primary_method] = validated_primary_shear_estimates_filename
+
+    # Write out the other tables
+    for method in other_shear_estimates_tables:
+        method_table = other_shear_estimates_tables[method]
+        if method_table is None:
+            method_table_filename = "None"
+        else:
+            method_table_filename = get_allowed_filename("VAL-SHM-" + method.upper(), "0", ".fits",
+                                                         version=SHE_CTE.__version__)
+            method_table.write(join(args.workdir, method_table_filename))
+            logger.info("Wrote shear estimates table to " + method_table_filename)
+        method_table_filenames[method] = method_table_filename
 
     validated_shear_estimates_prod = products.she_validated_measurements.create_dpd_she_validated_measurements(
-        filename=validated_shear_estimates_filename,
         spatial_footprint=shear_estimates_prod)
+
+    for method in method_table_filenames:
+        validated_shear_estimates_prod.set_method_filename(method, method_table_filenames[method])
 
     write_xml_product(validated_shear_estimates_prod, args.cross_validated_shear_estimates_product,
                       workdir=args.workdir)
+
+    logger.info("Wrote cross-validated shear measurements product to " + args.cross_validated_shear_estimates_product)
 
     logger.info("Finished" + dry_label + " shear validation.")
 
