@@ -222,6 +222,8 @@ def reconcile_weight(measurements_to_reconcile_table,
         None
     """
 
+    len_chain = chains_to_reconcile_table.meta[lmcc_tf.m.len_chain]
+
     # For any instances of NaN, set the weight to zero
     weights = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
     # Also for any negative weights (we do this in a separate step to avoid a warning)
@@ -240,7 +242,7 @@ def reconcile_weight(measurements_to_reconcile_table,
                        "Will output copy of 'best' row.")
         return reconcile_best(measurements_to_reconcile_table,
                               output_row,
-                              em_tf,
+                              sem_tf,
                               weights,
                               *args, **kwargs)
 
@@ -251,7 +253,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = (masked_column * masked_weights).sum() / tot_weight
 
         # If this property has an error, calculate that too
@@ -267,7 +269,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = masked_column.sum()
 
     # Combine properties bitwise or
@@ -275,7 +277,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
+        masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = np.bitwise_or.reduce(masked_column[~m], axis=0)
 
     # Copy the highest-weight property when we just copy
@@ -283,7 +285,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = measurements_to_reconcile_table[colname][highest_weight_index]
+        new_props[colname] = chains_to_reconcile_table[colname][highest_weight_index]
 
     # Set to NaN properties that can't be sensibly combined in any way
     for prop in props_to_nan:
@@ -291,26 +293,6 @@ def reconcile_weight(measurements_to_reconcile_table,
             continue
         colname = getattr(sem_tf, prop)
         new_props[colname] = np.NaN
-
-    # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-
-    masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
-    masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
-    masked_g2_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g2_err], m)
-
-    masked_shape_var = (0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2))
-
-    if not (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
-        logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
-                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
-                       "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
-                       "\ng2_err = " + str(measurements_to_reconcile_table[sem_tf.g2_err]) +
-                       "\nSetting weight to 0.")
-        new_props[sem_tf.weight] = 0.
-    else:
-        shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
-        new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
-                                                new_props[sem_tf.g2_err] ** 2) + shape_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in measurements_to_reconcile_table.colnames:
