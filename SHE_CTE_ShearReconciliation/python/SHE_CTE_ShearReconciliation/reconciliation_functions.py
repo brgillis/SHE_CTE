@@ -102,7 +102,6 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
 
         Return
         ------
@@ -140,7 +139,6 @@ def reconcile_invvar(measurements_to_reconcile_table,
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
 
         Return
         ------
@@ -196,7 +194,6 @@ def reconcile_weight(measurements_to_reconcile_table,
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
 
         Return
         ------
