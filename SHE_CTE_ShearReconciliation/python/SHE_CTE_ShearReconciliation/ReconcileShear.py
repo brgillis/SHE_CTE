@@ -4,7 +4,7 @@
     Author: Bryan Gillis
 """
 
-__updated__ = "2020-08-04"
+__updated__ = "2020-09-03"
 
 #
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -33,7 +33,7 @@ import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
 
-logger = log.getLogger('SHE_CTE_ReconcileShear')
+logger = getLogger('SHE_CTE_ReconcileShear')
 
 
 def defineSpecificProgramOptions():
