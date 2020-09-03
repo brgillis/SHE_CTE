@@ -113,16 +113,13 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    dry_run = args.dry_run or force_dry_run
-
     if args.profile:
         import cProfile
         cProfile.runctx("reconcile_shear_from_args(args)", {},
                         {"reconcile_shear_from_args": reconcile_shear_from_args,
-                         "args": args,
-                         "dry_run": dry_run},
+                         "args": args},
                         filename="reconcile_shear.prof")
     else:
-        reconcile_shear_from_args(args, dry_run)
+        reconcile_shear_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod() successfully.')
