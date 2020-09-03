@@ -21,18 +21,36 @@ __updated__ = "2020-09-03"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 from SHE_PPT.utility import run_only_once
 from astropy.io.ascii.core import masked
 
 import numpy as np
 
+
+shear_estimation_method_table_formats = {"she.ksbMeasurements": ksbm_tf,
+                                         "she.regaussMeasurements": regm_tf,
+                                         "she.momentsmlMeasurements": mmlm_tf,
+                                         "she.lensmcMeasurements": lmcm_tf,
+                                         "she.bfdMoments": bfdm_tf}
+
 logger = getLogger(__name__)
 
 
-def reconcile_best(measurements_to_reconcile_table,
-                   output_row,
-                   sem_tf,
-                   *args, **kwargs):
+def get_tf(measurements_to_reconcile_table):
+    fits_def = measurements_to_reconcile_table.meta[tf.m.table_format]
+    return shear_estimation_method_table_formats[fits_def]
+
+
+def reconcile_chains_best(measurements_to_reconcile_table,
+                          chains_to_reconcile_table,
+                          output_row,
+                          *args, **kwargs):
     """ Reconciliation method which selects the best (highest-weight) measurement.
 
         Parameters
@@ -56,31 +74,35 @@ def reconcile_best(measurements_to_reconcile_table,
         None
     """
 
-    measurements_to_reconcile_table.sort(sem_tf.weight)
+    sem_tf = get_tf(measurements_to_reconcile_table)
 
-    best_row = None
+    # Find the row with the highest weight, ignoring NaN and Inf weights
+    best_index = None
+    best_weight = -1e99
 
     for i in range(len(measurements_to_reconcile_table)):
-        i_from_end = -1 - i
-        test_row = measurements_to_reconcile_table[i_from_end]
-        if not (np.isnan(test_row[sem_tf.weight]) or np.isinf(test_row[sem_tf.weight])):
-            best_row = test_row
-            break
+        weight = measurements_to_reconcile_table[i][sem_tf.weight]
+        if not (np.isnan(weight) or np.isinf(weight)):
+            if weight > best_weight:
+                best_index = i
+                best_weight = weight
 
-    # If we didn't find any good row, just use the last
-    if best_row == None:
-        best_row = measurements_to_reconcile_table[-1]
+    # If no good rows are available, just use the first
+    if best_index is None:
+        best_index = 0
+
+    best_chains_row = chains_to_reconcile_table[best_index]
 
     # Update the output row
     for colname in output_row.colnames:
-        output_row[colname] = best_row[colname]
+        output_row[colname] = best_chains_row[colname]
 
     return
 
 
 def reconcile_shape_weight(measurements_to_reconcile_table,
+                           chains_to_reconcile_table,
                            output_row,
-                           sem_tf,
                            *args, **kwargs):
     """ Reconciliation method which combines measurements based on supplied shape
         measurement weights.
@@ -107,6 +129,8 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
         None
     """
 
+    sem_tf = get_tf(measurements_to_reconcile_table)
+
     weights = measurements_to_reconcile_table[sem_tf.weight]
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
@@ -117,8 +141,8 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
 
 
 def reconcile_invvar(measurements_to_reconcile_table,
+                     chains_to_reconcile_table,
                      output_row,
-                     sem_tf,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on inverse-shape-variance
         weighting.
@@ -145,12 +169,14 @@ def reconcile_invvar(measurements_to_reconcile_table,
         None
     """
 
+    sem_tf = get_tf(measurements_to_reconcile_table)
+
     weights = 1 / (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
                           measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
+                            chains_to_reconcile_table=chains_to_reconcile_table,
                             output_row=output_row,
-                            sem_tf=sem_tf,
                             weights=weights,
                             *args, **kwargs)
 
@@ -173,9 +199,8 @@ def warn_missing_props(missing_props):
 
 
 def reconcile_weight(measurements_to_reconcile_table,
+                     chains_to_reconcile_table,
                      output_row,
-                     sem_tf,
-                     weights,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on given weights.
         Parameters
