@@ -243,15 +243,23 @@ def reconcile_shear_from_args(args):
                                               reconciliation_function=reconciliation_function,
                                               workdir=args.workdir)
 
-        # The output table is now finalized, so output it and store the filename in the output data product
-        reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),
-                                                           instance_id=str(tile_id),
-                                                           extension=".fits",
-                                                           version=SHE_CTE.__version__)
-        reconciled_catalog.write(os.path.join(args.workdir, reconciled_catalog_filename))
+        # If we don't have any data, don't write a table at all
+        if len(reconciled_catalog) == 0:
 
-        reconciled_catalog_product.set_method_filename(method=shear_estimation_method,
-                                                       filename=reconciled_catalog_filename)
+            reconciled_catalog_product.set_method_filename(method=shear_estimation_method,
+                                                           filename=None)
+
+        else:
+
+            # The output table is now finalized, so output it and store the filename in the output data product
+            reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),
+                                                               instance_id=str(tile_id),
+                                                               extension=".fits",
+                                                               version=SHE_CTE.__version__)
+            reconciled_catalog.write(os.path.join(args.workdir, reconciled_catalog_filename))
+
+            reconciled_catalog_product.set_method_filename(method=shear_estimation_method,
+                                                           filename=reconciled_catalog_filename)
 
     # End looping over methods
 
