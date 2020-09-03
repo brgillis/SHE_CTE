@@ -115,7 +115,7 @@ def reconcile_tables(shear_estimates_tables,
     # Loop through each table
     for estimates_table in shear_estimates_tables:
 
-        if estimates_table is None or estimates_table is "None":
+        if estimates_table is None or estimates_table == "None" or estimates_table == "data/None":
             continue
 
         if isinstance(estimates_table, str):
