@@ -49,7 +49,6 @@ def reconcile_best(measurements_to_reconcile_table,
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
 
         Return
         ------
@@ -58,18 +57,21 @@ def reconcile_best(measurements_to_reconcile_table,
 
     measurements_to_reconcile_table.sort(sem_tf.weight)
 
-    best_row = None
+    # Find the row with the highest weight, ignoring NaN and Inf weights
+    best_index = None
+    best_weight = -1e99
 
     for i in range(len(measurements_to_reconcile_table)):
-        i_from_end = -1 - i
-        test_row = measurements_to_reconcile_table[i_from_end]
-        if not (np.isnan(test_row[sem_tf.weight]) or np.isinf(test_row[sem_tf.weight])):
-            best_row = test_row
-            break
+        weight = measurements_to_reconcile_table[i][sem_tf.weight]
+        if not (np.isnan(weight) or np.isinf(weight)) and weight > best_weight:
+            best_index = i
+            best_weight = weight
 
-    # If we didn't find any good row, just use the last
-    if best_row == None:
-        best_row = measurements_to_reconcile_table[-1]
+    # If no good rows are available, just use the first
+    if best_index is None:
+        best_index = 0
+
+    best_row = measurements_to_reconcile_table[best_index]
 
     # Update the output row
     for colname in output_row.colnames:

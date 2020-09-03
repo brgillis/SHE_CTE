@@ -57,17 +57,16 @@ def reconcile_chains_best(measurements_to_reconcile_table,
         ----------
         measurements_to_reconcile_table : astropy.table.Table
             The table containing rows of different measurements of the same object
+        chains_to_reconcile_table : astropy.table.Table
+            The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
             The row to which to output the reconciled measurement
-        sem_tf : Table Format
-            The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
 
         Return
         ------
