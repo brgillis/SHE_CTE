@@ -86,6 +86,9 @@ def defineSpecificProgramOptions():
     parser.add_argument('--she_reconciled_measurements', type=str,
                         help='Desired filename to contain the output DpdSheReconciledMeasurements data product.')
 
+    parser.add_argument('--she_reconciled_lensmc_chains', type=str,
+                        help='Desired filename to contain the output DpdSheReconciledLensMcChains data product.')
+
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
     parser.add_argument('--logdir', type=str, default=".")
