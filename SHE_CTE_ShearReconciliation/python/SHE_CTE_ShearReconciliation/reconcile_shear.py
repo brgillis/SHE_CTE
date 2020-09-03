@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-08-24"
+__updated__ = "2020-09-03"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -114,6 +114,9 @@ def reconcile_tables(shear_estimates_tables,
 
     # Loop through each table
     for estimates_table in shear_estimates_tables:
+
+        if estimates_table is None or estimates_table is "None":
+            continue
 
         if isinstance(estimates_table, str):
             if workdir is None:
@@ -258,4 +261,3 @@ def reconcile_shear_from_args(args):
     logger.debug("# Exiting reconcile_shear_from_args() successfully.")
 
     return
-
