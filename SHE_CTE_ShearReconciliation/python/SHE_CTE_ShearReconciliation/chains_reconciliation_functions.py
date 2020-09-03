@@ -82,10 +82,9 @@ def reconcile_chains_best(measurements_to_reconcile_table,
 
     for i in range(len(measurements_to_reconcile_table)):
         weight = measurements_to_reconcile_table[i][sem_tf.weight]
-        if not (np.isnan(weight) or np.isinf(weight)):
-            if weight > best_weight:
-                best_index = i
-                best_weight = weight
+        if not (np.isnan(weight) or np.isinf(weight)) and weight > best_weight:
+            best_index = i
+            best_weight = weight
 
     # If no good rows are available, just use the first
     if best_index is None:
