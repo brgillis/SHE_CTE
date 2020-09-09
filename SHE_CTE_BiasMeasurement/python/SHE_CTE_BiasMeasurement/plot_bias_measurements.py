@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2019-12-09"
+__updated__ = "2020-09-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,10 +25,11 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
-import matplotlib.pyplot as pyplot
-import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
+
+import matplotlib.pyplot as pyplot
+import numpy as np
 
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
@@ -206,9 +207,9 @@ def plot_bias_measurements_from_args(args):
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
-                        if g1_bias_measurement == '':
+                        if g1_bias_measurement == '' or g1_bias_measurement == 'NaN':
                             g1_bias_measurement = np.nan
-                        if g2_bias_measurement == '':
+                        if g2_bias_measurement == '' or g2_bias_measurement == 'NaN':
                             g2_bias_measurement = np.nan
 
                         # If we're norming, correct bias measurements by the central value
@@ -238,20 +239,20 @@ def plot_bias_measurements_from_args(args):
                             g1_o = getattr(g1_bias_measurements, measurement_key + "_err")
                             g2_o = getattr(g2_bias_measurements, measurement_key + "_err")
 
-                        if g1_o != '':
+                        if g1_o != '' or g1_o == 'NaN':
                             ly1_o.append(g1_o)
                         else:
                             ly1_o.append(np.nan)
-                        if g2_o != '':
+                        if g2_o != '' or g1_o == 'NaN':
                             ly2_o.append(g2_o)
                         else:
                             ly2_o.append(np.nan)
 
-                    x_vals = np.array(lx)
-                    y1_vals = np.array(ly1)
-                    y2_vals = np.array(ly2)
-                    y1_o_vals = np.array(ly1_o)
-                    y2_o_vals = np.array(ly2_o)
+                    x_vals = np.array(lx, dtype=float)
+                    y1_vals = np.array(ly1, dtype=float)
+                    y2_vals = np.array(ly2, dtype=float)
+                    y1_o_vals = np.array(ly1_o, dtype=float)
+                    y2_o_vals = np.array(ly2_o, dtype=float)
 
                     # Determine combined y differently for error and non-error values
                     if "_err" in measurement_key:
@@ -267,8 +268,8 @@ def plot_bias_measurements_from_args(args):
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
                         y2_errs = y2_o_vals
-                        y_errs = (np.abs(y1_vals) * y1_o_vals + np.abs(y2_vals)
-                                  * y2_o_vals) / np.sqrt(y1_vals**2 + y2_vals**2)
+                        y_errs = (np.abs(y1_vals) * y1_errs + np.abs(y2_vals)
+                                  * y2_errs) / np.sqrt(y1_vals**2 + y2_vals**2)
 
                     # Plot the values (and optionally error bars)
                     if not "_err" in measurement_key:
