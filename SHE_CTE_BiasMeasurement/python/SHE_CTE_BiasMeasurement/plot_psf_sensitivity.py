@@ -292,7 +292,7 @@ def plot_psf_sensitivity_from_args(args):
                         y1_errs = y1_o_vals
                         y2_errs = y2_o_vals
                         # Carry over errors from previous run, on unnormed data
-                        y_errs = all_methods_data[(method, calibration_label)]["y_err"]
+                        y_errs = all_methods_data[(method, "")]["y_err"]
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
