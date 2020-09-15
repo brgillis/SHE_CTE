@@ -17,7 +17,7 @@ import matplotlib.pyplot as pyplot
 import numpy as np
 
 
-__updated__ = "2019-07-17"
+__updated__ = "2020-09-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -149,11 +149,12 @@ def plot_psf_sensitivity_from_args(args):
 
     # Open and and keep in memory all bias measurements
     all_bias_measurements = {}
+    all_bias_measurements_dirs = {}
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
             tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(dir + "/shear_bias_measurements.xml")
+            all_bias_measurements[tag] = read_xml_product(tagdir + "/shear_bias_measurements.xml")
             all_bias_measurements_dirs[tag] = tagdir
 
     # Do a loop of reading for each property
