@@ -141,7 +141,9 @@ def plot_psf_sensitivity_from_args(args):
     """
 
     # Determine the qualified path to the root data folder
-    if args.root_data_folder[0] == "/":
+    if args.root_data_folder is None:
+        root_data_folder = args.workdir
+    elif args.root_data_folder[0] == "/":
         root_data_folder = args.root_data_folder
     else:
         # Relative to workdir in this case

@@ -50,7 +50,7 @@ def defineSpecificProgramOptions():
     # Input Data
     parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML", "LensMC"],
                         help='Methods to plot bias measurements for.')
-    parser.add_argument('--root_data_folder', default="../",
+    parser.add_argument('--root_data_folder', default=None,
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
                              "or relative to workdir.")
     parser.add_argument('--bias_measurements_head', default="shear_bias_measurements_",
