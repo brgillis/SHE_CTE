@@ -149,13 +149,11 @@ def plot_psf_sensitivity_from_args(args):
 
     # Open and and keep in memory all bias measurements
     all_bias_measurements = {}
-    all_bias_measurements_dirs = {}
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(tagdir + "/shear_bias_measurements.xml")
-            all_bias_measurements_dirs[tag] = tagdir
+            all_bias_measurements[tag] = read_xml_product(
+                join(root_data_folder, args.bias_measurements_head + tag + ".xml"), workdir=root_data_folder)
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
