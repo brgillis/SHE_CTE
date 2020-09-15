@@ -5,7 +5,7 @@
     Main program for plotting PSF sensitivity
 """
 
-__updated__ = "2019-04-23"
+__updated__ = "2020-09-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,10 +22,11 @@ __updated__ = "2019-04-23"
 
 import argparse
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+from SHE_CTE_BiasMeasurement.plot_psf_sensitivity import plot_psf_sensitivity_from_args
 
 
 def defineSpecificProgramOptions():
@@ -52,8 +53,8 @@ def defineSpecificProgramOptions():
     parser.add_argument('--root_data_folder', default="../",
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
                              "or relative to workdir.")
-    parser.add_argument('--data_folder_head', default="workspace_",
-                        help="Head of folder names containing bias measurements, minus the E??P??S?? portion.")
+    parser.add_argument('--bias_measurements_head', default="shear_bias_measurements_",
+                        help="Head of filenames of bias measurements, minus the E??P??S?? portion.")
     parser.add_argument('--output_file_name_head', default="sensitivity_testing",
                         help="Desired head of filenames for created files.")
     parser.add_argument('--output_format', default="png",
