@@ -235,14 +235,14 @@ def plot_psf_sensitivity_from_args(args):
 
                         # Get the bias measurements for this method and testing variant
                         g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
-                            method, workdir=all_bias_measurements_dirs[tag])
+                            method, workdir=root_data_folder)
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=all_bias_measurements_dirs[tag]))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=root_data_folder))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 
