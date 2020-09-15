@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2020-09-09"
+__updated__ = "2020-09-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -263,7 +263,10 @@ def plot_bias_measurements_from_args(args):
                         y_errs = None
                     elif calibration_label == "_normed":
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                        y1_errs = y1_o_vals
+                        y2_errs = y2_o_vals
                         # Carry over errors from previous run, on unnormed data
+                        y_errs = all_methods_data[(method, calibration_label)]["y_err"]
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
