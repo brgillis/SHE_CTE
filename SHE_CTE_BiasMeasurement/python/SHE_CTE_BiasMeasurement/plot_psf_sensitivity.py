@@ -16,7 +16,7 @@ import matplotlib.pyplot as pyplot
 import numpy as np
 
 
-__updated__ = "2020-09-15"
+__updated__ = "2020-09-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -444,10 +444,10 @@ def plot_psf_sensitivity_from_args(args):
 
                     for prop_key in psf_properties:
 
-                        # Only plot m versus R2 and c versus E
-                        if (("m" in measurement_key_template and "E" in prop_key) or
-                                ("c" in measurement_key_template and "R" in prop_key)):
-                            continue
+                        # Uncomment below to only plot m versus R2 and c versus E
+                        #                         if (("m" in measurement_key_template and "E" in prop_key) or
+                        #                                 ("c" in measurement_key_template and "R" in prop_key)):
+                        #                             continue
 
                         for index in (1, 2):
 
