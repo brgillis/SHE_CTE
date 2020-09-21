@@ -33,20 +33,20 @@ logger = getLogger(__name__)
 def reconcile_chains_best(chains_to_reconcile_table,
                           output_row,
                           *args, **kwargs):
-    """ Reconciliation method which selects the best (highest-weight) measurement.
+    """ Reconciliation method which selects the best (highest-weight) chains.
 
         Parameters
         ----------
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
-            The row to which to output the reconciled measurement
+            The row to which to output the reconciled chains
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
         Side-effects
         ------------
-        - output_row is updated with the reconciled measurement
+        - output_row is updated with the reconciled chains
 
         Return
         ------
@@ -79,7 +79,7 @@ def reconcile_chains_best(chains_to_reconcile_table,
 def reconcile_shape_weight(chains_to_reconcile_table,
                            output_row,
                            *args, **kwargs):
-    """ Reconciliation method which combines measurements based on supplied shape
+    """ Reconciliation method which combines chains based on supplied shape
         measurement weights.
 
 
@@ -88,13 +88,13 @@ def reconcile_shape_weight(chains_to_reconcile_table,
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
-            The row to which to output the reconciled measurement
+            The row to which to output the reconciled chains
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
         Side-effects
         ------------
-        - output_row is updated with the reconciled measurement
+        - output_row is updated with the reconciled chains
 
         Return
         ------
@@ -111,7 +111,7 @@ def reconcile_shape_weight(chains_to_reconcile_table,
 def reconcile_invvar(chains_to_reconcile_table,
                      output_row,
                      *args, **kwargs):
-    """ Reconciliation method which combines measurements based on inverse-shape-variance
+    """ Reconciliation method which combines chains based on inverse-shape-variance
         weighting.
 
 
@@ -120,13 +120,13 @@ def reconcile_invvar(chains_to_reconcile_table,
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
-            The row to which to output the reconciled measurement
+            The row to which to output the reconciled chains
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
         Side-effects
         ------------
-        - output_row is updated with the reconciled measurement
+        - output_row is updated with the reconciled chains
 
         Return
         ------
@@ -163,13 +163,14 @@ def reconcile_weight(chains_to_reconcile_table,
                      output_row,
                      weights,
                      *args, **kwargs):
-    """ Reconciliation method which combines measurements based on given weights.
+    """ Reconciliation method which combines chains based on given weights.
+
         Parameters
         ----------
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
-            The row to which to output the reconciled measurement
+            The row to which to output the reconciled chains
         weights : Iterable <float>
             The weights to use for each row of the table
         *args, **kwards
@@ -177,7 +178,7 @@ def reconcile_weight(chains_to_reconcile_table,
 
         Side-effects
         ------------
-        - output_row is updated with the reconciled measurement
+        - output_row is updated with the reconciled chains
 
         Return
         ------
