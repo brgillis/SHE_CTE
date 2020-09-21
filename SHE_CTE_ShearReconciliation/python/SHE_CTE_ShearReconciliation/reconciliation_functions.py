@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2020-09-03"
+__updated__ = "2020-09-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -276,7 +276,7 @@ def reconcile_weight(measurements_to_reconcile_table,
     masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
     masked_g2_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g2_err], m)
 
-    masked_shape_var = (0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2))
+    masked_shape_var = 0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2)
 
     if not (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
         logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
