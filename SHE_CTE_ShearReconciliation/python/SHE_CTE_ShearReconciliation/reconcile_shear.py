@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-09-03"
+__updated__ = "2020-09-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -39,8 +39,15 @@ from astropy.table import Table
 from galsim import shear
 
 import SHE_CTE
-from SHE_CTE_ShearReconciliation.reconciliation_functions import reconcile_best, reconcile_invvar, reconcile_shape_weight
+from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
+                                                                         reconcile_chains_invvar,
+                                                                         reconcile_chains_shape_weight,
+                                                                         reconcile_chains_keep)
+from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
+                                                                  reconcile_invvar,
+                                                                  reconcile_shape_weight)
 import numpy as np
+
 
 logger = getLogger(__name__)
 
@@ -49,6 +56,13 @@ reconciliation_methods = {"Best": reconcile_best,
                           "ShapeWeight": reconcile_shape_weight}
 
 default_reconciliation_method = "InvVar"
+
+chains_reconciliation_methods = {"Best": reconcile_best,
+                                 "InvVar": reconcile_invvar,
+                                 "ShapeWeight": reconcile_shape_weight,
+                                 "Keep": reconcile_chains_keep}
+
+default_chains_reconciliation_method = "Keep"
 
 shear_estimation_method_table_formats = {"KSB": ksbm_tf,
                                          "REGAUSS": regm_tf,

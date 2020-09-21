@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different chains.
 """
 
-__updated__ = "2020-09-03"
+__updated__ = "2020-09-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,49 +21,26 @@ __updated__ = "2020-09-03"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
-from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
-from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
-from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 from SHE_PPT.utility import run_only_once
 from astropy.io.ascii.core import masked
 
 import numpy as np
 
-
-shear_estimation_method_table_formats = {"she.ksbMeasurements": ksbm_tf,
-                                         "she.regaussMeasurements": regm_tf,
-                                         "she.momentsmlMeasurements": mmlm_tf,
-                                         "she.lensmcMeasurements": lmcm_tf,
-                                         "she.bfdMoments": bfdm_tf}
-
 logger = getLogger(__name__)
 
 
-def get_tf(measurements_to_reconcile_table):
-    fits_def = measurements_to_reconcile_table.meta[tf.m.table_format]
-    return shear_estimation_method_table_formats[fits_def]
-
-
-def reconcile_chains_best(measurements_to_reconcile_table,
-                          chains_to_reconcile_table,
+def reconcile_chains_best(chains_to_reconcile_table,
                           output_row,
-                          sem_tf,
                           *args, **kwargs):
     """ Reconciliation method which selects the best (highest-weight) measurement.
 
         Parameters
         ----------
-        measurements_to_reconcile_table : astropy.table.Table
-            The table containing rows of different measurements of the same object
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
             The row to which to output the reconciled measurement
-        sem_tf : Table Format
-            The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
@@ -80,8 +57,8 @@ def reconcile_chains_best(measurements_to_reconcile_table,
     best_index = None
     best_weight = -1e99
 
-    for i in range(len(measurements_to_reconcile_table)):
-        weight = measurements_to_reconcile_table[i][sem_tf.weight]
+    for i in range(len(chains_to_reconcile_table)):
+        weight = chains_to_reconcile_table[i][lmcc_tf.weight]
         if not (np.isnan(weight) or np.isinf(weight)) and weight > best_weight:
             best_index = i
             best_weight = weight
@@ -99,10 +76,8 @@ def reconcile_chains_best(measurements_to_reconcile_table,
     return
 
 
-def reconcile_shape_weight(measurements_to_reconcile_table,
-                           chains_to_reconcile_table,
+def reconcile_shape_weight(chains_to_reconcile_table,
                            output_row,
-                           sem_tf,
                            *args, **kwargs):
     """ Reconciliation method which combines measurements based on supplied shape
         measurement weights.
@@ -110,12 +85,10 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
 
         Parameters
         ----------
-        measurements_to_reconcile_table : astropy.table.Table
-            The table containing rows of different measurements of the same object
+        chains_to_reconcile_table : astropy.table.Table
+            The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
             The row to which to output the reconciled measurement
-        sem_tf : Table Format
-            The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
@@ -128,19 +101,15 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
         None
     """
 
-    weights = measurements_to_reconcile_table[sem_tf.weight]
+    weights = chains_to_reconcile_table[lmcc_tf.weight]
 
-    return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
-                            output_row=output_row,
-                            sem_tf=sem_tf,
+    return reconcile_weight(output_row=output_row,
                             weights=weights,
                             *args, **kwargs)
 
 
-def reconcile_invvar(measurements_to_reconcile_table,
-                     chains_to_reconcile_table,
+def reconcile_invvar(chains_to_reconcile_table,
                      output_row,
-                     sem_tf,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on inverse-shape-variance
         weighting.
@@ -148,12 +117,10 @@ def reconcile_invvar(measurements_to_reconcile_table,
 
         Parameters
         ----------
-        measurements_to_reconcile_table : astropy.table.Table
-            The table containing rows of different measurements of the same object
+        chains_to_reconcile_table : astropy.table.Table
+            The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
             The row to which to output the reconciled measurement
-        sem_tf : Table Format
-            The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
@@ -166,13 +133,11 @@ def reconcile_invvar(measurements_to_reconcile_table,
         None
     """
 
-    weights = 1 / (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
-                          measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
+    weights = 1 / (0.5 * (chains_to_reconcile_table[lmcc_tf.g1_err] ** 2 +
+                          chains_to_reconcile_table[lmcc_tf.g2_err] ** 2))
 
-    return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
-                            chains_to_reconcile_table=chains_to_reconcile_table,
+    return reconcile_weight(chains_to_reconcile_table=chains_to_reconcile_table,
                             output_row=output_row,
-                            sem_tf=sem_tf,
                             weights=weights,
                             *args, **kwargs)
 
@@ -194,20 +159,17 @@ def warn_missing_props(missing_props):
     logger.warning(warning_string[:-1])
 
 
-def reconcile_weight(measurements_to_reconcile_table,
-                     chains_to_reconcile_table,
+def reconcile_weight(chains_to_reconcile_table,
                      output_row,
-                     sem_tf,
+                     weights,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on given weights.
         Parameters
         ----------
-        measurements_to_reconcile_table : astropy.table.Table
-            The table containing rows of different measurements of the same object
+        chains_to_reconcile_table : astropy.table.Table
+            The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
             The row to which to output the reconciled measurement
-        sem_tf : Table Format
-            The table format of the measurements table
         weights : Iterable <float>
             The weights to use for each row of the table
         *args, **kwards
@@ -237,65 +199,63 @@ def reconcile_weight(measurements_to_reconcile_table,
     highest_weight_index = np.argmax(weights)
 
     if tot_weight <= 0:
-        logger.warning("Total weight for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
-                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) + " is not positive. " +
+        logger.warning("Total weight for object " + str(chains_to_reconcile_table[lmcc_tf.ID]) + " with:"
+                       "weight = " + str(chains_to_reconcile_table[lmcc_tf.weight]) + " is not positive. " +
                        "Will output copy of 'best' row.")
-        return reconcile_best(measurements_to_reconcile_table,
+        return reconcile_best(chains_to_reconcile_tablem,
                               output_row,
-                              sem_tf,
-                              weights,
                               *args, **kwargs)
 
     new_props = {}
 
     # Combine each value we can combine simply (where all errors are independent)
     for prop in props_with_independent_errors:
-        if not prop in vars(sem_tf):
+        if not prop in vars(lmcc_tf):
             continue
-        colname = getattr(sem_tf, prop)
+        colname = getattr(lmcc_tf, prop)
         masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = (masked_column * masked_weights).sum() / tot_weight
 
         # If this property has an error, calculate that too
         prop_err = prop + "_err"
-        if not prop_err in vars(sem_tf):
+        if not prop_err in vars(lmcc_tf):
             continue
-        colname_err = getattr(sem_tf, prop_err)
-        masked_column_err = np.ma.masked_array(measurements_to_reconcile_table[colname_err], m)
+        colname_err = getattr(lmcc_tf, prop_err)
+        masked_column_err = np.ma.masked_array(chains_to_reconcile_table[colname_err], m)
         new_props[colname_err] = np.sqrt((np.power(masked_column_err * masked_weights, 2)).sum()) / tot_weight
 
     # Combine properties we sum up
     for prop in props_to_sum:
-        if not prop in vars(sem_tf):
+        if not prop in vars(lmcc_tf):
             continue
-        colname = getattr(sem_tf, prop)
+        colname = getattr(lmcc_tf, prop)
         masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = masked_column.sum()
 
     # Combine properties bitwise or
     for prop in props_to_bitwise_or:
-        if not prop in vars(sem_tf):
+        if not prop in vars(lmcc_tf):
             continue
-        colname = getattr(sem_tf, prop)
+        colname = getattr(lmcc_tf, prop)
         masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m)
         new_props[colname] = np.bitwise_or.reduce(masked_column[~m], axis=0)
 
     # Copy the highest-weight property when we just copy
     for prop in props_to_copy:
-        if not prop in vars(sem_tf):
+        if not prop in vars(lmcc_tf):
             continue
-        colname = getattr(sem_tf, prop)
+        colname = getattr(lmcc_tf, prop)
         new_props[colname] = chains_to_reconcile_table[colname][highest_weight_index]
 
     # Set to NaN properties that can't be sensibly combined in any way
     for prop in props_to_nan:
-        if not prop in vars(sem_tf):
+        if not prop in vars(lmcc_tf):
             continue
-        colname = getattr(sem_tf, prop)
+        colname = getattr(lmcc_tf, prop)
         new_props[colname] = np.NaN
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
-    for prop in measurements_to_reconcile_table.colnames:
+    for prop in chains_to_reconcile_table.colnames:
         missing_props = []
         if prop in new_props:
             output_row[prop] = new_props[prop]
