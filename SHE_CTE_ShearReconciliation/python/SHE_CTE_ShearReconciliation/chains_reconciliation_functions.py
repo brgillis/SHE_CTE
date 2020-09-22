@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different chains.
 """
 
-__updated__ = "2020-09-21"
+__updated__ = "2020-09-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -243,27 +243,39 @@ def reconcile_chains_weight(chains_to_reconcile_table,
     return
 
 
-def reconcile_invvar(chains_to_reconcile_table,
-                     output_row,
-                     *args, **kwargs):
-    """ Reconciliation method which combines chains based on inverse-shape-variance
-        weighting.
-
+def reconcile_chains_keep(chains_to_reconcile_table,
+                          output_row,
+                          *args, **kwargs):
+    """ Reconciliation method which keeps all chains, adjusting weights appropriately.
 
         Parameters
         ----------
         chains_to_reconcile_table : astropy.table.Table
             The table containing rows of different chains of the same object
         output_row : row of astropy.table.Row
-            The row to which to output the reconciled chains
+            The row to which to output the first chain (with adjusted weights)
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
 
         Side-effects
         ------------
-        - output_row is updated with the reconciled chains
+        - output_row is updated with the first chain (with adjusted weights)
 
         Return
         ------
-        None
+        List of rows, one for each observation beyond the first, matching the format of output_row
     """
+
+    weights = chains_to_reconcile_table[lmcc_tf.shape_weight]
+
+    # For any instances of NaN, set the weight to zero
+    weights.data = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
+    # Also for any negative weights (we do this in a separate step to avoid a warning)
+    weights.data = np.where(weights < 0, 0, weights)
+
+    # Make a mask of objects with zero weight
+    m = weights <= 0
+    masked_weights = np.ma.masked_array(weights, m)
+
+    # Calculate the normalized weights
+    masked_normed_weights = masked_weights / masked_weights.sum()
