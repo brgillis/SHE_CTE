@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different chains.
 """
 
-__updated__ = "2020-09-22"
+__updated__ = "2020-09-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -74,6 +74,38 @@ def reconcile_chains_best(chains_to_reconcile_table,
         output_row[colname] = best_chains_row[colname]
 
     return
+
+
+def reconcile_chains_invvar(chains_to_reconcile_table,
+                            output_row,
+                            *args, **kwargs):
+    """ Reconciliation method which combines chains using the inverse of the supplied
+        variance as the weight.
+
+
+        Parameters
+        ----------
+        chains_to_reconcile_table : astropy.table.Table
+            The table containing rows of different chains of the same object
+        output_row : row of astropy.table.Row
+            The row to which to output the reconciled chains
+        *args, **kwards
+            Needed in case a different reconciliation method has an expanded interface
+
+        Side-effects
+        ------------
+        - output_row is updated with the reconciled chains
+
+        Return
+        ------
+        None
+    """
+
+    weights = 1. / chains_to_reconcile_table[lmcc_tf.e_var]
+
+    return reconcile_chains_weight(output_row=output_row,
+                                   weights=weights,
+                                   *args, **kwargs)
 
 
 def reconcile_chains_shape_weight(chains_to_reconcile_table,
@@ -211,24 +243,13 @@ def reconcile_chains_weight(chains_to_reconcile_table,
         colname = getattr(lmcc_tf, prop)
         new_props[colname] = np.NaN
 
-    # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
+    # Use the shape noise to calculate new weight
 
-    masked_inv_shear_weight_column = 1. / np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.weight], m)
-    masked_inv_shape_weight_column = 1. / np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_weight], m)
+    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_noise], m)**2
 
-    if not (masked_inv_shear_weight_column[~m] > masked_inv_shape_weight_column[~m]).all():
-        logger.warning("Cannot determine shape noise for object " + str(chains_to_reconcile_table[lmcc_tf.ID]) + " with:"
-                       "shear weight = " + str(chains_to_reconcile_table[lmcc_tf.weight]) +
-                       "\nshape weight = " + str(chains_to_reconcile_table[lmcc_tf.shape_weight]) +
-                       "\nSetting weight to 0.")
-        new_props[sem_tf.weight] = 0.
-        new_props[sem_tf.shape_weight] = 0.
-    else:
-        shape_noise_var = (masked_inv_shear_weight_column[~m] - masked_inv_shape_weight_column[~m]).mean()
-
-        shape_weight = masked_weights.sum(axis=0)
-        new_props[sem_tf.shape_weight] = shape_weight
-        new_props[sem_tf.weight] = 1. / (1. / shape_weight + shape_noise_var)
+    shape_weight = masked_weights.sum(axis=0)
+    new_props[sem_tf.shape_weight] = shape_weight
+    new_props[sem_tf.weight] = 1. / (1. / shape_weight + shape_noise_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in chains_to_reconcile_table.colnames:
