@@ -265,7 +265,7 @@ def reconcile_shear_from_args(args):
                                               workdir=args.workdir)
 
         # If we don't have any data, don't write a table at all
-        if len(reconciled_catalog) == 0:
+        if reconciled_catalog is None or len(reconciled_catalog) == 0:
 
             logger.info("No data to output for method " + shear_estimation_method + ".")
 
