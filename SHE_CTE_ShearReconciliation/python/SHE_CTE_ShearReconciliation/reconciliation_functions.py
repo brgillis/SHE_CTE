@@ -145,8 +145,7 @@ def reconcile_invvar(measurements_to_reconcile_table,
         None
     """
 
-    weights = 1 / (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
-                          measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
+    weights = 1 / measurements_to_reconcile_table[sem_tf.e_var]
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,

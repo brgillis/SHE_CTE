@@ -45,15 +45,15 @@ sem_names = ("KSB",
              "MomentsML",
              "REGAUSS")
 
-sem_tfs = {"KSB":ksbm_tf,
-           "LensMC":lmcm_tf,
-           "MomentsML":mmlm_tf,
-           "REGAUSS":regm_tf}
+sem_tfs = {"KSB": ksbm_tf,
+           "LensMC": lmcm_tf,
+           "MomentsML": mmlm_tf,
+           "REGAUSS": regm_tf}
 
-sem_initialisers = {"KSB":initialise_ksb_measurements_table,
-                    "LensMC":initialise_lensmc_measurements_table,
-                    "MomentsML":initialise_momentsml_measurements_table,
-                    "REGAUSS":initialise_regauss_measurements_table}
+sem_initialisers = {"KSB": initialise_ksb_measurements_table,
+                    "LensMC": initialise_lensmc_measurements_table,
+                    "MomentsML": initialise_momentsml_measurements_table,
+                    "REGAUSS": initialise_regauss_measurements_table}
 
 
 class Args(object):
@@ -71,9 +71,12 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     r2 = t2.loc[i]
     assert np.isclose(r1[sem_tf.g1], r2[sem_tf.g1]), "Row " + str(i) + " doesn't match expected value for g1."
     assert np.isclose(r1[sem_tf.g2], r2[sem_tf.g2]), "Row " + str(i) + " doesn't match expected value for g2."
-    assert np.isclose(r1[sem_tf.g1_err], r2[sem_tf.g1_err]), "Row " + str(i) + " doesn't match expected value for g1_err."
-    assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + str(i) + " doesn't match expected value for g2_err."
-    assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + str(i) + " doesn't match expected value for weight."
+    assert np.isclose(r1[sem_tf.g1_err], r2[sem_tf.g1_err]), "Row " + \
+        str(i) + " doesn't match expected value for g1_err."
+    assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + \
+        str(i) + " doesn't match expected value for g2_err."
+    assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + \
+        str(i) + " doesn't match expected value for weight."
 
     return
 
@@ -111,7 +114,8 @@ class TestCase:
                                                                                (6, 12, -0.04, 0.04, 0.02, 0.02, None),
                                                                                (8, 19, 0.1, 0.2, 0.001, 0.001, None),
                                                                                (0, 19, 0, 0, np.nan, np.nan, np.nan),
-                                                                               (0, 19, np.nan, np.nan, np.nan, np.nan, np.inf),
+                                                                               (0, 19, np.nan, np.nan,
+                                                                                np.nan, np.nan, np.inf),
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
 
                 if weight is None:
@@ -128,6 +132,8 @@ class TestCase:
                 t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
                 t[tf.weight] = np.ones(l, dtype=">f4") * weight
+                t[tf.e_var] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
+                t[tf.shape_noise] = np.ones(l, dtype=">f4") * shape_noise
                 t.add_index(tf.ID)
                 tables.append(t)
 
@@ -260,8 +266,10 @@ class TestCase:
         mer_final_catalog_data_filename = get_allowed_filename("MFC", "TEST", version=SHE_CTE.__version__)
         mer_final_catalog_table.write(os.path.join(self.workdir, mer_final_catalog_data_filename))
 
-        mer_final_catalog_product = products.mer_final_catalog.create_dpd_mer_final_catalog(mer_final_catalog_data_filename)
-        mer_final_catalog_product_filename = get_allowed_filename("MFC-P", "TEST", version=SHE_CTE.__version__, subdir="")
+        mer_final_catalog_product = products.mer_final_catalog.create_dpd_mer_final_catalog(
+            mer_final_catalog_data_filename)
+        mer_final_catalog_product_filename = get_allowed_filename(
+            "MFC-P", "TEST", version=SHE_CTE.__version__, subdir="")
         write_xml_product(mer_final_catalog_product, mer_final_catalog_product_filename,
                           workdir=self.workdir, allow_pickled=False)
 
