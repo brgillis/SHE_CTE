@@ -24,6 +24,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import write_xml_product, read_xml_product, get_allowed_filename, write_listfile
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf, initialise_mer_final_catalog
 from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf, initialise_ksb_measurements_table
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, initialise_lensmc_chains_table, len_chain
 from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf, initialise_lensmc_measurements_table
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf, initialise_momentsml_measurements_table
@@ -81,7 +82,7 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     return
 
 
-class TestCase:
+class TestReconcileShear:
     """
     """
 
@@ -101,9 +102,12 @@ class TestCase:
 
         # We'll set up some mock tables from each method, using the same values for each method
         cls.sem_table_lists = {}
+        cls.chains_table_list = []
         for sem in sem_names:
 
             tf = sem_tfs[sem]
+
+            make_chains = sem == "LensMC"
 
             tables = []
 
@@ -120,8 +124,10 @@ class TestCase:
 
                 if weight is None:
                     weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + cls.shape_noise ** 2)
-
                 l = i_max - i_min + 1
+
+                # Create the measurements table
+
                 # t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
                 t = sem_initialisers[sem](optional_columns=(tf.e_var, tf.shape_noise))
                 for _ in range(l):
@@ -138,6 +144,25 @@ class TestCase:
                 t[tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
                 t.add_index(tf.ID)
                 tables.append(t)
+
+                if make_chains:
+                    # Create the chains table
+
+                    tc = initialise_lensmc_chains_table(optional_columns=(lmcc_tf.e_var, lmcc_tf.shape_noise))
+                    for _ in range(l):
+                        tc.add_row()
+
+                    tc[lmcc_tf.ID] = np.arange(l) + i_min
+                    tc[lmcc_tf.g1] = np.array((cls.true_g1[i_min:i_max + 1],)).transpose() + g1_offset + \
+                        np.random.standard_normal((l, len_chain)) * g1_err
+                    tc[lmcc_tf.g2] = np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset + \
+                        np.random.standard_normal((l, len_chain)) * g2_err
+                    tc[lmcc_tf.weight] = np.ones(l, dtype=">f4") * weight
+                    # tc[lmcc_tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.e_var] = np.ones(l, dtype=">f4") * (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
+                    tc.add_index(lmcc_tf.ID)
+                    cls.chains_table_list.append(t)
 
             cls.sem_table_lists[sem] = tables
 

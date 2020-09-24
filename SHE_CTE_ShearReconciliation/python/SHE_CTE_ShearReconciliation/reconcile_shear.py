@@ -40,6 +40,7 @@ from galsim import shear
 
 import SHE_CTE
 from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
+                                                                         reconcile_chains_invvar,
                                                                          reconcile_chains_shape_weight,
                                                                          reconcile_chains_keep)
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
@@ -57,6 +58,7 @@ reconciliation_methods = {"Best": reconcile_best,
 default_reconciliation_method = "InvVar"
 
 chains_reconciliation_methods = {"Best": reconcile_chains_best,
+                                 "InvVar": reconcile_chains_invvar,
                                  "ShapeWeight": reconcile_chains_shape_weight,
                                  "Keep": reconcile_chains_keep}
 
