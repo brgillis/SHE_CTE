@@ -270,7 +270,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         new_props[colname] = np.NaN
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[sem_tf.shape_noise], m)**2
+    shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
     new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
                                             new_props[sem_tf.g2_err] ** 2) + shape_noise_var)
 

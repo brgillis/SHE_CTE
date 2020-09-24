@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2020-09-21"
+__updated__ = "2020-09-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -77,7 +77,7 @@ shear_estimation_method_table_initialisers = {"KSB": initialise_ksb_measurements
 assert default_reconciliation_method in reconciliation_methods
 
 
-def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, table_initialiser):
+def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_columns, table_initialiser):
     """ Stores an object's info (from its row) in the proper table within the ids_to_reconcile dict, so it
         can be handled later.
     """
@@ -88,7 +88,7 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, table_ini
     # Is this the first conflict with this ID?
     if not id in ids_to_reconcile:
         # First conflict, so add the id with a table using the existing row
-        t = table_initialiser()
+        t = table_initialiser(optional_columns=optional_columns)
         t.add_row(existing_row)
         ids_to_reconcile[id] = t
     else:
@@ -109,13 +109,8 @@ def reconcile_tables(shear_estimates_tables,
     sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
     table_initialiser = shear_estimation_method_table_initialisers[shear_estimation_method]
 
-    # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
-    # this will store the first temporarily and later be updated with the reconciled result
-    # TODO - set tile ID in header
-    reconciled_catalog = table_initialiser()
-
-    # Set up the object ID to be used as an index for this catalog
-    reconciled_catalog.add_index(sem_tf.ID)
+    # We'll properly create the reconciled catalog once we know what optional columns to include in it
+    reconciled_catalog = None
 
     # Create a dict of objects needing reconciliation. Keys are object IDs, and values are tables containing
     # one row for each separate measurement
@@ -145,6 +140,19 @@ def reconcile_tables(shear_estimates_tables,
             raise ValueError("Table " + qualified_estimates_table_filename + " is not in expected table format (" +
                              sem_tf.m.table_format + "). See log for details of error.")
 
+        # We can now create the reconciled catalog
+        if reconciled_catalog is None:
+
+            # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
+            # this will store the first temporarily and later be updated with the reconciled result
+            # TODO - set tile ID in header
+            optional_columns = estimates_table.colnames
+
+            reconciled_catalog = table_initialiser(optional_columns=optional_columns)
+
+            # Set up the object ID to be used as an index for this catalog
+            reconciled_catalog.add_index(sem_tf.ID)
+
         # Loop over the rows of the table
         for row in estimates_table:
             id = row[sem_tf.ID]
@@ -159,10 +167,11 @@ def reconcile_tables(shear_estimates_tables,
                                   existing_row=reconciled_catalog.loc[id],
                                   ids_to_reconcile=ids_to_reconcile,
                                   sem_tf=sem_tf,
+                                  optional_columns=optional_columns,
                                   table_initialiser=table_initialiser)
 
             else:
-                # Otherwise, add it to the reconciled catalog
+                # Otherwise, add it to the reconcil['SHE_LENSMC_ASSUMED_SHAPE_NOISE']ed catalog
                 reconciled_catalog.add_row(row)
                 ids_in_reconciled_catalog.add(id)
 
