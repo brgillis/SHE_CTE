@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different chains.
 """
 
-__updated__ = "2020-09-23"
+__updated__ = "2020-09-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -300,3 +300,28 @@ def reconcile_chains_keep(chains_to_reconcile_table,
 
     # Calculate the normalized weights
     masked_normed_weights = masked_weights / masked_weights.sum()
+
+    # Use the shape noise to calculate new total weight
+
+    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_noise], m)**2
+
+    total_shape_weight = masked_weights.sum(axis=0)
+    total_shear_weight = 1. / (1. / total_shape_weight + shape_noise_var)
+
+    first_row = True
+    extra_rows = []
+
+    for i in range(len(chains_to_reconcile_table)):
+
+        row = chains_to_reconcile_table[i]
+        row[lmcc_tf.weight] = total_shear_weight * masked_normed_weights[i]
+
+        if not first_row:
+            extra_rows.append(row)
+            continue
+
+        # For the first row, update the existing row in the catalog
+        for colname in row.colnames:
+            output_row[colname] = row[colname]
+
+    return extra_rows
