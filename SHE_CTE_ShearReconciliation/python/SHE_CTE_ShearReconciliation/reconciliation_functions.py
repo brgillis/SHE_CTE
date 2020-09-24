@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2020-09-21"
+__updated__ = "2020-09-24"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -271,24 +271,9 @@ def reconcile_weight(measurements_to_reconcile_table,
         new_props[colname] = np.NaN
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-
-    masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
-    masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
-    masked_g2_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g2_err], m)
-
-    masked_shape_var = 0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2)
-
-    if not (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
-        logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
-                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
-                       "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
-                       "\ng2_err = " + str(measurements_to_reconcile_table[sem_tf.g2_err]) +
-                       "\nSetting weight to 0.")
-        new_props[sem_tf.weight] = 0.
-    else:
-        shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
-        new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
-                                                new_props[sem_tf.g2_err] ** 2) + shape_var)
+    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[sem_tf.shape_noise], m)**2
+    new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
+                                            new_props[sem_tf.g2_err] ** 2) + shape_noise_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in measurements_to_reconcile_table.colnames:
