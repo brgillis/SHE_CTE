@@ -122,6 +122,7 @@ class TestCase:
                     weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + cls.shape_noise ** 2)
 
                 l = i_max - i_min + 1
+                # t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
                 t = sem_initialisers[sem](optional_columns=(tf.e_var, tf.shape_noise))
                 for _ in range(l):
                     t.add_row()
@@ -132,6 +133,7 @@ class TestCase:
                 t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
                 t[tf.weight] = np.ones(l, dtype=">f4") * weight
+                # t[tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
                 t[tf.e_var] = np.ones(l, dtype=">f4") * (g1_err**2 + g2_err**2)
                 t[tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
                 t.add_index(tf.ID)
@@ -182,6 +184,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Not available until DM update")
     def test_reconcile_shape_weight(self):
 
         sem = "LensMC"

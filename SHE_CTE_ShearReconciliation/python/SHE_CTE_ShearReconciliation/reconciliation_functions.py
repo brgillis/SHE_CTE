@@ -108,7 +108,7 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
         None
     """
 
-    weights = measurements_to_reconcile_table[sem_tf.weight]
+    weights = measurements_to_reconcile_table[sem_tf.shape_weight]
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
