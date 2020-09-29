@@ -410,14 +410,15 @@ class TestReconcileShear:
         assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18, 0)
 
         # Check combination of tables 0 and 1 is sensible
-        test_row = reconciled_chains.loc[6]
-        assert np.isclose(test_row[lmcc_tf.g1].mean(), self.true_g1[6])
-        assert np.isclose(test_row[lmcc_tf.g2].mean(), self.true_g2[6])
+        test_row_0 = reconciled_chains.loc[6][0]
+        test_row_1 = reconciled_chains.loc[6][1]
+        assert test_row_0[lmcc_tf.g1].mean() > self.true_g1[6]
+        assert test_row_0[lmcc_tf.g2].mean() < self.true_g2[6]
+        assert test_row_1[lmcc_tf.g1].mean() < self.true_g1[6]
+        assert test_row_1[lmcc_tf.g2].mean() > self.true_g2[6]
 
-        # Weight should be less than the max weight, but higher than at least one individual weight
-        assert test_row[lmcc_tf.weight] < self.max_weight
-        assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
-                test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
+        # Test that the weights add up properly
+        assert test_row_0[lmcc_tf.weight] + test_row_1[lmcc_tf.weight] < self.max_weight
 
         return
 
