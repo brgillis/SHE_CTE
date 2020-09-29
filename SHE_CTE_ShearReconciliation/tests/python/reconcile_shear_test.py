@@ -261,8 +261,8 @@ class TestReconcileShear:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_catalog.loc[6]
-        assert test_row[sem_tf.g1] < self.true_g1[6]
-        assert test_row[sem_tf.g2] > self.true_g2[6]
+        assert np.isclose(test_row[sem_tf.g1], self.true_g1[6])
+        assert np.isclose(test_row[sem_tf.g2], self.true_g2[6])
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[sem_tf.weight] < self.max_weight
@@ -350,8 +350,8 @@ class TestReconcileShear:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_chains.loc[6]
-        assert test_row[lmcc_tf.g1].mean() < self.true_g1[6]
-        assert test_row[lmcc_tf.g2].mean() > self.true_g2[6]
+        assert np.isclose(test_row[lmcc_tf.g1].mean(), self.true_g1[6])
+        assert np.isclose(test_row[lmcc_tf.g2].mean(), self.true_g2[6])
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[lmcc_tf.weight] < self.max_weight
@@ -379,13 +379,13 @@ class TestReconcileShear:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_chains.loc[6]
-        assert test_row[lmcc_tf.g1].mean() < self.true_g1[6]
-        assert test_row[lmcc_tf.g2].mean() > self.true_g2[6]
+        assert np.isclose(test_row[lmcc_tf.g1].mean(), self.true_g1[6])
+        assert np.isclose(test_row[lmcc_tf.g2].mean(), self.true_g2[6])
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[lmcc_tf.weight] < self.max_weight
-        assert (test_row[lmcc_tf.weight] > self.chains_table_list[0][0].loc[6][lmcc_tf.weight] or
-                test_row[lmcc_tf.weight] > self.chains_table_list[0][1].loc[6][lmcc_tf.weight])
+        assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
+                test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
 
         return
 
