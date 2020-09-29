@@ -172,11 +172,16 @@ class TestReconcileShear:
                     for _ in range(l):
                         tc.add_row()
 
+                    # Use a stable set of deviates which average to zero for consistency
+                    deviates_first_half = np.random.standard_normal((l, len_chain // 2))
+                    deviates_second_half = -deviates_first_half
+                    deviates = np.concatenate((deviates_first_half, deviates_second_half), axis=1)
+
                     tc[lmcc_tf.ID] = np.arange(l) + i_min
                     tc[lmcc_tf.g1] = (np.array((cls.true_g1[i_min:i_max + 1],)).transpose() + g1_offset +
-                                      np.random.standard_normal((l, len_chain)) * g1_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                                      deviates * g1_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
                     tc[lmcc_tf.g2] = (np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset +
-                                      np.random.standard_normal((l, len_chain)) * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                                      deviates * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
                     tc[lmcc_tf.weight] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.weight]) * weight
                     # tc[lmcc_tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
                     tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (g1_err**2 + g2_err**2)
@@ -345,8 +350,8 @@ class TestReconcileShear:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_chains.loc[6]
-        assert (test_row[lmcc_tf.g1] < self.true_g1[6]).all()
-        assert (test_row[lmcc_tf.g2] > self.true_g2[6]).all()
+        assert test_row[lmcc_tf.g1].mean() < self.true_g1[6]
+        assert test_row[lmcc_tf.g2].mean() > self.true_g2[6]
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[lmcc_tf.weight] < self.max_weight
@@ -374,8 +379,8 @@ class TestReconcileShear:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_chains.loc[6]
-        assert (test_row[lmcc_tf.g1] < self.true_g1[6]).all()
-        assert (test_row[lmcc_tf.g2] > self.true_g2[6]).all()
+        assert test_row[lmcc_tf.g1].mean() < self.true_g1[6]
+        assert test_row[lmcc_tf.g2].mean() > self.true_g2[6]
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[lmcc_tf.weight] < self.max_weight
