@@ -4,22 +4,6 @@
 
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
-
-__updated__ = "2020-09-24"
-
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
-#
-# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
-# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
-# any later version.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
 import os
 
 from SHE_PPT import products
@@ -30,6 +14,7 @@ from SHE_PPT.pipeline_utility import ReconciliationConfigKeys, read_reconciliati
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table
 from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
@@ -47,6 +32,22 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
                                                                   reconcile_invvar,
                                                                   reconcile_shape_weight)
 import numpy as np
+
+
+__updated__ = "2020-09-29"
+
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 
 logger = getLogger(__name__)
@@ -173,7 +174,7 @@ def reconcile_tables(shear_estimates_tables,
                                   table_initialiser=table_initialiser)
 
             else:
-                # Otherwise, add it to the reconcil['SHE_LENSMC_ASSUMED_SHAPE_NOISE']ed catalog
+                # Otherwise, add it to the reconciled catalog
                 reconciled_catalog.add_row(row)
                 ids_in_reconciled_catalog.add(id)
 
@@ -186,6 +187,90 @@ def reconcile_tables(shear_estimates_tables,
                                 output_row=reconciled_catalog.loc[id],
                                 sem_tf=sem_tf)
     return reconciled_catalog
+
+
+def reconcile_chains(chains_tables,
+                     object_ids_in_tile,
+                     chains_reconciliation_function,
+                     workdir=None):
+
+    # We'll properly create the reconciled chains catalog once we know what optional columns to include in it
+    reconciled_chains = None
+
+    # Create a dict of objects needing reconciliation. Keys are object IDs, and values are tables containing
+    # one row for each separate measurement
+    ids_to_reconcile = {}
+
+    # Create a set of IDs we've added to the table (faster to access than column indices)
+    ids_in_reconciled_chains = set()
+
+    # Loop through each table
+    for chains_table in chains_tables:
+
+        if chains_table is None or chains_table == "None" or chains_table == "data/None":
+            continue
+
+        if isinstance(chains_table, str):
+            if workdir is None:
+                raise ValueError("If a filename is passed to reconcile_chains (\"" + chains_table + "\"), " +
+                                 "the workdir must also be supplied.")
+            # It's a filename, so load it in
+            qualified_chains_table_filename = os.path.join(workdir, chains_table)
+            chains_table = Table.read(qualified_estimates_table_filename)
+        else:
+            # If it's not a filename, store the string version of the table for logging purposes
+            qualified_chains_table_filename = str(chains_table)
+
+        # Ensure it's in the right format
+        if not is_in_format(chains_table, lmcc_tf, verbose=True):
+            raise ValueError("Table " + qualified_chains_table_filename + " is not in expected table format (" +
+                             lmcc_tf.m.table_format + "). See log for details of error.")
+
+        # We can now create the reconciled catalog
+        if reconciled_chains is None:
+
+            # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
+            # this will store the first temporarily and later be updated with the reconciled result
+            # TODO - set tile ID in header
+            optional_columns = chains_table.colnames
+
+            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_columns)
+
+            # Set up the object ID to be used as an index for this catalog
+            reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Loop over the rows of the table
+        for row in chains_table:
+            id = row[lmcc_tf.ID]
+
+            # Skip if this ID isn't in the MER catalog for the Tile
+            if id not in ids_in_reconciled_chains:
+                continue
+
+            # Check if this ID is already in the reconciled catalog
+            if id in ids_in_reconciled_chains:
+                store_chains_object_info(new_row=row,
+                                         existing_row=reconciled_catalog.loc[id],
+                                         ids_to_reconcile=ids_to_reconcile,
+                                         optional_columns=optional_columns)
+
+            else:
+                # Otherwise, add it to the reconciled catalog
+                reconciled_chains.add_row(row)
+                ids_in_reconciled_catalog.add(id)
+
+        # End looping through rows of this table
+    # End looping through tables
+
+    # Now, we need to perform the reconciliation of each id
+    for id in ids_to_reconcile:
+        extra_rows = chains_reconciliation_function(chains_to_reconcile_table=ids_to_reconcile[id],
+                                                    output_row=reconciled_chains.loc[id])
+        if extra_rows is not None:
+            for extra_row in extra_rows:
+                reconciled_chains.add_row(extra_row)
+
+    return reconciled_chains
 
 
 def reconcile_shear_from_args(args):
