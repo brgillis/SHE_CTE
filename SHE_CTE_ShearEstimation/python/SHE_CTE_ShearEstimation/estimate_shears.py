@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-09-03"
+__updated__ = "2020-09-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -377,7 +377,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
                                                                 version=SHE_CTE.__version__,
-                                                                subdir=subfolder_name),
+                                                                subdir=subfolder_name)
 
                     chains_table.write(os.path.join(args.workdir, chains_data_filename))
 
