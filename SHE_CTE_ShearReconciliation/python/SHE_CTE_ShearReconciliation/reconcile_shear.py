@@ -244,20 +244,22 @@ def reconcile_chains(chains_tables,
             id = row[lmcc_tf.ID]
 
             # Skip if this ID isn't in the MER catalog for the Tile
-            if id not in ids_in_reconciled_chains:
+            if id not in object_ids_in_tile:
                 continue
 
             # Check if this ID is already in the reconciled catalog
             if id in ids_in_reconciled_chains:
-                store_chains_object_info(new_row=row,
-                                         existing_row=reconciled_catalog.loc[id],
-                                         ids_to_reconcile=ids_to_reconcile,
-                                         optional_columns=optional_columns)
+                store_object_info(new_row=row,
+                                  existing_row=reconciled_chains.loc[id],
+                                  ids_to_reconcile=ids_to_reconcile,
+                                  sem_tf=lmcc_tf,
+                                  optional_columns=optional_columns,
+                                  table_initialiser=initialise_lensmc_chains_table)
 
             else:
                 # Otherwise, add it to the reconciled catalog
                 reconciled_chains.add_row(row)
-                ids_in_reconciled_catalog.add(id)
+                ids_in_reconciled_chains.add(id)
 
         # End looping through rows of this table
     # End looping through tables

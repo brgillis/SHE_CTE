@@ -92,8 +92,8 @@ def assert_chains_rows_equal(t1, t2, i):
 
     r1 = t1.loc[i]
     r2 = t2.loc[i]
-    assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]), "Row " + str(i) + " doesn't match expected value for g1."
-    assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]), "Row " + str(i) + " doesn't match expected value for g2."
+    assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]).all(), "Row " + str(i) + " doesn't match expected value for g1."
+    assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]).all(), "Row " + str(i) + " doesn't match expected value for g2."
     assert np.isclose(r1[lmcc_tf.shape_noise], r2[lmcc_tf.shape_noise]), "Row " + \
         str(i) + " doesn't match expected value for shape noise."
     assert np.isclose(r1[lmcc_tf.weight], r2[lmcc_tf.weight]), "Row " + \
