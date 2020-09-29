@@ -101,7 +101,7 @@ def reconcile_chains_invvar(chains_to_reconcile_table,
         None
     """
 
-    weights = 1. / chains_to_reconcile_table[lmcc_tf.e_var]
+    weights = 1. / (0.5 * chains_to_reconcile_table[lmcc_tf.e_var])
 
     return reconcile_chains_weight(chains_to_reconcile_table=chains_to_reconcile_table,
                                    output_row=output_row,
@@ -144,7 +144,7 @@ def reconcile_chains_shape_weight(chains_to_reconcile_table,
 
 # Data used for weight reconciliation
 props_with_independent_errors = ("g1", "g2", "ra", "dec", "re", "flux",
-                                 "bulge_frac", "snr", "lr", "shape_noise")
+                                 "bulge_frac", "snr", "lr", "shape_noise", "e_var")
 props_to_sum = ("nexp",)
 props_to_bitwise_or = ("fit_flags", "val_flags",)
 props_to_copy = ("ID", "fit_class")
