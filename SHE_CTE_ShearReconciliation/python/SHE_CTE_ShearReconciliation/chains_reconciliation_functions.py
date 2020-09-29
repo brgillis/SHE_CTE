@@ -199,7 +199,7 @@ def reconcile_chains_weight(chains_to_reconcile_table,
 
     len_weights = len(weights)
 
-    tot_weight = weights.sum()
+    tot_weight = masked_weights.sum()
     highest_weight_index = np.argmax(weights)
 
     if tot_weight <= 0:
@@ -303,23 +303,25 @@ def reconcile_chains_keep(chains_to_reconcile_table,
         List of rows, one for each observation beyond the first, matching the format of output_row
     """
 
-    weights = chains_to_reconcile_table[lmcc_tf.shape_weight]
+    weights = 1 / (0.5 * chains_to_reconcile_table[lmcc_tf.e_var])
 
     # For any instances of NaN, set the weight to zero
-    weights.data = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
+    weights = np.where(np.logical_or(np.isnan(weights), np.isinf(weights)), 0, weights)
     # Also for any negative weights (we do this in a separate step to avoid a warning)
-    weights.data = np.where(weights < 0, 0, weights)
+    weights = np.where(weights < 0, 0, weights)
 
     # Make a mask of objects with zero weight
     m = weights <= 0
     masked_weights = np.ma.masked_array(weights, m)
+    tot_weight = masked_weights.sum()
 
     # Calculate the normalized weights
     masked_normed_weights = masked_weights / masked_weights.sum()
 
     # Use the shape noise to calculate new total weight
 
-    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_noise], m)**2
+    shape_noise_var = (
+        masked_weights * np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_noise], m)**2).sum() / tot_weight
 
     total_shape_weight = masked_weights.sum(axis=0)
     total_shear_weight = 1. / (1. / total_shape_weight + shape_noise_var)
