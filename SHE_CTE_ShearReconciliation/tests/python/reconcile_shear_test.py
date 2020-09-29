@@ -173,16 +173,16 @@ class TestReconcileShear:
                         tc.add_row()
 
                     tc[lmcc_tf.ID] = np.arange(l) + i_min
-                    tc[lmcc_tf.g1] = np.array((cls.true_g1[i_min:i_max + 1],)).transpose() + g1_offset + \
-                        np.random.standard_normal((l, len_chain)) * g1_err
-                    tc[lmcc_tf.g2] = np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset + \
-                        np.random.standard_normal((l, len_chain)) * g2_err
-                    tc[lmcc_tf.weight] = np.ones(l, dtype=">f4") * weight
+                    tc[lmcc_tf.g1] = (np.array((cls.true_g1[i_min:i_max + 1],)).transpose() + g1_offset +
+                                      np.random.standard_normal((l, len_chain)) * g1_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                    tc[lmcc_tf.g2] = (np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset +
+                                      np.random.standard_normal((l, len_chain)) * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                    tc[lmcc_tf.weight] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.weight]) * weight
                     # tc[lmcc_tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
-                    tc[lmcc_tf.e_var] = np.ones(l, dtype=">f4") * (g1_err**2 + g2_err**2)
-                    tc[lmcc_tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
+                    tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.shape_noise] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_noise]) * cls.shape_noise
                     tc.add_index(lmcc_tf.ID)
-                    cls.chains_table_list.append(t)
+                    cls.chains_table_list.append(tc)
 
             cls.sem_table_lists[sem] = tables
 
@@ -306,7 +306,7 @@ class TestReconcileShear:
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
                                              object_ids_in_tile=self.object_ids_in_tile,
-                                             reconciliation_function=reconcile_chains_best,
+                                             chains_reconciliation_function=reconcile_chains_best,
                                              workdir=self.workdir)
 
         assert(len(reconciled_chains) == 19)
