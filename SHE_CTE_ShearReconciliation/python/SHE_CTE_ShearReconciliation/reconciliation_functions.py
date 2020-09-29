@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2020-09-24"
+__updated__ = "2020-09-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -282,6 +282,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         else:
             missing_props.append(prop)
             output_row[prop] = np.NaN
-        warn_missing_props(missing_props)
+        if len(missing_props) > 0:
+            warn_missing_props(missing_props)
 
     return

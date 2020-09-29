@@ -144,7 +144,7 @@ def reconcile_chains_shape_weight(chains_to_reconcile_table,
 
 # Data used for weight reconciliation
 props_with_independent_errors = ("g1", "g2", "ra", "dec", "re", "flux",
-                                 "bulge_frac", "snr", "lr")
+                                 "bulge_frac", "snr", "lr", "shape_noise")
 props_to_sum = ("nexp",)
 props_to_bitwise_or = ("fit_flags", "val_flags",)
 props_to_copy = ("ID", "fit_class")
@@ -262,11 +262,9 @@ def reconcile_chains_weight(chains_to_reconcile_table,
 
     # Use the shape noise to calculate new weight
 
-    shape_noise_var = np.ma.masked_array(chains_to_reconcile_table[lmcc_tf.shape_noise], m)**2
-
     shape_weight = masked_weights.sum(axis=0)
     # new_props[lmcc_tf.shape_weight] = shape_weight
-    new_props[lmcc_tf.weight] = 1. / (1. / shape_weight + shape_noise_var)
+    new_props[lmcc_tf.weight] = 1. / (1. / shape_weight + new_props[lmcc_tf.shape_noise]**2)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in chains_to_reconcile_table.colnames:
@@ -276,7 +274,8 @@ def reconcile_chains_weight(chains_to_reconcile_table,
         else:
             missing_props.append(prop)
             output_row[prop] = np.NaN
-        warn_missing_props(missing_props)
+        if len(missing_props) > 0:
+            warn_missing_props(missing_props)
 
     return
 
