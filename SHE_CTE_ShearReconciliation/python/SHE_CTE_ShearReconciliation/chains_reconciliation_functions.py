@@ -339,6 +339,7 @@ def reconcile_chains_keep(chains_to_reconcile_table,
             continue
 
         # For the first row, update the existing row in the catalog
+        first_row = False
         for colname in row.colnames:
             output_row[colname] = row[colname]
 

@@ -86,11 +86,13 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     return
 
 
-def assert_chains_rows_equal(t1, t2, i):
+def assert_chains_rows_equal(t1, t2, i, which_of_kept=None):
     """ Check that two chains rows match in shear parameters
     """
 
     r1 = t1.loc[i]
+    if which_of_kept is not None:
+        r1 = r1[which_of_kept]
     r2 = t2.loc[i]
     assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]).all(), "Row " + str(i) + " doesn't match expected value for g1."
     assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]).all(), "Row " + str(i) + " doesn't match expected value for g2."
@@ -397,15 +399,15 @@ class TestReconcileShear:
                                              chains_reconciliation_function=reconcile_chains_keep,
                                              workdir=self.workdir)
 
-        assert(len(reconciled_chains) == 19)
+        assert(len(reconciled_chains) == 85)
 
         reconciled_chains.add_index(lmcc_tf.ID)
 
         # Row 1 should exactly match results from table 0, since there's no other data for it
-        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1)
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1, 0)
 
         # Row 18 should exactly match results from table 2, since there's no other data for it
-        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18)
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18, 0)
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_chains.loc[6]
