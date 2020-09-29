@@ -34,11 +34,14 @@ from astropy.table import Table
 import pytest
 
 import SHE_CTE
-from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
-from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_tables
+from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args, reconcile_tables, reconcile_chains
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
                                                                   reconcile_shape_weight,
                                                                   reconcile_invvar)
+from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
+                                                                         reconcile_chains_shape_weight,
+                                                                         reconcile_chains_invvar,
+                                                                         reconcile_chains_keep)
 import numpy as np
 
 sem_names = ("KSB",
@@ -77,6 +80,22 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + \
         str(i) + " doesn't match expected value for g2_err."
     assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + \
+        str(i) + " doesn't match expected value for weight."
+
+    return
+
+
+def assert_chains_rows_equal(t1, t2, i):
+    """ Check that two chains rows match in shear parameters
+    """
+
+    r1 = t1.loc[i]
+    r2 = t2.loc[i]
+    assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]), "Row " + str(i) + " doesn't match expected value for g1."
+    assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]), "Row " + str(i) + " doesn't match expected value for g2."
+    assert np.isclose(r1[lmcc_tf.shape_noise], r2[lmcc_tf.shape_noise]), "Row " + \
+        str(i) + " doesn't match expected value for shape noise."
+    assert np.isclose(r1[lmcc_tf.weight], r2[lmcc_tf.weight]), "Row " + \
         str(i) + " doesn't match expected value for weight."
 
     return
@@ -277,6 +296,28 @@ class TestReconcileShear:
             assert test_row[sem_tf.weight] < self.max_weight
             assert test_row[sem_tf.weight] > sem_table_list[0].loc[6][sem_tf.weight]
             assert test_row[sem_tf.weight] > sem_table_list[1].loc[6][sem_tf.weight]
+
+        return
+
+    def test_reconcile_chains_best(self):
+
+        reconciled_chains = reconcile_chains(shear_estimates_tables=cls.chains_table_list,
+                                             object_ids_in_tile=self.object_ids_in_tile,
+                                             reconciliation_function=reconcile_chains_best,
+                                             workdir=self.workdir)
+
+        assert(len(reconciled_chains) == 19)
+
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Row 1 should exactly match results from table 0
+        assert_chains_rows_equal(reconciled_chains, cls.chains_table_list[0], 1)
+
+        # Also for 6, which overlaps with table 1, but table 0 has higher weight
+        assert_chains_rows_equal(reconciled_chains, cls.chains_table_list[0], 6)
+
+        # Row 8 should be from table 2, which has the highest weight
+        assert_chains_rows_equal(reconciled_chains, cls.chains_table_list[2], 8)
 
         return
 
