@@ -34,7 +34,7 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
 import numpy as np
 
 
-__updated__ = "2020-09-29"
+__updated__ = "2020-09-30"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -333,12 +333,23 @@ def reconcile_shear_from_args(args):
         # Get the table filename for each method, and if it isn't None, add it to that method's list
         for shear_estimation_method in shear_estimation_method_table_formats:
             estimates_table_filename = she_validated_measurement_product.get_method_filename(shear_estimation_method)
-            if estimates_table_filename is not None:
+            if estimates_table_filename is not None and estimates_table_filename != "None" and estimates_table_filename != "data/None":
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
     # Create a data product for the output
     reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
         spatial_footprint=mer_final_catalog_product)
+
+    # Get the filenames of the chains tables to be reconciled
+    lensmc_chains_table_filenames = []
+    she_lensmc_chains_filename_list = read_listfile(os.path.join(args.workdir,
+                                                                 args.she_lensmc_chains_listfile))
+    for she_lensmc_chains_product_filename in she_lensmc_chains_filename_list:
+        she_lensmc_chains_product = read_xml_product(she_lensmc_chains_product_filename, workdir=args.workdir)
+        she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
+        if (she_lensmc_chains_table_filename is not None and she_lensmc_chains_table_filename != "None"
+                and she_lensmc_chains_table_filename != "data/None"):
+            lensmc_chains_table_filenames.append(she_lensmc_chains_table_filename)
 
     # Get the tile_id and set it for the new product
     tile_id = mer_final_catalog_product.Data.TileIndex
@@ -385,6 +396,46 @@ def reconcile_shear_from_args(args):
     logger.info("Outputting reconciled catalog data product to " +
                 os.path.join(args.workdir, args.she_reconciled_measurements))
     write_xml_product(reconciled_catalog_product, args.she_reconciled_measurements, workdir=args.workdir)
+
+    # Now reconcile the chains
+    reconciled_chains_catalog = reconcile_chains(chains_tables=validated_shear_estimates_table_filenames[shear_estimation_method],
+                                                 object_ids_in_tile=object_ids_in_tile,
+                                                 chains_reconciliation_function=chains_reconciliation_function,
+                                                 workdir=args.workdir)
+
+    # Create the output product
+    reconciled_chains_product = products.she_reconciled_lensmc_chains.create_dpd_she_reconciled_lensmc_chains(
+        spatial_footprint=mer_final_catalog_product)
+    reconciled_chains_product.Data.TileIndex = tile_id
+
+    # If we don't have any data, don't write a table at all
+    if reconciled_chains_catalog is None or len(reconciled_catalog) == 0:
+
+        logger.info("No chains data to output.")
+
+        reconciled_chains_product.set_filename(None)
+
+    else:
+
+        # The output table is now finalized, so output it and store the filename in the output data product
+        reconciled_chains_catalog_filename = get_allowed_filename(type_name="REC-LMC-CHAINS",
+                                                                  instance_id=str(tile_id),
+                                                                  extension=".fits",
+                                                                  version=SHE_CTE.__version__)
+
+        qualified_reconciled_chains_catalog_filename = os.path.join(args.workdir, reconciled_chains_catalog_filename)
+
+        logger.info("Outputting reconciled chains catalog to " +
+                    qualified_reconciled_chains_catalog_filename)
+
+        reconciled_chains_catalog.write(qualified_reconciled_catalog_filename)
+
+        reconciled_chains_product.set_filename(reconciled_chains_catalog_filename)
+
+    # Output the finalized chains data product to the desired filename
+    logger.info("Outputting reconciled catalog data product to " +
+                os.path.join(args.workdir, args.she_reconciled_lensmc_chains))
+    write_xml_product(reconciled_chains_product, args.she_reconciled_lensmc_chains, workdir=args.workdir)
 
     logger.debug("# Exiting reconcile_shear_from_args() successfully.")
 
