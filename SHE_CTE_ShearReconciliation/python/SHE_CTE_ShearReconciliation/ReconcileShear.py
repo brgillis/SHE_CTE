@@ -4,7 +4,7 @@
     Author: Bryan Gillis
 """
 
-__updated__ = "2020-09-03"
+__updated__ = "2020-10-05"
 
 #
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -80,6 +80,10 @@ def defineSpecificProgramOptions():
                         help="Which reconciliation method to use. If not specified, will take value from pipeline " +
                              "config if available. If that's not available either, will use default of InvVar " +
                              "(Inverse Variance) combination.")
+
+    parser.add_argument('--chains_method', type=str, default=None,
+                        help="Which chains reconciliation method to use. If not specified, will take value from pipeline " +
+                             "config if available. If that's not available either, will use default of keeping all chains.")
 
     # Output arguments
 

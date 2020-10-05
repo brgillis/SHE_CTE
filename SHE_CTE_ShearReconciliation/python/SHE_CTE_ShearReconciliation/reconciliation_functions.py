@@ -4,13 +4,8 @@
 
     Functions to handle different ways of reconciling different shear estimates.
 """
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import run_only_once
-from astropy.io.ascii.core import masked
 
-import numpy as np
-
-__updated__ = "2020-08-20"
+__updated__ = "2020-09-29"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,6 +20,12 @@ __updated__ = "2020-08-20"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from SHE_PPT.logging import getLogger
+from SHE_PPT.utility import run_only_once
+from astropy.io.ascii.core import masked
+
+import numpy as np
+
 logger = getLogger(__name__)
 
 
@@ -33,7 +34,7 @@ def reconcile_best(measurements_to_reconcile_table,
                    sem_tf,
                    *args, **kwargs):
     """ Reconciliation method which selects the best (highest-weight) measurement.
-    
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -44,12 +45,11 @@ def reconcile_best(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
@@ -57,18 +57,21 @@ def reconcile_best(measurements_to_reconcile_table,
 
     measurements_to_reconcile_table.sort(sem_tf.weight)
 
-    best_row = None
+    # Find the row with the highest weight, ignoring NaN and Inf weights
+    best_index = None
+    best_weight = -1e99
 
     for i in range(len(measurements_to_reconcile_table)):
-        i_from_end = -1 - i
-        test_row = measurements_to_reconcile_table[i_from_end]
-        if not (np.isnan(test_row[sem_tf.weight]) or np.isinf(test_row[sem_tf.weight])):
-            best_row = test_row
-            break
+        weight = measurements_to_reconcile_table[i][sem_tf.weight]
+        if not (np.isnan(weight) or np.isinf(weight)) and weight > best_weight:
+            best_index = i
+            best_weight = weight
 
-    # If we didn't find any good row, just use the last
-    if best_row == None:
-        best_row = measurements_to_reconcile_table[-1]
+    # If no good rows are available, just use the first
+    if best_index is None:
+        best_index = 0
+
+    best_row = measurements_to_reconcile_table[best_index]
 
     # Update the output row
     for colname in output_row.colnames:
@@ -83,8 +86,8 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
                            *args, **kwargs):
     """ Reconciliation method which combines measurements based on supplied shape
         measurement weights.
-    
-    
+
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -95,18 +98,17 @@ def reconcile_shape_weight(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
     """
 
-    weights = measurements_to_reconcile_table[sem_tf.weight]
+    weights = measurements_to_reconcile_table[sem_tf.shape_weight]
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
@@ -121,8 +123,8 @@ def reconcile_invvar(measurements_to_reconcile_table,
                      *args, **kwargs):
     """ Reconciliation method which combines measurements based on inverse-shape-variance
         weighting.
-    
-    
+
+
         Parameters
         ----------
         measurements_to_reconcile_table : astropy.table.Table
@@ -133,19 +135,17 @@ def reconcile_invvar(measurements_to_reconcile_table,
             The table format of the measurements table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
     """
 
-    weights = 1 / (0.5 * (measurements_to_reconcile_table[sem_tf.g1_err] ** 2 +
-                        measurements_to_reconcile_table[sem_tf.g2_err] ** 2))
+    weights = 1 / measurements_to_reconcile_table[sem_tf.e_var]
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
@@ -189,12 +189,11 @@ def reconcile_weight(measurements_to_reconcile_table,
             The weights to use for each row of the table
         *args, **kwards
             Needed in case a different reconciliation method has an expanded interface
-            
+
         Side-effects
         ------------
         - output_row is updated with the reconciled measurement
-        - measurements_to_reconcile_table is sorted by weight
-    
+
         Return
         ------
         None
@@ -271,23 +270,9 @@ def reconcile_weight(measurements_to_reconcile_table,
         new_props[colname] = np.NaN
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-
-    masked_inv_weight_column = 1 / np.ma.masked_array(measurements_to_reconcile_table[sem_tf.weight], m)
-    masked_g1_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g1_err], m)
-    masked_g2_err = np.ma.masked_array(measurements_to_reconcile_table[sem_tf.g2_err], m)
-
-    masked_shape_var = (0.5 * (masked_g1_err ** 2 + masked_g2_err ** 2))
-
-    if not (masked_inv_weight_column[~m] > masked_shape_var[~m]).all():
-        logger.warning("Cannot determine shape noise for object " + str(measurements_to_reconcile_table[sem_tf.ID]) + " with:"
-                       "weight = " + str(measurements_to_reconcile_table[sem_tf.weight]) +
-                       "\ng1_err = " + str(measurements_to_reconcile_table[sem_tf.g1_err]) +
-                       "\ng2_err = " + str(measurements_to_reconcile_table[sem_tf.g2_err]) +
-                       "\nSetting weight to 0.")
-        new_props[sem_tf.weight] = 0.
-    else:
-        shape_var = (masked_inv_weight_column[~m] - masked_shape_var[~m]).mean()
-        new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 + new_props[sem_tf.g2_err] ** 2) + shape_var)
+    shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
+    new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
+                                            new_props[sem_tf.g2_err] ** 2) + shape_noise_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     for prop in measurements_to_reconcile_table.colnames:
@@ -297,7 +282,7 @@ def reconcile_weight(measurements_to_reconcile_table,
         else:
             missing_props.append(prop)
             output_row[prop] = np.NaN
-        warn_missing_props(missing_props)
+        if len(missing_props) > 0:
+            warn_missing_props(missing_props)
 
     return
-

@@ -24,36 +24,41 @@ from SHE_PPT import products
 from SHE_PPT.file_io import write_xml_product, read_xml_product, get_allowed_filename, write_listfile
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf, initialise_mer_final_catalog
 from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf, initialise_ksb_measurements_table
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, initialise_lensmc_chains_table, len_chain
 from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf, initialise_lensmc_measurements_table
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf, initialise_momentsml_measurements_table
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf, initialise_regauss_measurements_table
 from SHE_PPT.table_utility import is_in_format, add_row
-from astropy.table import Table
+from astropy.table import Table, Row
 import pytest
 
 import SHE_CTE
-from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
-from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_tables
+from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
+                                                                         reconcile_chains_shape_weight,
+                                                                         reconcile_chains_invvar,
+                                                                         reconcile_chains_keep)
+from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args, reconcile_tables, reconcile_chains
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
                                                                   reconcile_shape_weight,
                                                                   reconcile_invvar)
 import numpy as np
+
 
 sem_names = ("KSB",
              "LensMC",
              "MomentsML",
              "REGAUSS")
 
-sem_tfs = {"KSB":ksbm_tf,
-           "LensMC":lmcm_tf,
-           "MomentsML":mmlm_tf,
-           "REGAUSS":regm_tf}
+sem_tfs = {"KSB": ksbm_tf,
+           "LensMC": lmcm_tf,
+           "MomentsML": mmlm_tf,
+           "REGAUSS": regm_tf}
 
-sem_initialisers = {"KSB":initialise_ksb_measurements_table,
-                    "LensMC":initialise_lensmc_measurements_table,
-                    "MomentsML":initialise_momentsml_measurements_table,
-                    "REGAUSS":initialise_regauss_measurements_table}
+sem_initialisers = {"KSB": initialise_ksb_measurements_table,
+                    "LensMC": initialise_lensmc_measurements_table,
+                    "MomentsML": initialise_momentsml_measurements_table,
+                    "REGAUSS": initialise_regauss_measurements_table}
 
 
 class Args(object):
@@ -71,14 +76,39 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     r2 = t2.loc[i]
     assert np.isclose(r1[sem_tf.g1], r2[sem_tf.g1]), "Row " + str(i) + " doesn't match expected value for g1."
     assert np.isclose(r1[sem_tf.g2], r2[sem_tf.g2]), "Row " + str(i) + " doesn't match expected value for g2."
-    assert np.isclose(r1[sem_tf.g1_err], r2[sem_tf.g1_err]), "Row " + str(i) + " doesn't match expected value for g1_err."
-    assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + str(i) + " doesn't match expected value for g2_err."
-    assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + str(i) + " doesn't match expected value for weight."
+    assert np.isclose(r1[sem_tf.g1_err], r2[sem_tf.g1_err]), "Row " + \
+        str(i) + " doesn't match expected value for g1_err."
+    assert np.isclose(r1[sem_tf.g2_err], r2[sem_tf.g2_err]), "Row " + \
+        str(i) + " doesn't match expected value for g2_err."
+    assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + \
+        str(i) + " doesn't match expected value for weight."
 
     return
 
 
-class TestCase:
+def assert_chains_rows_equal(t1, t2, i, which_of_kept=None):
+    """ Check that two chains rows match in shear parameters
+    """
+
+    r1 = t1.loc[i]
+    if which_of_kept is not None:
+        if (isinstance(r1, Row) and which_of_kept != 0) or which_of_kept > len(r1):
+            raise ValueError("Fewer rows kept (" + str(len(r1)) +
+                             ") than requested index (" + str(which_of_kept) + ").")
+        if not isinstance(r1, Row):
+            r1 = r1[which_of_kept]
+    r2 = t2.loc[i]
+    assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]).all(), "Row " + str(i) + " doesn't match expected value for g1."
+    assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]).all(), "Row " + str(i) + " doesn't match expected value for g2."
+    assert np.isclose(r1[lmcc_tf.shape_noise], r2[lmcc_tf.shape_noise]), "Row " + \
+        str(i) + " doesn't match expected value for shape noise."
+    assert np.isclose(r1[lmcc_tf.weight], r2[lmcc_tf.weight]), "Row " + \
+        str(i) + " doesn't match expected value for weight."
+
+    return
+
+
+class TestReconcileShear:
     """
     """
 
@@ -98,9 +128,12 @@ class TestCase:
 
         # We'll set up some mock tables from each method, using the same values for each method
         cls.sem_table_lists = {}
+        cls.chains_table_list = []
         for sem in sem_names:
 
             tf = sem_tfs[sem]
+
+            make_chains = sem == "LensMC"
 
             tables = []
 
@@ -111,14 +144,18 @@ class TestCase:
                                                                                (6, 12, -0.04, 0.04, 0.02, 0.02, None),
                                                                                (8, 19, 0.1, 0.2, 0.001, 0.001, None),
                                                                                (0, 19, 0, 0, np.nan, np.nan, np.nan),
-                                                                               (0, 19, np.nan, np.nan, np.nan, np.nan, np.inf),
+                                                                               (0, 19, np.nan, np.nan,
+                                                                                np.nan, np.nan, np.inf),
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
 
                 if weight is None:
                     weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + cls.shape_noise ** 2)
-
                 l = i_max - i_min + 1
-                t = sem_initialisers[sem]()
+
+                # Create the measurements table
+
+                # t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
+                t = sem_initialisers[sem](optional_columns=(tf.e_var, tf.shape_noise))
                 for _ in range(l):
                     t.add_row()
 
@@ -128,8 +165,35 @@ class TestCase:
                 t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
                 t[tf.weight] = np.ones(l, dtype=">f4") * weight
+                # t[tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
+                t[tf.e_var] = np.ones(l, dtype=">f4") * (g1_err**2 + g2_err**2)
+                t[tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
                 t.add_index(tf.ID)
                 tables.append(t)
+
+                if make_chains:
+                    # Create the chains table
+
+                    tc = initialise_lensmc_chains_table(optional_columns=(lmcc_tf.e_var, lmcc_tf.shape_noise))
+                    for _ in range(l):
+                        tc.add_row()
+
+                    # Use a stable set of deviates which average to zero for consistency
+                    deviates_first_half = np.random.standard_normal((l, len_chain // 2))
+                    deviates_second_half = -deviates_first_half
+                    deviates = np.concatenate((deviates_first_half, deviates_second_half), axis=1)
+
+                    tc[lmcc_tf.ID] = np.arange(l) + i_min
+                    tc[lmcc_tf.g1] = (np.array((cls.true_g1[i_min:i_max + 1],)).transpose() + g1_offset +
+                                      deviates * g1_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                    tc[lmcc_tf.g2] = (np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset +
+                                      deviates * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
+                    tc[lmcc_tf.weight] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.weight]) * weight
+                    # tc[lmcc_tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.shape_noise] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_noise]) * cls.shape_noise
+                    tc.add_index(lmcc_tf.ID)
+                    cls.chains_table_list.append(tc)
 
             cls.sem_table_lists[sem] = tables
 
@@ -176,6 +240,7 @@ class TestCase:
 
         return
 
+    @pytest.mark.skip(reason="Not available until DM update")
     def test_reconcile_shape_weight(self):
 
         sem = "LensMC"
@@ -201,8 +266,8 @@ class TestCase:
 
         # Check combination of tables 0 and 1 is sensible
         test_row = reconciled_catalog.loc[6]
-        assert test_row[sem_tf.g1] < self.true_g1[6]
-        assert test_row[sem_tf.g2] > self.true_g2[6]
+        assert np.isclose(test_row[sem_tf.g1], self.true_g1[6])
+        assert np.isclose(test_row[sem_tf.g2], self.true_g2[6])
 
         # Weight should be less than the max weight, but higher than at least one individual weight
         assert test_row[sem_tf.weight] < self.max_weight
@@ -246,8 +311,119 @@ class TestCase:
 
         return
 
+    def test_reconcile_chains_best(self):
+
+        reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
+                                             object_ids_in_tile=self.object_ids_in_tile,
+                                             chains_reconciliation_function=reconcile_chains_best,
+                                             workdir=self.workdir)
+
+        assert(len(reconciled_chains) == 19)
+
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Row 1 should exactly match results from table 0
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1)
+
+        # Also for 6, which overlaps with table 1, but table 0 has higher weight
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 6)
+
+        # Row 8 should be from table 2, which has the highest weight
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 8)
+
+        return
+
+    @pytest.mark.skip(reason="Not available until DM update")
+    def test_reconcile_chains_shape_weight(self):
+
+        reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
+                                             object_ids_in_tile=self.object_ids_in_tile,
+                                             chains_reconciliation_function=reconcile_chains_shape_weight,
+                                             workdir=self.workdir)
+
+        assert(len(reconciled_chains) == 19)
+
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Row 1 should exactly match results from table 0, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1)
+
+        # Row 18 should exactly match results from table 2, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18)
+
+        # Check combination of tables 0 and 1 is sensible
+        test_row = reconciled_chains.loc[6]
+        assert np.isclose(test_row[lmcc_tf.g1].mean(), self.true_g1[6])
+        assert np.isclose(test_row[lmcc_tf.g2].mean(), self.true_g2[6])
+
+        # Weight should be less than the max weight, but higher than at least one individual weight
+        assert test_row[lmcc_tf.weight] < self.max_weight
+        assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
+                test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
+
+        return
+
+    def test_reconcile_chains_invvar(self):
+
+        reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
+                                             object_ids_in_tile=self.object_ids_in_tile,
+                                             chains_reconciliation_function=reconcile_chains_invvar,
+                                             workdir=self.workdir)
+
+        assert(len(reconciled_chains) == 19)
+
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Row 1 should exactly match results from table 0, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1)
+
+        # Row 18 should exactly match results from table 2, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18)
+
+        # Check combination of tables 0 and 1 is sensible
+        test_row = reconciled_chains.loc[6]
+        assert np.isclose(test_row[lmcc_tf.g1].mean(), self.true_g1[6])
+        assert np.isclose(test_row[lmcc_tf.g2].mean(), self.true_g2[6])
+
+        # Weight should be less than the max weight, but higher than at least one individual weight
+        assert test_row[lmcc_tf.weight] < self.max_weight
+        assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
+                test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
+
+        return
+
+    def test_reconcile_chains_keep(self):
+
+        reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
+                                             object_ids_in_tile=self.object_ids_in_tile,
+                                             chains_reconciliation_function=reconcile_chains_keep,
+                                             workdir=self.workdir)
+
+        assert(len(reconciled_chains) == 85)
+
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Row 1 should exactly match results from table 0, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1, 0)
+
+        # Row 18 should exactly match results from table 2, since there's no other data for it
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 18, 0)
+
+        # Check combination of tables 0 and 1 is sensible
+        test_row_0 = reconciled_chains.loc[6][0]
+        test_row_1 = reconciled_chains.loc[6][1]
+        assert test_row_0[lmcc_tf.g1].mean() > self.true_g1[6]
+        assert test_row_0[lmcc_tf.g2].mean() < self.true_g2[6]
+        assert test_row_1[lmcc_tf.g1].mean() < self.true_g1[6]
+        assert test_row_1[lmcc_tf.g2].mean() > self.true_g2[6]
+
+        # Test that the weights add up properly
+        assert test_row_0[lmcc_tf.weight] + test_row_1[lmcc_tf.weight] < self.max_weight
+
+        return
+
     def test_interface(self):
-        """Run through the full exectuable, to test the interface.
+        """Run through the full executable, to test the interface.
         """
 
         # Start by creating data products with the input data
@@ -260,8 +436,10 @@ class TestCase:
         mer_final_catalog_data_filename = get_allowed_filename("MFC", "TEST", version=SHE_CTE.__version__)
         mer_final_catalog_table.write(os.path.join(self.workdir, mer_final_catalog_data_filename))
 
-        mer_final_catalog_product = products.mer_final_catalog.create_dpd_mer_final_catalog(mer_final_catalog_data_filename)
-        mer_final_catalog_product_filename = get_allowed_filename("MFC-P", "TEST", version=SHE_CTE.__version__, subdir="")
+        mer_final_catalog_product = products.mer_final_catalog.create_dpd_mer_final_catalog(
+            mer_final_catalog_data_filename)
+        mer_final_catalog_product_filename = get_allowed_filename(
+            "MFC-P", "TEST", version=SHE_CTE.__version__, subdir="")
         write_xml_product(mer_final_catalog_product, mer_final_catalog_product_filename,
                           workdir=self.workdir, allow_pickled=False)
 
@@ -270,33 +448,64 @@ class TestCase:
         for i in range(len(self.sem_table_lists["KSB"])):
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
             for sem in sem_names:
-                sem_table_filename = get_allowed_filename("SEM-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
+                sem_table_filename = get_allowed_filename(
+                    "SEM-TEST-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
                 self.sem_table_lists[sem][i].write(os.path.join(self.workdir, sem_table_filename))
                 sem_product.set_method_filename(sem, sem_table_filename)
 
-            sem_product_filename = get_allowed_filename("SEM-P", str(i), version=SHE_CTE.__version__, subdir="",)
+            sem_product_filename = get_allowed_filename(
+                "SEM-TEST-P", str(i), version=SHE_CTE.__version__, subdir="", extension=".xml",)
             write_xml_product(sem_product, sem_product_filename, workdir=self.workdir)
             sem_product_filename_list.append(sem_product_filename)
 
-        sem_listfile_filename = get_allowed_filename("SEM-L", "TEST", version=SHE_CTE.__version__, subdir="",)
+        sem_listfile_filename = get_allowed_filename(
+            "SEM-TEST-L", "0", version=SHE_CTE.__version__, subdir="", extension=".json",)
         write_listfile(os.path.join(self.workdir, sem_listfile_filename), sem_product_filename_list)
 
+        # Create a data product for each input chains table, and a listfile of their names
+        chains_product_filename_list = []
+
+        for i in range(len(self.chains_table_list)):
+            chains_product = products.she_lensmc_chains.create_dpd_she_lensmc_chains()
+
+            chains_table_filename = get_allowed_filename("CHAINS-TEST", str(i), version=SHE_CTE.__version__,)
+            self.chains_table_list[i].write(os.path.join(self.workdir, chains_table_filename))
+            chains_product.set_filename(chains_table_filename)
+
+            chains_product_filename = get_allowed_filename(
+                "CHAINS-TEST-P", str(i), version=SHE_CTE.__version__, subdir="", extension=".xml")
+            write_xml_product(chains_product, chains_product_filename, workdir=self.workdir)
+            chains_product_filename_list.append(chains_product_filename)
+
+        chains_listfile_filename = get_allowed_filename(
+            "CHAINS-TEST-L", "0", version=SHE_CTE.__version__, subdir="", extension=".json",)
+        write_listfile(os.path.join(self.workdir, chains_listfile_filename), chains_product_filename_list)
+
+        # Get desired filenames for output products
+        srm_product_filename = get_allowed_filename(
+            "SRM-P", "TEST", version=SHE_CTE.__version__, subdir="", extension=".xml",)
+        rec_chains_product_filename = get_allowed_filename(
+            "REC-CHAINS-TEST-P", "0", version=SHE_CTE.__version__, subdir="", extension=".xml",)
+
         # Set up arguments to call the main reconciliation function
-        srm_product_filename = get_allowed_filename("SRM-P", "TEST", version=SHE_CTE.__version__, subdir="",)
         args = Args(profile=False,
                     dry_run=False,
                     debug=False,
                     she_validated_measurements_listfile=sem_listfile_filename,
+                    she_lensmc_chains_listfile=chains_listfile_filename,
                     mer_final_catalog=mer_final_catalog_product_filename,
                     she_reconciliation_config="None",
                     method=None,
+                    chains_method=None,
                     she_reconciled_measurements=srm_product_filename,
+                    she_reconciled_lensmc_chains=rec_chains_product_filename,
                     workdir=self.workdir,
                     logdir="logs")
 
-        # Call the program, then check the results
+        # Call the program
         reconcile_shear_from_args(args)
 
+        # Check the reconciled measurements results
         srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
 
         for sem in sem_names:
@@ -306,5 +515,15 @@ class TestCase:
 
             # Just a quick test on results, since we do detailed tests elsewhere
             assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem][0], 1, sem_tfs[sem])
+
+        # Check the reconciled chains results
+        rec_chains_product = read_xml_product(rec_chains_product_filename, workdir=self.workdir, allow_pickled=False)
+
+        rec_chains_table_filename = rec_chains_product.get_filename()
+        reconciled_chains = Table.read(os.path.join(self.workdir, rec_chains_table_filename))
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Just a quick test on results, since we do detailed tests elsewhere
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1, 0)
 
         return
