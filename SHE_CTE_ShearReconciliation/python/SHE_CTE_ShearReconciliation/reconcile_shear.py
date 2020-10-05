@@ -216,7 +216,7 @@ def reconcile_chains(chains_tables,
                                  "the workdir must also be supplied.")
             # It's a filename, so load it in
             qualified_chains_table_filename = os.path.join(workdir, chains_table)
-            chains_table = Table.read(qualified_estimates_table_filename)
+            chains_table = Table.read(qualified_chains_table_filename)
         else:
             # If it's not a filename, store the string version of the table for logging purposes
             qualified_chains_table_filename = str(chains_table)
@@ -232,9 +232,9 @@ def reconcile_chains(chains_tables,
             # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
             # this will store the first temporarily and later be updated with the reconciled result
             # TODO - set tile ID in header
-            optional_chains_columns = chains_table.colnames
+            optional_columns = chains_table.colnames
 
-            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_chains_columns)
+            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_columns)
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_chains.add_index(lmcc_tf.ID)
@@ -431,7 +431,7 @@ def reconcile_shear_from_args(args):
     write_xml_product(reconciled_catalog_product, args.she_reconciled_measurements, workdir=args.workdir)
 
     # Now reconcile the chains
-    reconciled_chains_catalog = reconcile_chains(chains_tables=validated_shear_estimates_table_filenames[shear_estimation_method],
+    reconciled_chains_catalog = reconcile_chains(chains_tables=lensmc_chains_table_filenames,
                                                  object_ids_in_tile=object_ids_in_tile,
                                                  chains_reconciliation_function=chains_reconciliation_function,
                                                  workdir=args.workdir)

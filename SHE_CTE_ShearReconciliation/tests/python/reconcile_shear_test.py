@@ -30,7 +30,7 @@ from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf, initialise_momentsml_measurements_table
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf, initialise_regauss_measurements_table
 from SHE_PPT.table_utility import is_in_format, add_row
-from astropy.table import Table
+from astropy.table import Table, Row
 import pytest
 
 import SHE_CTE
@@ -92,7 +92,11 @@ def assert_chains_rows_equal(t1, t2, i, which_of_kept=None):
 
     r1 = t1.loc[i]
     if which_of_kept is not None:
-        r1 = r1[which_of_kept]
+        if (isinstance(r1, Row) and which_of_kept != 0) or which_of_kept > len(r1):
+            raise ValueError("Fewer rows kept (" + str(len(r1)) +
+                             ") than requested index (" + str(which_of_kept) + ").")
+        if not isinstance(r1, Row):
+            r1 = r1[which_of_kept]
     r2 = t2.loc[i]
     assert np.isclose(r1[lmcc_tf.g1], r2[lmcc_tf.g1]).all(), "Row " + str(i) + " doesn't match expected value for g1."
     assert np.isclose(r1[lmcc_tf.g2], r2[lmcc_tf.g2]).all(), "Row " + str(i) + " doesn't match expected value for g2."
