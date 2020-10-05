@@ -212,7 +212,6 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_best(self):
 
         sem = "LensMC"
@@ -277,7 +276,6 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_invvar(self):
 
         for sem in sem_names:
@@ -313,7 +311,6 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_chains_best(self):
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
@@ -366,7 +363,6 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_chains_invvar(self):
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
@@ -396,7 +392,6 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_chains_keep(self):
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
