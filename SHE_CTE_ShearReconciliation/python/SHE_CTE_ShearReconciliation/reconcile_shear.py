@@ -459,7 +459,7 @@ def reconcile_shear_from_args(args):
     logger.info("Outputting reconciled chains catalog to " +
                 qualified_reconciled_chains_catalog_filename)
 
-    reconciled_chains_catalog.write(qualified_reconciled_catalog_filename)
+    reconciled_chains_catalog.write(qualified_reconciled_chains_catalog_filename)
 
     reconciled_chains_product.set_filename(reconciled_chains_catalog_filename)
 
