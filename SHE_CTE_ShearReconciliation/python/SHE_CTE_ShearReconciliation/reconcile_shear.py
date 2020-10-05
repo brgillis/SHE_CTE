@@ -279,6 +279,13 @@ def reconcile_shear_from_args(args):
     """ Primary function for performing shear reconciliation
     """
 
+    # Read in the pipeline config if supplied
+    if args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
+        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
+                                                     workdir=args.workdir)
+    else:
+        pipeline_config = None
+
     # Determine the reconciliation method to use
 
     method = None
@@ -286,11 +293,8 @@ def reconcile_shear_from_args(args):
     if args.method is not None:
         method = str(args.method)
         logger.info("Using reconciliation method: '" + str(method) + "', passed from command-line.")
-    elif args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
-        # Load in the pipeline configuration and see if the method is supplied there
-
-        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
-                                                     workdir=args.workdir)
+    elif pipeline_config is not None:
+        # See if the method is supplied in the pipeline config
 
         if ReconciliationConfigKeys.REC_METHOD.value in pipeline_config:
             method = str(pipeline_config[ReconciliationConfigKeys.REC_METHOD.value])
@@ -316,12 +320,8 @@ def reconcile_shear_from_args(args):
     if args.chains_method is not None:
         chains_method = str(args.chains_method)
         logger.info("Using chains reconciliation method: '" + str(chains_method) + "', passed from command-line.")
-    elif args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
-        # Load in the pipeline configuration and see if the method is supplied there
-
-        # TODO: Refactor to only read in config once
-        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
-                                                     workdir=args.workdir)
+    elif pipeline_config is not None:
+        # See if the chains method is supplied in the pipeline config
 
         if ReconciliationConfigKeys.CHAINS_REC_METHOD.value in pipeline_config:
             chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD.value])
