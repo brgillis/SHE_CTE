@@ -392,6 +392,7 @@ class TestReconcileShear:
 
         return
 
+    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_reconcile_chains_keep(self):
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
@@ -422,9 +423,8 @@ class TestReconcileShear:
 
         return
 
-    @pytest.mark.skip(reason="Not testing at present to save time.")
     def test_interface(self):
-        """Run through the full exectuable, to test the interface.
+        """Run through the full executable, to test the interface.
         """
 
         # Start by creating data products with the input data
@@ -449,33 +449,64 @@ class TestReconcileShear:
         for i in range(len(self.sem_table_lists["KSB"])):
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
             for sem in sem_names:
-                sem_table_filename = get_allowed_filename("SEM-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
+                sem_table_filename = get_allowed_filename(
+                    "SEM-TEST-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
                 self.sem_table_lists[sem][i].write(os.path.join(self.workdir, sem_table_filename))
                 sem_product.set_method_filename(sem, sem_table_filename)
 
-            sem_product_filename = get_allowed_filename("SEM-P", str(i), version=SHE_CTE.__version__, subdir="",)
+            sem_product_filename = get_allowed_filename(
+                "SEM-TEST-P", str(i), version=SHE_CTE.__version__, subdir="", extension=".xml",)
             write_xml_product(sem_product, sem_product_filename, workdir=self.workdir)
             sem_product_filename_list.append(sem_product_filename)
 
-        sem_listfile_filename = get_allowed_filename("SEM-L", "TEST", version=SHE_CTE.__version__, subdir="",)
+        sem_listfile_filename = get_allowed_filename(
+            "SEM-TEST-L", "0", version=SHE_CTE.__version__, subdir="", extension=".json",)
         write_listfile(os.path.join(self.workdir, sem_listfile_filename), sem_product_filename_list)
 
+        # Create a data product for each input chains table, and a listfile of their names
+        chains_product_filename_list = []
+
+        for i in range(len(self.chains_table_list)):
+            chains_product = products.she_lensmc_chains.create_dpd_she_lensmc_chains()
+
+            chains_table_filename = get_allowed_filename("CHAINS-TEST", str(i), version=SHE_CTE.__version__,)
+            self.chains_table_list[i].write(os.path.join(self.workdir, chains_table_filename))
+            chains_product.set_filename(chains_table_filename)
+
+            chains_product_filename = get_allowed_filename(
+                "CHAINS-TEST-P", str(i), version=SHE_CTE.__version__, subdir="", extension=".xml")
+            write_xml_product(chains_product, chains_product_filename, workdir=self.workdir)
+            chains_product_filename_list.append(chains_product_filename)
+
+        chains_listfile_filename = get_allowed_filename(
+            "CHAINS-TEST-L", "0", version=SHE_CTE.__version__, subdir="", extension=".json",)
+        write_listfile(os.path.join(self.workdir, chains_listfile_filename), chains_product_filename_list)
+
+        # Get desired filenames for output products
+        srm_product_filename = get_allowed_filename(
+            "SRM-P", "TEST", version=SHE_CTE.__version__, subdir="", extension=".xml",)
+        rec_chains_product_filename = get_allowed_filename(
+            "REC-CHAINS-TEST-P", "0", version=SHE_CTE.__version__, subdir="", extension=".xml",)
+
         # Set up arguments to call the main reconciliation function
-        srm_product_filename = get_allowed_filename("SRM-P", "TEST", version=SHE_CTE.__version__, subdir="",)
         args = Args(profile=False,
                     dry_run=False,
                     debug=False,
                     she_validated_measurements_listfile=sem_listfile_filename,
+                    she_lensmc_chains_listfile=chains_listfile_filename,
                     mer_final_catalog=mer_final_catalog_product_filename,
                     she_reconciliation_config="None",
                     method=None,
+                    chains_method=None,
                     she_reconciled_measurements=srm_product_filename,
+                    she_reconciled_lensmc_chains=rec_chains_product_filename,
                     workdir=self.workdir,
                     logdir="logs")
 
-        # Call the program, then check the results
+        # Call the program
         reconcile_shear_from_args(args)
 
+        # Check the reconciled measurements results
         srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
 
         for sem in sem_names:
@@ -485,5 +516,15 @@ class TestReconcileShear:
 
             # Just a quick test on results, since we do detailed tests elsewhere
             assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem][0], 1, sem_tfs[sem])
+
+        # Check the reconciled chains results
+        rec_chains_product = read_xml_product(rec_chains_product_filename, workdir=self.workdir, allow_pickled=False)
+
+        rec_chains_table_filename = rec_chains_product.get_filename()
+        reconciled_chains = Table.read(os.path.join(self.workdir, rec_chains_table_filename))
+        reconciled_chains.add_index(lmcc_tf.ID)
+
+        # Just a quick test on results, since we do detailed tests elsewhere
+        assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1, 0)
 
         return
