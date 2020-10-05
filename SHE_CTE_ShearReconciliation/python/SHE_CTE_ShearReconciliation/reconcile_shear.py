@@ -232,9 +232,9 @@ def reconcile_chains(chains_tables,
             # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
             # this will store the first temporarily and later be updated with the reconciled result
             # TODO - set tile ID in header
-            optional_columns = chains_table.colnames
+            optional_chains_columns = chains_table.colnames
 
-            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_columns)
+            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_chains_columns)
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_chains.add_index(lmcc_tf.ID)
@@ -441,29 +441,27 @@ def reconcile_shear_from_args(args):
         spatial_footprint=mer_final_catalog_product)
     reconciled_chains_product.Data.TileIndex = tile_id
 
-    # If we don't have any data, don't write a table at all
-    if reconciled_chains_catalog is None or len(reconciled_catalog) == 0:
+    # If we don't have any data, create an empty table
+    if reconciled_chains_catalog is None:
 
-        logger.info("No chains data to output.")
+        logger.warning("No reconciled chains data to output.")
 
-        reconciled_chains_product.set_filename(None)
+        reconciled_chains_catalog = initialise_lensmc_chains_table()
 
-    else:
+    # The output table is now finalized, so output it and store the filename in the output data product
+    reconciled_chains_catalog_filename = get_allowed_filename(type_name="REC-LMC-CHAINS",
+                                                              instance_id=str(tile_id),
+                                                              extension=".fits",
+                                                              version=SHE_CTE.__version__)
 
-        # The output table is now finalized, so output it and store the filename in the output data product
-        reconciled_chains_catalog_filename = get_allowed_filename(type_name="REC-LMC-CHAINS",
-                                                                  instance_id=str(tile_id),
-                                                                  extension=".fits",
-                                                                  version=SHE_CTE.__version__)
+    qualified_reconciled_chains_catalog_filename = os.path.join(args.workdir, reconciled_chains_catalog_filename)
 
-        qualified_reconciled_chains_catalog_filename = os.path.join(args.workdir, reconciled_chains_catalog_filename)
+    logger.info("Outputting reconciled chains catalog to " +
+                qualified_reconciled_chains_catalog_filename)
 
-        logger.info("Outputting reconciled chains catalog to " +
-                    qualified_reconciled_chains_catalog_filename)
+    reconciled_chains_catalog.write(qualified_reconciled_catalog_filename)
 
-        reconciled_chains_catalog.write(qualified_reconciled_catalog_filename)
-
-        reconciled_chains_product.set_filename(reconciled_chains_catalog_filename)
+    reconciled_chains_product.set_filename(reconciled_chains_catalog_filename)
 
     # Output the finalized chains data product to the desired filename
     logger.info("Outputting reconciled catalog data product to " +
