@@ -34,7 +34,7 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
 import numpy as np
 
 
-__updated__ = "2020-09-30"
+__updated__ = "2020-10-05"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -308,6 +308,39 @@ def reconcile_shear_from_args(args):
         raise ValueError("Reconciliation method " + method + " is not recognized. Allowed methods are:" +
                          allowed_method_str)
     reconciliation_function = reconciliation_methods[method]
+
+    # Determine the chains reconciliation method to use
+
+    chains_method = None
+
+    if args.chains_method is not None:
+        chains_method = str(args.chains_method)
+        logger.info("Using chains reconciliation method: '" + str(chains_method) + "', passed from command-line.")
+    elif args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
+        # Load in the pipeline configuration and see if the method is supplied there
+
+        # TODO: Refactor to only read in config once
+        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
+                                                     workdir=args.workdir)
+
+        if ReconciliationConfigKeys.CHAINS_REC_METHOD.value in pipeline_config:
+            chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD.value])
+            logger.info("Using chains reconciliation method: '" +
+                        str(chains_method) + "', from pipeline configuration file.")
+
+    if chains_method is None:
+        # If we get here, it isn't yet determined, so use the default
+        chains_method = default_reconciliation_method
+        logger.info("Using default chains reconciliation method: '" + str(method) + "'.")
+
+    # Check we're using a valid chains reconciliation method
+    if not chains_method in chains_reconciliation_methods:
+        allowed_chains_method_str = ""
+        for allowed_chains_method in chains_reconciliation_methods:
+            allowed_chains_method_str += "\n" + allowed_chains_method
+        raise ValueError("Chains reconciliation method " + chains_method + " is not recognized. Allowed methods are:" +
+                         allowed_chains_method_str)
+    chains_reconciliation_function = chains_reconciliation_methods[chains_method]
 
     # Load in the final catalog from MER to get the IDs of objects in this tile
     mer_final_catalog_product = read_xml_product(args.mer_final_catalog, workdir=args.workdir)
