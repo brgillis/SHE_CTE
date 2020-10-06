@@ -4,8 +4,24 @@
 
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
+import os
 
-__updated__ = "2020-09-01"
+from SHE_PPT import file_io
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile
+from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_utility import table_to_hdu
+from astropy import units
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Table, Column, join, vstack, unique
+
+import SHE_CTE
+import numpy as np
+
+
+__updated__ = "2020-10-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -19,21 +35,6 @@ __updated__ = "2020-09-01"
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-
-import os
-
-from SHE_PPT import file_io
-from SHE_PPT import products
-from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_utility import table_to_hdu
-from astropy import units
-from astropy.coordinates import SkyCoord
-from astropy.io import fits
-from astropy.table import Table, Column, join, vstack, unique
-
-import SHE_CTE
-import numpy as np
 
 
 logger = getLogger(__name__)
@@ -93,19 +94,40 @@ def match_to_tu_from_args(args):
     """ @TODO Fill in docstring
     """
 
+    # Get the lists of star and galaxy filenames
+
+    if args.tu_star_catalog_list is not None:
+        tu_star_catalog_product_filenames = read_listfile(os.path.join(args.workdir, args.tu_star_catalog_list))
+    elif args.tu_star_catalog is not None:
+        tu_star_catalog_product_filenames = [args.tu_star_catalog]
+    else:
+        raise ValueError("No star catalogs provided to match with.")
+
+    if args.tu_galaxy_catalog_list is not None:
+        tu_galaxy_catalog_product_filenames = read_listfile(os.path.join(args.workdir, args.tu_galaxy_catalog_list))
+    elif args.tu_galaxy_catalog is not None:
+        tu_galaxy_catalog_product_filenames = [args.tu_galaxy_catalog]
+    else:
+        raise ValueError("No galaxy catalogs provided to match with.")
+
     # Read in the data products for SIM's TU galaxy and star catalogs, and get the filenames of the fits files from
     # them
-    qualified_star_catalog_product_filename = file_io.find_file(args.tu_star_catalog,
-                                                                path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
-    star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
-    star_catalog_filenames = star_catalog_product.get_data_filenames()
 
-    qualified_galaxy_catalog_product_filename = file_io.find_file(args.tu_galaxy_catalog,
-                                                                  path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
-    galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
-    galaxy_catalog_filenames = galaxy_catalog_product.get_data_filenames()
+    star_catalog_filenames = []
+    for tu_star_catalog_product_filename in tu_star_catalog_product_filenames:
+        qualified_star_catalog_product_filename = file_io.find_file(tu_star_catalog_product_filename,
+                                                                    path=args.workdir + ":" + args.sim_path)
+        logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
+        star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
+        star_catalog_filenames.append(star_catalog_product.get_data_filename())
+
+    galaxy_catalog_filenames = []
+    for tu_galaxy_catalog_product_filename in tu_galaxy_catalog_product_filenames:
+        qualified_galaxy_catalog_product_filename = file_io.find_file(tu_galaxy_catalog_product_filename,
+                                                                      path=args.workdir + ":" + args.sim_path)
+        logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
+        galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
+        galaxy_catalog_filenames.append(galaxy_catalog_product.get_data_filename())
 
     # Read in the shear estimates data product, and get the filenames of the tables for each method from it.
     qualified_shear_estimates_product_filename = file_io.find_file(args.she_measurements_product,
