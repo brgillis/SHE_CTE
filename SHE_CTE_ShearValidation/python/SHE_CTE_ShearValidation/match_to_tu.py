@@ -176,7 +176,7 @@ def match_to_tu_from_args(args):
         if shear_table is None:
             continue
 
-        sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
+        sem_tf = shear_estimation_method_table_formats[method]
 
         ra_col = shear_table[sem_tf.ra]
         dec_col = shear_table[sem_tf.dec]
@@ -299,6 +299,8 @@ def match_to_tu_from_args(args):
                     continue
 
                 logger.info("Performing match for method " + method + ".")
+
+                sem_tf = shear_estimation_method_table_formats[method]
 
                 ra_se = shear_table[sem_tf.ra]
                 dec_se = shear_table[sem_tf.dec]
