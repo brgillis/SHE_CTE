@@ -10,7 +10,11 @@ from SHE_PPT import file_io
 from SHE_PPT import products
 from SHE_PPT.file_io import read_listfile
 from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 from SHE_PPT.table_utility import table_to_hdu
 from astropy import units
 from astropy.coordinates import SkyCoord
@@ -45,6 +49,12 @@ star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
 max_coverage = 1.0  # deg
+
+shear_estimation_method_table_formats = {"KSB": ksbm_tf,
+                                         "REGAUSS": regm_tf,
+                                         "MomentsML": mmlm_tf,
+                                         "LensMC": lmcm_tf,
+                                         "BFD": bfdm_tf}
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -166,10 +176,12 @@ def match_to_tu_from_args(args):
         if shear_table is None:
             continue
 
-        ra_col = shear_table[sm_tf.ra]
-        dec_col = shear_table[sm_tf.dec]
+        sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
 
-        flags_col = shear_table[sm_tf.fit_flags]
+        ra_col = shear_table[sem_tf.ra]
+        dec_col = shear_table[sem_tf.dec]
+
+        flags_col = shear_table[sem_tf.fit_flags]
 
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
@@ -288,8 +300,8 @@ def match_to_tu_from_args(args):
 
                 logger.info("Performing match for method " + method + ".")
 
-                ra_se = shear_table[sm_tf.ra]
-                dec_se = shear_table[sm_tf.dec]
+                ra_se = shear_table[sem_tf.ra]
+                dec_se = shear_table[sem_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
                 # Match to both star and galaxy tables, and determine which is best match
@@ -307,9 +319,9 @@ def match_to_tu_from_args(args):
                 # Mask rows where the match isn't close enough, or to the other type of object, with -99
 
                 in_ra_range = np.logical_and(
-                    shear_table[sm_tf.ra] >= local_ra_range[0], shear_table[sm_tf.ra] < local_ra_range[1])
+                    shear_table[sem_tf.ra] >= local_ra_range[0], shear_table[sem_tf.ra] < local_ra_range[1])
                 in_dec_range = np.logical_and(
-                    shear_table[sm_tf.dec] >= local_dec_range[0], shear_table[sm_tf.dec] < local_dec_range[1])
+                    shear_table[sem_tf.dec] >= local_dec_range[0], shear_table[sem_tf.dec] < local_dec_range[1])
 
                 in_range = np.logical_and(in_ra_range, in_dec_range)
 
