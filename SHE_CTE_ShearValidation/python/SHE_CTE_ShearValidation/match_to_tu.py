@@ -166,10 +166,10 @@ def match_to_tu_from_args(args):
         if shear_table is None:
             continue
 
-        ra_col = shear_table[sm_tf.x_world]
-        dec_col = shear_table[sm_tf.y_world]
+        ra_col = shear_table[sm_tf.ra]
+        dec_col = shear_table[sm_tf.dec]
 
-        flags_col = shear_table[sm_tf.flags]
+        flags_col = shear_table[sm_tf.fit_flags]
 
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
@@ -288,8 +288,8 @@ def match_to_tu_from_args(args):
 
                 logger.info("Performing match for method " + method + ".")
 
-                ra_se = shear_table[sm_tf.x_world]
-                dec_se = shear_table[sm_tf.y_world]
+                ra_se = shear_table[sm_tf.ra]
+                dec_se = shear_table[sm_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
                 # Match to both star and galaxy tables, and determine which is best match
@@ -307,9 +307,9 @@ def match_to_tu_from_args(args):
                 # Mask rows where the match isn't close enough, or to the other type of object, with -99
 
                 in_ra_range = np.logical_and(
-                    shear_table[sm_tf.x_world] >= local_ra_range[0], shear_table[sm_tf.x_world] < local_ra_range[1])
+                    shear_table[sm_tf.ra] >= local_ra_range[0], shear_table[sm_tf.ra] < local_ra_range[1])
                 in_dec_range = np.logical_and(
-                    shear_table[sm_tf.y_world] >= local_dec_range[0], shear_table[sm_tf.y_world] < local_dec_range[1])
+                    shear_table[sm_tf.dec] >= local_dec_range[0], shear_table[sm_tf.dec] < local_dec_range[1])
 
                 in_range = np.logical_and(in_ra_range, in_dec_range)
 
