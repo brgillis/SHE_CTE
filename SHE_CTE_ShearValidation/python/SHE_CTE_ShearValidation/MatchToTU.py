@@ -47,7 +47,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input filenames
-    parser.add_argument('--shear_estimates_product', type=str,
+    parser.add_argument('--she_measurements_product', type=str,
                         help='Filename for shear estimates data product (XML data product)')
     parser.add_argument('--tu_galaxy_catalog_list', type=str, default=None,
                         help='Filename for True Universe Galaxy Catalog listfile (.json).')
