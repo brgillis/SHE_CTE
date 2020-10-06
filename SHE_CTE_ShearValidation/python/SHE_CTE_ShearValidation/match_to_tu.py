@@ -97,14 +97,18 @@ def match_to_tu_from_args(args):
     # Get the lists of star and galaxy filenames
 
     if args.tu_star_catalog_list is not None:
-        tu_star_catalog_product_filenames = read_listfile(os.path.join(args.workdir, args.tu_star_catalog_list))
+        qualified_tu_star_catalog_list = file_io.find_file(args.tu_star_catalog_list,
+                                                           path=args.workdir + ":" + args.sim_path)
+        tu_star_catalog_product_filenames = read_listfile(qualified_tu_star_catalog_list)
     elif args.tu_star_catalog is not None:
         tu_star_catalog_product_filenames = [args.tu_star_catalog]
     else:
         raise ValueError("No star catalogs provided to match with.")
 
     if args.tu_galaxy_catalog_list is not None:
-        tu_galaxy_catalog_product_filenames = read_listfile(os.path.join(args.workdir, args.tu_galaxy_catalog_list))
+        qualified_tu_galaxy_catalog_list = file_io.find_file(args.tu_galaxy_catalog_list,
+                                                             path=args.workdir + ":" + args.sim_path)
+        tu_galaxy_catalog_product_filenames = read_listfile(qualified_tu_galaxy_catalog_list)
     elif args.tu_galaxy_catalog is not None:
         tu_galaxy_catalog_product_filenames = [args.tu_galaxy_catalog]
     else:
