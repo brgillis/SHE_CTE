@@ -27,7 +27,6 @@ from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
-from astropy.stats import jackknife_stats
 
 import matplotlib.pyplot as pyplot
 import numpy as np
@@ -43,6 +42,57 @@ def Spline(*args, **kwargs):
 def get_spline_slope(x_vals, y_vals, x):
     spline = Spline(x_vals, y_vals)
     return spline.derivative()(x)
+
+
+def jackknife_resampling(data):
+    """jackknife_resampling, copied from astropy v4.0.1"""
+
+    n = data.shape[0]
+    if n <= 0:
+        raise ValueError("data must contain at least one measurement.")
+
+    resamples = np.empty([n, n - 1])
+
+    for i in range(n):
+        resamples[i] = np.delete(data, i)
+
+    return resamples
+
+
+def jackknife_stats(data, statistic, confidence_level=0.95):
+    """jackknife_stats, copied from astropy v4.0.1"""
+
+    if not (0 < confidence_level < 1):
+        raise ValueError("confidence level must be in (0, 1).")
+
+    # make sure original data is proper
+    n = data.shape[0]
+    if n <= 0:
+        raise ValueError("data must contain at least one measurement.")
+
+    # Only import scipy if inputs are valid
+    from scipy.special import erfinv
+
+    resamples = jackknife_resampling(data)
+
+    stat_data = statistic(data)
+    jack_stat = np.apply_along_axis(statistic, 1, resamples)
+    mean_jack_stat = np.mean(jack_stat, axis=0)
+
+    # jackknife bias
+    bias = (n - 1) * (mean_jack_stat - stat_data)
+
+    # jackknife standard error
+    std_err = np.sqrt((n - 1) * np.mean((jack_stat - mean_jack_stat) * (jack_stat -
+                                                                        mean_jack_stat), axis=0))
+
+    # bias-corrected "jackknifed estimate"
+    estimate = stat_data - bias
+
+    z_score = np.sqrt(2.0) * erfinv(confidence_level)
+    conf_interval = estimate + z_score * np.array((-std_err, std_err))
+
+    return estimate, bias, std_err, conf_interval
 
 
 testing_data_labels = {"S": "Sky Level (ADU/pixel)",
