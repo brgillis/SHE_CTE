@@ -368,7 +368,7 @@ def plot_bias_measurements_from_args(args):
                         for chosen_y_vals, y_label in ((y_vals, "y_slope"),
                                                        (y1_vals, "y1_slope"),
                                                        (y2_vals, "y2_slope")):
-                            xy_vals = np.array(zip(x_vals, chosen_y_vals))
+                            xy_vals = np.array(list(zip(x_vals, chosen_y_vals)))
                             estimate, _, stderr, conf_interval = jackknife_stats(
                                 xy_vals, get_spline_slope_at_central_x, 0.95)
                             method_data[y_label] = estimate
