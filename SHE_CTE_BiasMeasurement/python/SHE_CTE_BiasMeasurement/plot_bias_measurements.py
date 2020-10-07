@@ -63,7 +63,7 @@ def jackknife_resampling(data):
 
 
 def jackknife_stats(data, statistic, confidence_level=0.95):
-    """jackknife_stats, copied from astropy v4.0.1"""
+    """jackknife_stats, copied from astropy v4.0.1 and modified to work with 2D data"""
 
     if not (0 < confidence_level < 1):
         raise ValueError("confidence level must be in (0, 1).")
@@ -79,7 +79,9 @@ def jackknife_stats(data, statistic, confidence_level=0.95):
     resamples = jackknife_resampling(data)
 
     stat_data = statistic(data)
-    jack_stat = np.apply_along_axis(statistic, 1, resamples)
+    jack_stat = np.empty(n)
+    for i in range(n):
+        jack_stat[i] = statistic(resamples[i])
     mean_jack_stat = np.mean(jack_stat, axis=0)
 
     # jackknife bias
