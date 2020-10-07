@@ -45,16 +45,19 @@ def get_spline_slope(x_vals, y_vals, x):
 
 
 def jackknife_resampling(data):
-    """jackknife_resampling, copied from astropy v4.0.1"""
+    """jackknife_resampling, copied from astropy v4.0.1 and modified to work with 2D data"""
 
     n = data.shape[0]
     if n <= 0:
         raise ValueError("data must contain at least one measurement.")
 
-    resamples = np.empty([n, n - 1])
+    len_data = len(data[0])
+
+    resamples = np.empty([n, n - 1, len_data])
 
     for i in range(n):
-        resamples[i] = np.delete(data, i)
+        indices_to_del = np.arange(len_data) + len_data * i
+        resamples[i] = np.delete(data, indices_to_del).reshape(n - 1, len_data)
 
     return resamples
 
