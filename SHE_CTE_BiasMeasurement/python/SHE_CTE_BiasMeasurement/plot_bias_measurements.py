@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2020-09-09"
+__updated__ = "2020-10-07"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -27,6 +27,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
+from astropy.stats import jackknife_stats
 
 import matplotlib.pyplot as pyplot
 import numpy as np
@@ -37,6 +38,11 @@ psf_gal_size_ratio = (0.2 / 0.3)**2
 
 def Spline(*args, **kwargs):
     return InterpolatedUnivariateSpline(*args, k=1, **kwargs)
+
+
+def get_spline_slope(x_vals, y_vals, x):
+    spline = Spline(x_vals, y_vals)
+    return spline.derivative()(x)
 
 
 testing_data_labels = {"S": "Sky Level (ADU/pixel)",
@@ -57,6 +63,8 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
+
+centre_index = 2
 
 x_values = {"S": [45.52, 45.61, 45.71, 45.80,  45.90],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
@@ -299,6 +307,24 @@ def plot_bias_measurements_from_args(args):
                                        "y1_o": y1_o_vals,
                                        "y2_o": y2_o_vals,
                                        }
+
+                        # Calculate y/y1/y2 slope at the central value and jackknife error of it
+                        central_x = x_vals[centre_index]
+
+                        def get_spline_slope_at_central_x(xy_vals):
+                            x_vals, y_vals = zip(*xy_vals)
+                            return get_spline_slope(x_vals, y_vals, central_x)
+
+                        for chosen_y_vals, y_label in ((y_vals, "y_slope"),
+                                                       (y1_vals, "y1_slope"),
+                                                       (y2_vals, "y2_slope")):
+                            xy_vals = np.array(zip(x_vals, chosen_y_vals))
+                            estimate, _, stderr, conf_interval = jackknife_stats(
+                                xy_vals, get_spline_slope_at_central_x, 0.95)
+                            method_data[y_label] = estimate
+                            method_data[y_label + "_err"] = stderr
+                            method_data[y_label + "_conf_interval"] = conf_interval
+
                         all_methods_data[(method, calibration_label)] = method_data
 
                 # Plot the target line
@@ -458,7 +484,7 @@ def plot_bias_measurements_from_args(args):
                     ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
                             label=label)
 
-                    if False and "_err" not in measurement_key:
+                    if args.plot_fractional_limits and "_err" not in measurement_key:
 
                         # Now try to solve for where it intersects the target lines
                         limit_label_base = method + "_" + measurement_key
@@ -511,7 +537,7 @@ def plot_bias_measurements_from_args(args):
                 else:
                     pyplot.close()
 
-        if False:
+        if args.plot_fractional_limits:
 
             # Make plots of the fractional limits for each method
 
@@ -555,9 +581,5 @@ def plot_bias_measurements_from_args(args):
             output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_fractional_limits." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-#         if not args.hide:
-#             fig.show()
-#         else:
-#             pyplot.close()
 
     return
