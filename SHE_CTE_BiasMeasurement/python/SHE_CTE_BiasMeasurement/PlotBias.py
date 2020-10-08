@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2020-10-07"
+__updated__ = "2020-10-08"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -65,8 +65,6 @@ def defineSpecificProgramOptions():
                         help="If set, will not display plots when they are generated.")
     parser.add_argument('--plot_error', action="store_true",
                         help="If set, will also plot errors for all parameters.")
-    parser.add_argument('--plot_fractional_limits', action="store_true",
-                        help="If set, will also plot fractional limits for all methods.")
     parser.add_argument('--plot_slopes', action="store_true",
                         help="If set, will also plot slopes and slope errors for all methods.")
     parser.add_argument('--normed_only', action="store_true",
