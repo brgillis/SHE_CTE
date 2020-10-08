@@ -601,6 +601,8 @@ def plot_bias_measurements_from_args(args):
                         xticklabels.append("Big " + method.replace("_big", ""))
                 ax.set_xticklabels(xticklabels)
 
+                ylim = [1e99, -1e99]
+
                 for index, offset, marker in (("1", -0.05, (3, 2, 0)),
                                               ("2",  0.05, (3, 2, 180))):
 
@@ -611,12 +613,27 @@ def plot_bias_measurements_from_args(args):
                         slopes.append(method_data["y" + index + "_slope"])
                         slope_errs.append(method_data["y" + index + "_slope_err"])
 
+                    slopes = np.array(slopes)
+                    slope_errs = np.array(slope_errs)
+
+                    if (slopes - slope_errs).min() < ylim[0]:
+                        ylim[0] = (slopes - slope_errs).min()
+                    if (slopes + slope_errs).max() > ylim[1]:
+                        ylim[1] = (slopes + slope_errs).max()
+
                     ax.scatter(xticks + offset, slopes, label=measurement_key + r"_{\rm " + index + r"}",
                                marker=marker, color=measurement_colors[measurement_key],
                                s=256)
 
                     ax.errorbar(xticks + offset, slopes, slope_errs,  label=None, color=measurement_colors[measurement_key],
                                 linestyle="None")
+
+                # Tweak the y limits for a bit more room, then set them
+                ymid = (ylim[0] + ylim[1]) / 2
+                yhalf = ylim[1] - ymid
+                ylim[0] = ymid - 1.05 * yhalf
+                ylim[1] = ymid + 1.05 * yhalf
+                ax.set_ylim(ylim)
 
                 # Plot zero line
                 xlim = deepcopy(ax.get_xlim())
