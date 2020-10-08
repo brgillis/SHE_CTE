@@ -573,11 +573,9 @@ def plot_bias_measurements_from_args(args):
                 else:
                     pyplot.close()
 
-        if args.plot_slopes:
+            if args.plot_slopes:
 
-            # Make plots of the slopes and errors on slopes for each method, separately for m and c
-
-            for measurement_key in ("m", "c"):
+                # Make plots of the slopes and errors on slopes for each method
 
                 # Set up the figure
                 fig = pyplot.figure()
