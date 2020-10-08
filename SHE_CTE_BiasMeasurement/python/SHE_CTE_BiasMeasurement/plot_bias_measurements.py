@@ -588,7 +588,7 @@ def plot_bias_measurements_from_args(args):
 
                 ax = fig.add_subplot(1, 1, 1)
                 ax.set_xlabel("Method", fontsize=fontsize)
-                ax.set_ylabel(r"\partial " + measurement_key + r"_i$/\partial (" +
+                ax.set_ylabel(r"$\partial " + measurement_key + r"_i/\partial $ (" +
                               testing_data_labels_no_units[testing_data_key] + ")", fontsize=fontsize)
 
                 xticks = np.arange(len(args.methods), dtype=float)
@@ -603,8 +603,8 @@ def plot_bias_measurements_from_args(args):
 
                 ylim = [1e99, -1e99]
 
-                for index, offset, marker in (("1", -0.05, (3, 2, 0)),
-                                              ("2",  0.05, (3, 2, 180))):
+                for index, offset, marker in (("1", -0.05, (3, 0, 0)),
+                                              ("2",  0.05, (3, 0, 180))):
 
                     slopes = []
                     slope_errs = []
@@ -621,9 +621,9 @@ def plot_bias_measurements_from_args(args):
                     if (slopes + slope_errs).max() > ylim[1]:
                         ylim[1] = (slopes + slope_errs).max()
 
-                    ax.scatter(xticks + offset, slopes, label=measurement_key + r"_{\rm " + index + r"}",
+                    ax.scatter(xticks + offset, slopes, label="$" + measurement_key + r"_{\rm " + index + r"}$",
                                marker=marker, color=measurement_colors[measurement_key],
-                               s=256)
+                               s=128)
 
                     ax.errorbar(xticks + offset, slopes, slope_errs,  label=None, color=measurement_colors[measurement_key],
                                 linestyle="None")
