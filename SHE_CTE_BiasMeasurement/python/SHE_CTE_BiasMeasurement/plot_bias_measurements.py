@@ -591,7 +591,7 @@ def plot_bias_measurements_from_args(args):
                 ax.set_ylabel(r"\partial " + measurement_key + r"_i$/\partial (" +
                               testing_data_labels_no_units[testing_data_key] + ")", fontsize=fontsize)
 
-                xticks = np.arange(len(args.methods))
+                xticks = np.arange(len(args.methods), dtype=float)
                 ax.set_xticks(xticks)
                 xticklabels = []
                 for method in args.methods:
