@@ -590,7 +590,6 @@ def plot_bias_measurements_from_args(args):
                 ax.set_xlabel("Method", fontsize=fontsize)
                 ax.set_ylabel(r"\partial " + measurement_key + r"_i$/\partial (" +
                               testing_data_labels_no_units[testing_data_key] + ")", fontsize=fontsize)
-                ax.set_yscale("log", nonposy="clip")
 
                 xticks = np.arange(len(args.methods))
                 ax.set_xticks(xticks)
@@ -619,12 +618,16 @@ def plot_bias_measurements_from_args(args):
                     ax.errorbar(xticks + offset, slopes, slope_errs,  label=None, color=measurement_colors[measurement_key],
                                 linestyle="None")
 
-            ax.legend(loc="upper right", scatterpoints=1)
+                # Plot zero line
+                xlim = deepcopy(ax.get_xlim())
+                ax.plot(xlim, [0, 0], label=None, color="k", linestyle="dashed")
 
-            # Save and show it
-            output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                   testing_data_key + "_slopes." + args.output_format)
-            pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-            logger.info("Saved plot to " + output_filename)
+                ax.legend(loc="upper right", scatterpoints=1)
+
+                # Save and show it
+                output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                       testing_data_key + "_" + measurement_key + "_slopes." + args.output_format)
+                pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                logger.info("Saved plot to " + output_filename)
 
     return
