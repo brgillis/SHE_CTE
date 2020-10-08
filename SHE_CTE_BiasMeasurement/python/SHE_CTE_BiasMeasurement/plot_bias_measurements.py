@@ -413,7 +413,7 @@ def plot_bias_measurements_from_args(args):
                                            testing_data_key + "_" + measurement_key + calibration_label + "." +
                                            args.output_format)
                     pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-                    logger.info("Saved plot to " + output_filename + ".")
+                    logger.info("Saved plot to " + output_filename)
                     if not args.hide:
                         fig.show()
                     else:
@@ -469,7 +469,7 @@ def plot_bias_measurements_from_args(args):
                                                calibration_label + "." + args.output_format)
                         pyplot.savefig(output_filename, format=args.output_format,
                                        bbox_inches="tight", pad_inches=0.05)
-                        logger.info("Saved plot to " + output_filename + ".")
+                        logger.info("Saved plot to " + output_filename)
                         if not args.hide:
                             fig.show()
                         else:
@@ -567,7 +567,7 @@ def plot_bias_measurements_from_args(args):
                 output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                        testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
                 pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-                logger.info("Saved plot to " + output_filename + ".")
+                logger.info("Saved plot to " + output_filename)
                 if not args.hide:
                     fig.show()
                 else:
@@ -625,6 +625,6 @@ def plot_bias_measurements_from_args(args):
             output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                    testing_data_key + "_slopes." + args.output_format)
             pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-            logger.info("Saved plot to " + output_filename + ".")
+            logger.info("Saved plot to " + output_filename)
 
     return
