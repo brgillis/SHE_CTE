@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2020-10-06"
+__updated__ = "2020-10-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -79,6 +79,9 @@ def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
             catalog = Table.read(qualified_filename, format="fits")
         except OSError as e:
             logger.error(filename + " is corrupt or missing")
+            raise
+        except Exception as e:
+            logger.error("Error reading in catalog " + filename)
             raise
 
         # Get the (RA, Dec) columns
