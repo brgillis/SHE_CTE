@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2020-10-12"
+__updated__ = "2020-10-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -55,6 +55,13 @@ shear_estimation_method_table_formats = {"KSB": ksbm_tf,
                                          "MomentsML": mmlm_tf,
                                          "LensMC": lmcm_tf,
                                          "BFD": bfdm_tf}
+
+galcat_g1_colname = "GAMMA1"
+galcat_g2_colname = "GAMMA2"
+galcat_bulge_angle_colname = "DISK_ANGLE"
+galcat_bulge_axis_ratio_colname = "DISK_AXIS_RATIO"
+galcat_disk_angle_colname = "DISK_ANGLE"
+galcat_disk_axis_ratio_colname = "DISK_AXIS_RATIO"
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -387,18 +394,18 @@ def match_to_tu_from_args(args):
                 if not method == "BFD":
 
                     gal_matched_table.add_column(
-                        Column(np.arctan2(gal_matched_table["G2"].data, gal_matched_table["G1"].data) * 90 / np.pi,
+                        Column(np.arctan2(gal_matched_table[sem_tf.g2].data, gal_matched_table[sem_tf.g1].data) * 90 / np.pi,
                                name="Beta_Est_Shear"))
 
-                    g_mag = np.sqrt(gal_matched_table["G1"].data ** 2 + gal_matched_table["G2"].data ** 2)
+                    g_mag = np.sqrt(gal_matched_table[sem_tf.g1].data ** 2 + gal_matched_table[sem_tf.g2].data ** 2)
                     gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
 
                     gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
 
                 # Details about the input shear
 
-                g1_in = gal_matched_table["GAMMA1"]
-                g2_in = gal_matched_table["GAMMA2"]
+                g1_in = gal_matched_table[galcat_g1_colname]
+                g2_in = gal_matched_table[galcat_g2_colname]
 
                 gal_matched_table.add_column(
                     Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
@@ -408,13 +415,13 @@ def match_to_tu_from_args(args):
 
                 # Details about the input bulge shape
 
-                bulge_angle = gal_matched_table["DISK_ANGLE"] + 90
+                bulge_angle = gal_matched_table[galcat_bulge_angle_colname] + 90
                 regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
                                                    np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
                 gal_matched_table.add_column(Column(regularized_bulge_angle,
                                                     name="Beta_Input_Bulge_Unsheared_Shape"))
 
-                bulge_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
+                bulge_axis_ratio = gal_matched_table[galcat_bulge_axis_ratio_colname]
                 bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
                 gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
 
@@ -425,13 +432,13 @@ def match_to_tu_from_args(args):
 
                 # Details about the input disk shape
 
-                disk_angle = gal_matched_table["DISK_ANGLE"] + 90
+                disk_angle = gal_matched_table[galcat_disk_angle_colname] + 90
                 regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
                                                   np.where(disk_angle > 90, disk_angle - 180, disk_angle))
                 gal_matched_table.add_column(Column(regularized_disk_angle,
                                                     name="Beta_Input_Disk_Unsheared_Shape"))
 
-                disk_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
+                disk_axis_ratio = gal_matched_table[galcat_disk_axis_ratio_colname]
                 disk_g_mag = (1 - disk_axis_ratio) / (1 + disk_axis_ratio)
                 gal_matched_table.add_column(Column(disk_g_mag, name="Mag_Input_Disk_Unsheared_Shape"))
 
