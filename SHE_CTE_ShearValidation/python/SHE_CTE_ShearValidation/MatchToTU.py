@@ -5,7 +5,7 @@
     Executable for matching the output of the Analysis pipeline to SIM's True Universe catalogs.
 """
 
-__updated__ = "2019-05-10"
+__updated__ = "2020-10-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,10 +22,11 @@ __updated__ = "2019-05-10"
 
 import argparse
 
-import SHE_CTE
-from SHE_CTE_ShearValidation.match_to_tu import match_to_tu_from_args
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+from SHE_CTE_ShearValidation.match_to_tu import match_to_tu_from_args
 
 
 def defineSpecificProgramOptions():
@@ -46,11 +47,15 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input filenames
-    parser.add_argument('--shear_estimates_product', type=str,
+    parser.add_argument('--she_measurements_product', type=str,
                         help='Filename for shear estimates data product (XML data product)')
-    parser.add_argument('--tu_galaxy_catalog', type=str,
+    parser.add_argument('--tu_galaxy_catalog_list', type=str, default=None,
+                        help='Filename for True Universe Galaxy Catalog listfile (.json).')
+    parser.add_argument('--tu_star_catalog_list', type=str, default=None,
+                        help='Filename for True Universe Star Catalog listfile (.json).')
+    parser.add_argument('--tu_galaxy_catalog', type=str, default=None,
                         help='Filename for True Universe Galaxy Catalog data product (XML data product)')
-    parser.add_argument('--tu_star_catalog', type=str,
+    parser.add_argument('--tu_star_catalog', type=str, default=None,
                         help='Filename for True Universe Star Catalog data product (XML data product)')
 
     # Output filenames
@@ -64,7 +69,7 @@ def defineSpecificProgramOptions():
     # Optional arguments (can't be used with pipeline runner)
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
-    parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC456/SIM-VIS/vis_science_T11",
+    parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC7_migrated/SIM",
                         help="Path to where the SIM data is stored")
     parser.add_argument('--match_threshold', type=float, default=0.3,
                         help="Maximum distance allowed for a match in units of arcsec.")

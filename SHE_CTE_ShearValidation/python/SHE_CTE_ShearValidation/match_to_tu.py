@@ -4,8 +4,28 @@
 
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
+import os
 
-__updated__ = "2020-09-01"
+from SHE_PPT import file_io
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile
+from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
+from SHE_PPT.table_utility import table_to_hdu
+from astropy import units
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Table, Column, join, vstack, unique
+
+import SHE_CTE
+import numpy as np
+
+
+__updated__ = "2020-10-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,21 +40,6 @@ __updated__ = "2020-09-01"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import os
-
-from SHE_PPT import file_io
-from SHE_PPT import products
-from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_utility import table_to_hdu
-from astropy import units
-from astropy.coordinates import SkyCoord
-from astropy.io import fits
-from astropy.table import Table, Column, join, vstack, unique
-
-import SHE_CTE
-import numpy as np
-
 
 logger = getLogger(__name__)
 
@@ -44,6 +49,19 @@ star_index_colname = "STAR_INDEX"
 gal_index_colname = "GAL_INDEX"
 
 max_coverage = 1.0  # deg
+
+shear_estimation_method_table_formats = {"KSB": ksbm_tf,
+                                         "REGAUSS": regm_tf,
+                                         "MomentsML": mmlm_tf,
+                                         "LensMC": lmcm_tf,
+                                         "BFD": bfdm_tf}
+
+galcat_g1_colname = "GAMMA1"
+galcat_g2_colname = "GAMMA2"
+galcat_bulge_angle_colname = "DISK_ANGLE"
+galcat_bulge_axis_ratio_colname = "DISK_AXIS_RATIO"
+galcat_disk_angle_colname = "DISK_ANGLE"
+galcat_disk_axis_ratio_colname = "DISK_AXIS_RATIO"
 
 
 def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
@@ -69,6 +87,9 @@ def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
         except OSError as e:
             logger.error(filename + " is corrupt or missing")
             raise
+        except Exception as e:
+            logger.error("Error reading in catalog " + filename)
+            raise
 
         # Get the (RA, Dec) columns
         ra = catalog["RA_MAG"] if "RA_MAG" in catalog.colnames else catalog["RA"]
@@ -93,19 +114,44 @@ def match_to_tu_from_args(args):
     """ @TODO Fill in docstring
     """
 
+    # Get the lists of star and galaxy filenames
+
+    if args.tu_star_catalog_list is not None:
+        qualified_tu_star_catalog_list = file_io.find_file(args.tu_star_catalog_list,
+                                                           path=args.workdir + ":" + args.sim_path)
+        tu_star_catalog_product_filenames = read_listfile(qualified_tu_star_catalog_list)
+    elif args.tu_star_catalog is not None:
+        tu_star_catalog_product_filenames = [args.tu_star_catalog]
+    else:
+        raise ValueError("No star catalogs provided to match with.")
+
+    if args.tu_galaxy_catalog_list is not None:
+        qualified_tu_galaxy_catalog_list = file_io.find_file(args.tu_galaxy_catalog_list,
+                                                             path=args.workdir + ":" + args.sim_path)
+        tu_galaxy_catalog_product_filenames = read_listfile(qualified_tu_galaxy_catalog_list)
+    elif args.tu_galaxy_catalog is not None:
+        tu_galaxy_catalog_product_filenames = [args.tu_galaxy_catalog]
+    else:
+        raise ValueError("No galaxy catalogs provided to match with.")
+
     # Read in the data products for SIM's TU galaxy and star catalogs, and get the filenames of the fits files from
     # them
-    qualified_star_catalog_product_filename = file_io.find_file(args.tu_star_catalog,
-                                                                path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
-    star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
-    star_catalog_filenames = star_catalog_product.get_data_filenames()
 
-    qualified_galaxy_catalog_product_filename = file_io.find_file(args.tu_galaxy_catalog,
-                                                                  path=args.workdir + ":" + args.sim_path)
-    logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
-    galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
-    galaxy_catalog_filenames = galaxy_catalog_product.get_data_filenames()
+    star_catalog_filenames = []
+    for tu_star_catalog_product_filename in tu_star_catalog_product_filenames:
+        qualified_star_catalog_product_filename = file_io.find_file(tu_star_catalog_product_filename,
+                                                                    path=args.workdir + ":" + args.sim_path)
+        logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
+        star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
+        star_catalog_filenames.append(star_catalog_product.get_data_filename())
+
+    galaxy_catalog_filenames = []
+    for tu_galaxy_catalog_product_filename in tu_galaxy_catalog_product_filenames:
+        qualified_galaxy_catalog_product_filename = file_io.find_file(tu_galaxy_catalog_product_filename,
+                                                                      path=args.workdir + ":" + args.sim_path)
+        logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
+        galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
+        galaxy_catalog_filenames.append(galaxy_catalog_product.get_data_filename())
 
     # Read in the shear estimates data product, and get the filenames of the tables for each method from it.
     qualified_shear_estimates_product_filename = file_io.find_file(args.she_measurements_product,
@@ -117,7 +163,7 @@ def match_to_tu_from_args(args):
 
     for method in methods:
         fn = shear_estimates_product.get_method_filename(method)
-        if fn is None or fn == "None":
+        if fn is None or fn == "None" or fn == "data/None":
             shear_tables[method] = None
             logger.warning("No filename for method " + method + ".")
         else:
@@ -140,10 +186,12 @@ def match_to_tu_from_args(args):
         if shear_table is None:
             continue
 
-        ra_col = shear_table[sm_tf.x_world]
-        dec_col = shear_table[sm_tf.y_world]
+        sem_tf = shear_estimation_method_table_formats[method]
 
-        flags_col = shear_table[sm_tf.flags]
+        ra_col = shear_table[sem_tf.ra]
+        dec_col = shear_table[sem_tf.dec]
+
+        flags_col = shear_table[sem_tf.fit_flags]
 
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
@@ -262,8 +310,10 @@ def match_to_tu_from_args(args):
 
                 logger.info("Performing match for method " + method + ".")
 
-                ra_se = shear_table[sm_tf.x_world]
-                dec_se = shear_table[sm_tf.y_world]
+                sem_tf = shear_estimation_method_table_formats[method]
+
+                ra_se = shear_table[sem_tf.ra]
+                dec_se = shear_table[sem_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
                 # Match to both star and galaxy tables, and determine which is best match
@@ -281,9 +331,9 @@ def match_to_tu_from_args(args):
                 # Mask rows where the match isn't close enough, or to the other type of object, with -99
 
                 in_ra_range = np.logical_and(
-                    shear_table[sm_tf.x_world] >= local_ra_range[0], shear_table[sm_tf.x_world] < local_ra_range[1])
+                    shear_table[sem_tf.ra] >= local_ra_range[0], shear_table[sem_tf.ra] < local_ra_range[1])
                 in_dec_range = np.logical_and(
-                    shear_table[sm_tf.y_world] >= local_dec_range[0], shear_table[sm_tf.y_world] < local_dec_range[1])
+                    shear_table[sem_tf.dec] >= local_dec_range[0], shear_table[sem_tf.dec] < local_dec_range[1])
 
                 in_range = np.logical_and(in_ra_range, in_dec_range)
 
@@ -344,18 +394,18 @@ def match_to_tu_from_args(args):
                 if not method == "BFD":
 
                     gal_matched_table.add_column(
-                        Column(np.arctan2(gal_matched_table["G2"].data, gal_matched_table["G1"].data) * 90 / np.pi,
+                        Column(np.arctan2(gal_matched_table[sem_tf.g2].data, gal_matched_table[sem_tf.g1].data) * 90 / np.pi,
                                name="Beta_Est_Shear"))
 
-                    g_mag = np.sqrt(gal_matched_table["G1"].data ** 2 + gal_matched_table["G2"].data ** 2)
+                    g_mag = np.sqrt(gal_matched_table[sem_tf.g1].data ** 2 + gal_matched_table[sem_tf.g2].data ** 2)
                     gal_matched_table.add_column(Column(g_mag, name="Mag_Est_Shear"))
 
                     gal_matched_table.add_column(Column((1 - g_mag) / (1 + g_mag), name="Axis_Ratio_Est_Shear"))
 
                 # Details about the input shear
 
-                g1_in = gal_matched_table["GAMMA1"]
-                g2_in = gal_matched_table["GAMMA2"]
+                g1_in = gal_matched_table[galcat_g1_colname]
+                g2_in = gal_matched_table[galcat_g2_colname]
 
                 gal_matched_table.add_column(
                     Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
@@ -365,13 +415,13 @@ def match_to_tu_from_args(args):
 
                 # Details about the input bulge shape
 
-                bulge_angle = gal_matched_table["DISK_ANGLE"] + 90
+                bulge_angle = gal_matched_table[galcat_bulge_angle_colname] + 90
                 regularized_bulge_angle = np.where(bulge_angle < -90, bulge_angle + 180,
                                                    np.where(bulge_angle > 90, bulge_angle - 180, bulge_angle))
                 gal_matched_table.add_column(Column(regularized_bulge_angle,
                                                     name="Beta_Input_Bulge_Unsheared_Shape"))
 
-                bulge_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
+                bulge_axis_ratio = gal_matched_table[galcat_bulge_axis_ratio_colname]
                 bulge_g_mag = (1 - bulge_axis_ratio) / (1 + bulge_axis_ratio)
                 gal_matched_table.add_column(Column(bulge_g_mag, name="Mag_Input_Bulge_Unsheared_Shape"))
 
@@ -382,13 +432,13 @@ def match_to_tu_from_args(args):
 
                 # Details about the input disk shape
 
-                disk_angle = gal_matched_table["DISK_ANGLE"] + 90
+                disk_angle = gal_matched_table[galcat_disk_angle_colname] + 90
                 regularized_disk_angle = np.where(disk_angle < -90, disk_angle + 180,
                                                   np.where(disk_angle > 90, disk_angle - 180, disk_angle))
                 gal_matched_table.add_column(Column(regularized_disk_angle,
                                                     name="Beta_Input_Disk_Unsheared_Shape"))
 
-                disk_axis_ratio = gal_matched_table["DISK_AXIS_RATIO"]
+                disk_axis_ratio = gal_matched_table[galcat_disk_axis_ratio_colname]
                 disk_g_mag = (1 - disk_axis_ratio) / (1 + disk_axis_ratio)
                 gal_matched_table.add_column(Column(disk_g_mag, name="Mag_Input_Disk_Unsheared_Shape"))
 
