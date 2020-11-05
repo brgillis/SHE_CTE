@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2020-10-13"
+__updated__ = "2020-11-05"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -207,7 +207,7 @@ def match_to_tu_from_args(args):
         dec_range[1] = np.max((dec_range[1], np.max(good_dec_data)))
 
     if ra_range[1] < ra_range[0] or dec_range[1] < dec_range[0]:
-        raise ValueError("Invalid range")
+        raise ValueError("Invalid range or no valid data for any method.")
 
     # Pad the range by the threshold amount
     ra_range[0] -= args.match_threshold
