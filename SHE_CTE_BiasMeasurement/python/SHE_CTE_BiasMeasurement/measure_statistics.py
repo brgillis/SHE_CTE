@@ -5,7 +5,7 @@
     Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-11-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -47,12 +47,12 @@ def measure_statistics_from_args(args):
 
     # Get the details table
 
-    details_table_product = read_xml_product(os.path.join(args.workdir, args.she_simulated_catalog))
+    details_table_product = read_xml_product(os.path.join(args.workdir, args.details_table))
     details_table = Table.read(os.path.join(args.workdir, details_table_product.get_data_filename()))
 
     # Get the shear estimates product
 
-    shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, args.she_measurements))
+    shear_estimates_table_product = read_xml_product(os.path.join(args.workdir, args.shear_estimates))
 
     # Initialise the output product
 
@@ -94,7 +94,7 @@ def measure_statistics_from_args(args):
         pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
     except Exception as e:
         logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
-                    "Exception was: " + str(e))
+                       "Exception was: " + str(e))
         pipeline_config = {}
 
     if CalibrationConfigKeys.MS_ARCHIVE_DIR.value in pipeline_config:
@@ -127,7 +127,7 @@ def measure_statistics_from_args(args):
                             workdir=args.workdir)
         except Exception as e:
             logger.warning("Failsafe exception block triggered when trying to save statistics product in archive. " +
-                        "Exception was: " + str(e))
+                           "Exception was: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')
 

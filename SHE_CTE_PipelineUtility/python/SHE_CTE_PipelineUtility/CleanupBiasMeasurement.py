@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2020-11-04"
+__updated__ = "2020-11-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -177,8 +177,8 @@ def cleanup_bias_measurement_from_args(args):
     for product_filename in (args.simulation_config,
                              args.stacked_data_image,
                              args.stacked_segmentation_image,
-                             argsshe_simulated_catalog,
-                             args.she_measurements):
+                             args.details_table,
+                             args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
 
     return

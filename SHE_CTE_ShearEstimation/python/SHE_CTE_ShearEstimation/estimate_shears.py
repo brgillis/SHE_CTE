@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-09-23"
+__updated__ = "2020-11-13"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -163,7 +163,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warning("No MDB file provided as input. Default values will be used where necessary.")
-        mdb.init(find_file("WEB/SHE_PPT_8_2/sample_mdb-SC8.xml"))
+        mdb.init(find_file("WEB/SHE_PPT_8_5/sample_mdb-SC8.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
@@ -270,35 +270,17 @@ def estimate_shears_from_args(args, dry_run=False):
         method_shear_estimates = {}
 
         # Check for methods in the pipeline options
-        config_keys_errors = []
-        for config_keys in (AnalysisConfigKeys, CalibrationConfigKeys):
-            config_keys_determined = False
-            try:
-                pipeline_config = read_config(args.pipeline_config,
-                                              workdir=args.workdir,
-                                              config_keys=config_keys)
-                config_keys_determined = True
-                break
-            except ValueError as e:
-                if not "Invalid key found in pipeline config file" in e:
-                    raise
-                config_keys_errors.append(str(e))
-
-        # Raise an error if config file isn't in either format
-        if not config_keys_determined:
-            error_message = ("Configuration file not in proper format for either Analysis or Calibration config file. " +
-                             "Respective exceptions were: ")
-            for e in config_keys_errors:
-                error_message = error_message + "\n" + e
-            raise ValueError(error_message)
-        else:
-            del config_keys_errors
+        pipeline_config = read_config(args.pipeline_config,
+                                      workdir=args.workdir,
+                                      config_keys=(AnalysisConfigKeys, CalibrationConfigKeys))
 
         # Use methods specified in the command-line first
         if args.methods is not None and len(args.methods) > 0:
             methods = args.methods
-        elif config_keys.ES_METHODS.value in pipeline_config:
-            methods = pipeline_config[config_keys.ES_METHODS.value].split()
+        elif AnalysisConfigKeys.ES_METHODS.value in pipeline_config:
+            methods = pipeline_config[AnalysisConfigKeys.ES_METHODS.value].split()
+        elif CalibrationConfigKeys.ES_METHODS.value in pipeline_config:
+            methods = pipeline_config[CalibrationConfigKeys.ES_METHODS.value].split()
         else:
             # Default to using all methods
             methods = list(estimation_methods.keys())
@@ -306,8 +288,10 @@ def estimate_shears_from_args(args, dry_run=False):
         # Determine which method we want chains from
         if args.chains_method is not None:
             chains_method = args.methods
-        elif config_keys.ES_CHAINS_METHOD.value in pipeline_config:
-            chains_method = pipeline_config[config_keys.ES_CHAINS_METHOD.value]
+        elif AnalysisConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
+            chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD.value]
+        elif CalibrationConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
+            chains_method = pipeline_config[CalibrationConfigKeys.ES_CHAINS_METHOD.value]
         else:
             # Default to using all methods
             chains_method = default_chains_method

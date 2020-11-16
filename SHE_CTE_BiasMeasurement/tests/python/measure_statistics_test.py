@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2020-11-16"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -15,7 +15,7 @@ __updated__ = "2020-07-10"
 #
 # This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# she_simulated_catalog.
+# details_table.
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
@@ -44,8 +44,8 @@ class Args(object):
         self.workdir = None
         self.logdir = None
         self.profile = False
-        self.she_simulated_catalog = None
-        self.she_measurements = None
+        self.details_table = None
+        self.shear_estimates = None
         self.she_bias_statistics = None
         self.archive_dir = None
         self.webdav_dir = None
@@ -63,8 +63,8 @@ class TestMeasureStatistics:
     def setup_class(cls):
 
         # Set up some mock data for the test
-        cls.she_simulated_catalog = table_formats.she_simulated_catalog.initialise_simulated_catalog()
-        cls.she_simulated_catalog_group = table_formats.she_simulated_catalog.initialise_simulated_catalog()
+        cls.details_table = table_formats.she_simulated_catalog.initialise_simulated_catalog()
+        cls.details_table_group = table_formats.she_simulated_catalog.initialise_simulated_catalog()
         cls.she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
         cls.she_measurements_group = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
 
@@ -103,22 +103,22 @@ class TestMeasureStatistics:
         g2_est_group += np.array([-0.2] * 5 + [0.2] * 5)
 
         for i in range(len(g1_true)):
-            cls.she_simulated_catalog.add_row(vals={datf.ID: i,
-                                      datf.group_ID: i})
+            cls.details_table.add_row(vals={datf.ID: i,
+                                            datf.group_ID: i})
             cls.she_measurements.add_row(vals={ksbm_tf.ID: i})
         for j in range(cls.len_group):
             for i in range(len(g1_true)):
-                cls.she_simulated_catalog_group.add_row(vals={datf.ID: i * cls.len_group + j,
-                                                datf.group_ID: i})
+                cls.details_table_group.add_row(vals={datf.ID: i * cls.len_group + j,
+                                                      datf.group_ID: i})
                 cls.she_measurements_group.add_row(vals={ksbm_tf.ID: i * cls.len_group + j})
 
-        # Save she_simulated_catalog data
-        cls.she_simulated_catalog[datf.g1] = g1_true
-        cls.she_simulated_catalog[datf.g2] = g2_true
+        # Save details_table data
+        cls.details_table[datf.g1] = g1_true
+        cls.details_table[datf.g2] = g2_true
 
-        # Save she_simulated_catalog_group data
-        cls.she_simulated_catalog_group[datf.g1] = g1_true_group
-        cls.she_simulated_catalog_group[datf.g2] = g2_true_group
+        # Save details_table_group data
+        cls.details_table_group[datf.g1] = g1_true_group
+        cls.details_table_group[datf.g2] = g2_true_group
 
         # Save she_measurements data
         cls.she_measurements[ksbm_tf.g1] = g1_est
@@ -149,7 +149,7 @@ class TestMeasureStatistics:
     def test_calculate_shear_bias_statistics(self):
         """Try using the calculate_shear_bias_statistics function and check the results.
         """
-        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.she_measurements, self.she_simulated_catalog)
+        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.she_measurements, self.details_table)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
@@ -199,9 +199,9 @@ class TestMeasureStatistics:
 
         # Check that we don't crash by calling calculate_shear_bias_statistics
         g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
-            somebad_she_measurements, self.she_simulated_catalog)
+            somebad_she_measurements, self.details_table)
         g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
-            allbad_she_measurements, self.she_simulated_catalog)
+            allbad_she_measurements, self.details_table)
 
         # Check the statistics all have the expected weight
 
@@ -253,9 +253,9 @@ class TestMeasureStatistics:
 
         # Check that we don't crash by calling calculate_shear_bias_statistics
         g1_somebad_bias_stats, g2_somebad_bias_stats = calculate_shear_bias_statistics(
-            somebad_she_measurements, self.she_simulated_catalog_group)
+            somebad_she_measurements, self.details_table_group)
         g1_allbad_bias_stats, g2_allbad_bias_stats = calculate_shear_bias_statistics(
-            allbad_she_measurements, self.she_simulated_catalog_group)
+            allbad_she_measurements, self.details_table_group)
 
         # Check the statistics all have the expected weight
 
@@ -275,7 +275,8 @@ class TestMeasureStatistics:
     def test_calculate_shear_bias_statistics_group(self):
         """Try using the calculate_shear_bias_statistics function and check the results on grouped data.
         """
-        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(self.she_measurements_group, self.she_simulated_catalog_group)
+        g1_bias_stats, g2_bias_stats = calculate_shear_bias_statistics(
+            self.she_measurements_group, self.details_table_group)
 
         g1_bias = BiasMeasurements(LinregressResults(g1_bias_stats))
         g2_bias = BiasMeasurements(LinregressResults(g2_bias_stats))
@@ -296,23 +297,23 @@ class TestMeasureStatistics:
         args = Args()
         args.workdir = self.workdir
         args.logdir = self.logdir
-        args.she_simulated_catalog = "test_she_simulated_catalog.xml"
-        args.she_measurements = "test_she_measurements.xml"
+        args.details_table = "test_details_table.xml"
+        args.shear_estimates = "test_she_measurements.xml"
         args.she_bias_statistics = "test_shear_statistics.xml"
 
         # Set up the files to be read in
 
         os.makedirs(os.path.join(args.workdir, "data"))
 
-        she_simulated_catalog_filename = "test_she_simulated_catalog.fits"
-        she_simulated_catalog_product = products.she_simulated_catalog.create_dpd_she_simulated_catalog(she_simulated_catalog_filename)
-        write_xml_product(she_simulated_catalog_product, args.she_simulated_catalog, workdir=args.workdir)
-        self.she_simulated_catalog.write(join(args.workdir, "data/" + she_simulated_catalog_filename), format="fits")
+        details_table_filename = "test_details_table.fits"
+        details_table_product = products.she_simulated_catalog.create_dpd_she_simulated_catalog(details_table_filename)
+        write_xml_product(details_table_product, args.details_table, workdir=args.workdir)
+        self.details_table.write(join(args.workdir, "data/" + details_table_filename), format="fits")
 
         she_measurements_filename = "test_she_measurements.fits"
         she_measurements_product = products.she_measurements.create_she_measurements_product(
             KSB_filename=she_measurements_filename)
-        write_xml_product(she_measurements_product, args.she_measurements, workdir=args.workdir)
+        write_xml_product(she_measurements_product, args.shear_estimates, workdir=args.workdir)
         self.she_measurements.write(join(args.workdir, "data/" + she_measurements_filename), format="fits")
 
         # Call the function
