@@ -163,7 +163,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warning("No MDB file provided as input. Default values will be used where necessary.")
-        mdb.init(find_file("WEB/SHE_PPT_8_2/sample_mdb-SC8.xml"))
+        mdb.init(find_file("WEB/SHE_PPT_8_5/sample_mdb-SC8.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
