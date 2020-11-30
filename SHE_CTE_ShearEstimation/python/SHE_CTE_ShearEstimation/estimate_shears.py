@@ -48,7 +48,7 @@ from astropy.io import fits
 import SHE_CTE
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC.she_measure_shear import fit_frame_stack
+from SHE_LensMC import she_measure_shear
 from SHE_LensMC.training_data import load_training_data
 import numpy as np
 
@@ -70,7 +70,7 @@ estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       # "MomentsML": ML_estimate_shear, # FIXME - uncomment when MomentsML is updated to EDEN 2.1
                       "MomentsML": None,
-                      "LensMC": fit_frame_stack,
+                      "LensMC": she_measure_shear,
                       # "BFD": bfd_measure_moments} # FIXME - uncomment when BFD is integrated
                       "BFD": None}
 
