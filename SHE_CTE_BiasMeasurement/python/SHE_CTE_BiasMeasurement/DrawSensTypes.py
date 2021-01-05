@@ -28,10 +28,14 @@ from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
 import matplotlib.pyplot as pyplot
-import numpy as np
 
 
-# TODO: Define constants here
+fig_title = "Types of Sensitivity Testing"
+title_fontsize = 24
+
+fig_xlabel = r"$X$"
+fig_ylabel = r"$\hat{X}$"
+axis_label_fontsize = 18
 
 
 def defineSpecificProgramOptions():
@@ -51,12 +55,16 @@ def defineSpecificProgramOptions():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
-
     # Output data
     parser.add_argument('--sens_types_plot', type=str, default="sens_types.pdf",
                         help='Desired name of the output sensitivity types plot.')
+
+    # Arguments
+    parser.add_argument('--hide', action="store_true",
+                        help="Don't show any generated plots.")
+
+    parser.add_argument('--profile', action='store_true',
+                        help='Store profiling data for execution.')
 
     # Arguments needed by the pipeline runner
     parser.add_argument('--workdir', type=str, default=".")
@@ -84,7 +92,7 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_DrawSensTypes",
-                                    store_true=["profile", "debug"])
+                                    store_true=["profile", "debug", "hide"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
@@ -123,5 +131,39 @@ if __name__ == "__main__":
 def draw_sens_types_from_args(args):
     """ @TODO main docstring
     """
+
+    # Set up the general layout of the plot
+    fig = pyplot.figure()
+
+    ax = fig.add_subplot(1, 1, 1)
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    fig.subplots_adjust(wspace=0, hspace=0, bottom=0.05, right=0.75, top=0.95, left=0.5)
+
+    # Add arrows to each axis
+    for direction in ["xzero", "yzero"]:
+        ax.axis[direction].set_axisline_style("-|>")
+        ax.axis[direction].set_visible(True)
+
+    # Hide borders
+    for side in ["left", "right", "bottom", "top"]:
+        ax.axis[side].set_visible(False)
+
+    pyplot.title(fig_title, fontsize=title_fontsize)
+    ax.set_xlabel(fig_xlabel, fontsize=axis_label_fontsize)
+    ax.set_ylabel(fig_ylabel, fontsize=axis_label_fontsize)
+
+    # Save and show the plot
+    qualified_output_filename = join(args.workdir, args.sens_types_plot)
+    pyplot.savefig(qualified_output_filename, format=args.sens_types_plot.split(".")[-1],
+                   bbox_inches="tight", pad_inches=0.05)
+
+    if not args.hide:
+        pyplot.show()
 
     return
