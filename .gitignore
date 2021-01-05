@@ -27,6 +27,7 @@ local.properties
 .settings/
 .loadpath
 .cproject
+.pydevproject
 
 
 # Python-specific
