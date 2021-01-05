@@ -12,12 +12,11 @@ from SHE_PPT.file_io import read_xml_product
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
 
-from SHE_CTE_BiasMeasurement.plot_bias_measurements import testing_data_labels
 import matplotlib.pyplot as pyplot
 import numpy as np
 
 
-__updated__ = "2019-07-17"
+__updated__ = "2021-01-05"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -141,7 +140,9 @@ def plot_psf_sensitivity_from_args(args):
     """
 
     # Determine the qualified path to the root data folder
-    if args.root_data_folder[0] == "/":
+    if args.root_data_folder is None:
+        root_data_folder = args.workdir
+    elif args.root_data_folder[0] == "/":
         root_data_folder = args.root_data_folder
     else:
         # Relative to workdir in this case
@@ -152,9 +153,8 @@ def plot_psf_sensitivity_from_args(args):
 
     def read_bias_measurements(tag):
         if not tag in all_bias_measurements:
-            tagdir = join(root_data_folder, args.data_folder_head + tag)
-            all_bias_measurements[tag] = read_xml_product(dir + "/she_bias_measurements.xml")
-            all_bias_measurements_dirs[tag] = tagdir
+            all_bias_measurements[tag] = read_xml_product(
+                join(root_data_folder, args.bias_measurements_head + tag + ".xml"), workdir=root_data_folder)
 
     # Do a loop of reading for each property
     for testing_variant in testing_variant_labels:
@@ -234,14 +234,14 @@ def plot_psf_sensitivity_from_args(args):
 
                         # Get the bias measurements for this method and testing variant
                         g1_bias_measurements, g2_bias_measurements = all_bias_measurements[tag].get_method_bias_measurements(
-                            method, workdir=all_bias_measurements_dirs[tag])
+                            method, workdir=root_data_folder)
                         g1_bias_measurement = getattr(g1_bias_measurements, measurement_key)
                         g2_bias_measurement = getattr(g2_bias_measurements, measurement_key)
 
                         # If we're norming, correct bias measurements by the central value
                         if calibration_label == "_normed":
                             g1_central_bias_measurements, g2_central_bias_measurements = (
-                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=all_bias_measurements_dirs[tag]))
+                                all_bias_measurements[tag_template].get_method_bias_measurements(method, workdir=root_data_folder))
                             g1_central_bias_measurement = getattr(g1_central_bias_measurements, measurement_key)
                             g2_central_bias_measurement = getattr(g2_central_bias_measurements, measurement_key)
 
@@ -258,12 +258,21 @@ def plot_psf_sensitivity_from_args(args):
 
                         # To calculate combined error, we also need non-error
                         if "_err" in measurement_key:
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key.replace("_err", "")))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key.replace("_err", "")))
+                            g1_o = getattr(g1_bias_measurements, measurement_key.replace("_err", ""))
+                            g2_o = getattr(g2_bias_measurements, measurement_key.replace("_err", ""))
                         else:
                             # And for non-error values, we'll want to plot error bars too, so we need that
-                            ly1_o.append(getattr(g1_bias_measurements, measurement_key + "_err"))
-                            ly2_o.append(getattr(g2_bias_measurements, measurement_key + "_err"))
+                            g1_o = getattr(g1_bias_measurements, measurement_key + "_err")
+                            g2_o = getattr(g2_bias_measurements, measurement_key + "_err")
+
+                        if g1_o != '' or g1_o == 'NaN':
+                            ly1_o.append(g1_o)
+                        else:
+                            ly1_o.append(np.nan)
+                        if g2_o != '' or g1_o == 'NaN':
+                            ly2_o.append(g2_o)
+                        else:
+                            ly2_o.append(np.nan)
 
                     x_vals = np.array(lx)
                     y1_vals = np.array(ly1)
@@ -280,7 +289,10 @@ def plot_psf_sensitivity_from_args(args):
                         y_errs = None
                     elif calibration_label == "_normed":
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
+                        y1_errs = y1_o_vals
+                        y2_errs = y2_o_vals
                         # Carry over errors from previous run, on unnormed data
+                        y_errs = all_methods_data[(method, "")]["y_err"]
                     else:
                         y_vals = np.sqrt(y1_vals**2 + y2_vals**2)
                         y1_errs = y1_o_vals
@@ -432,10 +444,10 @@ def plot_psf_sensitivity_from_args(args):
 
                     for prop_key in psf_properties:
 
-                        # Only plot m versus R2 and c versus E
-                        if (("m" in measurement_key_template and "E" in prop_key) or
-                                ("c" in measurement_key_template and "R" in prop_key)):
-                            continue
+                        # Uncomment below to only plot m versus R2 and c versus E
+                        #                         if (("m" in measurement_key_template and "E" in prop_key) or
+                        #                                 ("c" in measurement_key_template and "R" in prop_key)):
+                        #                             continue
 
                         for index in (1, 2):
 
