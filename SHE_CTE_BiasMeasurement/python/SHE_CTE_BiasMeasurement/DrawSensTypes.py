@@ -31,11 +31,23 @@ import matplotlib.pyplot as pyplot
 
 
 fig_title = "Types of Sensitivity Testing"
-title_fontsize = 24
+title_fontsize = 18
 
 fig_xlabel = r"$X$"
 fig_ylabel = r"$\hat{X}$"
 axis_label_fontsize = 18
+
+# Details for axis arrows
+axis_arrow_headwidth = 0.035
+axis_arrow_headlength = 0.035
+axis_arrow_overhang = 0.
+axis_linewidth = 1.
+
+# Details for arrows in the plot
+axis_arrow_headwidth = 0.025
+axis_arrow_headlength = 0.025
+axis_arrow_overhang = 0.3
+plot_linewidth = 0.5
 
 
 def defineSpecificProgramOptions():
@@ -143,20 +155,31 @@ def draw_sens_types_from_args(args):
     ax.set_xticks([])
     ax.set_yticks([])
 
-    fig.subplots_adjust(wspace=0, hspace=0, bottom=0.05, right=0.75, top=0.95, left=0.5)
+    fig.subplots_adjust(wspace=0, hspace=0, bottom=0.075, right=0.75, top=0.9, left=0.075)
 
-    # Add arrows to each axis
-    for direction in ["xzero", "yzero"]:
-        ax.axis[direction].set_axisline_style("-|>")
-        ax.axis[direction].set_visible(True)
-
-    # Hide borders
+    # Remove the default axes
     for side in ["left", "right", "bottom", "top"]:
-        ax.axis[side].set_visible(False)
+        ax.spines[side].set_visible(False)
 
+    # Draw arrows as replacement axes
+    ax.arrow(0., 0., 1.3, 0., facecolor='k', edgecolor='k', linewidth=axis_linewidth,
+             head_width=axis_arrow_headwidth, head_length=axis_arrow_headlength, overhang=axis_arrow_overhang,
+             length_includes_head=True, clip_on=False)
+
+    ax.arrow(0., 0., 0., 1., facecolor='k', edgecolor='k', linewidth=axis_linewidth,
+             head_width=axis_arrow_headwidth, head_length=axis_arrow_headlength, overhang=axis_arrow_overhang,
+             length_includes_head=True, clip_on=False)
+
+    # Draw plot and axis arrows
     pyplot.title(fig_title, fontsize=title_fontsize)
     ax.set_xlabel(fig_xlabel, fontsize=axis_label_fontsize)
     ax.set_ylabel(fig_ylabel, fontsize=axis_label_fontsize)
+
+    # Draw an arrow for the ideal line
+    ax.arrow(0.999, 0.999, 0.001, 0.001, facecolor="k", edgecolor="k",
+             head_width=axis_arrow_headwidth, head_length=axis_arrow_headlength, overhang=axis_arrow_overhang,
+             length_includes_head=True, clip_on=False)
+    ax.plot([0., 1.], [0., 1.], linestyle=":", c="k")
 
     # Save and show the plot
     qualified_output_filename = join(args.workdir, args.sens_types_plot)
