@@ -13,7 +13,6 @@ elements_depends_on_subdirs(SHE_BFD_CalculateMoments)
 elements_install_python_modules()
 
 # Instruction for creating a Python executable
-elements_add_python_program(SHE_CTE_DrawSensTypes SHE_CTE_BiasMeasurement.DrawSensTypes)
 elements_add_python_program(SHE_CTE_MeasureBias SHE_CTE_BiasMeasurement.MeasureBias)
 elements_add_python_program(SHE_CTE_MeasureStatistics SHE_CTE_BiasMeasurement.MeasureStatistics)
 elements_add_python_program(SHE_CTE_PlotBias SHE_CTE_BiasMeasurement.PlotBias)

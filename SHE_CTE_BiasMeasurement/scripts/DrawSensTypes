@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """ @file DrawSensTypes.py
 
     Created 5 January 2021
@@ -5,7 +7,7 @@
     Main function to draw a plot explaining different types of sensitivity testing.
 """
 
-__updated__ = "2021-01-05"
+__updated__ = "2021-01-08"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,12 +23,9 @@ __updated__ = "2021-01-05"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+from logging import getLogger
 from os.path import join
 
-from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-
-import SHE_CTE
 import matplotlib.pyplot as pyplot
 
 
@@ -103,11 +102,6 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_DrawSensTypes mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_DrawSensTypes",
-                                    store_true=["profile", "debug", "hide"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
     if args.profile:
         import cProfile
         cProfile.runctx("draw_sens_types_from_args(args)", {},
@@ -119,25 +113,6 @@ def mainMethod(args):
     logger.debug('# Exiting SHE_CTE_DrawSensTypes mainMethod()')
 
     return
-
-
-def main():
-    """
-    @brief
-        Alternate entry point for non-Elements execution.
-    """
-
-    parser = defineSpecificProgramOptions()
-
-    args = parser.parse_args()
-
-    mainMethod(args)
-
-    return
-
-
-if __name__ == "__main__":
-    main()
 
 
 def draw_sens_types_from_args(args):
@@ -181,6 +156,8 @@ def draw_sens_types_from_args(args):
              length_includes_head=True, clip_on=False)
     ax.plot([0., 1.], [0., 1.], linestyle=":", c="k")
 
+    # Draw
+
     # Save and show the plot
     qualified_output_filename = join(args.workdir, args.sens_types_plot)
     pyplot.savefig(qualified_output_filename, format=args.sens_types_plot.split(".")[-1],
@@ -190,3 +167,22 @@ def draw_sens_types_from_args(args):
         pyplot.show()
 
     return
+
+
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
+
+    parser = defineSpecificProgramOptions()
+
+    args = parser.parse_args()
+
+    mainMethod(args)
+
+    return
+
+
+if __name__ == "__main__":
+    main()
