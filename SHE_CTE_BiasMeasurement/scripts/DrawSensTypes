@@ -23,6 +23,7 @@ __updated__ = "2021-01-08"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+from copy import deepcopy
 from logging import getLogger
 from os.path import join
 
@@ -56,22 +57,43 @@ indicator_arrow_overhang = 1.0
 indicator_linewidth = 0.5
 indicator_padding = 0.02
 
-marker_base_point = 0.3
+marker_base_point = 0.2
 arrow_length = 0.3
 
 markersize = 100
 arrow_marker_adjustment = 0.018 * np.sqrt(markersize / 100)
 diag_arrow_marker_adjustment = arrow_marker_adjustment / np.sqrt(2.)
 
+label_fontsize = 10
+label_box_props = dict(boxstyle='square', facecolor='w', edgecolor='k')
 
-truth_indicator_source = (0.8, 0.2)
 truth_color = (0, 0, 1)
+truth_indicator_source = (0.6, 0.1)
+truth_label_offset = (0., 0.)
+truth_text = "\n".join((r"$\mathbf{Truth}$ $\mathbf{Sensitivity:}$ The change in bias",
+                        r"due to a change in the truth value $X$,",
+                        r"with the measurement value $\hat{X}$ held",
+                        r"constant."))
+truth_box_props = deepcopy(label_box_props)
+truth_box_props["edgecolor"] = truth_color
 
-meas_indicator_source = (0.4, 0.8)
 meas_color = (1, 0, 0)
+meas_indicator_source = (0.3, 0.6)
+meas_label_offset = (-0.2, 0.)
+meas_text = "\n".join((r"$\mathbf{Measurement}$ $\mathbf{Sensitivity:}$ The change in bias due to a change in the",
+                       r"measurement value $\hat{X}$, with the truth value $X$ held constant."))
+meas_box_props = deepcopy(label_box_props)
+meas_box_props["edgecolor"] = meas_color
 
-locus_indicator_source = (0.8, 0.6)
 locus_color = (1, 0, 1)
+locus_indicator_source = (0.6, 0.4)
+locus_label_offset = (0., 0.)
+locus_text = "\n".join((r"$\mathbf{Locus}$ $\mathbf{Sensitivity:}$ The change in bias",
+                        r"due to a change in both the the truth value $X$",
+                        r"and the measurement value $\hat{X}$, within",
+                        r"the locus $\hat{X}=X$."))
+locus_box_props = deepcopy(label_box_props)
+locus_box_props["edgecolor"] = locus_color
 
 
 def defineSpecificProgramOptions():
@@ -229,6 +251,10 @@ def draw_sens_types_from_args(args):
              facecolor=truth_color, edgecolor=truth_color, linestyle="-",
              head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
              length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+    ax.text(truth_indicator_source[0] + truth_label_offset[0], truth_indicator_source[1] + truth_label_offset[1],
+            truth_text, fontsize=label_fontsize,
+            verticalalignment='center', horizontalalignment='left',
+            bbox=truth_box_props)
 
     # Measurement sensitivity
     meas_arrow_midpoint = (marker_base_point, marker_base_point + arrow_length / 2)
@@ -239,6 +265,10 @@ def draw_sens_types_from_args(args):
              facecolor=meas_color, edgecolor=meas_color, linestyle="-",
              head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
              length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+    ax.text(meas_indicator_source[0] + meas_label_offset[0], meas_indicator_source[1] + meas_label_offset[1],
+            meas_text, fontsize=label_fontsize,
+            verticalalignment='bottom', horizontalalignment='left',
+            bbox=meas_box_props)
 
     # Locus sensitivity
     locus_arrow_midpoint = (marker_base_point + arrow_length / 2, marker_base_point + arrow_length / 2)
@@ -249,6 +279,10 @@ def draw_sens_types_from_args(args):
              facecolor=locus_color, edgecolor=locus_color, linestyle="-",
              head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
              length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+    ax.text(locus_indicator_source[0] + locus_label_offset[0], locus_indicator_source[1] + locus_label_offset[1],
+            locus_text, fontsize=label_fontsize,
+            verticalalignment='center', horizontalalignment='left',
+            bbox=locus_box_props)
 
     # Save and show the plot
     qualified_output_filename = join(args.workdir, args.sens_types_plot)
