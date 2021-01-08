@@ -69,7 +69,7 @@ label_box_props = dict(boxstyle='square', facecolor='w', edgecolor='k')
 
 truth_color = (0, 0, 1)
 truth_indicator_source = (0.6, 0.1)
-truth_label_offset = (0., 0.)
+truth_label_offset = (0., 0.05)
 truth_text = "\n".join((r"$\mathbf{Truth}$ $\mathbf{Sensitivity:}$ The change in bias",
                         r"due to a change in the truth value $X$,",
                         r"with the measurement value $\hat{X}$ held",
@@ -86,7 +86,7 @@ meas_box_props = deepcopy(label_box_props)
 meas_box_props["edgecolor"] = meas_color
 
 locus_color = (1, 0, 1)
-locus_indicator_source = (0.6, 0.4)
+locus_indicator_source = (0.57, 0.4)
 locus_label_offset = (0., 0.)
 locus_text = "\n".join((r"$\mathbf{Locus}$ $\mathbf{Sensitivity:}$ The change in bias",
                         r"due to a change in both the the truth value $X$",
@@ -94,6 +94,14 @@ locus_text = "\n".join((r"$\mathbf{Locus}$ $\mathbf{Sensitivity:}$ The change in
                         r"the locus $\hat{X}=X$."))
 locus_box_props = deepcopy(label_box_props)
 locus_box_props["edgecolor"] = locus_color
+
+ideal_indicator_source = (0.62, 0.85)
+ideal_indicator_dest = (0.75, 0.75)
+ideal_label_offset = (-0.01, 0.)
+ideal_text = "\n".join((r"Locus of ideal measurement, $\hat{X}=X$",))
+ideal_box_props = deepcopy(label_box_props)
+ideal_box_props["facecolor"] = "None"
+ideal_box_props["edgecolor"] = "None"
 
 
 def defineSpecificProgramOptions():
@@ -283,6 +291,19 @@ def draw_sens_types_from_args(args):
             locus_text, fontsize=label_fontsize,
             verticalalignment='center', horizontalalignment='left',
             bbox=locus_box_props)
+
+    # And a label for the locus of ideal measurement
+    ideal_indicator_length = np.subtract(ideal_indicator_dest, ideal_indicator_source)
+
+    ax.arrow(ideal_indicator_source[0], ideal_indicator_source[1],
+             ideal_indicator_length[0] - indicator_padding, ideal_indicator_length[1],
+             facecolor="k", edgecolor="k", linestyle="-",
+             head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+    ax.text(ideal_indicator_source[0] + ideal_label_offset[0], ideal_indicator_source[1] + ideal_label_offset[1],
+            ideal_text, fontsize=label_fontsize,
+            verticalalignment='center', horizontalalignment='right',
+            bbox=ideal_box_props)
 
     # Save and show the plot
     qualified_output_filename = join(args.workdir, args.sens_types_plot)
