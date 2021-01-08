@@ -27,6 +27,7 @@ from logging import getLogger
 from os.path import join
 
 import matplotlib.pyplot as pyplot
+import numpy as np
 
 
 fig_title = "Types of Sensitivity Testing"
@@ -43,10 +44,34 @@ axis_arrow_overhang = 0.
 axis_linewidth = 1.
 
 # Details for arrows in the plot
-axis_arrow_headwidth = 0.025
-axis_arrow_headlength = 0.025
-axis_arrow_overhang = 0.3
-plot_linewidth = 0.5
+plot_arrow_headwidth = 0.025
+plot_arrow_headlength = 0.025
+plot_arrow_overhang = 0.3
+plot_linewidth = 1
+
+# Details for indicator arrows
+indicator_arrow_headwidth = 0.025
+indicator_arrow_headlength = 0.025
+indicator_arrow_overhang = 1.0
+indicator_linewidth = 0.5
+indicator_padding = 0.02
+
+marker_base_point = 0.3
+arrow_length = 0.3
+
+markersize = 100
+arrow_marker_adjustment = 0.018 * np.sqrt(markersize / 100)
+diag_arrow_marker_adjustment = arrow_marker_adjustment / np.sqrt(2.)
+
+
+truth_indicator_source = (0.8, 0.2)
+truth_color = (0, 0, 1)
+
+meas_indicator_source = (0.4, 0.8)
+meas_color = (1, 0, 0)
+
+locus_indicator_source = (0.8, 0.6)
+locus_color = (1, 0, 1)
 
 
 def defineSpecificProgramOptions():
@@ -151,12 +176,79 @@ def draw_sens_types_from_args(args):
     ax.set_ylabel(fig_ylabel, fontsize=axis_label_fontsize)
 
     # Draw an arrow for the ideal line
-    ax.arrow(0.999, 0.999, 0.001, 0.001, facecolor="k", edgecolor="k",
-             head_width=axis_arrow_headwidth, head_length=axis_arrow_headlength, overhang=axis_arrow_overhang,
+    ax.arrow(0.9999, 0.9999, 0.0001, 0.0001, facecolor="k", edgecolor="k",
+             head_width=plot_arrow_headwidth, head_length=plot_arrow_headlength, overhang=plot_arrow_overhang,
              length_includes_head=True, clip_on=False)
     ax.plot([0., 1.], [0., 1.], linestyle=":", c="k")
 
-    # Draw
+    # Draw the base point
+    ax.scatter([marker_base_point], [marker_base_point], s=markersize, c="k", marker="o")
+
+    # Draw the test points
+    ax.scatter([marker_base_point, marker_base_point + arrow_length, marker_base_point + arrow_length],
+               [marker_base_point + arrow_length, marker_base_point, marker_base_point + arrow_length],
+               s=markersize, marker="o",
+               facecolors="None", edgecolors=[(1, 0, 0), (0, 0, 1), (1, 0, 1)])
+
+    # Draw arrows for each type of sensitivity
+    ax.arrow(marker_base_point + arrow_marker_adjustment, marker_base_point,
+             arrow_length - 2 * arrow_marker_adjustment, 0.,
+             facecolor=truth_color, edgecolor=truth_color,
+             head_width=plot_arrow_headwidth, head_length=plot_arrow_headlength, overhang=plot_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=0.5 * plot_linewidth)
+    ax.arrow(marker_base_point, marker_base_point + arrow_marker_adjustment,
+             0., arrow_length - 2 * arrow_marker_adjustment,
+             facecolor=(1, 0, 0), edgecolor=(1, 0, 0),
+             head_width=plot_arrow_headwidth, head_length=plot_arrow_headlength, overhang=plot_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=0.5 * plot_linewidth)
+    ax.arrow(marker_base_point + diag_arrow_marker_adjustment, marker_base_point + diag_arrow_marker_adjustment,
+             arrow_length - 2 * diag_arrow_marker_adjustment, arrow_length - 2 * diag_arrow_marker_adjustment,
+             facecolor=(1, 0, 1), edgecolor=(1, 0, 1),
+             head_width=plot_arrow_headwidth, head_length=plot_arrow_headlength, overhang=plot_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=0.5 * plot_linewidth)
+
+    # Draw arrow for the "adding-up" sensitivities
+    ax.plot([marker_base_point + arrow_length, marker_base_point + arrow_length],
+            [marker_base_point + arrow_marker_adjustment, marker_base_point +
+                arrow_length - arrow_marker_adjustment - plot_arrow_headlength * plot_arrow_overhang],
+            linestyle=":", c=(1, 0, 0), linewidth=plot_linewidth)
+    ax.arrow(marker_base_point + arrow_length, marker_base_point + arrow_length - arrow_marker_adjustment - 0.0001,
+             0., 0.0001,
+             facecolor=(1, 1, 1), edgecolor=(1, 0, 0), linestyle=":",
+             head_width=plot_arrow_headwidth, head_length=plot_arrow_headlength, overhang=1.0,
+             length_includes_head=True, clip_on=False, linewidth=plot_linewidth)
+
+    # Draw text and indicators for each of the types of sensitivities
+
+    # Truth sensitivity
+    truth_arrow_midpoint = (marker_base_point + arrow_length / 2, marker_base_point)
+    truth_indicator_length = np.subtract(truth_arrow_midpoint, truth_indicator_source)
+
+    ax.arrow(truth_indicator_source[0], truth_indicator_source[1],
+             truth_indicator_length[0], truth_indicator_length[1] - indicator_padding,
+             facecolor=truth_color, edgecolor=truth_color, linestyle="-",
+             head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+
+    # Measurement sensitivity
+    meas_arrow_midpoint = (marker_base_point, marker_base_point + arrow_length / 2)
+    meas_indicator_length = np.subtract(meas_arrow_midpoint, meas_indicator_source)
+
+    ax.arrow(meas_indicator_source[0], meas_indicator_source[1],
+             meas_indicator_length[0] + indicator_padding, meas_indicator_length[1],
+             facecolor=meas_color, edgecolor=meas_color, linestyle="-",
+             head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
+
+    # Locus sensitivity
+    locus_arrow_midpoint = (marker_base_point + arrow_length / 2, marker_base_point + arrow_length / 2)
+    locus_indicator_length = np.subtract(locus_arrow_midpoint, locus_indicator_source)
+
+    ax.arrow(locus_indicator_source[0], locus_indicator_source[1],
+             locus_indicator_length[0] + indicator_padding, locus_indicator_length[1],
+             facecolor=locus_color, edgecolor=locus_color, linestyle="-",
+             head_width=indicator_arrow_headwidth, head_length=indicator_arrow_headlength, overhang=indicator_arrow_overhang,
+             length_includes_head=True, clip_on=False, linewidth=indicator_linewidth)
 
     # Save and show the plot
     qualified_output_filename = join(args.workdir, args.sens_types_plot)
