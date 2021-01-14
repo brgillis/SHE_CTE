@@ -7,7 +7,7 @@
     Main function to draw a plot explaining different types of sensitivity testing.
 """
 
-__updated__ = "2021-01-08"
+__updated__ = "2021-01-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -98,7 +98,7 @@ locus_box_props["edgecolor"] = locus_color
 ideal_indicator_source = (0.62, 0.85)
 ideal_indicator_dest = (0.75, 0.75)
 ideal_label_offset = (-0.01, 0.)
-ideal_text = "\n".join((r"Locus of ideal measurement, $\hat{X}=X$",))
+ideal_text = "\n".join((r"Ideal measurement locus, $\hat{X}=X$",))
 ideal_box_props = deepcopy(label_box_props)
 ideal_box_props["facecolor"] = "None"
 ideal_box_props["edgecolor"] = "None"
