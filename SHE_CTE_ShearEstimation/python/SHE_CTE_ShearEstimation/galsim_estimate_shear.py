@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2020-12-18"
+__updated__ = "2021-01-15"
 
 from copy import deepcopy
 from math import sqrt
@@ -630,6 +630,9 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                 x_world = inv_var_stack(x_worlds, gerrs)
                 y_world = inv_var_stack(y_worlds, gerrs)
 
+                weight = 1 / (0.5 * (stack_shear_estimate.g1_err ** 2 + training_data.e1_var +
+                                     stack_shear_estimate.g2_err ** 2 + training_data.e2_var))
+
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({tf.ID: gal_id,
                                        tf.g1: stack_shear_estimate.g1,
@@ -637,6 +640,7 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                                        tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
                                        tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
                                        tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
+                                       tf.weight: weight,
                                        tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
                                        tf.fit_flags: stack_shear_estimate.flags,
                                        tf.re: stack_shear_estimate.re,
