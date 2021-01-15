@@ -630,9 +630,6 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                 x_world = inv_var_stack(x_worlds, gerrs)
                 y_world = inv_var_stack(y_worlds, gerrs)
 
-                weight = 1 / (0.5 * (stack_shear_estimate.g1_err ** 2 + training_data.e1_var +
-                                     stack_shear_estimate.g2_err ** 2 + training_data.e2_var))
-
         # Add this row to the estimates table (for now just using stack values)
         shear_estimates_table.add_row({tf.ID: gal_id,
                                        tf.g1: stack_shear_estimate.g1,
@@ -640,7 +637,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                                        tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
                                        tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
                                        tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
-                                       tf.weight: weight,
+                                       tf.weight: 1 / (0.5 * (stack_shear_estimate.g1_err ** 2 + training_data.e1_var +
+                                                              stack_shear_estimate.g2_err ** 2 + training_data.e2_var)),
                                        tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
                                        tf.fit_flags: stack_shear_estimate.flags,
                                        tf.re: stack_shear_estimate.re,
