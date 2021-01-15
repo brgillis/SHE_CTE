@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2020-11-13"
+__updated__ = "2021-01-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -287,7 +287,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
         # Determine which method we want chains from
         if args.chains_method is not None:
-            chains_method = args.methods
+            chains_method = args.chains_method
         elif AnalysisConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
             chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD.value]
         elif CalibrationConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
