@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-01-15"
+__updated__ = "2021-01-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -50,28 +50,24 @@ from SHE_CTE_ShearEstimation.control_training_data import load_control_training_
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
 from SHE_LensMC import she_measure_shear
 from SHE_LensMC.training_data import load_training_data
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
 logger = getLogger(__name__)
 
-# from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments, bfd_load_training_data # FIXME - uncomment when BFD is integrated
-# from SHE_MomentsML.estimate_shear import estimate_shear as
-# ML_estimate_shear # FIXME - uncomment when MomentsML is updated to EDEN
-# 2.1
+# from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments,
+# bfd_load_training_data # FIXME - uncomment when BFD is integrated
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
                    "LensMC": load_training_data,
-                   # "BFD": bfd_load_training_data} # FIXME - uncomment when BFD is integrated
                    "BFD": None}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
-                      # "MomentsML": ML_estimate_shear, # FIXME - uncomment when MomentsML is updated to EDEN 2.1
-                      "MomentsML": None,
+                      "MomentsML": ML_estimate_shear,
                       "LensMC": she_measure_shear,
-                      # "BFD": bfd_measure_moments} # FIXME - uncomment when BFD is integrated
                       "BFD": None}
 
 initialisation_methods = {"KSB": initialise_ksb_measurements_table,
