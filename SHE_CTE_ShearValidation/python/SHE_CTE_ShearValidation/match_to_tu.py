@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2020-11-05"
+__updated__ = "2021-01-26"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -304,13 +304,22 @@ def match_to_tu_from_args(args):
 
             for method in methods:
 
-                shear_table = shear_tables[method]
-                if shear_table is None or len(shear_table) == 0:
+                unpruned_shear_table = shear_tables[method]
+                if unpruned_shear_table is None:
+                    logger.info("No catalog provided for method " + method + ".")
                     continue
 
-                logger.info("Performing match for method " + method + ".")
-
                 sem_tf = shear_estimation_method_table_formats[method]
+
+                # Prune any rows with NaN for R.A. or Dec. from the shear table
+                good_rows = ~np.logical_or(np.isnan(unpruned_shear_table[sem_tf.ra]),
+                                           np.isnan(unpruned_shear_table[sem_tf.dec]))
+                shear_table = unpruned_shear_table[good_rows]
+
+                if len(shear_table) == 0:
+                    continue
+
+                logger.info("No valid rows in catalog for method " + method + ".")
 
                 ra_se = shear_table[sem_tf.ra]
                 dec_se = shear_table[sem_tf.dec]
