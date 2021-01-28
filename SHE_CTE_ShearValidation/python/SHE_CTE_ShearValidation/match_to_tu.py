@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2021-01-26"
+__updated__ = "2021-01-28"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -317,9 +317,8 @@ def match_to_tu_from_args(args):
                 shear_table = unpruned_shear_table[good_rows]
 
                 if len(shear_table) == 0:
+                    logger.info("No valid rows in catalog for method " + method + ".")
                     continue
-
-                logger.info("No valid rows in catalog for method " + method + ".")
 
                 ra_se = shear_table[sem_tf.ra]
                 dec_se = shear_table[sem_tf.dec]
