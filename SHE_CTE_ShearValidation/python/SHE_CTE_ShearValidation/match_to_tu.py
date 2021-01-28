@@ -470,7 +470,6 @@ def match_to_tu_from_args(args):
         gal_matched_table = vstack(gal_matched_tables[method])
         star_matched_table = vstack(star_matched_tables[method])
         unmatched_table = shear_tables[method]
-        unmatched_table.remove_columns([star_index_colname, gal_index_colname])
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
                                                        instance_id=method.upper() + "-" + str(os.getpid()),
