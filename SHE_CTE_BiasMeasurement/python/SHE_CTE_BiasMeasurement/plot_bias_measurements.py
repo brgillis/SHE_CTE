@@ -382,7 +382,8 @@ def plot_bias_measurements_from_args(args):
                                 xy_vals = np.array(list(zip(x_vals, chosen_y_vals)))
                                 estimate, _, stderr, conf_interval = jackknife_stats(
                                     xy_vals, get_spline_slope_at_central_x, 0.95)
-                                method_data[y_label] = estimate
+                                method_data[y_label] = get_spline_slope_at_central_x(xy_vals)
+                                method_data[y_label + "_mean"] = estimate
                                 method_data[y_label + "_err"] = stderr
                                 method_data[y_label + "_conf_interval"] = conf_interval
 
@@ -604,17 +605,20 @@ def plot_bias_measurements_from_args(args):
 
                 ylim = [1e99, -1e99]
 
-                for index, offset, marker in (("1", -0.05, (3, 0, 0)),
-                                              ("2",  0.05, (3, 0, 180))):
+                for index, offset, full_marker, hollow_marker in (("1", -0.05, (3, 0, 0), (3, 1, 0)),
+                                                                  ("2",  0.05, (3, 0, 180), (3, 1, 180))):
 
                     slopes = []
+                    slope_means = []
                     slope_errs = []
                     for method in args.methods:
                         method_data = all_methods_data[(method, "")]
                         slopes.append(method_data["y" + index + "_slope"])
+                        slope_means.append(method_data["y" + index + "_slope_mean"])
                         slope_errs.append(method_data["y" + index + "_slope_err"])
 
                     slopes = np.array(slopes)
+                    slope_means = np.array(slope_means)
                     slope_errs = np.array(slope_errs)
 
                     if (slopes - slope_errs).min() < ylim[0]:
@@ -623,7 +627,11 @@ def plot_bias_measurements_from_args(args):
                         ylim[1] = (slopes + slope_errs).max()
 
                     ax.scatter(xticks + offset, slopes, label="$" + measurement_key + r"_{\rm " + index + r"}$",
-                               marker=marker, color=measurement_colors[measurement_key],
+                               marker=hollow_marker, color=measurement_colors[measurement_key],
+                               s=128)
+
+                    ax.scatter(xticks + offset, slope_means, label="$" + measurement_key + r"_{\rm " + index + r"}$ (jackknife mean)",
+                               marker=full_marker, color=measurement_colors[measurement_key],
                                s=128)
 
                     ax.errorbar(xticks + offset, slopes, slope_errs,  label=None, color=measurement_colors[measurement_key],
@@ -639,6 +647,7 @@ def plot_bias_measurements_from_args(args):
                 # Plot zero line
                 xlim = deepcopy(ax.get_xlim())
                 ax.plot(xlim, [0, 0], label=None, color="k", linestyle="dashed")
+                ax.set_xlim(xlim)
 
                 ax.legend(loc="upper right", scatterpoints=1)
 
