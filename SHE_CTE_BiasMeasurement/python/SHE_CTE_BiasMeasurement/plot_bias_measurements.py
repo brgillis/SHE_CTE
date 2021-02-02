@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2020-09-15"
+__updated__ = "2021-02-02"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -25,18 +25,81 @@ from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product
+from SHE_PPT.logging import getLogger
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import fsolve
 
 import matplotlib.pyplot as pyplot
 import numpy as np
 
+logger = getLogger(__name__)
 
 psf_gal_size_ratio = (0.2 / 0.3)**2
 
 
 def Spline(*args, **kwargs):
     return InterpolatedUnivariateSpline(*args, k=1, **kwargs)
+
+
+def get_spline_slope(x_vals, y_vals, x):
+    spline = Spline(x_vals, y_vals)
+    return spline.derivative()(x)
+
+
+def jackknife_resampling(data):
+    """jackknife_resampling, copied from astropy v4.0.1 and modified to work with 2D data"""
+
+    n = data.shape[0]
+    if n <= 0:
+        raise ValueError("data must contain at least one measurement.")
+
+    len_data = len(data[0])
+
+    resamples = np.empty([n, n - 1, len_data])
+
+    for i in range(n):
+        indices_to_del = np.arange(len_data) + len_data * i
+        resamples[i] = np.delete(data, indices_to_del).reshape(n - 1, len_data)
+
+    return resamples
+
+
+def jackknife_stats(data, statistic, confidence_level=0.95):
+    """jackknife_stats, copied from astropy v4.0.1 and modified to work with 2D data"""
+
+    if not (0 < confidence_level < 1):
+        raise ValueError("confidence level must be in (0, 1).")
+
+    # make sure original data is proper
+    n = data.shape[0]
+    if n <= 0:
+        raise ValueError("data must contain at least one measurement.")
+
+    # Only import scipy if inputs are valid
+    from scipy.special import erfinv
+
+    resamples = jackknife_resampling(data)
+
+    stat_data = statistic(data)
+    jack_stat = np.empty(n)
+    for i in range(n):
+        jack_stat[i] = statistic(resamples[i])
+    mean_jack_stat = np.mean(jack_stat, axis=0)
+
+    # jackknife bias
+    bias = (n - 1) * (mean_jack_stat - stat_data)
+
+    # jackknife standard error
+    std_err = np.sqrt((n - 1) * np.mean((jack_stat - mean_jack_stat) * (jack_stat -
+                                                                        mean_jack_stat), axis=0))
+
+    # bias-corrected "jackknifed estimate"
+    estimate = stat_data - bias
+
+    z_score = np.sqrt(2.0) * erfinv(confidence_level)
+    conf_interval = estimate + z_score * np.array((-std_err, std_err))
+
+    return estimate, bias, std_err, conf_interval
 
 
 testing_data_labels = {"S": "Sky Level (ADU/pixel)",
@@ -57,6 +120,8 @@ testing_variant_labels = ("m2", "m1", "p0", "p1", "p2")
 
 measurement_key_templates = ("mDIM", "mDIM_err", "cDIM", "cDIM_err")
 measurement_colors = {"m": "r", "c": "b"}
+
+centre_index = 2
 
 x_values = {"S": [45.52, 45.61, 45.71, 45.80,  45.90],
             "E": [0.18556590758327751, 0.21333834512347458, 0.2422044791810781,
@@ -302,6 +367,25 @@ def plot_bias_measurements_from_args(args):
                                        "y1_o": y1_o_vals,
                                        "y2_o": y2_o_vals,
                                        }
+
+                        if args.plot_slopes:
+                            # Calculate y/y1/y2 slope at the central value and jackknife error of it
+                            central_x = x_vals[centre_index]
+
+                            def get_spline_slope_at_central_x(xy_vals):
+                                x_vals, y_vals = zip(*xy_vals)
+                                return get_spline_slope(x_vals, y_vals, central_x)
+
+                            for chosen_y_vals, y_label in ((y_vals, "y_slope"),
+                                                           (y1_vals, "y1_slope"),
+                                                           (y2_vals, "y2_slope")):
+                                xy_vals = np.array(list(zip(x_vals, chosen_y_vals)))
+                                estimate, _, stderr, conf_interval = jackknife_stats(
+                                    xy_vals, get_spline_slope_at_central_x, 0.95)
+                                method_data[y_label] = estimate
+                                method_data[y_label + "_err"] = stderr
+                                method_data[y_label + "_conf_interval"] = conf_interval
+
                         all_methods_data[(method, calibration_label)] = method_data
 
                 # Plot the target line
@@ -332,6 +416,7 @@ def plot_bias_measurements_from_args(args):
                                            testing_data_key + "_" + measurement_key + calibration_label + "." +
                                            args.output_format)
                     pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                    logger.info("Saved plot to " + output_filename)
                     if not args.hide:
                         fig.show()
                     else:
@@ -387,6 +472,7 @@ def plot_bias_measurements_from_args(args):
                                                calibration_label + "." + args.output_format)
                         pyplot.savefig(output_filename, format=args.output_format,
                                        bbox_inches="tight", pad_inches=0.05)
+                        logger.info("Saved plot to " + output_filename)
                         if not args.hide:
                             fig.show()
                         else:
@@ -412,7 +498,6 @@ def plot_bias_measurements_from_args(args):
                 else:
                     base_target = c_target
 
-                target_factor = target_limit_factors[testing_data_key][measurement_key.replace("_err", "")]
                 xlim = [-1.1 * base_target, 1.1 * base_target]
                 ylim = [-1.1 * base_target, 1.1 * base_target]
 
@@ -461,30 +546,6 @@ def plot_bias_measurements_from_args(args):
                     ax.plot(y1_spline_vals, y2_spline_vals, color=method_colors[method], marker='None',
                             label=label)
 
-                    if False and "_err" not in measurement_key:
-
-                        # Now try to solve for where it intersects the target lines
-                        limit_label_base = method + "_" + measurement_key
-
-                        for (target, target_key) in ((base_target, "base"), (20 * base_target, "high")):
-
-                            limit_label = limit_label_base + "_" + target_key
-                            intersections = {}
-
-                            for (i, side_label) in ((1, "low"), (3, "high")):
-                                guess = method_data["x"][2] + target / (method_data["y"][i] -
-                                                                        method_data["y"][2]) * (method_data["x"][i] -
-                                                                                                method_data["x"][2])
-                                intersections[side_label] = fsolve(lambda x: y_spline(x) - target, guess)
-
-                            fractional_limits[limit_label] = (
-                                (intersections["high"] - intersections["low"]) / (2. * method_data["x"][2]))[0]
-
-                        print(("Fraction limit on " + testing_data_labels_no_units[testing_data_key] + " for method " +
-                               method + " for " + measurement_key + ": " +
-                               str(fractional_limits[limit_label_base + "_base"]) + ",\t" +
-                               str(fractional_limits[limit_label_base + "_high"])))
-
                 theta_vals = np.linspace(0, 2 * np.pi, 360)
 
                 ax.set_xlim(xlim)
@@ -509,58 +570,82 @@ def plot_bias_measurements_from_args(args):
                 output_filename = join(args.workdir, args.output_file_name_head + "_" +
                                        testing_data_key + "_" + measurement_key + "_2D." + args.output_format)
                 pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                logger.info("Saved plot to " + output_filename)
                 if not args.hide:
                     fig.show()
                 else:
                     pyplot.close()
 
-        if False:
+            if args.plot_slopes:
 
-            # Make plots of the fractional limits for each method
+                # Make plots of the slopes and errors on slopes for each method
 
-            # Set up the figure
-            fig = pyplot.figure()
+                # Set up the figure
+                fig = pyplot.figure()
 
-            pyplot.title(titles[testing_data_key])
+                pyplot.title(titles[testing_data_key])
 
-            fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
+                fig.subplots_adjust(wspace=0, hspace=0, bottom=0.1, right=0.95, top=0.95, left=0.12)
 
-            ax = fig.add_subplot(1, 1, 1)
-            ax.set_xlabel("Method", fontsize=fontsize)
-            ax.set_ylabel("Allowed $\\Delta$ on " + testing_data_labels_no_units[testing_data_key], fontsize=fontsize)
-            ax.set_yscale("log", nonposy="clip")
-            ax.set_ylim(1e-4, 1e0)
+                ax = fig.add_subplot(1, 1, 1)
+                ax.set_xlabel("Method", fontsize=fontsize)
+                ax.set_ylabel(r"$\partial " + measurement_key + r"_i/\partial $ (" +
+                              testing_data_labels_no_units[testing_data_key] + ")", fontsize=fontsize)
 
-            xticks = list(range(len(args.methods)))
-            ax.set_xticks(xticks)
-            xticklabels = []
-            for method in args.methods:
-                if "_big" not in method:
-                    xticklabels.append(method)
-                else:
-                    xticklabels.append("Big " + method.replace("_big", ""))
-            ax.set_xticklabels(xticklabels)
+                xticks = np.arange(len(args.methods), dtype=float)
+                ax.set_xticks(xticks)
+                xticklabels = []
+                for method in args.methods:
+                    if "_big" not in method:
+                        xticklabels.append(method)
+                    else:
+                        xticklabels.append("Big " + method.replace("_big", ""))
+                ax.set_xticklabels(xticklabels)
 
-            for measurement_key in ("m", "c"):
-                for target_key in ("high", "base"):
+                ylim = [1e99, -1e99]
 
-                    limits = []
+                for index, offset, marker in (("1", -0.05, (3, 0, 0)),
+                                              ("2",  0.05, (3, 0, 180))):
+
+                    slopes = []
+                    slope_errs = []
                     for method in args.methods:
-                        limits.append(fractional_limits[method + "_" + measurement_key + "_" + target_key])
+                        method_data = all_methods_data[(method, "")]
+                        slopes.append(method_data["y" + index + "_slope"])
+                        slope_errs.append(method_data["y" + index + "_slope_err"])
 
-                    ax.scatter(xticks, limits, label=measurement_key + " " + target_labels[target_key],
-                               marker=target_shapes[target_key], color=measurement_colors[measurement_key],
-                               s=256)
+                    slopes = np.array(slopes)
+                    slope_errs = np.array(slope_errs)
 
-            ax.legend(loc="upper right", scatterpoints=1)
+                    if (slopes - slope_errs).min() < ylim[0]:
+                        ylim[0] = (slopes - slope_errs).min()
+                    if (slopes + slope_errs).max() > ylim[1]:
+                        ylim[1] = (slopes + slope_errs).max()
 
-            # Save and show it
-            output_filename = join(args.workdir, args.output_file_name_head + "_" +
-                                   testing_data_key + "_fractional_limits." + args.output_format)
-            pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
-#         if not args.hide:
-#             fig.show()
-#         else:
-#             pyplot.close()
+                    ax.scatter(xticks + offset, slopes, label="$" + measurement_key + r"_{\rm " + index + r"}$",
+                               marker=marker, color=measurement_colors[measurement_key],
+                               s=128)
+
+                    ax.errorbar(xticks + offset, slopes, slope_errs,  label=None, color=measurement_colors[measurement_key],
+                                linestyle="None")
+
+                # Tweak the y limits for a bit more room, then set them
+                ymid = (ylim[0] + ylim[1]) / 2
+                yhalf = ylim[1] - ymid
+                ylim[0] = ymid - 1.05 * yhalf
+                ylim[1] = ymid + 1.05 * yhalf
+                ax.set_ylim(ylim)
+
+                # Plot zero line
+                xlim = deepcopy(ax.get_xlim())
+                ax.plot(xlim, [0, 0], label=None, color="k", linestyle="dashed")
+
+                ax.legend(loc="upper right", scatterpoints=1)
+
+                # Save and show it
+                output_filename = join(args.workdir, args.output_file_name_head + "_" +
+                                       testing_data_key + "_" + measurement_key + "_slopes." + args.output_format)
+                pyplot.savefig(output_filename, format=args.output_format, bbox_inches="tight", pad_inches=0.05)
+                logger.info("Saved plot to " + output_filename)
 
     return
