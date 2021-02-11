@@ -90,8 +90,8 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_
 
     # Is this the first conflict with this ID?
     if not id in ids_to_reconcile:
-        # First conflict, so add the id with a table using the existing row
-        t = table_initialiser(optional_columns=optional_columns)
+        # First conflict, so add the id with a table using the existing row, ensuring the right column order
+        t = table_initialiser(optional_columns=optional_columns)[optional_columns]
         t.add_row(existing_row)
         ids_to_reconcile[id] = t
     else:
