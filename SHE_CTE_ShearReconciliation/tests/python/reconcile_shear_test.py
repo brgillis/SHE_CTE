@@ -154,20 +154,19 @@ class TestReconcileShear:
 
                 # Create the measurements table
 
-                # t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
-                t = sem_initialisers[sem](optional_columns=(tf.e_var, tf.shape_noise))
+                t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
                 for _ in range(l):
                     t.add_row()
 
                 t[tf.ID] = np.arange(l) + i_min
                 t[tf.g1] = cls.true_g1[i_min:i_max + 1] + g1_offset
                 t[tf.g2] = cls.true_g2[i_min:i_max + 1] + g2_offset
-                t[tf.g1_err] = np.ones(l, dtype=">f4") * g1_err
-                t[tf.g2_err] = np.ones(l, dtype=">f4") * g2_err
-                t[tf.weight] = np.ones(l, dtype=">f4") * weight
-                # t[tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
-                t[tf.e_var] = np.ones(l, dtype=">f4") * (g1_err**2 + g2_err**2)
-                t[tf.shape_noise] = np.ones(l, dtype=">f4") * cls.shape_noise
+                t[tf.g1_err] = np.ones(l, dtype=tf.dtypes[tf.g1_err]) * g1_err
+                t[tf.g2_err] = np.ones(l, dtype=tf.dtypes[tf.g2_err]) * g2_err
+                t[tf.weight] = np.ones(l, dtype=tf.dtypes[tf.weight]) * weight
+                t[tf.shape_weight] = np.ones(l, dtype=tf.dtypes[tf.shape_weight]) / (g1_err**2 + g2_err**2)
+                t[tf.e_var] = np.ones(l, dtype=tf.dtypes[tf.e_var]) * (g1_err**2 + g2_err**2)
+                t[tf.shape_noise] = np.ones(l, dtype=tf.dtypes[tf.shape_noise]) * cls.shape_noise
                 t.add_index(tf.ID)
                 tables.append(t)
 
@@ -189,7 +188,8 @@ class TestReconcileShear:
                     tc[lmcc_tf.g2] = (np.array((cls.true_g2[i_min:i_max + 1],)).transpose() + g2_offset +
                                       deviates * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
                     tc[lmcc_tf.weight] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.weight]) * weight
-                    # tc[lmcc_tf.shape_weight] = np.ones(l, dtype=">f4") / (g1_err**2 + g2_err**2)
+                    tc[lmcc_tf.shape_weight] = np.ones(
+                        l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_weight]) / (g1_err**2 + g2_err**2)
                     tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (g1_err**2 + g2_err**2)
                     tc[lmcc_tf.shape_noise] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_noise]) * cls.shape_noise
                     tc.add_index(lmcc_tf.ID)

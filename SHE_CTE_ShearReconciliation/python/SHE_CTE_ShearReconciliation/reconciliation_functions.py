@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2020-09-29"
+__updated__ = "2021-02-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -156,11 +156,12 @@ def reconcile_invvar(measurements_to_reconcile_table,
 
 # Data used for weight reconciliation
 props_with_independent_errors = ("g1", "g2", "g1_uncal", "g2_uncal", "ra", "dec", "re", "flux",
-                                 "bulge_frac", "snr", "sersic")
+                                 "bulge_frac", "snr", "sersic", "unmasked_fraction")
 props_to_sum = ("nexp",)
 props_to_bitwise_or = ("fit_flags", "val_flags",)
 props_to_copy = ("ID", "fit_class")
 props_to_nan = ("chi2", "dof", "g1g2_covar", "g1g2_uncal_covar")
+props_to_ignore = ("rec_flags")
 
 
 @run_only_once
@@ -275,14 +276,18 @@ def reconcile_weight(measurements_to_reconcile_table,
                                             new_props[sem_tf.g2_err] ** 2) + shape_noise_var)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
+    missing_props = []
     for prop in measurements_to_reconcile_table.colnames:
-        missing_props = []
         if prop in new_props:
             output_row[prop] = new_props[prop]
-        else:
+        elif not prop in props_to_ignore:
             missing_props.append(prop)
-            output_row[prop] = np.NaN
-        if len(missing_props) > 0:
-            warn_missing_props(missing_props)
+            try:
+                output_row[prop] = np.NaN
+            except ValueError:
+                # If it's an int, can't set to NaN, so set to -99 as a failure indicator
+                output_row[prop] = -99
+    if len(missing_props) > 0:
+        warn_missing_props(missing_props)
 
     return
