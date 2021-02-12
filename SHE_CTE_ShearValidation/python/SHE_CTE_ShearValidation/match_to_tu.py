@@ -57,6 +57,7 @@ shear_estimation_method_table_formats = {"KSB": ksbm_tf,
 
 galcat_g1_colname = "GAMMA1"
 galcat_g2_colname = "GAMMA2"
+galcat_kappa_colname = "KAPPA"
 galcat_bulge_angle_colname = "DISK_ANGLE"
 galcat_bulge_axis_ratio_colname = "DISK_AXIS_RATIO"
 galcat_disk_angle_colname = "DISK_ANGLE"
@@ -424,14 +425,14 @@ def match_to_tu_from_args(args):
 
                 # Details about the input shear
 
-                g1_in = gal_matched_table[galcat_g1_colname]
-                g2_in = gal_matched_table[galcat_g2_colname]
+                g1_in = gal_matched_table[galcat_g1_colname] / gal_matched_table[galcat_kappa_colname]
+                g2_in = gal_matched_table[galcat_g2_colname] / gal_matched_table[galcat_kappa_colname]
 
                 gal_matched_table.add_column(
                     Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
 
                 gal_matched_table.add_column(
-                    Column(np.sqrt(g1_in ** 2 + g2_in ** 2) * 90 / np.pi, name="Mag_Input_Shear"))
+                    Column(np.sqrt(g1_in ** 2 + g2_in ** 2), name="Mag_Input_Shear"))
 
                 # Details about the input bulge shape
 
