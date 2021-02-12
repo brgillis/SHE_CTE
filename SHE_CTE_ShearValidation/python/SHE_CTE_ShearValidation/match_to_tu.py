@@ -271,34 +271,41 @@ def match_to_tu_from_args(args):
 
             # Remove unused columns in the star table
 
-            overlapping_star_catalog.remove_columns(['DIST', 'TU_MAG_H_2MASS', 'SED_TEMPLATE', 'AV', 'TU_FNU_VIS',
-                                                     'TU_FNU_Y_NISP', 'TU_FNU_J_NISP', 'TU_FNU_H_NISP', 'TU_FNU_G_DECAM',
-                                                     'TU_FNU_R_DECAM', 'TU_FNU_I_DECAM', 'TU_FNU_Z_DECAM',
-                                                     'TU_FNU_U_MEGACAM', 'TU_FNU_R_MEGACAM', 'TU_FNU_G_JPCAM',
-                                                     'TU_FNU_I_PANSTARRS', 'TU_FNU_Z_PANSTARRS', 'TU_FNU_Z_HSC',
-                                                     'TU_FNU_G_GAIA', 'TU_FNU_BP_GAIA', 'TU_FNU_RP_GAIA', 'TU_FNU_U_LSST',
-                                                     'TU_FNU_G_LSST', 'TU_FNU_R_LSST', 'TU_FNU_I_LSST', 'TU_FNU_Z_LSST',
-                                                     'TU_FNU_Y_LSST', 'TU_FNU_U_KIDS', 'TU_FNU_G_KIDS', 'TU_FNU_R_KIDS',
-                                                     'TU_FNU_I_KIDS', 'TU_FNU_J_2MASS', 'TU_FNU_H_2MASS',
-                                                     'TU_FNU_KS_2MASS', ])
+            overlapping_star_catalog.remove_columns(['DIST', 'TU_MAG_H_2MASS', 'SED_TEMPLATE',
+                                                     'AV', 'TU_FNU_VIS', 'TU_FNU_Y_NISP', 'TU_FNU_J_NISP',
+                                                     'TU_FNU_H_NISP', 'TU_FNU_G_DECAM', 'TU_FNU_R_DECAM',
+                                                     'TU_FNU_I_DECAM', 'TU_FNU_Z_DECAM', 'TU_FNU_U_MEGACAM',
+                                                     'TU_FNU_R_MEGACAM', 'TU_FNU_G_JPCAM', 'TU_FNU_I_PANSTARRS',
+                                                     'TU_FNU_Z_PANSTARRS', 'TU_FNU_Z_HSC', 'TU_FNU_G_GAIA',
+                                                     'TU_FNU_BP_GAIA', 'TU_FNU_RP_GAIA', 'TU_FNU_U_LSST',
+                                                     'TU_FNU_G_LSST', 'TU_FNU_R_LSST', 'TU_FNU_I_LSST',
+                                                     'TU_FNU_Z_LSST', 'TU_FNU_Y_LSST', 'TU_FNU_U_KIDS',
+                                                     'TU_FNU_G_KIDS', 'TU_FNU_R_KIDS', 'TU_FNU_I_KIDS',
+                                                     'TU_FNU_J_2MASS', 'TU_FNU_H_2MASS', 'TU_FNU_KS_2MASS',
+                                                     'GAIA_RA', 'GAIA_RA_ERROR', 'GAIA_DEC', 'GAIA_DEC_ERROR',
+                                                     'GAIA_PHOT_G_MEAN_FLUX', 'GAIA_PHOT_G_MEAN_FLUX_ERROR',
+                                                     'GAIA_PHOT_BP_MEAN_FLUX', 'GAIA_PHOT_BP_MEAN_FLUX_ERROR',
+                                                     'GAIA_PHOT_RP_MEAN_FLUX', 'GAIA_PHOT_RP_MEAN_FLUX_ERROR'])
 
             # Remove unused columns in the galaxy table
+            overlapping_galaxy_catalog.remove_columns(['SOURCE_ID', 'HALO_ID', 'RA', 'DEC',
+                                                       'EXT_LAW', 'EBV', 'HALPHA_LOGFLAM_EXT_MAG',
+                                                       'HBETA_LOGFLAM_EXT_MAG', 'O2_LOGFLAM_EXT_MAG',
+                                                       'O3_LOGFLAM_EXT_MAG', 'N2_LOGFLAM_EXT_MAG',
+                                                       'S2_LOGFLAM_EXT_MAG', 'AV', 'TU_FNU_VIS_MAG',
+                                                       'TU_FNU_Y_NISP_MAG', 'TU_FNU_J_NISP_MAG', 'TU_FNU_H_NISP_MAG',
+                                                       'TU_FNU_G_DECAM_MAG', 'TU_FNU_R_DECAM_MAG',
+                                                       'TU_FNU_I_DECAM_MAG', 'TU_FNU_Z_DECAM_MAG',
+                                                       'TU_FNU_U_MEGACAM_MAG', 'TU_FNU_R_MEGACAM_MAG',
+                                                       'TU_FNU_G_JPCAM_MAG', 'TU_FNU_I_PANSTARRS_MAG',
+                                                       'TU_FNU_Z_PANSTARRS_MAG', 'TU_FNU_Z_HSC_MAG',
+                                                       'TU_FNU_G_GAIA_MAG', 'TU_FNU_BP_GAIA_MAG', 'TU_FNU_RP_GAIA_MAG',
+                                                       'TU_FNU_U_LSST_MAG', 'TU_FNU_G_LSST_MAG', 'TU_FNU_R_LSST_MAG',
+                                                       'TU_FNU_I_LSST_MAG', 'TU_FNU_Z_LSST_MAG', 'TU_FNU_Y_LSST_MAG',
+                                                       'TU_FNU_U_KIDS_MAG', 'TU_FNU_G_KIDS_MAG', 'TU_FNU_R_KIDS_MAG',
+                                                       'TU_FNU_I_KIDS_MAG', 'TU_FNU_J_2MASS_MAG',
+                                                       'TU_FNU_H_2MASS_MAG', 'TU_FNU_KS_2MASS_MAG'])
 
-            overlapping_galaxy_catalog.remove_columns(['SOURCE_ID', 'RA', 'DEC', 'TU_MAG_R01_SDSS_ABS', 'TU_MAG_R01_SDSS',
-                                                       'EXT_LAW', 'EBV', 'HALPHA_LOGFLAM_EXT', 'HBETA_LOGFLAM_EXT',
-                                                       'O2_LOGFLAM_EXT', 'O3_LOGFLAM_EXT', 'N2_LOGFLAM_EXT',
-                                                       'S2_LOGFLAM_EXT', 'AV', 'TU_FNU_VIS', 'TU_FNU_Y_NISP',
-                                                       'TU_FNU_J_NISP', 'TU_FNU_H_NISP', 'TU_FNU_G_DECAM',
-                                                       'TU_FNU_R_DECAM', 'TU_FNU_I_DECAM', 'TU_FNU_Z_DECAM',
-                                                       'TU_FNU_U_MEGACAM', 'TU_FNU_R_MEGACAM', 'TU_FNU_G_JPCAM',
-                                                       'TU_FNU_I_PANSTARRS', 'TU_FNU_Z_PANSTARRS', 'TU_FNU_Z_HSC',
-                                                       'TU_FNU_G_GAIA', 'TU_FNU_BP_GAIA', 'TU_FNU_RP_GAIA',
-                                                       'TU_FNU_U_LSST', 'TU_FNU_G_LSST', 'TU_FNU_R_LSST',
-                                                       'TU_FNU_I_LSST', 'TU_FNU_Z_LSST', 'TU_FNU_Y_LSST',
-                                                       'TU_FNU_U_KIDS', 'TU_FNU_G_KIDS', 'TU_FNU_R_KIDS',
-                                                       'TU_FNU_I_KIDS', 'TU_FNU_J_2MASS', 'TU_FNU_H_2MASS',
-                                                       'TU_FNU_KS_2MASS',
-                                                       ])
             # Set up star and galaxy tables for matching
 
             ra_star = overlapping_star_catalog["RA"]
