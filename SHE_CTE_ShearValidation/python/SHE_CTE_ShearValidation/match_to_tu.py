@@ -197,17 +197,16 @@ def match_to_tu_from_args(args):
         good_ra_data = ra_col[flags_col == 0]
         good_dec_data = dec_col[flags_col == 0]
 
-        if len(good_ra_data) == 0:
-            continue
-
         # Check if the range in this method's table sets a new min/max for ra and dec
-        good_ra_range[0] = np.min((good_ra_range[0], np.min(good_ra_data)))
-        good_ra_range[1] = np.max((good_ra_range[1], np.max(good_ra_data)))
+
+        if len(good_ra_data) > 0:
+            good_ra_range[0] = np.min((good_ra_range[0], np.min(good_ra_data)))
+            good_ra_range[1] = np.max((good_ra_range[1], np.max(good_ra_data)))
+            good_dec_range[0] = np.min((good_dec_range[0], np.min(good_dec_data)))
+            good_dec_range[1] = np.max((good_dec_range[1], np.max(good_dec_data)))
+
         full_ra_range[0] = np.min((full_ra_range[0], np.min(ra_col)))
         full_ra_range[1] = np.max((full_ra_range[1], np.max(ra_col)))
-
-        good_dec_range[0] = np.min((good_dec_range[0], np.min(good_dec_data)))
-        good_dec_range[1] = np.max((good_dec_range[1], np.max(good_dec_data)))
         full_dec_range[0] = np.min((full_dec_range[0], np.min(dec_col)))
         full_dec_range[1] = np.max((full_dec_range[1], np.max(dec_col)))
 
