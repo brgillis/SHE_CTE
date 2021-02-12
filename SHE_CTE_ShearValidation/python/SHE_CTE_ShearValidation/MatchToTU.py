@@ -5,7 +5,7 @@
     Executable for matching the output of the Analysis pipeline to SIM's True Universe catalogs.
 """
 
-__updated__ = "2020-10-06"
+__updated__ = "2021-02-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -69,7 +69,7 @@ def defineSpecificProgramOptions():
     # Optional arguments (can't be used with pipeline runner)
     parser.add_argument('--profile', action='store_true',
                         help='Store profiling data for execution.')
-    parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC7_migrated/SIM",
+    parser.add_argument('--sim_path', type=str, default="/mnt/cephfs/share/SC8/SIM",
                         help="Path to where the SIM data is stored")
     parser.add_argument('--match_threshold', type=float, default=0.3,
                         help="Maximum distance allowed for a match in units of arcsec.")
