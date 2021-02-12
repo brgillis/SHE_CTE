@@ -25,7 +25,7 @@ import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2021-01-28"
+__updated__ = "2021-02-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -173,8 +173,10 @@ def match_to_tu_from_args(args):
 
     # Determine the ra/dec range covered by the shear estimates file
 
-    ra_range = np.array((1e99, -1e99))
-    dec_range = np.array((1e99, -1e99))
+    good_ra_range = np.array((1e99, -1e99))
+    good_dec_range = np.array((1e99, -1e99))
+    full_ra_range = np.array((1e99, -1e99))
+    full_dec_range = np.array((1e99, -1e99))
 
     for method in methods:
 
@@ -200,14 +202,26 @@ def match_to_tu_from_args(args):
             continue
 
         # Check if the range in this method's table sets a new min/max for ra and dec
-        ra_range[0] = np.min((ra_range[0], np.min(good_ra_data)))
-        ra_range[1] = np.max((ra_range[1], np.max(good_ra_data)))
+        good_ra_range[0] = np.min((good_ra_range[0], np.min(good_ra_data)))
+        good_ra_range[1] = np.max((good_ra_range[1], np.max(good_ra_data)))
+        full_ra_range[0] = np.min((full_ra_range[0], np.min(ra_col)))
+        full_ra_range[1] = np.max((full_ra_range[1], np.max(ra_col)))
 
-        dec_range[0] = np.min((dec_range[0], np.min(good_dec_data)))
-        dec_range[1] = np.max((dec_range[1], np.max(good_dec_data)))
+        good_dec_range[0] = np.min((good_dec_range[0], np.min(good_dec_data)))
+        good_dec_range[1] = np.max((good_dec_range[1], np.max(good_dec_data)))
+        full_dec_range[0] = np.min((full_dec_range[0], np.min(dec_col)))
+        full_dec_range[1] = np.max((full_dec_range[1], np.max(dec_col)))
 
-    if ra_range[1] < ra_range[0] or dec_range[1] < dec_range[0]:
-        raise ValueError("Invalid range or no valid data for any method.")
+    if good_ra_range[1] < good_ra_range[0] or good_dec_range[1] < good_dec_range[0]:
+        logger.warning("Invalid range or no valid data for any method.")
+        if not (full_ra_range[1] > full_ra_range[0] and full_dec_range[1] > full_dec_range[0]):
+            raise ValueError("No valid position data for any method.")
+        else:
+            ra_range = full_ra_range
+            dec_range = full_dec_range
+    else:
+        ra_range = good_ra_range
+        dec_range = good_dec_range
 
     # Pad the range by the threshold amount
     ra_range[0] -= args.match_threshold
