@@ -34,7 +34,7 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
 import numpy as np
 
 
-__updated__ = "2020-10-05"
+__updated__ = "2021-02-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -90,8 +90,8 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_
 
     # Is this the first conflict with this ID?
     if not id in ids_to_reconcile:
-        # First conflict, so add the id with a table using the existing row
-        t = table_initialiser(optional_columns=optional_columns)
+        # First conflict, so add the id with a table using the existing row, ensuring the right column order
+        t = table_initialiser(optional_columns=optional_columns)[optional_columns]
         t.add_row(existing_row)
         ids_to_reconcile[id] = t
     else:
@@ -147,11 +147,12 @@ def reconcile_tables(shear_estimates_tables,
         if reconciled_catalog is None:
 
             # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
-            # this will store the first temporarily and later be updated with the reconciled result
+            # this will store the first temporarily and later be updated with the reconciled result.
+            # Note that we reorder the columns to match input here through the indexing at the end
             # TODO - set tile ID in header
-            optional_columns = estimates_table.colnames
 
-            reconciled_catalog = table_initialiser(optional_columns=optional_columns)
+            optional_columns = estimates_table.colnames
+            reconciled_catalog = table_initialiser(optional_columns=optional_columns)[optional_columns]
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_catalog.add_index(sem_tf.ID)
@@ -230,11 +231,13 @@ def reconcile_chains(chains_tables,
         if reconciled_chains is None:
 
             # Create a catalog for reconciled measurements. In case of multiple measurements of the same object,
-            # this will store the first temporarily and later be updated with the reconciled result
+            # this will store the first temporarily and later be updated with the reconciled result.
+            # Here we need to reorder the columns (done by the indexing at the end) to match the input catalog
             # TODO - set tile ID in header
-            optional_columns = chains_table.colnames
 
-            reconciled_chains = initialise_lensmc_chains_table(optional_columns=optional_columns)
+            optional_columns = chains_table.colnames
+            reconciled_chains = initialise_lensmc_chains_table(
+                optional_columns=optional_columns)[optional_columns]
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_chains.add_index(lmcc_tf.ID)

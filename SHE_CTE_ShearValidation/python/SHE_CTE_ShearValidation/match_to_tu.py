@@ -4,26 +4,6 @@
 
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
-import os
-
-from SHE_PPT import file_io
-from SHE_PPT import products
-from SHE_PPT.file_io import read_listfile
-from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
-from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
-from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
-from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
-from SHE_PPT.table_utility import table_to_hdu
-from astropy import units
-from astropy.coordinates import SkyCoord
-from astropy.io import fits
-from astropy.table import Table, Column, join, vstack, unique
-
-import SHE_CTE
-import numpy as np
-
 
 __updated__ = "2021-02-12"
 
@@ -40,6 +20,25 @@ __updated__ = "2021-02-12"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+import os
+
+from SHE_PPT import file_io
+from SHE_PPT import products
+from SHE_PPT.file_io import read_listfile
+from SHE_PPT.logging import getLogger
+from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
+from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
+from astropy import units
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.io.fits import table_to_hdu
+from astropy.table import Table, Column, join, vstack
+
+import SHE_CTE
+import numpy as np
 
 logger = getLogger(__name__)
 

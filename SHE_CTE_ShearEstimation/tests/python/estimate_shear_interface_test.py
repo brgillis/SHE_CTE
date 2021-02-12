@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2020-08-26"
+__updated__ = "2021-02-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -41,7 +41,9 @@ from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, R
 import SHE_LensMC.she_measure_shear
 import numpy as np
 
-# from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN 2.1
+# from SHE_MomentsML.estimate_shear import estimate_shear as
+# ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN
+# 2.1
 test_data_location = "/tmp"
 
 data_images_filename = "vis_calibrated_frames.json"
@@ -55,7 +57,7 @@ regauss_training_filename = "test_regauss_training.xml"
 
 expected_observation_id = '-1 -1 -1 -1'
 expected_observation_time = "2020-06-10 15:00:36.660000+00:00"
-expected_tile_id = '-1'
+expected_tile_id = '1'
 
 
 class TestCase:
@@ -70,7 +72,7 @@ class TestCase:
         # Download the MDB from WebDAV
         sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
         sync_mdb.download()
-        mdb_filename = sync_mdb.absolutePath("SHE_PPT_8_5/sample_mdb-SC8.xml")
+        mdb_filename = sync_mdb.absolutePath("SHE_PPT_8_7/sample_mdb-SC8.xml")
 
         mdb.init(mdb_filename)
 
@@ -81,7 +83,7 @@ class TestCase:
         # Download the data stack files from WebDAV
         sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
         sync_datastack.download()
-        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_8_5/vis_calibrated_frames.json")
+        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_8_7/vis_calibrated_frames.json")
         assert os.path.isfile(qualified_data_images_filename), f"Cannot find file: {qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
@@ -90,15 +92,15 @@ class TestCase:
 
         # Read in the test data
         cls.data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images_filename,
-                                             seg_listfile_filename=segmentation_images_filename,
-                                             stacked_image_product_filename=stacked_image_filename,
-                                             stacked_seg_product_filename=stacked_segmentation_image_filename,
-                                             psf_listfile_filename=psf_images_and_tables_filename,
-                                             detections_listfile_filename=detections_tables_filename,
-                                             workdir=cls.workdir,
-                                             clean_detections=True,
-                                             memmap=True,
-                                             mode='denywrite')
+                                            seg_listfile_filename=segmentation_images_filename,
+                                            stacked_image_product_filename=stacked_image_filename,
+                                            stacked_seg_product_filename=stacked_segmentation_image_filename,
+                                            psf_listfile_filename=psf_images_and_tables_filename,
+                                            detections_listfile_filename=detections_tables_filename,
+                                            workdir=cls.workdir,
+                                            clean_detections=True,
+                                            memmap=True,
+                                            mode='denywrite')
 
         return
 
@@ -183,8 +185,10 @@ class TestCase:
                 mean_val = np.mean(vals)
                 stddev_val = np.std(vals)
 
-                assert np.isclose(mean_val, ex_mean, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching mean for parameter " + param
-                assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev / np.sqrt(len_chain)), "Error matching stddev for parameter " + param
+                assert np.isclose(mean_val, ex_mean, rtol=0, atol=1e-8 + 2 * ex_stddev /
+                                  np.sqrt(len_chain)), "Error matching mean for parameter " + param
+                assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev /
+                                  np.sqrt(len_chain)), "Error matching stddev for parameter " + param
 
         return
 
@@ -197,7 +201,8 @@ class TestCase:
 
         vis_calibrated_frame_products = []
         for vis_calibrated_frame_filename in read_listfile(os.path.join(self.workdir, data_images_filename)):
-            vis_calibrated_frame_products.append(read_xml_product(os.path.join(self.workdir, vis_calibrated_frame_filename)))
+            vis_calibrated_frame_products.append(read_xml_product(
+                os.path.join(self.workdir, vis_calibrated_frame_filename)))
 
         t = initialise_ksb_measurements_table()
 
