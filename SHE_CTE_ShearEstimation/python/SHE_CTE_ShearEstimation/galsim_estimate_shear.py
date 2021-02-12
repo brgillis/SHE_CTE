@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-01-15"
+__updated__ = "2021-02-11"
 
 from copy import deepcopy
 from math import sqrt
@@ -685,7 +685,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                 if estimates_colname in estimates_row.colnames:
 
                     mean_value = estimates_row[getattr(tf, param)]
-                    stddev = estimates_row[getattr(tf, param + "_err")]
+                    try:
+                        stddev = estimates_row[getattr(tf, param + "_err")]
+                    except AttributeError:
+                        # Assume 0 error if not in the row
+                        stddev = 0.
 
                     mock_values = mean_value + stddev * np.random.standard_normal(len_chain)
 

@@ -1,4 +1,4 @@
-SHE_PPT_8_5/sample_mdb-SC8.xml
-SHE_PPT_8_5/data/gain_params_PTC1.fits
-SHE_PPT_8_5/data/gain_params_sc8.fits
-SHE_PPT_8_5/data/RON_params_BIAS02.fits
+SHE_PPT_8_7/sample_mdb-SC8.xml
+SHE_PPT_8_7/data/gain_params_PTC1.fits
+SHE_PPT_8_7/data/gain_params_sc8.fits
+SHE_PPT_8_7/data/RON_params_BIAS02.fits

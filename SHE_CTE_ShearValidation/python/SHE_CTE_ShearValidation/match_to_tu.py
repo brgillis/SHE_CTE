@@ -15,17 +15,17 @@ from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
 from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
-from SHE_PPT.table_utility import table_to_hdu
 from astropy import units
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
+from astropy.io.fits import table_to_hdu
 from astropy.table import Table, Column, join, vstack, unique
 
 import SHE_CTE
 import numpy as np
 
 
-__updated__ = "2021-01-28"
+__updated__ = "2021-02-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #

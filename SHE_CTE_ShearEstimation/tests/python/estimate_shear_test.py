@@ -46,7 +46,7 @@ class TestCase:
         """ Set up a default galaxy stamp and PSF stamp for testing.
         """
 
-        mdb.init(mdb_files=find_file("WEB/SHE_PPT_8_5/sample_mdb-SC8.xml"))
+        mdb.init(mdb_files=find_file("WEB/SHE_PPT_8_7/sample_mdb-SC8.xml"))
 
         self.sky_var = 0
         self.bkg_level = 1000
