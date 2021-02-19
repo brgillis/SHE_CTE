@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2021-02-11"
+__updated__ = "2021-02-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -268,7 +268,12 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
-        new_props[colname] = np.NaN
+        # Check if the column can store a NaN or not by passing it through a numpy array object
+        try:
+            new_props[colname] = np.array(np.NaN, dtype=sem_tf.dtypes[colname]).item()
+        except ValueError:
+            # Can't coerce NaN, so try storing -99
+            new_props[colname] = np.array(-99, dtype=sem_tf.dtypes[colname]).item()
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
     shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
@@ -279,7 +284,11 @@ def reconcile_weight(measurements_to_reconcile_table,
     missing_props = []
     for prop in measurements_to_reconcile_table.colnames:
         if prop in new_props:
-            output_row[prop] = new_props[prop]
+            try:
+                output_row[prop] = new_props[prop]
+            except ValueError:
+                logger.error("Value error with property: " + str(prop))
+                raise
         elif not prop in props_to_ignore:
             missing_props.append(prop)
             try:
