@@ -388,8 +388,9 @@ def estimate_shears_from_args(args, dry_run=False):
                                                           "Invalid implementation:" in str(e)):
                     logger.warning(str(e))
                 else:
+                    import traceback
                     logger.warning("Failsafe exception block triggered with exception: " + str(e) + ".\n"
-                                   "Traceback: " + str(e.__traceback__))
+                                   "Traceback: " + "".join(traceback.format_tb(e.__traceback__)))
 
                 hdulist = fits.HDUList()
 
