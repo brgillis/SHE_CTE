@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+from copy import deepcopy
 import os
 
 from SHE_PPT import products
@@ -140,7 +141,7 @@ class TestReconcileShear:
             # In brief - Table 1 and 2 cancel out for invvar weighting, but not shape weighting. Table 3 dominates,
             # Table 4 has NaN errors and 0 estimates, Table 5 has NaN estimates and errors and Inf weight,
             # Table 6 has impossible (negative) values for weight and errors
-            for i_min, i_max, g1_offset, g2_offset, g1_err, g2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, None),
+            for i_min, i_max, g1_offset, g2_offset, e1_err, e2_err, weight in ((0, 9, 0.01, -0.01, 0.01, 0.01, None),
                                                                                (6, 12, -0.04, 0.04, 0.02, 0.02, None),
                                                                                (8, 19, 0.1, 0.2, 0.001, 0.001, None),
                                                                                (0, 19, 0, 0, np.nan, np.nan, np.nan),
@@ -149,7 +150,10 @@ class TestReconcileShear:
                                                                                (0, 19, 0, 0, -1, -np.inf, -1),):
 
                 if weight is None:
-                    weight = 1 / (0.5 * (g1_err ** 2 + g2_err ** 2) + cls.shape_noise ** 2)
+                    weight = 1 / (0.5 * (e1_err ** 2 + e2_err ** 2) + cls.shape_noise ** 2)
+                g1_err = np.sqrt(e1_err**2 + cls.shape_noise**2)
+                g2_err = np.sqrt(e2_err**2 + cls.shape_noise**2)
+
                 l = i_max - i_min + 1
 
                 # Create the measurements table
@@ -161,11 +165,13 @@ class TestReconcileShear:
                 t[tf.ID] = np.arange(l) + i_min
                 t[tf.g1] = cls.true_g1[i_min:i_max + 1] + g1_offset
                 t[tf.g2] = cls.true_g2[i_min:i_max + 1] + g2_offset
+                t[tf.e1_err] = np.ones(l, dtype=tf.dtypes[tf.g1_err]) * e1_err
+                t[tf.e2_err] = np.ones(l, dtype=tf.dtypes[tf.g2_err]) * e2_err
                 t[tf.g1_err] = np.ones(l, dtype=tf.dtypes[tf.g1_err]) * g1_err
                 t[tf.g2_err] = np.ones(l, dtype=tf.dtypes[tf.g2_err]) * g2_err
                 t[tf.weight] = np.ones(l, dtype=tf.dtypes[tf.weight]) * weight
-                t[tf.shape_weight] = np.ones(l, dtype=tf.dtypes[tf.shape_weight]) / (g1_err**2 + g2_err**2)
-                t[tf.e_var] = np.ones(l, dtype=tf.dtypes[tf.e_var]) * (g1_err**2 + g2_err**2)
+                t[tf.shape_weight] = np.ones(l, dtype=tf.dtypes[tf.shape_weight]) / (e1_err**2 + e2_err**2)
+                t[tf.e_var] = np.ones(l, dtype=tf.dtypes[tf.e_var]) * (e1_err**2 + e2_err**2)
                 t[tf.shape_noise] = np.ones(l, dtype=tf.dtypes[tf.shape_noise]) * cls.shape_noise
                 t.add_index(tf.ID)
                 tables.append(t)
@@ -189,8 +195,8 @@ class TestReconcileShear:
                                       deviates * g2_err).astype(lmcc_tf.dtypes[lmcc_tf.g1])
                     tc[lmcc_tf.weight] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.weight]) * weight
                     tc[lmcc_tf.shape_weight] = np.ones(
-                        l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_weight]) / (g1_err**2 + g2_err**2)
-                    tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (g1_err**2 + g2_err**2)
+                        l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_weight]) * 2 / (e1_err**2 + e2_err**2)
+                    tc[lmcc_tf.e_var] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.e_var]) * (e1_err**2 + e2_err**2)
                     tc[lmcc_tf.shape_noise] = np.ones(l, dtype=lmcc_tf.dtypes[lmcc_tf.shape_noise]) * cls.shape_noise
                     tc.add_index(lmcc_tf.ID)
                     cls.chains_table_list.append(tc)
@@ -280,7 +286,10 @@ class TestReconcileShear:
 
         for sem in sem_names:
 
+            sem_tf = sem_tfs[sem]
+
             sem_table_list = self.sem_table_lists[sem]
+
             reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
                                                   shear_estimation_method=sem,
                                                   object_ids_in_tile=self.object_ids_in_tile,
@@ -308,6 +317,35 @@ class TestReconcileShear:
             assert test_row[sem_tf.weight] < self.max_weight
             assert test_row[sem_tf.weight] > sem_table_list[0].loc[6][sem_tf.weight]
             assert test_row[sem_tf.weight] > sem_table_list[1].loc[6][sem_tf.weight]
+
+            # Try some extra tables with varying columns, just for KSB to save time
+            if sem == "KSB":
+                t_alt1 = deepcopy(sem_table_list[0])
+                t_alt1.remove_column(sem_tf.shape_weight)
+                sem_table_list_alt = [t_alt1, t_alt1]
+                _ = reconcile_tables(shear_estimates_tables=sem_table_list_alt,
+                                     shear_estimation_method=sem,
+                                     object_ids_in_tile=self.object_ids_in_tile,
+                                     reconciliation_function=reconcile_invvar,
+                                     workdir=self.workdir)
+
+                t_alt2 = deepcopy(t_alt1)
+                t_alt2.remove_column(sem_tf.e_var)
+                sem_table_list_alt = [t_alt2, t_alt2]
+                _ = reconcile_tables(shear_estimates_tables=sem_table_list_alt,
+                                     shear_estimation_method=sem,
+                                     object_ids_in_tile=self.object_ids_in_tile,
+                                     reconciliation_function=reconcile_invvar,
+                                     workdir=self.workdir)
+
+                t_alt3 = deepcopy(t_alt2)
+                t_alt3[sem_tf.e1_err] == 0.
+                sem_table_list_alt = [t_alt3, t_alt3]
+                _ = reconcile_tables(shear_estimates_tables=sem_table_list_alt,
+                                     shear_estimation_method=sem,
+                                     object_ids_in_tile=self.object_ids_in_tile,
+                                     reconciliation_function=reconcile_invvar,
+                                     workdir=self.workdir)
 
         return
 
@@ -445,7 +483,7 @@ class TestReconcileShear:
 
         # Create a data product for each input shear estimates table
         sem_product_filename_list = []
-        for i in range(len(self.sem_table_lists["KSB"])):
+        for i in range(len(self.sem_table_lists["LensMC"])):
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
             for sem in sem_names:
                 sem_table_filename = get_allowed_filename(

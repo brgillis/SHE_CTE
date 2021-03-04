@@ -34,7 +34,7 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
 import numpy as np
 
 
-__updated__ = "2021-02-11"
+__updated__ = "2021-03-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -87,6 +87,7 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_
 
     id = new_row[sem_tf.ID]
     assert id == existing_row[sem_tf.ID]
+    assert len(new_row) == len(existing_row)
 
     # Is this the first conflict with this ID?
     if not id in ids_to_reconcile:

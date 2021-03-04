@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different chains.
 """
 
-__updated__ = "2020-09-29"
+__updated__ = "2021-03-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -263,7 +263,7 @@ def reconcile_chains_weight(chains_to_reconcile_table,
     # Use the shape noise to calculate new weight
 
     shape_weight = masked_weights.sum(axis=0)
-    # new_props[lmcc_tf.shape_weight] = shape_weight
+    new_props[lmcc_tf.shape_weight] = shape_weight
     new_props[lmcc_tf.weight] = 1. / (1. / shape_weight + new_props[lmcc_tf.shape_noise]**2)
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row

@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2021-02-19"
+__updated__ = "2021-03-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -145,7 +145,26 @@ def reconcile_invvar(measurements_to_reconcile_table,
         None
     """
 
-    weights = 1 / measurements_to_reconcile_table[sem_tf.e_var]
+    # Use provided inverse-variance shape weight if possible
+    if (sem_tf.shape_weight in measurements_to_reconcile_table and
+            (measurements_to_reconcile_table[sem_tf.shape_weight] != 0.).all()):
+        weights = measurements_to_reconcile_table[sem_tf.shape_weight]
+    # If e_var is present, get it from that
+    elif sem_tf.e_var in measurements_to_reconcile_table:
+        weights = 1 / measurements_to_reconcile_table[sem_tf.e_var]
+    # What about e1/2_err?
+    elif ((measurements_to_reconcile_table[sem_tf.e1_err] != 0).all() and
+          (measurements_to_reconcile_table[sem_tf.e2_err] != 0).all()):
+        weights = 2 / (measurements_to_reconcile_table[sem_tf.e1_err]**2 +
+                       measurements_to_reconcile_table[sem_tf.e2_err]**2)
+    # Last resort - g1/2_err and shape_noise
+    elif ((measurements_to_reconcile_table[sem_tf.g1_err] != 0).all() and
+          (measurements_to_reconcile_table[sem_tf.g2_err] != 0).all() and
+          sem_tf.shape_noise in measurements_to_reconcile_table and
+          (measurements_to_reconcile_table[sem_tf.shape_noise] != 0).all()):
+        weights = 2 / (measurements_to_reconcile_table[sem_tf.e1_err]**2 +
+                       measurements_to_reconcile_table[sem_tf.e2_err]**2 -
+                       2 * measurements_to_reconcile_table[sem_tf.shape_noise]**2)
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
@@ -229,14 +248,25 @@ def reconcile_weight(measurements_to_reconcile_table,
         if not prop in vars(sem_tf):
             continue
         colname = getattr(sem_tf, prop)
+        if not colname in measurements_to_reconcile_table.colnames:
+            continue
         masked_column = np.ma.masked_array(measurements_to_reconcile_table[colname], m)
         new_props[colname] = (masked_column * masked_weights).sum() / tot_weight
 
         # If this property has an error, calculate that too
-        prop_err = prop + "_err"
+        # For g1/g2, we have to get e1_err/e2_err instead
+        if prop == "g1":
+            prop_err = "e1_err"
+        elif prop == "g2":
+            prop_err = "e2_err"
+        else:
+            prop_err = prop + "_err"
+
         if not prop_err in vars(sem_tf):
             continue
         colname_err = getattr(sem_tf, prop_err)
+        if not colname_err in measurements_to_reconcile_table.colnames:
+            continue
         masked_column_err = np.ma.masked_array(measurements_to_reconcile_table[colname_err], m)
         new_props[colname_err] = np.sqrt((np.power(masked_column_err * masked_weights, 2)).sum()) / tot_weight
 
@@ -277,8 +307,20 @@ def reconcile_weight(measurements_to_reconcile_table,
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
     shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
-    new_props[sem_tf.weight] = 1. / (0.5 * (new_props[sem_tf.g1_err] ** 2 +
-                                            new_props[sem_tf.g2_err] ** 2) + shape_noise_var)
+
+#     import pdb
+#     pdb.set_trace()
+
+    if sem_tf.g1_err in output_row.colnames and sem_tf.g1_err not in new_props:
+        new_props[sem_tf.g1_err] = np.sqrt(new_props[sem_tf.e1_err]**2 + shape_noise_var)
+    if sem_tf.g2_err in output_row.colnames and sem_tf.g2_err not in new_props:
+        new_props[sem_tf.g2_err] = np.sqrt(new_props[sem_tf.e2_err]**2 + shape_noise_var)
+
+    new_props[sem_tf.weight] = 2 / (new_props[sem_tf.g1_err] ** 2 +
+                                    new_props[sem_tf.g2_err] ** 2)
+    if sem_tf.shape_weight in output_row.colnames:
+        new_props[sem_tf.shape_weight] = 2 / ((new_props[sem_tf.e1_err] ** 2 +
+                                               new_props[sem_tf.e2_err] ** 2))
 
     # Check for any missing properties, and warn and set them to NaN, while we update the output row
     missing_props = []
