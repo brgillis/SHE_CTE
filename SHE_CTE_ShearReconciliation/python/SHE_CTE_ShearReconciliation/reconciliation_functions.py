@@ -310,7 +310,13 @@ def reconcile_weight(measurements_to_reconcile_table,
             new_props[colname] = np.array(-99, dtype=sem_tf.dtypes[colname]).item()
 
     # Figure out what the shape noise is from the shape errors and weights, and use it to calculate weight
-    shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
+    if sem_tf.shape_noise in measurements_to_reconcile_table.colnames:
+        shape_noise_var = (np.ma.masked_array(measurements_to_reconcile_table[sem_tf.shape_noise], m)**2).mean()
+    else:
+        default_shape_noise = 0.25
+        shape_noise_var = default_shape_noise**2
+        logger.warning(f"Shape noise column {sem_tf.shape_noise} not present. Using default value of "
+                       + f"{default_shape_noise}.")
 
 #     import pdb
 #     pdb.set_trace()
