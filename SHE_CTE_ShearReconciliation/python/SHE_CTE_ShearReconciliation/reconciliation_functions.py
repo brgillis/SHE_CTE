@@ -147,24 +147,28 @@ def reconcile_invvar(measurements_to_reconcile_table,
 
     # Use provided inverse-variance shape weight if possible
     if (sem_tf.shape_weight in measurements_to_reconcile_table and
-            (measurements_to_reconcile_table[sem_tf.shape_weight] != 0.).all()):
+            (measurements_to_reconcile_table[sem_tf.shape_weight] != 0.).any()):
         weights = measurements_to_reconcile_table[sem_tf.shape_weight]
     # If e_var is present, get it from that
     elif sem_tf.e_var in measurements_to_reconcile_table:
         weights = 1 / measurements_to_reconcile_table[sem_tf.e_var]
     # What about e1/2_err?
-    elif ((measurements_to_reconcile_table[sem_tf.e1_err] != 0).all() and
-          (measurements_to_reconcile_table[sem_tf.e2_err] != 0).all()):
+    elif ((measurements_to_reconcile_table[sem_tf.e1_err] != 0).any() and
+          (measurements_to_reconcile_table[sem_tf.e2_err] != 0).any()):
         weights = 2 / (measurements_to_reconcile_table[sem_tf.e1_err]**2 +
                        measurements_to_reconcile_table[sem_tf.e2_err]**2)
     # Last resort - g1/2_err and shape_noise
-    elif ((measurements_to_reconcile_table[sem_tf.g1_err] != 0).all() and
-          (measurements_to_reconcile_table[sem_tf.g2_err] != 0).all() and
+    elif ((measurements_to_reconcile_table[sem_tf.g1_err] != 0).any() and
+          (measurements_to_reconcile_table[sem_tf.g2_err] != 0).any() and
           sem_tf.shape_noise in measurements_to_reconcile_table and
-          (measurements_to_reconcile_table[sem_tf.shape_noise] != 0).all()):
+          (measurements_to_reconcile_table[sem_tf.shape_noise] != 0).any()):
         weights = 2 / (measurements_to_reconcile_table[sem_tf.e1_err]**2 +
                        measurements_to_reconcile_table[sem_tf.e2_err]**2 -
                        2 * measurements_to_reconcile_table[sem_tf.shape_noise]**2)
+    else:
+        logger.warning("No error information available for reconciliation. Default uniform weights " +
+                       "will be used.")
+        weights = np.ones_like(measurements_to_reconcile_table[sem_tf.e1_err]) * 100.
 
     return reconcile_weight(measurements_to_reconcile_table=measurements_to_reconcile_table,
                             output_row=output_row,
