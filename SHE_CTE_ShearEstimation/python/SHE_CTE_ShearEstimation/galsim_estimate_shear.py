@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-02-11"
+__updated__ = "2021-03-04"
 
 from copy import deepcopy
 from math import sqrt
@@ -460,8 +460,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
     logger = getLogger(__name__)
     logger.debug("Entering GS_estimate_shear")
 
-    shear_estimates_table = initialisation_methods[method]()
     tf = table_formats[method]
+    shear_estimates_table = initialisation_methods[method](optional_columns=[tf.e_var,
+                                                                             tf.shape_weight,
+                                                                             tf.shape_noise])
 
     if scale_label in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[scale_label]
@@ -636,9 +638,15 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                                        tf.g2: stack_shear_estimate.g2,
                                        tf.g1_err: np.sqrt(stack_shear_estimate.g1_err ** 2 + training_data.e1_var),
                                        tf.g2_err: np.sqrt(stack_shear_estimate.g2_err ** 2 + training_data.e2_var),
+                                       tf.e1_err: np.sqrt(stack_shear_estimate.g1_err ** 2),
+                                       tf.e2_err: np.sqrt(stack_shear_estimate.g2_err ** 2),
+                                       tf.e_var: stack_shear_estimate.g1_err ** 2 + stack_shear_estimate.g2_err ** 2,
                                        tf.g1g2_covar: stack_shear_estimate.g1g2_covar,
                                        tf.weight: 1 / (0.5 * (stack_shear_estimate.g1_err ** 2 + training_data.e1_var +
                                                               stack_shear_estimate.g2_err ** 2 + training_data.e2_var)),
+                                       tf.shape_weight: 1 / (0.5 * (stack_shear_estimate.g1_err ** 2 +
+                                                                    stack_shear_estimate.g2_err ** 2)),
+                                       tf.shape_noise: np.sqrt((training_data.e1_var + training_data.e2_var) / 2),
                                        tf.fit_class: 2,  # Unknown type, since we can't distinguish stars and galaxies
                                        tf.fit_flags: stack_shear_estimate.flags,
                                        tf.re: stack_shear_estimate.re,
