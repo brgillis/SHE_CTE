@@ -258,7 +258,8 @@ def object_id_split_from_args(args):
         # Create the product and fill out metadata
         batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
 
-        batch_id_list_product.Data.PointingIdList = observation_id
+        batch_id_list_product.Data.BatchIndex = i
+        batch_id_list_product.Data.PointingIdList = pointing_list
         batch_id_list_product.Data.ObservationId = observation_id
 
         num_tiles = len(tile_list)
