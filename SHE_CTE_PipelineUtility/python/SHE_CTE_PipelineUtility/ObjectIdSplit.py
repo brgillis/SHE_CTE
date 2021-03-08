@@ -20,6 +20,7 @@ from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
 from astropy.table import Table
+from pyxb.exceptions_ import SimpleTypeValueError
 
 import SHE_CTE
 import numpy as np
@@ -264,13 +265,19 @@ def object_id_split_from_args(args):
 
         num_tiles = len(tile_list)
 
-        base_tile_object = deepcopy(batch_id_list_product.Data.TileList[0])
-        batch_id_list_product.Data.TileList = [base_tile_object] * num_tiles
-        tile_list_binding = batch_id_list_product.Data.TileList
+        try:
+            base_tile_object = deepcopy(batch_id_list_product.Data.TileList[0])
+            batch_id_list_product.Data.TileList = [base_tile_object] * num_tiles
+            tile_list_binding = batch_id_list_product.Data.TileList
 
-        for tile_i, (tile_index, tile_product_id) in enumerate(tile_list):
-            tile_list_binding[tile_i].TileIndex = tile_index
-            tile_list_binding[tile_i].TileProductId = tile_product_id
+            for tile_i, (tile_index, tile_product_id) in enumerate(tile_list):
+                tile_list_binding[tile_i].TileIndex = tile_index
+                tile_list_binding[tile_i].TileProductId = tile_product_id
+        except SimpleTypeValueError:
+            logger.warning("Cannot list all tiles in data product; will only list first tile.")
+            tile_list_binding = batch_id_list_product.Data.TileList
+            tile_list_binding.TileIndex = tile_list[0].tile_index
+            tile_list_binding.TileProductId = tile_list[0].tile_product_id
 
         # Save the product
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
