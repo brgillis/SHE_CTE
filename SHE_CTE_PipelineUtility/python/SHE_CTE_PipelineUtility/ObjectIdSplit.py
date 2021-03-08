@@ -9,18 +9,15 @@ from copy import deepcopy
 import math
 import os
 
-from SHE_PPT.file_io import (read_listfile, write_listfile,
-                             read_xml_product, write_xml_product,
+from SHE_PPT.file_io import (write_listfile,
+                             write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
-from SHE_PPT.products import she_object_id_list, mer_final_catalog
+from SHE_PPT.products import she_object_id_list
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_utility import is_in_format
 from SHE_PPT.utility import get_arguments_string
-from astropy.table import Table
-from pyxb.exceptions_ import SimpleTypeValueError
 
 import SHE_CTE
 import numpy as np
@@ -273,7 +270,9 @@ def object_id_split_from_args(args):
             for tile_i, (tile_index, tile_product_id) in enumerate(tile_list):
                 tile_list_binding[tile_i].TileIndex = tile_index
                 tile_list_binding[tile_i].TileProductId = tile_product_id
-        except SimpleTypeValueError:
+        except TypeError as e:
+            if not "object does not support indexing" in str(e):
+                raise
             logger.warning("Cannot list all tiles in data product; will only list first tile.")
             tile_list_binding = batch_id_list_product.Data.TileList
             tile_list_binding.TileIndex = tile_list[0].tile_index
