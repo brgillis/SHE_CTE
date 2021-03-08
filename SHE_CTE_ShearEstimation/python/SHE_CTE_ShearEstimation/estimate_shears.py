@@ -178,8 +178,9 @@ def estimate_shears_from_args(args, dry_run=False):
                                     stacked_seg_product_filename=args.stacked_segmentation_image,
                                     psf_listfile_filename=args.psf_images_and_tables,
                                     detections_listfile_filename=args.detections_tables,
-                                    workdir=args.workdir,
                                     object_id_list_product_filename=args.object_ids,
+                                    workdir=args.workdir,
+                                    save_products=True,
                                     memmap=True,
                                     mode='denywrite')
 
