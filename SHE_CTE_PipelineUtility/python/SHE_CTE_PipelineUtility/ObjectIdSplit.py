@@ -275,8 +275,8 @@ def object_id_split_from_args(args):
                 raise
             logger.warning("Cannot list all tiles in data product; will only list first tile.")
             tile_list_binding = batch_id_list_product.Data.TileList
-            tile_list_binding.TileIndex = tile_list[0].tile_index
-            tile_list_binding.TileProductId = tile_list[0].tile_product_id
+            tile_list_binding.TileIndex = tile_list[0][0]
+            tile_list_binding.TileProductId = tile_list[0][1]
 
         # Save the product
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
