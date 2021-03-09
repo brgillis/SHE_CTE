@@ -245,7 +245,7 @@ def she_measurements_merge_from_args(args):
         (full_l_she_measurements_tables,
          full_l_observation_ids,
          full_l_pointing_id_lists,
-         full_l_tile_lists) = zip([read_method_estimates_tables(
+         full_l_tile_lists) = zip(*[read_method_estimates_tables(
              f, args.workdir) for f in measurements_product_filenames])
 
         full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
@@ -268,7 +268,7 @@ def she_measurements_merge_from_args(args):
         (full_l_she_measurements_tables,
          full_l_observation_ids,
          full_l_pointing_id_lists,
-         full_l_tile_lists) = zip([a.get() for a in pool_she_measurements_tables_and_metadata if a.get() is not None])
+         full_l_tile_lists) = zip(*[a.get() for a in pool_she_measurements_tables_and_metadata if a.get() is not None])
 
         # Read the chains tables
 
@@ -283,8 +283,8 @@ def she_measurements_merge_from_args(args):
 
         l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
         l_observation_ids = np.array([x for x in full_l_observation_ids if x is not None])
-        l_pointing_id_lists = np.array([x for x in full_l_observation_ids if x is not None])
-        l_tile_lists = np.array([x for x in full_l_observation_ids if x is not None])
+        l_pointing_id_lists = np.array([x for x in full_l_pointing_id_lists if x is not None])
+        l_tile_lists = np.array([x for x in full_l_tile_lists if x is not None])
 
         # Check metadata is consistent
         for l in (l_observation_ids, l_pointing_id_lists, l_tile_lists):
@@ -322,12 +322,12 @@ def she_measurements_merge_from_args(args):
 
     # Set the metadata for the measurements product
     combined_she_lensmc_chains_product.Data.ObservationId = observation_id
-    combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
+    combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
     combined_she_lensmc_chains_product.Data.TileList = tile_list
 
     # Set the metadata for the chains product
     combined_she_lensmc_chains_product.Data.ObservationId = observation_id
-    combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
+    combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
     combined_she_lensmc_chains_product.Data.TileList = tile_list
 
     for method in methods:
