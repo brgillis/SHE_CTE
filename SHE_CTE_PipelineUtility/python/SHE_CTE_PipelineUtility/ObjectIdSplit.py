@@ -4,8 +4,26 @@
 
     Split point executable for splitting up processing of objects into batches.
 """
+import argparse
+from copy import deepcopy
+import math
+import os
 
-__updated__ = "2020-08-12"
+from SHE_PPT.file_io import (write_listfile,
+                             write_xml_product,
+                             get_allowed_filename)
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.products import she_object_id_list
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.utility import get_arguments_string
+
+import SHE_CTE
+import numpy as np
+
+
+__updated__ = "2021-03-08"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,24 +38,6 @@ __updated__ = "2020-08-12"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
-import math
-import os
-
-from SHE_PPT.file_io import (read_listfile, write_listfile,
-                             read_xml_product, write_xml_product,
-                             get_allowed_filename)
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
-from SHE_PPT.products import she_object_id_list, mer_final_catalog
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.utility import get_arguments_string
-from astropy.table import Table
-
-import SHE_CTE
-import numpy as np
 
 default_batch_size = 20
 default_max_batches = 0
@@ -140,16 +140,34 @@ def object_id_split_from_args(args):
 
     logger.info("Reading data images...")
 
-    if args.data_images is not None:
-        data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
-                                        detections_listfile_filename=args.mer_final_catalog_tables,
-                                        workdir=args.workdir,
-                                        memmap=True,
-                                        mode='denywrite')
-    else:
-        data_stack = None
+    data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
+                                    detections_listfile_filename=args.mer_final_catalog_tables,
+                                    workdir=args.workdir,
+                                    save_products=True,
+                                    memmap=True,
+                                    mode='denywrite')
 
-    # Read in each mer_final_catalog table and add the IDs in it to a global set
+    # Get the tile list, pointing list, and observation id from the input data products
+
+    tile_list = []
+
+    for detections_catalogue_product in data_stack.detections_catalogue_products:
+        tile_index = detections_catalogue_product.Data.TileIndex
+        tile_product_id = detections_catalogue_product.Header.ProductId
+        tile_list.append((tile_index, tile_product_id))
+
+    pointing_list = []
+    observation_id = None
+
+    for exposure_product in data_stack.exposure_products:
+        pointing_list.append(exposure_product.Data.ObservationSequence.PointingId)
+        if observation_id is None:
+            observation_id = exposure_product.Data.ObservationSequence.ObservationId
+        else:
+            # Check it's consistent and warn if not
+            new_observation_id = exposure_product.Data.ObservationSequence.ObservationId
+            if not observation_id == new_observation_id:
+                logger.warning(f"Inconsistent observation IDs: {observation_id} and {new_observation_id}.")
 
     if ids_to_use is not None:
 
@@ -157,56 +175,24 @@ def object_id_split_from_args(args):
 
     else:
 
-        all_ids = set()
-
-        logger.info("Reading in IDs from mer_final_catalog from: " + args.mer_final_catalog_tables)
-
-        mer_final_catalog_table_product_filenames = read_listfile(os.path.join(args.workdir, args.mer_final_catalog_tables))
-
-        for tile_mer_final_catalog_table_product_filename in mer_final_catalog_table_product_filenames:
-
-            # Read in the product and get the filename of the table
-
-            tile_mer_final_catalog_table_product = read_xml_product(os.path.join(args.workdir,
-                                                                          tile_mer_final_catalog_table_product_filename))
-
-            if not isinstance(tile_mer_final_catalog_table_product, mer_final_catalog.dpdMerFinalCatalog):
-                raise TypeError("mer_final_catalog product is of invalid type: " + type(tile_mer_final_catalog_table_product))
-
-            tile_mer_final_catalog_table_filename = tile_mer_final_catalog_table_product.get_data_filename()
-
-            # Read in the table
-
-            tile_mer_final_catalog_table = Table.read(os.path.join(args.workdir, tile_mer_final_catalog_table_filename))
-
-            if not is_in_format(tile_mer_final_catalog_table, mfc_tf, verbose=True, ignore_metadata=True):
-                raise TypeError("Input mer_final_catalog table is of invalid format.")
-
-            # Get the ID list from it and add it to the set
-            all_ids.update(tile_mer_final_catalog_table[mfc_tf.ID].data)
+        all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
 
         logger.info("Finished reading in IDs from mer_final_catalog.")
 
-        # If supplied with data images, prune IDs that aren't in the images
-        if data_stack is not None:
+        # Prune IDs that aren't in the images
+        good_ids = []
 
-            good_ids = []
+        for gal_id in all_ids:
 
-            for gal_id in all_ids:
+            # Get a stack of the galaxy images
+            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id,
+                                                              width=1,)
 
-                # Get a stack of the galaxy images
-                gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id,
-                                                                  width=1,)
+            # Do we have any data for this object?
+            if not gal_stamp_stack.is_empty():
+                good_ids.append(gal_id)
 
-                # Do we have any data for this object?
-                if not gal_stamp_stack.is_empty():
-                    good_ids.append(gal_id)
-
-            all_ids_array = np.array(good_ids)
-
-        else:
-            # Convert IDs to a numpy array for easier handling
-            all_ids_array = np.array(list(all_ids))
+        all_ids_array = np.array(good_ids)
 
     num_ids = len(all_ids_array)
 
@@ -267,8 +253,32 @@ def object_id_split_from_args(args):
                                                               processing_function="SHE")
         id_list_product_filename_list.append(batch_id_list_product_filename)
 
-        # Create and save the product
+        # Create the product and fill out metadata
         batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
+
+        batch_id_list_product.Data.BatchIndex = i
+        batch_id_list_product.Data.PointingIdList = pointing_list
+        batch_id_list_product.Data.ObservationId = observation_id
+
+        num_tiles = len(tile_list)
+
+        try:
+            base_tile_object = deepcopy(batch_id_list_product.Data.TileList[0])
+            batch_id_list_product.Data.TileList = [base_tile_object] * num_tiles
+            tile_list_binding = batch_id_list_product.Data.TileList
+
+            for tile_i, (tile_index, tile_product_id) in enumerate(tile_list):
+                tile_list_binding[tile_i].TileIndex = tile_index
+                tile_list_binding[tile_i].TileProductId = tile_product_id
+        except TypeError as e:
+            if not "object does not support indexing" in str(e):
+                raise
+            logger.warning("Cannot list all tiles in data product; will only list first tile.")
+            tile_list_binding = batch_id_list_product.Data.TileList
+            tile_list_binding.TileIndex = tile_list[0][0]
+            tile_list_binding.TileProductId = tile_list[0][1]
+
+        # Save the product
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
         logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)

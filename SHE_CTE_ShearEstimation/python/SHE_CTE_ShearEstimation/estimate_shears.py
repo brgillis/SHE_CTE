@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-03-03"
+__updated__ = "2021-03-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -178,8 +178,9 @@ def estimate_shears_from_args(args, dry_run=False):
                                     stacked_seg_product_filename=args.stacked_segmentation_image,
                                     psf_listfile_filename=args.psf_images_and_tables,
                                     detections_listfile_filename=args.detections_tables,
-                                    workdir=args.workdir,
                                     object_id_list_product_filename=args.object_ids,
+                                    workdir=args.workdir,
+                                    save_products=True,
                                     memmap=True,
                                     mode='denywrite')
 
@@ -364,6 +365,11 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
 
+                    # Fill in metadata for the chains product
+                    chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
+                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
+                    chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
                 else:
                     shear_estimates_table = shear_estimates_results
@@ -438,6 +444,11 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
 
+                    # Fill in metadata for the chains product
+                    chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
+                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
+                    chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
             method_shear_estimates[method] = shear_estimates_table
@@ -464,6 +475,11 @@ def estimate_shears_from_args(args, dry_run=False):
     for method in estimation_methods:
         if method not in methods:
             shear_estimates_prod.set_method_filename(method, None)
+
+    # Fill in metadata for the estimates product
+    shear_estimates_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
+    shear_estimates_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
+    shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 

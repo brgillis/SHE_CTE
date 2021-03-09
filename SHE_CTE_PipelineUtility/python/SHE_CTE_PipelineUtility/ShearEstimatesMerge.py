@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2020-09-01"
+__updated__ = "2021-03-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -38,6 +38,7 @@ from astropy import table
 
 import SHE_CTE
 import multiprocessing as mp
+import numpy as np
 
 
 logger = getLogger(__name__)
@@ -135,6 +136,10 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
 
 def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
 
+    observation_id = None
+    pointing_id_list = None
+    tile_list = None
+
     try:
 
         logger.debug("Loading shear estimates from file: " + she_measurements_table_product_filename)
@@ -146,6 +151,11 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
         if not isinstance(she_measurements_table_product, products.she_measurements.dpdSheMeasurements):
             raise TypeError("Shear product is of invalid type: " + type(she_measurements_table_product))
+
+        if observation_id is None:
+            observation_id = she_measurements_table_product.Data.ObservationId
+            pointing_id_list = she_measurements_table_product.Data.PointingIdList
+            tile_list = she_measurements_table_product.Data.TileList
 
     except Exception as e:
 
@@ -182,7 +192,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
         logger.debug("Finished loading shear estimates from file: " + she_measurements_table_product_filename)
 
-    return she_measurements_tables
+    return (she_measurements_tables, observation_id, pointing_id_list, tile_list)
 
 
 def she_measurements_merge_from_args(args):
@@ -232,10 +242,11 @@ def she_measurements_merge_from_args(args):
 
     if number_threads == 1:
 
-        full_l_she_measurements_tables = [read_method_estimates_tables(
-            f, args.workdir) for f in measurements_product_filenames]
-
-        l_she_measurements_tables = [t for t in full_l_she_measurements_tables if t is not None]
+        (full_l_she_measurements_tables,
+         full_l_observation_ids,
+         full_l_pointing_id_lists,
+         full_l_tile_lists) = zip(*[read_method_estimates_tables(
+             f, args.workdir) for f in measurements_product_filenames])
 
         full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
             f, args.workdir) for f in chains_product_filenames]
@@ -247,13 +258,17 @@ def she_measurements_merge_from_args(args):
         # Read the measurements tables
 
         pool = mp.Pool(processes=number_threads)
-        pool_she_measurements_tables = [pool.apply_async(read_method_estimates_tables, args=(
-            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename in measurements_product_filenames]
+        pool_she_measurements_tables_and_metadata = [pool.apply_async(read_method_estimates_tables, args=(
+            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename
+            in measurements_product_filenames]
 
         pool.close()
         pool.join()
 
-        l_she_measurements_tables = [a.get() for a in pool_she_measurements_tables if a.get() is not None]
+        (full_l_she_measurements_tables,
+         full_l_observation_ids,
+         full_l_pointing_id_lists,
+         full_l_tile_lists) = zip(*[a.get() for a in pool_she_measurements_tables_and_metadata if a.get() is not None])
 
         # Read the chains tables
 
@@ -265,6 +280,20 @@ def she_measurements_merge_from_args(args):
         pool.join()
 
         she_lensmc_chains_tables = [a.get() for a in pool_she_lensmc_chains_tables if a.get() is not None]
+
+        l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
+        l_observation_ids = np.array([x for x in full_l_observation_ids if x is not None])
+        l_pointing_id_lists = np.array([x for x in full_l_pointing_id_lists if x is not None])
+        l_tile_lists = np.array([x for x in full_l_tile_lists if x is not None])
+
+        # Check metadata is consistent
+        for l in (l_observation_ids, l_pointing_id_lists, l_tile_lists):
+            if not (l == l[0]).all():
+                logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
+
+        observation_id = l_observation_ids[0]
+        pointing_id_list = l_pointing_id_lists[0]
+        tile_list = l_tile_lists[0]
 
     # Sort the tables into the expected format
     for method in methods:
@@ -290,6 +319,16 @@ def she_measurements_merge_from_args(args):
         spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
     combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
         spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
+
+    # Set the metadata for the measurements product
+    combined_she_measurements_product.Data.ObservationId = observation_id
+    combined_she_measurements_product.Data.PointingIdList = list(pointing_id_list)
+    combined_she_measurements_product.Data.TileList = tile_list
+
+    # Set the metadata for the chains product
+    combined_she_lensmc_chains_product.Data.ObservationId = observation_id
+    combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
+    combined_she_lensmc_chains_product.Data.TileList = tile_list
 
     for method in methods:
 
