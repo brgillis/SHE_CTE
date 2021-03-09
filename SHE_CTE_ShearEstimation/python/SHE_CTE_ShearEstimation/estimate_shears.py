@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-03-08"
+__updated__ = "2021-03-09"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -367,7 +367,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     # Fill in metadata for the chains product
                     chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingId
+                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
                     chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
@@ -446,7 +446,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     # Fill in metadata for the chains product
                     chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingId
+                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
                     chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
