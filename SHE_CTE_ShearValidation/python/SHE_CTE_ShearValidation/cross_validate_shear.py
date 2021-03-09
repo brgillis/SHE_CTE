@@ -178,6 +178,11 @@ def cross_validate_shear(args, dry_run=False):
     validated_shear_estimates_prod = products.she_validated_measurements.create_dpd_she_validated_measurements(
         spatial_footprint=shear_estimates_prod)
 
+    # Set up metadata for the new product
+    validated_shear_estimates_prod.Data.ObservationId = shear_estimates_prod.Data.ObservationId
+    validated_shear_estimates_prod.Data.PointingIdList = shear_estimates_prod.Data.PointingIdList
+    validated_shear_estimates_prod.Data.TileList = shear_estimates_prod.Data.TileList
+
     for method in method_table_filenames:
         validated_shear_estimates_prod.set_method_filename(method, method_table_filenames[method])
 
