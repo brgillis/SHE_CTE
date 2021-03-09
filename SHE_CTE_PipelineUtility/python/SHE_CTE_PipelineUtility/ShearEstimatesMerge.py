@@ -321,9 +321,9 @@ def she_measurements_merge_from_args(args):
         spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
 
     # Set the metadata for the measurements product
-    combined_she_lensmc_chains_product.Data.ObservationId = observation_id
-    combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
-    combined_she_lensmc_chains_product.Data.TileList = tile_list
+    combined_she_measurements_product.Data.ObservationId = observation_id
+    combined_she_measurements_product.Data.PointingIdList = list(pointing_id_list)
+    combined_she_measurements_product.Data.TileList = tile_list
 
     # Set the metadata for the chains product
     combined_she_lensmc_chains_product.Data.ObservationId = observation_id
