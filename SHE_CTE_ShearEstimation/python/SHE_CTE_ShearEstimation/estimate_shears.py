@@ -478,7 +478,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Fill in metadata for the estimates product
     shear_estimates_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-    shear_estimates_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingId
+    shear_estimates_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
     shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
