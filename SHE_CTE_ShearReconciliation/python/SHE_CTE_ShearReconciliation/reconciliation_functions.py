@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2021-03-04"
+__updated__ = "2021-03-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -241,7 +241,7 @@ def reconcile_weight(measurements_to_reconcile_table,
                        "Will output copy of 'best' row.")
         return reconcile_best(measurements_to_reconcile_table,
                               output_row,
-                              em_tf,
+                              sem_tf,
                               weights,
                               *args, **kwargs)
 
