@@ -318,9 +318,6 @@ def reconcile_weight(measurements_to_reconcile_table,
         logger.warning(f"Shape noise column {sem_tf.shape_noise} not present. Using default value of "
                        + f"{default_shape_noise}.")
 
-#     import pdb
-#     pdb.set_trace()
-
     if sem_tf.g1_err in output_row.colnames and sem_tf.g1_err not in new_props:
         new_props[sem_tf.g1_err] = np.sqrt(new_props[sem_tf.e1_err]**2 + shape_noise_var)
     if sem_tf.g2_err in output_row.colnames and sem_tf.g2_err not in new_props:
