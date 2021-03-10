@@ -180,6 +180,7 @@ def cross_validate_shear(args, dry_run=False):
 
     # Set up metadata for the new product
     validated_shear_estimates_prod.Data.ObservationId = shear_estimates_prod.Data.ObservationId
+    validated_shear_estimates_prod.Data.ObservationDateTime = shear_estimates_prod.Data.ObservationDateTime
     validated_shear_estimates_prod.Data.PointingIdList = shear_estimates_prod.Data.PointingIdList
     validated_shear_estimates_prod.Data.TileList = shear_estimates_prod.Data.TileList
 

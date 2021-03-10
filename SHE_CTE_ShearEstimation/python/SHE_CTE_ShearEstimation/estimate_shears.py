@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-03-09"
+__updated__ = "2021-03-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -86,54 +86,65 @@ table_formats = {"KSB": ksbm_tf,
 default_chains_method = "LensMC"
 
 
-def fill_measurements_table_meta(t, mer_final_catalog_products, vis_calibrated_frame_products):
+def fill_measurements_table_meta(t,
+                                 mer_final_catalog_products,
+                                 vis_calibrated_frame_products,
+                                 observation_id=None,
+                                 observation_time=None,
+                                 pointing_id_list=None,
+                                 tile_id_list=None):
     """ A function to get the Observation ID, Observation Time, Field ID, and Tile IDs from data products
-        and add them to a table's meta.
+        and add them to a table's meta. If values are provided, they will be used. Otherwise values will
+        be determined from the data products.
     """
 
-    # Get a list of the tile IDs from the met catalogs
-    tile_ids = np.empty_like(mer_final_catalog_products, dtype='<U20')
-    for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
-        tile_ids[i] = str(mer_final_catalog_product.Data.TileIndex)
+    if tile_id_list is None:
+        # Get a list of the tile IDs from the met catalogs
+        tile_id_list = np.empty_like(mer_final_catalog_products, dtype=int)
+        for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
+            tile_id_list[i] = mer_final_catalog_product.Data.TileIndex
 
     # Turn the Tile ID list into a spaced string
-    tile_id_list = " ".join(tile_ids)
+    tile_id_list_str = " ".join(map(str, tile_id_list))
 
-    # Get the observation data from the exposure products
+    if observation_time is None:
 
-    observation_times = np.empty_like(vis_calibrated_frame_products, dtype='<U40')
-    observation_ids = np.empty_like(vis_calibrated_frame_products, dtype='<U20')
-    field_ids = np.empty_like(vis_calibrated_frame_products, dtype='<U20')
+        # Get the observation data from the exposure products
 
-    for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
-        observation_times[i] = str(vis_calibrated_frame_product.Data.ObservationDateTime.OBT)
-        observation_ids[i] = str(vis_calibrated_frame_product.Data.ObservationSequence.ObservationId)
-        field_ids[i] = str(vis_calibrated_frame_product.Data.ObservationSequence.FieldId)
+        observation_times = [None] * len(vis_calibrated_frame_products)
 
-    # Turn the Observation ID list into a spaced string
-    observation_id_list = " ".join(observation_ids)
+        for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
+            observation_times[i] = vis_calibrated_frame_product.Data.ObservationDateTime
 
-    # Get the most recent observation time
-    observation_times.sort()
-    observation_time_value = observation_times[-1]
+        # Get the most recent observation time
+        observation_times.sort(key=lambda t: t.OBT)
+        observation_time = observation_times[-1]
 
-    # Check that all field IDs are the same
-    if not (field_ids == field_ids[0]).all():
-        # Make a string of the list, but warn about it
-        field_id_value = " ".join(field_ids)
-        logger.warning("Not all exposures have the same field ID. Found field IDs: " + field_id_value + ". " +
-                       "This list will be output to the table headers.")
-    else:
-        # All are the same, so just report one value
-        field_id_value = int(field_ids[0])
+    observation_time_str = str(observation_time.OBT)
+
+    if observation_id is None:
+        # Get the observation ID
+        observation_ids = np.empty_like(vis_calibrated_frame_products, dtype=int)
+        for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
+            observation_ids[i] = vis_calibrated_frame_product.Data.ObservationSequence.ObservationId
+
+        if not (observation_ids == observation_ids[0]).all():
+            logger.warning("Not all observation IDs are the same. First in list will be used.")
+        observation_id = observation_ids[0]
+
+    if pointing_id_list is None:
+        pointing_id_list = [None] * len(vis_calibrated_frame_products)
+        for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
+            pointing_id_list[i] = vis_calibrated_frame_product.Data.ObservationSequence.PointingId
+    pointing_id_list_str = " ".join(map(str, pointing_id_list))
 
     # Update the table's meta with the observation and tile data
-    t.meta[sm_tf.m.observation_id] = observation_id_list
-    t.meta[sm_tf.m.observation_time] = observation_time_value
-    t.meta[sm_tf.m.tile_id] = tile_id_list
-    # t.meta[sm_tf.m.field_id] = field_id_value # TODO: Add Field ID as well when it's added to the data model
+    t.meta[sm_tf.m.observation_id] = observation_id
+    t.meta[sm_tf.m.observation_time] = observation_time_str
+    t.meta[sm_tf.m.pointing_id] = pointing_id_list_str
+    t.meta[sm_tf.m.tile_id] = tile_id_list_str
 
-    return
+    return observation_id, observation_time, pointing_id_list, tile_id_list
 
 
 def estimate_shears_from_args(args, dry_run=False):
@@ -263,6 +274,12 @@ def estimate_shears_from_args(args, dry_run=False):
                                               subdir=subfolder_name),
         spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
+    # Init some values that we'll determine the first time possible
+    observation_id = None
+    observation_time = None
+    pointing_id_list = None
+    tile_id_list = None
+
     if not dry_run:
 
         method_shear_estimates = {}
@@ -325,11 +342,9 @@ def estimate_shears_from_args(args, dry_run=False):
                     training_data_filename = training_data_filenames[method]
                     if training_data_filename == 'None':
                         training_data_filename = None
-                    if training_data_filename is None:
-                        # Don't raise for KSB, REGAUSS, and LensMC which allow default behaviour here
-                        if method not in ("KSB", "LensMC", "REGAUSS"):
-                            raise ValueError(
-                                "Invalid implementation: No training data supplied for method " + method + ".")
+                    if training_data_filename is None and method not in ("KSB", "LensMC", "REGAUSS"):
+                        raise ValueError(
+                            "Invalid implementation: No training data supplied for method " + method + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
                 else:
                     training_data = None
@@ -356,6 +371,22 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 if return_chains:
                     shear_estimates_table, chains_table = shear_estimates_results
+                else:
+                    shear_estimates_table = shear_estimates_results
+
+                # Update the table meta with observation and tile info
+                (observation_id,
+                 observation_time,
+                 pointing_id_list,
+                 tile_id_list) = fill_measurements_table_meta(t=shear_estimates_table,
+                                                              mer_final_catalog_products=mer_final_catalog_products,
+                                                              vis_calibrated_frame_products=vis_calibrated_frame_products,
+                                                              observation_id=observation_id,
+                                                              observation_time=observation_time,
+                                                              pointing_id_list=pointing_id_list,
+                                                              tile_id_list=tile_id_list)
+
+                if return_chains:
 
                     chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
                                                                 version=SHE_CTE.__version__,
@@ -366,22 +397,16 @@ def estimate_shears_from_args(args, dry_run=False):
                     chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
 
                     # Fill in metadata for the chains product
-                    chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
+                    chains_prod.Data.ObservationId = observation_id
+                    chains_prod.Data.ObservationDateTime = observation_time
+                    chains_prod.Data.PointingIdList = pointing_id_list
                     chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
-                else:
-                    shear_estimates_table = shear_estimates_results
 
                 if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
                                      "for method " + method + ".")
-
-                # Update the table meta with observation and tile info
-                fill_measurements_table_meta(t=shear_estimates_table,
-                                             mer_final_catalog_products=mer_final_catalog_products,
-                                             vis_calibrated_frame_products=vis_calibrated_frame_products)
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
@@ -444,10 +469,12 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
 
-                    # Fill in metadata for the chains product
-                    chains_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-                    chains_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
-                    chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+                    # Fill in metadata for the chains product if possible
+                    if observation_id is not None:
+                        chains_prod.Data.ObservationId = observation_id
+                        chains_prod.Data.ObservationDateTime = observation_time
+                        chains_prod.Data.PointingIdList = pointing_id_list
+                        chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -477,8 +504,9 @@ def estimate_shears_from_args(args, dry_run=False):
             shear_estimates_prod.set_method_filename(method, None)
 
     # Fill in metadata for the estimates product
-    shear_estimates_prod.Data.ObservationId = data_stack.object_id_list_product.Data.ObservationId
-    shear_estimates_prod.Data.PointingIdList = data_stack.object_id_list_product.Data.PointingIdList
+    shear_estimates_prod.Data.ObservationId = observation_id
+    shear_estimates_prod.Data.ObservationDateTime = observation_time
+    shear_estimates_prod.Data.PointingIdList = pointing_id_list
     shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
