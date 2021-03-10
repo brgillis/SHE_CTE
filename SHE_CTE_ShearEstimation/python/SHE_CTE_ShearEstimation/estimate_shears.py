@@ -100,7 +100,7 @@ def fill_measurements_table_meta(t,
 
     if tile_id_list is None:
         # Get a list of the tile IDs from the met catalogs
-        tile_id_list = np.empty_like(mer_final_catalog_products, dtype='<U20')
+        tile_id_list = np.empty_like(mer_final_catalog_products, dtype=int)
         for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
             tile_id_list[i] = mer_final_catalog_product.Data.TileIndex
 
@@ -120,11 +120,11 @@ def fill_measurements_table_meta(t,
         observation_times.sort(key=lambda t: t.OBT)
         observation_time = observation_times[-1]
 
-    observation_time_str = str(observation_times[-1].OBT)
+    observation_time_str = str(observation_time.OBT)
 
     if observation_id is None:
         # Get the observation ID
-        observation_ids = np.empty_like(vis_calibrated_frame_products, dtype='<U20')
+        observation_ids = np.empty_like(vis_calibrated_frame_products, dtype=int)
         for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
             observation_ids[i] = vis_calibrated_frame_product.Data.ObservationSequence.ObservationId
 
@@ -133,10 +133,10 @@ def fill_measurements_table_meta(t,
         observation_id = observation_ids[0]
 
     if pointing_id_list is None:
-        pointing_id_list = [None] * len(vis_calibrated_frame_product)
+        pointing_id_list = [None] * len(vis_calibrated_frame_products)
         for i, vis_calibrated_frame_product in enumerate(vis_calibrated_frame_products):
             pointing_id_list[i] = vis_calibrated_frame_product.Data.ObservationSequence.PointingId
-        pointing_id_list_str = " ".join(map(str, pointing_id_list))
+    pointing_id_list_str = " ".join(map(str, pointing_id_list))
 
     # Update the table's meta with the observation and tile data
     t.meta[sm_tf.m.observation_id] = observation_id
@@ -400,7 +400,7 @@ def estimate_shears_from_args(args, dry_run=False):
                     chains_prod.Data.ObservationId = observation_id
                     chains_prod.Data.ObservationDateTime = observation_time
                     chains_prod.Data.PointingIdList = pointing_id_list
-                    chains_prod.Data.TileList = tile_id_list
+                    chains_prod.Data.TileList = tile_id_list[0]  # FIXME when data model is updated
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -469,11 +469,12 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
 
-                    # Fill in metadata for the chains product
-                    chains_prod.Data.ObservationId = observation_id
-                    chains_prod.Data.ObservationDateTime = observation_time
-                    chains_prod.Data.PointingIdList = pointing_id_list
-                    chains_prod.Data.TileList = tile_id_list
+                    # Fill in metadata for the chains product if possible
+                    if observation_id is not None:
+                        chains_prod.Data.ObservationId = observation_id
+                        chains_prod.Data.ObservationDateTime = observation_time
+                        chains_prod.Data.PointingIdList = pointing_id_list
+                        chains_prod.Data.TileList = tile_id_list[0]  # FIXME when data model is updated
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -506,7 +507,7 @@ def estimate_shears_from_args(args, dry_run=False):
     shear_estimates_prod.Data.ObservationId = observation_id
     shear_estimates_prod.Data.ObservationDateTime = observation_time
     shear_estimates_prod.Data.PointingIdList = pointing_id_list
-    shear_estimates_prod.Data.TileList = tile_id_list
+    shear_estimates_prod.Data.TileList = tile_id_list[0]  # FIXME when data model is updated
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 
