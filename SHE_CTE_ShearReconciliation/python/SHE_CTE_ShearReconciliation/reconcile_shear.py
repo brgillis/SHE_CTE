@@ -34,7 +34,7 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
 import numpy as np
 
 
-__updated__ = "2021-03-04"
+__updated__ = "2021-03-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -297,12 +297,9 @@ def reconcile_shear_from_args(args):
     if args.method is not None:
         method = str(args.method)
         logger.info("Using reconciliation method: '" + str(method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.REC_METHOD.value in pipeline_config:
-            method = str(pipeline_config[ReconciliationConfigKeys.REC_METHOD.value])
-            logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
+    elif pipeline_config is not None and ReconciliationConfigKeys.REC_METHOD.value in pipeline_config:
+        method = str(pipeline_config[ReconciliationConfigKeys.REC_METHOD.value])
+        logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
 
     if method is None:
         # If we get here, it isn't yet determined, so use the default
@@ -324,13 +321,10 @@ def reconcile_shear_from_args(args):
     if args.chains_method is not None:
         chains_method = str(args.chains_method)
         logger.info("Using chains reconciliation method: '" + str(chains_method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the chains method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.CHAINS_REC_METHOD.value in pipeline_config:
-            chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD.value])
-            logger.info("Using chains reconciliation method: '" +
-                        str(chains_method) + "', from pipeline configuration file.")
+    elif pipeline_config is not None and ReconciliationConfigKeys.CHAINS_REC_METHOD.value in pipeline_config:
+        chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD.value])
+        logger.info("Using chains reconciliation method: '" +
+                    str(chains_method) + "', from pipeline configuration file.")
 
     if chains_method is None:
         # If we get here, it isn't yet determined, so use the default
@@ -362,6 +356,10 @@ def reconcile_shear_from_args(args):
     she_validated_measurements_filename_list = read_listfile(os.path.join(args.workdir,
                                                                           args.she_validated_measurements_listfile))
 
+    # Start lists of all observation IDs and pointing IDs
+    observation_id_list = []
+    pointing_id_list = []
+
     # Loop over each product (representing a different observation)
     for she_validated_measurements_filename in she_validated_measurements_filename_list:
         she_validated_measurement_product = read_xml_product(xml_filename=she_validated_measurements_filename,
@@ -372,6 +370,16 @@ def reconcile_shear_from_args(args):
             estimates_table_filename = she_validated_measurement_product.get_method_filename(shear_estimation_method)
             if estimates_table_filename is not None and estimates_table_filename != "None" and estimates_table_filename != "data/None":
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
+
+        # Add to observation and pointing id lists
+        measurements_observation_id = she_validated_measurement_product.Data.ObservationId
+        measurements_pointing_id_list = she_validated_measurement_product.Data.PointingIdList
+
+        if measurements_observation_id not in observation_id_list:
+            observation_id_list.append(measurements_observation_id)
+        for measurements_pointing_id in measurements_pointing_id_list:
+            if measurements_pointing_id not in pointing_id_list:
+                pointing_id_list.append(measurements_pointing_id)
 
     # Create a data product for the output
     reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
@@ -391,6 +399,8 @@ def reconcile_shear_from_args(args):
     # Get the tile_id and set it for the new product
     tile_id = mer_final_catalog_product.Data.TileIndex
     reconciled_catalog_product.Data.TileIndex = tile_id
+    reconciled_catalog_product.Data.ObservationIdList = observation_id_list
+    reconciled_catalog_product.Data.PointingIdList = pointing_id_list
 
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in shear_estimation_method_table_formats:
@@ -444,6 +454,8 @@ def reconcile_shear_from_args(args):
     reconciled_chains_product = products.she_reconciled_lensmc_chains.create_dpd_she_reconciled_lensmc_chains(
         spatial_footprint=mer_final_catalog_product)
     reconciled_chains_product.Data.TileIndex = tile_id
+    reconciled_chains_product.Data.ObservationIdList = observation_id_list
+    reconciled_chains_product.Data.PointingIdList = pointing_id_list
 
     # If we don't have any data, create an empty table
     if reconciled_chains_catalog is None:
