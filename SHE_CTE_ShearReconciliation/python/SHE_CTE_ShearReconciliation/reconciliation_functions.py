@@ -241,7 +241,7 @@ def reconcile_weight(measurements_to_reconcile_table,
                        "Will output copy of 'best' row.")
         return reconcile_best(measurements_to_reconcile_table,
                               output_row,
-                              ssem_tf,
+                              sem_tf,
                               weights,
                               *args, **kwargs)
 
