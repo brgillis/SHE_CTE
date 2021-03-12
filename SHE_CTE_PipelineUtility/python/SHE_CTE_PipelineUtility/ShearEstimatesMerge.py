@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2021-03-10"
+__updated__ = "2021-03-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -300,6 +300,7 @@ def she_measurements_merge_from_args(args):
         observation_time = l_observation_times[0]
         pointing_id_list = l_pointing_id_lists[0]
         tile_list = l_tile_lists[0]
+    # End section to handle multithreading
 
     # Sort the tables into the expected format
     for method in methods:
