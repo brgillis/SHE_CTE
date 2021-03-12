@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2021-02-11"
+__updated__ = "2021-03-12"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -55,9 +55,9 @@ detections_tables_filename = "mer_final_catalogs.json"
 ksb_training_filename = "test_ksb_training.xml"
 regauss_training_filename = "test_regauss_training.xml"
 
-expected_observation_id = '-1 -1 -1 -1'
+expected_observation_id = -1
 expected_observation_time = "2020-06-10 15:00:36.660000+00:00"
-expected_tile_id = '1'
+expected_tile_id = "1"
 
 
 class TestCase:
