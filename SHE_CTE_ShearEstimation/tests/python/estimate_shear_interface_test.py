@@ -57,6 +57,7 @@ regauss_training_filename = "test_regauss_training.xml"
 
 expected_observation_id = -1
 expected_observation_time = "2020-06-10 15:00:36.660000+00:00"
+expected_pointing_id_list = "-1 -1 -1 -1"
 expected_tile_id = "1"
 
 
@@ -212,6 +213,7 @@ class TestCase:
 
         assert t.meta[sm_tf.m.observation_id] == expected_observation_id
         assert t.meta[sm_tf.m.observation_time] == expected_observation_time
+        assert t.meta[sm_tf.m.pointing_id] == expected_pointing_id_list
         assert t.meta[sm_tf.m.tile_id] == expected_tile_id
 
         return
