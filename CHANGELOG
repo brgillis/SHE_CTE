@@ -1,6 +1,6 @@
 Changelog for SHE_CTE Common Testing Environment
 
-Changes from v8.0 to v8.1
+Changes in v8.1
 =========================
 
 API Changes
@@ -8,22 +8,45 @@ API Changes
 
 Dependency Changes
 ------------------
+- Now depends on SHE_LensMC 3.2 and SHE_MomentsML 8.1, and inheriting dependencies on SHE_PPT 8.7,
+  ST_DataModelBindings 8.0.5, ST_DataModelTools 8.0.5,  EL_Utils 1.1.0, and Elements 5.12.0
 
 Deprecated Features
 -------------------
 
+- Removed sim_sc4_fix option from shear estimation methods
+
 Bug Fixes
 ---------
+
+- Fixed bug which could cause tables with optional columns in an unexpected order to crash SHE_CTE_ReconcileShear
+- Fixed how reconcile_best performs when some weights are NaN or Inf
 
 New Features
 ------------
 - Added SHE_CTE_ShearReconciliation module and SHE_CTE_ReconcileShear executable
+- Data product metadata (Observation ID, Observation time, Pointing IDs, and Tile Index) is now passed
+  along to each generated data product
+- Re-enabled MomentsML shear estimation method
+- KSB and REGAUSS methods now fill out all new error-related columns of shear measurements tables
+- Added reconciliation of LensMC chains to SHE_CTE_ReconcileShear
 
 New Config Features
 -------------------
 
+- chains_method can be specified in the pipeline config or at command-line for SHE_CTE_ReconcileShear
+
 Miscellaneous
 -------------
+
+- Better error handling in SHE_CTE_BiasMeasurement.measure_bias
+- Misc. variables renamed for consistency
+- Euclid license added to __init__.py files
+- Necessary changes to adjust to changes in SHE_PPT 8.7
+- Necessary changes to adjust to changes in data model (e.g. different columns in TU catalogues)
+- Updated to use new test data in SHE_PPT_8_7 on WebDAV
+- Now using standard interface to read config files
+- Misc. formatting and cleanup
 
 Changes from v0.8 to v8.0
 =========================
