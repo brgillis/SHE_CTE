@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2021-02-12"
+__updated__ = "2021-04-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -106,6 +106,12 @@ def select_true_universe_sources(catalog_filenames, ra_range, dec_range, path):
                 merged_catalog = catalog[cond]
             else:
                 merged_catalog = vstack([merged_catalog, catalog[cond]])
+
+    if merged_catalog is None:
+        logger.warning("No TU sources found in region: \n" +
+                       f"R.A.: {ra_range}\n" +
+                       f"Dec.: {dec_range}")
+        merged_catalog = catalog[cond]
 
     return merged_catalog
 
