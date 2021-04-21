@@ -350,13 +350,30 @@ def match_to_tu_from_args(args):
                 dec_se = shear_table[sem_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
-                # Match to both star and galaxy tables, and determine which is best match
-                best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
-                best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
+                if len(sky_coord_star) > 0:
 
-                # Perform the reverse match as well, and only use a symmetric best-match table
-                best_obj_id_from_star, _best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(sky_coord_se)
-                best_obj_id_from_gal, _best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
+                    # Match to star table
+                    best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
+
+                    # Perform the reverse match as well, and only use a symmetric best-match table
+                    best_obj_id_from_star, _best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(
+                        sky_coord_se)
+
+                else:
+                    best_star_id, best_star_distance = [], []
+                    best_obj_id_from_star, _best_distance_from_star = [], []
+
+                if len(sky_coord_gal) > 0:
+
+                    # Match to galaxy table
+                    best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
+
+                    # Perform the reverse match as well, and only use a symmetric best-match table
+                    best_obj_id_from_gal, _best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
+
+                else:
+                    best_gal_id, best_gal_distance = [], []
+                    best_obj_id_from_gal, _best_distance_from_gal = [], []
 
                 # Check that the overall best distance is less than the threshold
                 best_distance = np.where(best_gal_distance <= best_star_distance,
@@ -373,44 +390,56 @@ def match_to_tu_from_args(args):
 
                 # Mask out with -99 if the distance is outside the threshold or it better matches to the
                 # other type of object
-                best_star_id = np.where(in_range, np.where(best_distance < args.match_threshold,
-                                                           np.where(best_star_distance <
-                                                                    best_gal_distance, best_star_id, -99),
-                                                           -99), -99)
-                best_gal_id = np.where(in_range, np.where(best_distance < args.match_threshold,
-                                                          np.where(best_gal_distance <=
-                                                                   best_star_distance, best_gal_id, -99),
-                                                          -99), -99)
 
-                # Check for symmetric matches
-                symmetric_star_match = best_obj_id_from_star[best_star_id] == np.arange(len(best_star_id))
-                symmetric_gal_match = best_obj_id_from_gal[best_gal_id] == np.arange(len(best_gal_id))
+                if len(sky_coord_star) > 0:
+                    best_star_id = np.where(in_range, np.where(best_distance < args.match_threshold,
+                                                               np.where(best_star_distance <
+                                                                        best_gal_distance, best_star_id, -99),
+                                                               -99), -99)
+                    symmetric_star_match = best_obj_id_from_star[best_star_id] == np.arange(len(best_star_id))
 
-                # Note - this will give junk results for those that are already flagged -99, but since we
-                # do an or-wise update in the next step, it isn't an issue here. Be warned though if
-                # do anything else with these new symmetric_*_match arrays
+                    # Mask out with -99 if we don't have a symmetric match
+                    best_star_id = np.where(symmetric_star_match, best_star_id, -99)
+                else:
+                    best_star_id = np.zeros(len(in_range), dtype=int)
 
-                # Mask out with -99 if we don't have a symmetric match
-                best_star_id = np.where(symmetric_star_match, best_star_id, -99)
-                best_gal_id = np.where(symmetric_gal_match, best_gal_id, -99)
+                if len(sky_coord_gal) > 0:
+                    best_gal_id = np.where(in_range, np.where(best_distance < args.match_threshold,
+                                                              np.where(best_gal_distance <=
+                                                                       best_star_distance, best_gal_id, -99),
+                                                              -99), -99)
+                    symmetric_gal_match = best_obj_id_from_gal[best_gal_id] == np.arange(len(best_gal_id))
+
+                    # Mask out with -99 if we don't have a symmetric match
+                    best_gal_id = np.where(symmetric_gal_match, best_gal_id, -99)
+                else:
+                    best_gal_id = np.zeros(len(in_range), dtype=int)
 
                 # Add columns to the shear estimates table so we can match to it
                 if star_index_colname in shear_table.colnames:
-                    shear_table[star_index_colname] = best_star_id
+                    if len(best_star_id) > 0:
+                        shear_table[star_index_colname] = best_star_id
                 else:
                     shear_table.add_column(Column(best_star_id, name=star_index_colname))
                 if gal_index_colname in shear_table.colnames:
-                    shear_table[gal_index_colname] = best_gal_id
+                    if len(best_gal_id) > 0:
+                        shear_table[gal_index_colname] = best_gal_id
                 else:
                     shear_table.add_column(Column(best_gal_id, name=gal_index_colname))
 
                 # Match to the star and galaxy tables
 
-                star_matched_table = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
-                logger.info("Matched " + str(len(star_matched_table)) + " objects to stars.")
+                if len(sky_coord_star) > 0:
+                    star_matched_table = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
+                    logger.info("Matched " + str(len(star_matched_table)) + " objects to stars.")
+                else:
+                    star_matched_table = shear_table[False * np.ones(len(shear_table), dtype=bool)]
 
-                gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
-                logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
+                if len(sky_coord_gal) > 0:
+                    gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
+                    logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
+                else:
+                    gal_matched_table = shear_table[False * np.ones(len(shear_table), dtype=bool)]
 
                 # Remove matched rows from the shear table
                 matched_rows = np.logical_or(best_star_id > 0, best_gal_id > 0)
@@ -420,6 +449,14 @@ def match_to_tu_from_args(args):
                 # Remove extra columns we no longer need
                 star_matched_table.remove_columns([star_index_colname, gal_index_colname])
                 gal_matched_table.remove_columns([star_index_colname, gal_index_colname])
+
+                # Add these tables to the dictionaries of tables
+                star_matched_tables[method].append(star_matched_table)
+                gal_matched_tables[method].append(gal_matched_table)
+
+                # Skip to next batch if we didn't match any galaxies
+                if len(gal_matched_table) == 0:
+                    continue
 
                 # Add extra useful columns to the galaxy-matched table for analysis
 
@@ -461,10 +498,6 @@ def match_to_tu_from_args(args):
                 gal_matched_table.add_column(Column(regularized_disk_angle,
                                                     name="Beta_Input_Disk_Unsheared_Shape"))
 
-                # Add these tables to the dictionaries of tables
-                star_matched_tables[method].append(star_matched_table)
-                gal_matched_tables[method].append(gal_matched_table)
-
     # Create output data product
     matched_catalog_product = products.she_measurements.create_dpd_she_measurements()
     for method in methods:
@@ -474,7 +507,11 @@ def match_to_tu_from_args(args):
             continue
 
         gal_matched_table = vstack(gal_matched_tables[method])
+        if len(gal_matched_table) == 0:
+            logger.warn(f"No measurements with method {method} were matched to galaxies.")
         star_matched_table = vstack(star_matched_tables[method])
+        if len(star_matched_table) == 0:
+            logger.warn(f"No measurements with method {method} were matched to stars.")
         unmatched_table = shear_tables[method]
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
