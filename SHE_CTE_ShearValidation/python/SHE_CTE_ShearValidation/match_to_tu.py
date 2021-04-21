@@ -350,7 +350,7 @@ def match_to_tu_from_args(args):
                 dec_se = shear_table[sem_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
-                if len(sky_coord_star > 0):
+                if len(sky_coord_star) > 0:
 
                     # Match to star table
                     best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
@@ -363,7 +363,7 @@ def match_to_tu_from_args(args):
                     best_star_id, best_star_distance = [], []
                     best_obj_id_from_star, _best_distance_from_star = [], []
 
-                if len(sky_coord_gal > 0):
+                if len(sky_coord_gal) > 0:
 
                     # Match to galaxy table
                     best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
