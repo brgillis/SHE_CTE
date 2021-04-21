@@ -400,6 +400,8 @@ def match_to_tu_from_args(args):
 
                     # Mask out with -99 if we don't have a symmetric match
                     best_star_id = np.where(symmetric_star_match, best_star_id, -99)
+                else:
+                    best_star_id = np.zeros(len(in_range), dtype=int)
 
                 if len(sky_coord_gal) > 0:
                     best_gal_id = np.where(in_range, np.where(best_distance < args.match_threshold,
@@ -410,6 +412,8 @@ def match_to_tu_from_args(args):
 
                     # Mask out with -99 if we don't have a symmetric match
                     best_gal_id = np.where(symmetric_gal_match, best_gal_id, -99)
+                else:
+                    best_gal_id = np.zeros(len(in_range), dtype=int)
 
                 # Add columns to the shear estimates table so we can match to it
                 if star_index_colname in shear_table.colnames:
@@ -428,14 +432,10 @@ def match_to_tu_from_args(args):
                 if len(sky_coord_star) > 0:
                     star_matched_table = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
                     logger.info("Matched " + str(len(star_matched_table)) + " objects to stars.")
-                else:
-                    best_star_id = False * np.ones(len(in_range), dtype=bool)
 
                 if len(sky_coord_gal) > 0:
                     gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
                     logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
-                else:
-                    best_gal_id = False * np.ones(len(in_range), dtype=bool)
 
                 # Remove matched rows from the shear table
                 matched_rows = np.logical_or(best_star_id > 0, best_gal_id > 0)
