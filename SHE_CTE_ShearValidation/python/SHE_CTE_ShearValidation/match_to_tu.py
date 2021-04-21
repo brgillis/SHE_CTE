@@ -390,14 +390,22 @@ def match_to_tu_from_args(args):
 
                 # Mask out with -99 if the distance is outside the threshold or it better matches to the
                 # other type of object
-                best_star_id = np.where(in_range, np.where(best_distance < args.match_threshold,
-                                                           np.where(best_star_distance <
-                                                                    best_gal_distance, best_star_id, -99),
-                                                           -99), -99)
-                best_gal_id = np.where(in_range, np.where(best_distance < args.match_threshold,
-                                                          np.where(best_gal_distance <=
-                                                                   best_star_distance, best_gal_id, -99),
-                                                          -99), -99)
+
+                if len(sky_coord_star) > 0:
+                    best_star_id = np.where(in_range, np.where(best_distance < args.match_threshold,
+                                                               np.where(best_star_distance <
+                                                                        best_gal_distance, best_star_id, -99),
+                                                               -99), -99)
+                else:
+                    best_star_id = []
+
+                if len(sky_coord_gal) > 0:
+                    best_gal_id = np.where(in_range, np.where(best_distance < args.match_threshold,
+                                                              np.where(best_gal_distance <=
+                                                                       best_star_distance, best_gal_id, -99),
+                                                              -99), -99)
+                else:
+                    best_gal_id = []
 
                 # Check for symmetric matches
                 symmetric_star_match = best_obj_id_from_star[best_star_id] == np.arange(len(best_star_id))
