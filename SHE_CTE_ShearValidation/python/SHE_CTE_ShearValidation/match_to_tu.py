@@ -350,13 +350,30 @@ def match_to_tu_from_args(args):
                 dec_se = shear_table[sem_tf.dec]
                 sky_coord_se = SkyCoord(ra=ra_se * units.degree, dec=dec_se * units.degree)
 
-                # Match to both star and galaxy tables, and determine which is best match
-                best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
-                best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
+                if len(sky_coord_star > 0):
 
-                # Perform the reverse match as well, and only use a symmetric best-match table
-                best_obj_id_from_star, _best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(sky_coord_se)
-                best_obj_id_from_gal, _best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
+                    # Match to star table
+                    best_star_id, best_star_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_star)
+
+                    # Perform the reverse match as well, and only use a symmetric best-match table
+                    best_obj_id_from_star, _best_distance_from_star, _ = sky_coord_star.match_to_catalog_sky(
+                        sky_coord_se)
+
+                else:
+                    best_star_id, best_star_distance = [], []
+                    best_obj_id_from_star, _best_distance_from_star = [], []
+
+                if len(sky_coord_gal > 0):
+
+                    # Match to galaxy table
+                    best_gal_id, best_gal_distance, _ = sky_coord_se.match_to_catalog_sky(sky_coord_gal)
+
+                    # Perform the reverse match as well, and only use a symmetric best-match table
+                    best_obj_id_from_gal, _best_distance_from_gal, _ = sky_coord_gal.match_to_catalog_sky(sky_coord_se)
+
+                else:
+                    best_gal_id, best_gal_distance = [], []
+                    best_obj_id_from_gal, _best_distance_from_gal = [], []
 
                 # Check that the overall best distance is less than the threshold
                 best_distance = np.where(best_gal_distance <= best_star_distance,
@@ -474,7 +491,11 @@ def match_to_tu_from_args(args):
             continue
 
         gal_matched_table = vstack(gal_matched_tables[method])
+        if len(gal_matched_table) == 0:
+            logger.warn(f"No measurements with method {method} were matched to galaxies.")
         star_matched_table = vstack(star_matched_tables[method])
+        if len(star_matched_table) == 0:
+            logger.warn(f"No measurements with method {method} were matched to stars.")
         unmatched_table = shear_tables[method]
 
         method_filename = file_io.get_allowed_filename("SHEAR-SIM-MATCHED-CAT",
