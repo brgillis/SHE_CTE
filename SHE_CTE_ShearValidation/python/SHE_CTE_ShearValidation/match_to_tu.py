@@ -432,10 +432,14 @@ def match_to_tu_from_args(args):
                 if len(sky_coord_star) > 0:
                     star_matched_table = join(shear_table, overlapping_star_catalog, keys=star_index_colname)
                     logger.info("Matched " + str(len(star_matched_table)) + " objects to stars.")
+                else:
+                    star_matched_table = shear_table[False * np.ones(len(shear_table), dtype=bool)]
 
                 if len(sky_coord_gal) > 0:
                     gal_matched_table = join(shear_table, overlapping_galaxy_catalog, keys=gal_index_colname)
                     logger.info("Matched " + str(len(gal_matched_table)) + " objects to galaxies.")
+                else:
+                    gal_matched_table = shear_table[False * np.ones(len(shear_table), dtype=bool)]
 
                 # Remove matched rows from the shear table
                 matched_rows = np.logical_or(best_star_id > 0, best_gal_id > 0)
