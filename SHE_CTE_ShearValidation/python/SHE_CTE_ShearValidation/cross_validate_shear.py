@@ -105,7 +105,7 @@ def cross_validate_shear(args, dry_run=False):
 
         filename = shear_estimates_prod.get_method_filename(method)
 
-        if not is_any_type_of_none(filename):
+        if filename not in (None, "None", "", "data/None", "data/"):
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
             if not is_in_format(shear_estimates_table, sm_tfs[method], strict=False):
                 logger.warning("Shear estimates table from " +
@@ -187,7 +187,7 @@ def cross_validate_shear(args, dry_run=False):
 
     for method in method_table_filenames:
         method_table_filename = method_table_filenames[method]
-        if is_any_type_of_none(method_table_filename):
+        if method_table_filename in (None, "None", "", "data/None", "data/"):
             validated_shear_estimates_prod.set_method_filename(method, None)
         else:
             validated_shear_estimates_prod.set_method_filename(method, method_table_filenames[method])
