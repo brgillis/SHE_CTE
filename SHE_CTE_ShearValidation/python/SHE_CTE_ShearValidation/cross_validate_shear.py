@@ -27,7 +27,6 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.utility import is_any_type_of_none
 from astropy.table import Table
 
 import SHE_CTE
