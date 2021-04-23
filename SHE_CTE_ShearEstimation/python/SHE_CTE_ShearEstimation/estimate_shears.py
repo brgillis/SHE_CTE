@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-03-10"
+__updated__ = "2021-04-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -400,7 +400,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     chains_prod.Data.ObservationId = observation_id
                     chains_prod.Data.ObservationDateTime = observation_time
                     chains_prod.Data.PointingIdList = pointing_id_list
-                    chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+                    if data_stack.object_id_list_product is not None:
+                        chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -474,7 +475,8 @@ def estimate_shears_from_args(args, dry_run=False):
                         chains_prod.Data.ObservationId = observation_id
                         chains_prod.Data.ObservationDateTime = observation_time
                         chains_prod.Data.PointingIdList = pointing_id_list
-                        chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+                        if data_stack.object_id_list_product is not None:
+                            chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -507,7 +509,8 @@ def estimate_shears_from_args(args, dry_run=False):
     shear_estimates_prod.Data.ObservationId = observation_id
     shear_estimates_prod.Data.ObservationDateTime = observation_time
     shear_estimates_prod.Data.PointingIdList = pointing_id_list
-    shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+    if data_stack.object_id_list_product is not None:
+        shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 
