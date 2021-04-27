@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-03-10"
+__updated__ = "2021-04-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -57,31 +57,25 @@ import numpy as np
 
 logger = getLogger(__name__)
 
-# from SHE_CTE_ShearEstimation.bfd_functions import bfd_measure_moments,
-# bfd_load_training_data # FIXME - uncomment when BFD is integrated
 loading_methods = {"KSB": load_control_training_data,
                    "REGAUSS": load_control_training_data,
                    "MomentsML": None,
-                   "LensMC": load_training_data,
-                   "BFD": None}
+                   "LensMC": load_training_data}
 
 estimation_methods = {"KSB": KSB_estimate_shear,
                       "REGAUSS": REGAUSS_estimate_shear,
                       "MomentsML": ML_estimate_shear,
-                      "LensMC": she_measure_shear,
-                      "BFD": None}
+                      "LensMC": she_measure_shear}
 
 initialisation_methods = {"KSB": initialise_ksb_measurements_table,
                           "REGAUSS": initialise_regauss_measurements_table,
                           "MomentsML": initialise_momentsml_measurements_table,
-                          "LensMC": initialise_lensmc_measurements_table,
-                          "BFD": initialise_bfd_moments_table}
+                          "LensMC": initialise_lensmc_measurements_table}
 
 table_formats = {"KSB": ksbm_tf,
                  "REGAUSS": regm_tf,
                  "MomentsML": mmlm_tf,
-                 "LensMC": lmcm_tf,
-                 "BFD": bfdm_tf}
+                 "LensMC": lmcm_tf}
 
 default_chains_method = "LensMC"
 
@@ -217,8 +211,7 @@ def estimate_shears_from_args(args, dry_run=False):
     training_data_filenames = {"KSB": args.ksb_training_data,
                                "REGAUSS": args.regauss_training_data,
                                "MomentsML": args.momentsml_training_data,
-                               "LensMC": args.lensmc_training_data,
-                               "BFD": args.bfd_training_data}
+                               "LensMC": args.lensmc_training_data}
 
     # Set up output
 
@@ -257,9 +250,7 @@ def estimate_shears_from_args(args, dry_run=False):
         estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
 
     shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
-        BFD_filename=get_allowed_filename("BFD-SHM", estimates_instance_id,
-                                          version=SHE_CTE.__version__,
-                                          subdir=subfolder_name),
+        BFD_filename=None,
         KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
                                           version=SHE_CTE.__version__,
                                           subdir=subfolder_name),
@@ -400,7 +391,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     chains_prod.Data.ObservationId = observation_id
                     chains_prod.Data.ObservationDateTime = observation_time
                     chains_prod.Data.PointingIdList = pointing_id_list
-                    chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+                    if data_stack.object_id_list_product is not None:
+                        chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -474,7 +466,8 @@ def estimate_shears_from_args(args, dry_run=False):
                         chains_prod.Data.ObservationId = observation_id
                         chains_prod.Data.ObservationDateTime = observation_time
                         chains_prod.Data.PointingIdList = pointing_id_list
-                        chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+                        if data_stack.object_id_list_product is not None:
+                            chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
                     write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
 
@@ -507,7 +500,8 @@ def estimate_shears_from_args(args, dry_run=False):
     shear_estimates_prod.Data.ObservationId = observation_id
     shear_estimates_prod.Data.ObservationDateTime = observation_time
     shear_estimates_prod.Data.PointingIdList = pointing_id_list
-    shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
+    if data_stack.object_id_list_product is not None:
+        shear_estimates_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
     write_xml_product(shear_estimates_prod, args.shear_estimates_product, workdir=args.workdir)
 
