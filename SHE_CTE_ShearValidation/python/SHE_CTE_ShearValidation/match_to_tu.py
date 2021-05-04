@@ -122,9 +122,11 @@ def match_to_tu_from_args(args):
 
     # Get the lists of star and galaxy filenames
 
+    search_path = args.workdir + ":" + args.sim_path
+
     if args.tu_star_catalog_list is not None:
         qualified_tu_star_catalog_list = file_io.find_file(args.tu_star_catalog_list,
-                                                           path=args.workdir + ":" + args.sim_path)
+                                                           path=search_path)
         tu_star_catalog_product_filenames = read_listfile(qualified_tu_star_catalog_list)
     elif args.tu_star_catalog is not None:
         tu_star_catalog_product_filenames = [args.tu_star_catalog]
@@ -133,7 +135,7 @@ def match_to_tu_from_args(args):
 
     if args.tu_galaxy_catalog_list is not None:
         qualified_tu_galaxy_catalog_list = file_io.find_file(args.tu_galaxy_catalog_list,
-                                                             path=args.workdir + ":" + args.sim_path)
+                                                             path=search_path)
         tu_galaxy_catalog_product_filenames = read_listfile(qualified_tu_galaxy_catalog_list)
     elif args.tu_galaxy_catalog is not None:
         tu_galaxy_catalog_product_filenames = [args.tu_galaxy_catalog]
@@ -146,7 +148,7 @@ def match_to_tu_from_args(args):
     star_catalog_filenames = []
     for tu_star_catalog_product_filename in tu_star_catalog_product_filenames:
         qualified_star_catalog_product_filename = file_io.find_file(tu_star_catalog_product_filename,
-                                                                    path=args.workdir + ":" + args.sim_path)
+                                                                    path=search_path)
         logger.info("Reading in True Universe star catalog product from " + qualified_star_catalog_product_filename)
         star_catalog_product = file_io.read_xml_product(qualified_star_catalog_product_filename)
         star_catalog_filenames.append(star_catalog_product.get_data_filename())
@@ -154,7 +156,7 @@ def match_to_tu_from_args(args):
     galaxy_catalog_filenames = []
     for tu_galaxy_catalog_product_filename in tu_galaxy_catalog_product_filenames:
         qualified_galaxy_catalog_product_filename = file_io.find_file(tu_galaxy_catalog_product_filename,
-                                                                      path=args.workdir + ":" + args.sim_path)
+                                                                      path=search_path)
         logger.info("Reading in True Universe galaxy catalog product from " + qualified_galaxy_catalog_product_filename)
         galaxy_catalog_product = file_io.read_xml_product(qualified_galaxy_catalog_product_filename)
         galaxy_catalog_filenames.append(galaxy_catalog_product.get_data_filename())
@@ -264,14 +266,14 @@ def match_to_tu_from_args(args):
             overlapping_star_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
                                                                     ra_range=local_ra_range,
                                                                     dec_range=local_dec_range,
-                                                                    path=args.workdir + ":" + args.sim_path)
+                                                                    path=search_path)
 
             logger.info("Found " + str(len(overlapping_star_catalog)) + " stars in overlapping region.")
 
             overlapping_galaxy_catalog = select_true_universe_sources(catalog_filenames=galaxy_catalog_filenames,
                                                                       ra_range=local_ra_range,
                                                                       dec_range=local_dec_range,
-                                                                      path=args.workdir + ":" + args.sim_path)
+                                                                      path=search_path)
 
             logger.info("Found " + str(len(overlapping_galaxy_catalog)) + " galaxies in overlapping region.")
 
