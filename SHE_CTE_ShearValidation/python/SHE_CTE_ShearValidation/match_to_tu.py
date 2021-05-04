@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2021-04-21"
+__updated__ = "2021-05-04"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -316,13 +316,13 @@ def match_to_tu_from_args(args):
 
             ra_star = overlapping_star_catalog["RA"]
             dec_star = overlapping_star_catalog["DEC"]
-            sky_coord_star = SkyCoord(ra=ra_star * units.degree, dec=dec_star * units.degree)
+            sky_coord_star = SkyCoord(ra=ra_star, dec=dec_star)
 
             overlapping_star_catalog.add_column(Column(np.arange(len(ra_star)), name=star_index_colname))
 
             ra_gal = overlapping_galaxy_catalog["RA_MAG"]
             dec_gal = overlapping_galaxy_catalog["DEC_MAG"]
-            sky_coord_gal = SkyCoord(ra=ra_gal * units.degree, dec=dec_gal * units.degree)
+            sky_coord_gal = SkyCoord(ra=ra_gal, dec=dec_gal)
 
             overlapping_galaxy_catalog.add_column(Column(np.arange(len(ra_gal)), name=gal_index_colname))
 
