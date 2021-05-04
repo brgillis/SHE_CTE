@@ -264,14 +264,14 @@ def match_to_tu_from_args(args):
             overlapping_star_catalog = select_true_universe_sources(catalog_filenames=star_catalog_filenames,
                                                                     ra_range=local_ra_range,
                                                                     dec_range=local_dec_range,
-                                                                    path=args.sim_path)
+                                                                    path=args.workdir + ":" + args.sim_path)
 
             logger.info("Found " + str(len(overlapping_star_catalog)) + " stars in overlapping region.")
 
             overlapping_galaxy_catalog = select_true_universe_sources(catalog_filenames=galaxy_catalog_filenames,
                                                                       ra_range=local_ra_range,
                                                                       dec_range=local_dec_range,
-                                                                      path=args.sim_path)
+                                                                      path=args.workdir + ":" + args.sim_path)
 
             logger.info("Found " + str(len(overlapping_galaxy_catalog)) + " galaxies in overlapping region.")
 
