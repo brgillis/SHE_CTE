@@ -5,7 +5,7 @@
     Code to implement matching of shear estimates catalogs to SIM's TU galaxy and star catalogs.
 """
 
-__updated__ = "2021-04-21"
+__updated__ = "2021-05-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -473,8 +473,8 @@ def match_to_tu_from_args(args):
 
                 # Details about the input shear
 
-                g1_in = gal_matched_table[galcat_g1_colname] / gal_matched_table[galcat_kappa_colname]
-                g2_in = gal_matched_table[galcat_g2_colname] / gal_matched_table[galcat_kappa_colname]
+                g1_in = gal_matched_table[galcat_g1_colname] / (1 - gal_matched_table[galcat_kappa_colname])
+                g2_in = gal_matched_table[galcat_g2_colname] / (1 - gal_matched_table[galcat_kappa_colname])
 
                 gal_matched_table.add_column(
                     Column(np.arctan2(g2_in, g1_in) * 90 / np.pi, name="Beta_Input_Shear"))
