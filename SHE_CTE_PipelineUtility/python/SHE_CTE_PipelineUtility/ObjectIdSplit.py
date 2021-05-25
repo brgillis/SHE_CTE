@@ -177,12 +177,16 @@ def object_id_split_from_args(args):
 
     else:
 
+        # Get the number of IDs desired - 0 indicates all available
+        num_ids_desired = max_batches * batch_size
+
         all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
 
         logger.info("Finished reading in IDs from mer_final_catalog.")
 
         # Prune IDs that aren't in the images
         good_ids = []
+        num_good_ids = 0
 
         for gal_id in all_ids:
 
@@ -193,6 +197,9 @@ def object_id_split_from_args(args):
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
                 good_ids.append(gal_id)
+                num_good_ids += 1
+                if num_ids_desired > 0 and num_good_ids >= num_ids_desired:
+                    break
 
         all_ids_array = np.array(good_ids)
 
