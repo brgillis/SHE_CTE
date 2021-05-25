@@ -218,7 +218,7 @@ def object_id_split_from_args(args):
     else:
         limited_num_batches = num_batches
 
-    logger.info(f"Splitting IDs into {limited_num_batches)} batches of size {str(batch_size}.")
+    logger.info(f"Splitting IDs into {limited_num_batches} batches of size {batch_size}.")
 
     id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
                                    num_batches - 1, endpoint=True, dtype=int)
@@ -251,7 +251,7 @@ def object_id_split_from_args(args):
             try:
                 os.mkdir(qualified_subfolder_name)
             except Exception as e:
-                logger.error(f"Directory ({qualified_subfolder_name}) does not exist and cannot be created.")
+                logger.error(f"Directory {qualified_subfolder_name} does not exist and cannot be created.")
                 raise e
 
         logger.debug(f"Writing ID list #{i} to product.")
