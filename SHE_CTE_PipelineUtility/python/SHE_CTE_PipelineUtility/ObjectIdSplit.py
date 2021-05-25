@@ -335,7 +335,8 @@ def object_id_split_from_args(args):
         # Create the product and copy metadata from the first catalogue
         batch_mer_catalog_product = mer_final_catalog.create_dpd_mer_final_catalog()
 
-        for attr in dir(first_mer_final_catalog_product.Data):
+        for attr in ['CatalogDescription', 'CutoutsCatalogStorage', 'DataStorage', 'ObservationIdList', 'ProcessingMode',
+                     'ProcessingSteps', 'QualityParams', 'SpatialCoverage', 'SpectralCoverage', 'TileIndex']:
             setattr(batch_mer_catalog_product.Data, attr, getattr(first_mer_final_catalog_product.Data, attr))
 
         # Overwrite the data filename with the new catalog
