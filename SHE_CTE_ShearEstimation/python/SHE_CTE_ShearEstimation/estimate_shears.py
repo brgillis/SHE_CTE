@@ -91,7 +91,7 @@ def fill_measurements_table_meta(t,
     """
 
     if tile_id_list is None:
-        # Get a list of the tile IDs from the met catalogs
+        # Get a list of the tile IDs from the MER catalogs
         tile_id_list = np.empty_like(mer_final_catalog_products, dtype=int)
         for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
             tile_id_list[i] = mer_final_catalog_product.Data.TileIndex
