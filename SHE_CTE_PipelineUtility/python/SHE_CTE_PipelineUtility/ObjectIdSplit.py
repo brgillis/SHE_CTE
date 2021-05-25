@@ -30,9 +30,9 @@ from SHE_PPT.file_io import (write_listfile,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
-from SHE_PPT.products import she_object_id_list
+from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
@@ -149,6 +149,8 @@ def object_id_split_from_args(args):
                                     memmap=True,
                                     mode='denywrite')
 
+    first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
+
     # Get the tile list, pointing list, and observation id from the input data products
 
     tile_list = []
@@ -228,18 +230,17 @@ def object_id_split_from_args(args):
     assert len(id_arrays[0]) == batch_size or num_batches == 1
     assert len(id_arrays[-1]) <= batch_size
 
-    # Start outputting the ID lists for each batch
+    # Start outputting the ID lists for each batch and creating trimmed catalogs
 
     # Keep a list of all product filenames
     id_list_product_filename_list = []
+    batch_mer_catalog_product_filename_list = []
 
-    logger.info("Writing ID lists into products.")
+    logger.info("Writing ID lists and batch catalogs into products.")
 
     for i in range(limited_num_batches):
 
-        logger.debug("Writing ID list #" + str(i) + " to product.")
-
-        # For the filename, we want to set it up in a subfolder so we don't get too many files
+        # For the filenames, we want to set it up in a subfolder so we don't get too many files
         subfolder_number = i % 256
         subfolder_name = "data/s" + str(subfolder_number)
 
@@ -252,6 +253,8 @@ def object_id_split_from_args(args):
             except Exception as e:
                 logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
                 raise e
+
+        logger.debug("Writing ID list #" + str(i) + " to product.")
 
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
@@ -290,7 +293,58 @@ def object_id_split_from_args(args):
         # Save the product
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
-        logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
+        logger.debug(f"Successfully wrote ID list #{i} to product: {batch_id_list_product_filename}")
+
+        # Create and write out the batch catalog
+
+        # Get a filename for the batch catalog
+        batch_mer_catalog_filename = get_allowed_filename(type_name="BATCH-MER-CAT",
+                                                          instance_id=str(i),
+                                                          extension=".fits",
+                                                          version=SHE_CTE.__version__,
+                                                          subdir=subfolder_name,
+                                                          processing_function="SHE")
+
+        # Init the catalog and copy over metadata
+        batch_mer_catalog = initialise_mer_final_catalog(optional_columns=data_stack.detections_catalogue.colnames)
+        for key in data_stack.detections_catalogue.meta:
+            batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
+
+        # Add a row to the catalog for each ID, taking the row from the combined catalogue
+        for object_id in id_arrays[i]:
+            object_row = data_stack.detections_catalogue.loc[object_id]
+            batch_mer_catalog.add_row(object_row)
+
+        # Write out the catalog
+        batch_mer_catalog.write(os.path.join(args.workdir, batch_mer_catalog_filename))
+
+        logger.debug(f"Successfully wrote batch MER catalog #{i} to: {batch_mer_catalog_filename}")
+
+        # Create and write out the batch MER product
+        logger.debug(f"Writing batch MER catalog product #{i}.")
+
+        # Get a filename for this product and store it in the list
+        batch_mer_catalog_product_filename = get_allowed_filename(type_name="P-BATCH-MER-CAT",
+                                                                  instance_id=str(i),
+                                                                  extension=".xml",
+                                                                  version=SHE_CTE.__version__,
+                                                                  subdir=subfolder_name,
+                                                                  processing_function="SHE")
+        batch_mer_catalog_product_filename_list.append(batch_mer_catalog_product_filename)
+
+        # Create the product and copy metadata from the first catalogue
+        batch_mer_catalog_product = mer_final_catalog.create_dpd_mer_final_catalog()
+
+        for attr in dir(first_mer_final_catalog_product.Data):
+            setattr(batch_mer_catalog_product.Data, attr, getattr(first_mer_final_catalog_product.Data, attr))
+
+        # Overwrite the data filename with the new catalog
+        batch_mer_catalog_product.set_data_filename(batch_mer_catalog_filename)
+
+        # Save the product
+        write_xml_product(batch_mer_catalog_product, batch_mer_catalog_product_filename, workdir=args.workdir)
+
+        logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
 
     # Output the listfile
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
