@@ -188,14 +188,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                     mode='denywrite')
 
     # Read in the catalog and exposure data products, which we'll need for updating metadata
-    mer_final_catalog_products = []
-    for mer_final_catalog_filename in read_listfile(os.path.join(args.workdir, args.detections_tables)):
-        mer_final_catalog_products.append(read_xml_product(os.path.join(args.workdir, mer_final_catalog_filename)))
-
-    vis_calibrated_frame_products = []
-    for vis_calibrated_frame_filename in read_listfile(os.path.join(args.workdir, args.data_images)):
-        vis_calibrated_frame_products.append(read_xml_product(
-            os.path.join(args.workdir, vis_calibrated_frame_filename)))
+    mer_final_catalog_products = data_stack.detections_catalogue_products
+    vis_calibrated_frame_products = data_stack.exposure_products
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
