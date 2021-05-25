@@ -347,9 +347,12 @@ def object_id_split_from_args(args):
 
         logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
 
-    # Output the listfile
+    # Output the listfiles
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
     logger.info(f"Finished writing listfile of object ID list products to {args.object_ids}")
+
+    write_listfile(os.path.join(args.workdir, args.batch_mer_catalogs), batch_mer_catalog_product_filename_list)
+    logger.info(f"Finished writing listfile of batch MER catalog products to {args.batch_mer_catalogs}")
 
     logger.debug('# Exiting object_id_split_from_args normally')
 
