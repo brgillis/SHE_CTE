@@ -364,7 +364,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          return_chains=return_chains,
                                                          mode=fast_mode)
 
-                if return_chains:
+                if return_chains or method == "LensMC":
                     shear_estimates_table, chains_table = shear_estimates_results
                 else:
                     shear_estimates_table = shear_estimates_results
