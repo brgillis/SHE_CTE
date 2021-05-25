@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2021-03-16"
+__updated__ = "2021-05-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -69,7 +69,10 @@ def defineSpecificProgramOptions():
                         help="Pipeline-wide configuration file.")
 
     # Output arguments
-    parser.add_argument('--object_ids', type=str)
+    parser.add_argument('--object_ids', type=str, default="object_ids.json",
+                        help='Desired filename for output .json listfile of object ID list products.')
+    parser.add_argument('--batch_mer_catalogs', type=str, default="batch_mer_catalogs.json",
+                        help='Desired filename for output .json listfile of MER catalogues for each batch of objects.')
 
     # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
