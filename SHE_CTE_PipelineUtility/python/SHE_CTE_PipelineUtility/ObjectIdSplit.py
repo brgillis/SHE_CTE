@@ -94,7 +94,7 @@ def object_id_split_from_args(args):
 
     # Read in the pipeline configuration if present
     if args.pipeline_config is None or args.pipeline_config == "None":
-        logger.warning("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
+        logger.warning(f"No pipeline configuration found. Using default batch size of {default_batch_size}")
         batch_size = default_batch_size
         max_batches = default_max_batches
         ids_to_use = None
@@ -103,30 +103,30 @@ def object_id_split_from_args(args):
 
         # Check for the batch size key
         if AnalysisConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default batch size of " + str(default_batch_size))
+            logger.info(f"Key {AnalysisConfigKeys.OID_BATCH_SIZE.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default batch size of {default_batch_size}")
             batch_size = default_batch_size
         else:
             batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
             if batch_size < 0:
-                raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
-            logger.info("Using batch size of: " + str(batch_size))
+                raise ValueError(f"Invalid batch size: {batch_size}. Must be >= 0.")
+            logger.info(f"Using batch size of: {batch_size}")
 
         # Check for the max_batches key
         if AnalysisConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_MAX_BATCHES.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default max batches of " + str(default_max_batches))
+            logger.info(f"Key {AnalysisConfigKeys.OID_MAX_BATCHES.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default max batches of {default_max_batches}")
             max_batches = default_max_batches
         else:
             max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
             if max_batches < 0:
-                raise ValueError("Invalid max batches: " + str(max_batches) + ". Must be >= 0.")
-            logger.info("Using max batches of: " + str(max_batches))
+                raise ValueError(f"Invalid max batches: {max_batches}. Must be >= 0.")
+            logger.info(f"Using max batches of: {max_batches}")
 
         # Check for the IDs key
         if AnalysisConfigKeys.OID_IDS.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_IDS.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default of using all IDs")
+            logger.info(f"Key {AnalysisConfigKeys.OID_IDS.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default of using all IDs")
             ids_to_use = None
         else:
             ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
@@ -136,7 +136,7 @@ def object_id_split_from_args(args):
                 logger.info("Using all IDs")
             else:
                 ids_to_use = list(map(int, ids_to_use_str))
-                logger.info("Using limited selection of IDs:" + str(ids_to_use))
+                logger.info(f"Using limited selection of IDs: {ids_to_use}")
 
     # Read in the data images
 
@@ -218,7 +218,7 @@ def object_id_split_from_args(args):
     else:
         limited_num_batches = num_batches
 
-    logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
+    logger.info(f"Splitting IDs into {limited_num_batches)} batches of size {str(batch_size}.")
 
     id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
                                    num_batches - 1, endpoint=True, dtype=int)
@@ -242,7 +242,7 @@ def object_id_split_from_args(args):
 
         # For the filenames, we want to set it up in a subfolder so we don't get too many files
         subfolder_number = i % 256
-        subfolder_name = "data/s" + str(subfolder_number)
+        subfolder_name = f"data/s{subfolder_number}"
 
         qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
 
@@ -251,10 +251,10 @@ def object_id_split_from_args(args):
             try:
                 os.mkdir(qualified_subfolder_name)
             except Exception as e:
-                logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+                logger.error(f"Directory ({qualified_subfolder_name}) does not exist and cannot be created.")
                 raise e
 
-        logger.debug("Writing ID list #" + str(i) + " to product.")
+        logger.debug(f"Writing ID list #{i} to product.")
 
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
@@ -348,7 +348,7 @@ def object_id_split_from_args(args):
 
     # Output the listfile
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
-    logger.info("Finished writing listfile of object ID list products to " + args.object_ids)
+    logger.info(f"Finished writing listfile of object ID list products to {args.object_ids}")
 
     logger.debug('# Exiting object_id_split_from_args normally')
 
@@ -369,7 +369,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ObjectIdSplit mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ObjectIdSplit",
+    exec_cmd = get_arguments_string(args, cmd=f"E-Run SHE_CTE {SHE_CTE.__version__} SHE_CTE_ObjectIdSplit",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -385,7 +385,7 @@ def mainMethod(args):
         else:
             object_id_split_from_args(args)
     except Exception as e:
-        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning(f"Failsafe exception block triggered with exception: {e}")
         raise
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')
