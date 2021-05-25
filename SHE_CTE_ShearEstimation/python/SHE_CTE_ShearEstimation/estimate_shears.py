@@ -27,7 +27,7 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file, read_xml_product)
+                             read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys,
                                       read_config, get_conditional_product)
@@ -76,6 +76,7 @@ table_formats = {"KSB": ksbm_tf,
                  "LensMC": lmcm_tf}
 
 default_chains_method = "LensMC"
+default_fast_mode = "normal"
 
 
 def fill_measurements_table_meta(t,
@@ -298,6 +299,16 @@ def estimate_shears_from_args(args, dry_run=False):
             raise ValueError("chains_method (\"" + str(chains_method) + "\") not in methods to run (" +
                              str(methods) + ").")
 
+        # Determine whether or not to use fast mode
+        if AnalysisConfigKeys.ES_FAST_MODE.value in pipeline_config:
+            fast_mode_bool = bool(pipeline_config[AnalysisConfigKeys.ES_FAST_MODE.value])
+            if fast_mode_bool:
+                fast_mode = "fast"
+            else:
+                fast_mode = "normal"
+        else:
+            fast_mode = default_fast_mode
+
         for method in methods:
 
             logger.info("Estimating shear with method " + method + "...")
@@ -350,7 +361,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          calibration_data=calibration_data,
                                                          workdir=args.workdir,
                                                          debug=args.debug,
-                                                         return_chains=return_chains)
+                                                         return_chains=return_chains,
+                                                         mode=fast_mode)
 
                 if return_chains:
                     shear_estimates_table, chains_table = shear_estimates_results
