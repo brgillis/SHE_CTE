@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-04-27"
+__updated__ = "2021-05-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,7 +20,6 @@ __updated__ = "2021-04-27"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import copy
 import os
 
 from SHE_PPT import flags
@@ -28,13 +27,12 @@ from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file, read_xml_product)
+                             read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys,
                                       read_config, get_conditional_product)
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
@@ -78,6 +76,7 @@ table_formats = {"KSB": ksbm_tf,
                  "LensMC": lmcm_tf}
 
 default_chains_method = "LensMC"
+default_fast_mode = "normal"
 
 
 def fill_measurements_table_meta(t,
@@ -93,7 +92,7 @@ def fill_measurements_table_meta(t,
     """
 
     if tile_id_list is None:
-        # Get a list of the tile IDs from the met catalogs
+        # Get a list of the tile IDs from the MER catalogs
         tile_id_list = np.empty_like(mer_final_catalog_products, dtype=int)
         for i, mer_final_catalog_product in enumerate(mer_final_catalog_products):
             tile_id_list[i] = mer_final_catalog_product.Data.TileIndex
@@ -190,14 +189,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                     mode='denywrite')
 
     # Read in the catalog and exposure data products, which we'll need for updating metadata
-    mer_final_catalog_products = []
-    for mer_final_catalog_filename in read_listfile(os.path.join(args.workdir, args.detections_tables)):
-        mer_final_catalog_products.append(read_xml_product(os.path.join(args.workdir, mer_final_catalog_filename)))
-
-    vis_calibrated_frame_products = []
-    for vis_calibrated_frame_filename in read_listfile(os.path.join(args.workdir, args.data_images)):
-        vis_calibrated_frame_products.append(read_xml_product(
-            os.path.join(args.workdir, vis_calibrated_frame_filename)))
+    mer_final_catalog_products = data_stack.detections_catalogue_products
+    vis_calibrated_frame_products = data_stack.exposure_products
 
     # Calibration parameters product
     calibration_parameters_prod = get_conditional_product(args.calibration_parameters_product)
@@ -306,6 +299,16 @@ def estimate_shears_from_args(args, dry_run=False):
             raise ValueError("chains_method (\"" + str(chains_method) + "\") not in methods to run (" +
                              str(methods) + ").")
 
+        # Determine whether or not to use fast mode
+        if AnalysisConfigKeys.ES_FAST_MODE.value in pipeline_config:
+            fast_mode_bool = bool(pipeline_config[AnalysisConfigKeys.ES_FAST_MODE.value])
+            if fast_mode_bool:
+                fast_mode = "fast"
+            else:
+                fast_mode = "normal"
+        else:
+            fast_mode = default_fast_mode
+
         for method in methods:
 
             logger.info("Estimating shear with method " + method + "...")
@@ -358,9 +361,10 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          calibration_data=calibration_data,
                                                          workdir=args.workdir,
                                                          debug=args.debug,
-                                                         return_chains=return_chains)
+                                                         return_chains=return_chains,
+                                                         mode=fast_mode)
 
-                if return_chains:
+                if return_chains or method == "LensMC":
                     shear_estimates_table, chains_table = shear_estimates_results
                 else:
                     shear_estimates_table = shear_estimates_results

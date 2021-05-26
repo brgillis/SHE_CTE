@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2021-03-16"
+__updated__ = "2021-05-25"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -30,9 +30,9 @@ from SHE_PPT.file_io import (write_listfile,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
-from SHE_PPT.products import she_object_id_list
+from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
+from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
@@ -69,7 +69,10 @@ def defineSpecificProgramOptions():
                         help="Pipeline-wide configuration file.")
 
     # Output arguments
-    parser.add_argument('--object_ids', type=str)
+    parser.add_argument('--object_ids', type=str, default="object_ids.json",
+                        help='Desired filename for output .json listfile of object ID list products.')
+    parser.add_argument('--batch_mer_catalogs', type=str, default="batch_mer_catalogs.json",
+                        help='Desired filename for output .json listfile of MER catalogues for each batch of objects.')
 
     # Required pipeline arguments
     parser.add_argument('--workdir', type=str,)
@@ -91,7 +94,7 @@ def object_id_split_from_args(args):
 
     # Read in the pipeline configuration if present
     if args.pipeline_config is None or args.pipeline_config == "None":
-        logger.warning("No pipeline configuration found. Using default batch size of " + str(default_batch_size))
+        logger.warning(f"No pipeline configuration found. Using default batch size of {default_batch_size}")
         batch_size = default_batch_size
         max_batches = default_max_batches
         ids_to_use = None
@@ -100,30 +103,30 @@ def object_id_split_from_args(args):
 
         # Check for the batch size key
         if AnalysisConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_BATCH_SIZE.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default batch size of " + str(default_batch_size))
+            logger.info(f"Key {AnalysisConfigKeys.OID_BATCH_SIZE.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default batch size of {default_batch_size}")
             batch_size = default_batch_size
         else:
             batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
             if batch_size < 0:
-                raise ValueError("Invalid batch size: " + str(batch_size) + ". Must be >= 0.")
-            logger.info("Using batch size of: " + str(batch_size))
+                raise ValueError(f"Invalid batch size: {batch_size}. Must be >= 0.")
+            logger.info(f"Using batch size of: {batch_size}")
 
         # Check for the max_batches key
         if AnalysisConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_MAX_BATCHES.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default max batches of " + str(default_max_batches))
+            logger.info(f"Key {AnalysisConfigKeys.OID_MAX_BATCHES.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default max batches of {default_max_batches}")
             max_batches = default_max_batches
         else:
             max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
             if max_batches < 0:
-                raise ValueError("Invalid max batches: " + str(max_batches) + ". Must be >= 0.")
-            logger.info("Using max batches of: " + str(max_batches))
+                raise ValueError(f"Invalid max batches: {max_batches}. Must be >= 0.")
+            logger.info(f"Using max batches of: {max_batches}")
 
         # Check for the IDs key
         if AnalysisConfigKeys.OID_IDS.value not in pipeline_config:
-            logger.info("Key " + AnalysisConfigKeys.OID_IDS.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                        "Using default of using all IDs")
+            logger.info(f"Key {AnalysisConfigKeys.OID_IDS.value} not found in pipeline config {args.pipeline_config}. " +
+                        f"Using default of using all IDs")
             ids_to_use = None
         else:
             ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
@@ -133,7 +136,7 @@ def object_id_split_from_args(args):
                 logger.info("Using all IDs")
             else:
                 ids_to_use = list(map(int, ids_to_use_str))
-                logger.info("Using limited selection of IDs:" + str(ids_to_use))
+                logger.info(f"Using limited selection of IDs: {ids_to_use}")
 
     # Read in the data images
 
@@ -145,6 +148,8 @@ def object_id_split_from_args(args):
                                     save_products=True,
                                     memmap=True,
                                     mode='denywrite')
+
+    first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
     # Get the tile list, pointing list, and observation id from the input data products
 
@@ -174,12 +179,16 @@ def object_id_split_from_args(args):
 
     else:
 
+        # Get the number of IDs desired - 0 indicates all available
+        num_ids_desired = max_batches * batch_size
+
         all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
 
         logger.info("Finished reading in IDs from mer_final_catalog.")
 
         # Prune IDs that aren't in the images
         good_ids = []
+        num_good_ids = 0
 
         for gal_id in all_ids:
 
@@ -190,6 +199,9 @@ def object_id_split_from_args(args):
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
                 good_ids.append(gal_id)
+                num_good_ids += 1
+                if num_ids_desired > 0 and num_good_ids >= num_ids_desired:
+                    break
 
         all_ids_array = np.array(good_ids)
 
@@ -206,7 +218,7 @@ def object_id_split_from_args(args):
     else:
         limited_num_batches = num_batches
 
-    logger.info("Splitting IDs into " + str(limited_num_batches) + " batches of size " + str(batch_size) + ".")
+    logger.info(f"Splitting IDs into {limited_num_batches} batches of size {batch_size}.")
 
     id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
                                    num_batches - 1, endpoint=True, dtype=int)
@@ -218,20 +230,19 @@ def object_id_split_from_args(args):
     assert len(id_arrays[0]) == batch_size or num_batches == 1
     assert len(id_arrays[-1]) <= batch_size
 
-    # Start outputting the ID lists for each batch
+    # Start outputting the ID lists for each batch and creating trimmed catalogs
 
     # Keep a list of all product filenames
     id_list_product_filename_list = []
+    batch_mer_catalog_product_filename_list = []
 
-    logger.info("Writing ID lists into products.")
+    logger.info("Writing ID lists and batch catalogs into products.")
 
     for i in range(limited_num_batches):
 
-        logger.debug("Writing ID list #" + str(i) + " to product.")
-
-        # For the filename, we want to set it up in a subfolder so we don't get too many files
+        # For the filenames, we want to set it up in a subfolder so we don't get too many files
         subfolder_number = i % 256
-        subfolder_name = "data/s" + str(subfolder_number)
+        subfolder_name = f"data/s{subfolder_number}"
 
         qualified_subfolder_name = os.path.join(args.workdir, subfolder_name)
 
@@ -240,8 +251,10 @@ def object_id_split_from_args(args):
             try:
                 os.mkdir(qualified_subfolder_name)
             except Exception as e:
-                logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
+                logger.error(f"Directory {qualified_subfolder_name} does not exist and cannot be created.")
                 raise e
+
+        logger.debug(f"Writing ID list #{i} to product.")
 
         # Get a filename for this batch and store it in the list
         batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
@@ -280,11 +293,66 @@ def object_id_split_from_args(args):
         # Save the product
         write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=args.workdir)
 
-        logger.debug("Successfully wrote ID list #" + str(i) + " to product: " + batch_id_list_product_filename)
+        logger.debug(f"Successfully wrote ID list #{i} to product: {batch_id_list_product_filename}")
 
-    # Output the listfile
+        # Create and write out the batch catalog
+
+        # Get a filename for the batch catalog
+        batch_mer_catalog_filename = get_allowed_filename(type_name="BATCH-MER-CAT",
+                                                          instance_id=str(i),
+                                                          extension=".fits",
+                                                          version=SHE_CTE.__version__,
+                                                          subdir=subfolder_name,
+                                                          processing_function="SHE")
+
+        # Init the catalog and copy over metadata
+        batch_mer_catalog = initialise_mer_final_catalog(optional_columns=data_stack.detections_catalogue.colnames)
+        for key in data_stack.detections_catalogue.meta:
+            batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
+
+        # Add a row to the catalog for each ID, taking the row from the combined catalogue
+        for object_id in id_arrays[i]:
+            object_row = data_stack.detections_catalogue.loc[object_id]
+            batch_mer_catalog.add_row(object_row)
+
+        # Write out the catalog
+        batch_mer_catalog.write(os.path.join(args.workdir, batch_mer_catalog_filename))
+
+        logger.debug(f"Successfully wrote batch MER catalog #{i} to: {batch_mer_catalog_filename}")
+
+        # Create and write out the batch MER product
+        logger.debug(f"Writing batch MER catalog product #{i}.")
+
+        # Get a filename for this product and store it in the list
+        batch_mer_catalog_product_filename = get_allowed_filename(type_name="P-BATCH-MER-CAT",
+                                                                  instance_id=str(i),
+                                                                  extension=".xml",
+                                                                  version=SHE_CTE.__version__,
+                                                                  subdir=subfolder_name,
+                                                                  processing_function="SHE")
+        batch_mer_catalog_product_filename_list.append(batch_mer_catalog_product_filename)
+
+        # Create the product and copy metadata from the first catalogue
+        batch_mer_catalog_product = mer_final_catalog.create_dpd_mer_final_catalog()
+
+        for attr in ['CatalogDescription', 'CutoutsCatalogStorage', 'DataStorage', 'ObservationIdList', 'ProcessingMode',
+                     'ProcessingSteps', 'QualityParams', 'SpatialCoverage', 'SpectralCoverage', 'TileIndex']:
+            setattr(batch_mer_catalog_product.Data, attr, getattr(first_mer_final_catalog_product.Data, attr))
+
+        # Overwrite the data filename with the new catalog
+        batch_mer_catalog_product.set_data_filename(batch_mer_catalog_filename)
+
+        # Save the product
+        write_xml_product(batch_mer_catalog_product, batch_mer_catalog_product_filename, workdir=args.workdir)
+
+        logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
+
+    # Output the listfiles
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
-    logger.info("Finished writing listfile of object ID list products to " + args.object_ids)
+    logger.info(f"Finished writing listfile of object ID list products to {args.object_ids}")
+
+    write_listfile(os.path.join(args.workdir, args.batch_mer_catalogs), batch_mer_catalog_product_filename_list)
+    logger.info(f"Finished writing listfile of batch MER catalog products to {args.batch_mer_catalogs}")
 
     logger.debug('# Exiting object_id_split_from_args normally')
 
@@ -305,7 +373,7 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ObjectIdSplit mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ObjectIdSplit",
+    exec_cmd = get_arguments_string(args, cmd=f"E-Run SHE_CTE {SHE_CTE.__version__} SHE_CTE_ObjectIdSplit",
                                     store_true=["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
@@ -321,7 +389,7 @@ def mainMethod(args):
         else:
             object_id_split_from_args(args)
     except Exception as e:
-        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
+        # logger.warning(f"Failsafe exception block triggered with exception: {e}")
         raise
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')
