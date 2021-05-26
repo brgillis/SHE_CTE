@@ -5,7 +5,7 @@
     SHE_CTE package, for modules general to SHE_CTE
 """
 
-__updated__ = "2021-05-25"
+__updated__ = "2021-05-26"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,7 +20,7 @@ __updated__ = "2021-05-25"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "8.1.9"
+__version__ = "8.1.10"
 
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
