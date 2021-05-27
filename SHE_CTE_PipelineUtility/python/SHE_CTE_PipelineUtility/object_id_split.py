@@ -45,107 +45,68 @@ logger = getLogger(__name__)
 def read_oid_split_pipeline_config(pipeline_config,
                                    workdir):
 
-    # Read in the pipeline configuration if present
-    if pipeline_config is None or pipeline_config == "None":
+    pipeline_config = read_analysis_config(config_filename=pipeline_config,
+                                           workdir=workdir,
+                                           cline_args=None,
+                                           defaults={AnalysisConfigKeys.OID_BATCH_SIZE.value: default_batch_size,
+                                                     AnalysisConfigKeys.OID_MAX_BATCHES.value: default_max_batches,
+                                                     AnalysisConfigKeys.OID_IDS.value: None})
 
-        logger.warning(f"No pipeline configuration found. Using default batch size of {default_batch_size}")
-        batch_size = default_batch_size
-        max_batches = default_max_batches
-        ids_to_use = None
+    # Convert values into the proper type and log values
 
+    batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
+    logger.info(f"Using batch size of: {batch_size}")
+
+    max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
+    logger.info(f"Using max batches of: {max_batches}")
+
+    ids_to_use = pipeline_config[AnalysisConfigKeys.OID_IDS.value]
+    logger.info(f"Using max batches of: {ids_to_use}")
+
+    # Check for the IDs key
+    if ids_to_use is None:
+        logger.info("Using all IDs")
     else:
 
-        pipeline_config = read_analysis_config(pipeline_config, workdir=workdir)
+        ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
 
-        # Check for the batch size key
-        if AnalysisConfigKeys.OID_BATCH_SIZE.value not in pipeline_config:
-
-            logger.info(f"Key {AnalysisConfigKeys.OID_BATCH_SIZE.value} not found in pipeline config {pipeline_config}. " +
-                        f"Using default batch size of {default_batch_size}")
-            batch_size = default_batch_size
-
-        else:
-
-            batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
-            if batch_size < 0:
-                raise ValueError(f"Invalid batch size: {batch_size}. Must be >= 0.")
-            logger.info(f"Using batch size of: {batch_size}")
-
-        # Check for the max_batches key
-        if AnalysisConfigKeys.OID_MAX_BATCHES.value not in pipeline_config:
-
-            logger.info(f"Key {AnalysisConfigKeys.OID_MAX_BATCHES.value} not found in pipeline config {pipeline_config}. " +
-                        f"Using default max batches of {default_max_batches}")
-            max_batches = default_max_batches
-
-        else:
-
-            max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
-            if max_batches < 0:
-                raise ValueError(f"Invalid max batches: {max_batches}. Must be >= 0.")
-            logger.info(f"Using max batches of: {max_batches}")
-
-        # Check for the IDs key
-        if AnalysisConfigKeys.OID_IDS.value not in pipeline_config:
-
-            logger.info(f"Key {AnalysisConfigKeys.OID_IDS.value} not found in pipeline config {pipeline_config}. " +
-                        f"Using default of using all IDs")
+        if len(ids_to_use_str) == 0:
             ids_to_use = None
-
+            logger.info("Using all IDs")
         else:
-
-            ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
-
-            if len(ids_to_use_str) == 0:
-                ids_to_use = None
-                logger.info("Using all IDs")
-            else:
-                ids_to_use = list(map(int, ids_to_use_str))
-                logger.info(f"Using limited selection of IDs: {ids_to_use}")
+            ids_to_use = list(map(int, ids_to_use_str))
+            logger.info(f"Using limited selection of IDs: {ids_to_use}")
 
     return ids_to_use, max_batches, batch_size
 
 
-def read_oid_input_data(data_images,
-                        mer_final_catalog_tables,
-                        workdir,
-                        ids_to_use,
-                        max_batches,
-                        batch_size):
-
-    # Read in the data images
-    logger.info("Reading data images...")
-
-    data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
-                                    detections_listfile_filename=mer_final_catalog_tables,
-                                    workdir=workdir,
-                                    save_products=True,
-                                    memmap=True,
-                                    mode='denywrite')
-
-    first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
-
-    # Get the tile list, pointing list, and observation id from the input data products
-
+def get_tile_list(data_stack):
     tile_list = []
-
     for detections_catalogue_product in data_stack.detections_catalogue_products:
         tile_index = detections_catalogue_product.Data.TileIndex
         tile_product_id = detections_catalogue_product.Header.ProductId
         tile_list.append((tile_index, tile_product_id))
 
+    return tile_list
+
+
+def get_pointing_list_and_observation_id(data_stack):
     pointing_list = []
     observation_id = None
-
     for exposure_product in data_stack.exposure_products:
         pointing_list.append(exposure_product.Data.ObservationSequence.PointingId)
         if observation_id is None:
             observation_id = exposure_product.Data.ObservationSequence.ObservationId
         else:
-            # Check it's consistent and warn if not
             new_observation_id = exposure_product.Data.ObservationSequence.ObservationId
             if not observation_id == new_observation_id:
+                # Check it's consistent and warn if not
                 logger.warning(f"Inconsistent observation IDs: {observation_id} and {new_observation_id}.")
+
+    return pointing_list, observation_id
+
+
+def get_ids_array(ids_to_use, max_batches, batch_size, data_stack):
 
     if ids_to_use is not None:
 
@@ -175,9 +136,39 @@ def read_oid_input_data(data_images,
                 good_ids.append(gal_id)
                 num_good_ids += 1
                 if num_ids_desired > 0 and num_good_ids >= num_ids_desired:
-                    0 = 0  # break
+                    break
 
         all_ids_array = np.array(good_ids)
+
+    return all_ids_array
+
+
+def read_oid_input_data(data_images,
+                        mer_final_catalog_tables,
+                        workdir,
+                        ids_to_use,
+                        max_batches,
+                        batch_size):
+
+    # Read in the data images
+    logger.info("Reading data images...")
+
+    data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
+                                    detections_listfile_filename=mer_final_catalog_tables,
+                                    workdir=workdir,
+                                    save_products=True,
+                                    memmap=True,
+                                    mode='denywrite')
+
+    first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
+
+    # Get the tile list, pointing list, and observation id from the input data products
+
+    tile_list = get_tile_list(data_stack)
+
+    pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
+
+    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack)
 
     num_ids = len(all_ids_array)
 
