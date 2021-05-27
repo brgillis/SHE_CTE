@@ -42,7 +42,7 @@ def defineSpecificProgramOptions():
     """
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ObjectIdSplit defineSpecificProgramOptions()')
+    logger.debug('# Entering SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = argparse.ArgumentParser()
@@ -69,7 +69,7 @@ def defineSpecificProgramOptions():
                         help="Set to enable debugging protocols")
     parser.add_argument('--profile', action='store_true')
 
-    logger.debug('# Exiting SHE_CTE_ObjectIdSplit defineSpecificProgramOptions()')
+    logger.debug('# Exiting SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
 
     return parser
 
