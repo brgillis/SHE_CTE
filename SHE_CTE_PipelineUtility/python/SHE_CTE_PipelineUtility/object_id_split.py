@@ -65,8 +65,7 @@ def read_oid_split_pipeline_config(pipeline_config,
         ids_key = None
 
         defaults_dict = {batch_size_key: default_sub_batch_size,
-                         max_batches_key: default_max_sub_batches,
-                         ids_key: None}
+                         max_batches_key: default_max_sub_batches}
 
     pipeline_config = read_analysis_config(config_filename=pipeline_config,
                                            workdir=workdir,
