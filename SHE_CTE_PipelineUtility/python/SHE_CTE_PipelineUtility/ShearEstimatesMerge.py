@@ -317,7 +317,7 @@ def she_measurements_merge_from_args(args):
                 continue
             she_measurements_tables[method].append(t)
 
-    logger.info("Finished loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
+    logger.info("Finished loading shear estimates from files listed in: " + args.shear_estimates_product_listfile)
 
     logger.info("Combining shear estimates tables.")
 
