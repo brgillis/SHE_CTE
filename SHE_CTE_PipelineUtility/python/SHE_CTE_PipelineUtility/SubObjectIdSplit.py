@@ -24,7 +24,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
 
 import SHE_CTE
-from .ObjectIdSplit import defineSpecificProgramOptions, main
+from .ObjectIdSplit import defineSpecificProgramOptions
 from .object_id_split import object_id_split_from_args
 
 
@@ -70,6 +70,21 @@ def mainMethod(args):
         raise
 
     logger.debug('# Exiting SHE_CTE_SubObjectIdSplit mainMethod()')
+
+    return
+
+
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
+
+    parser = defineSpecificProgramOptions()
+
+    args = parser.parse_args()
+
+    mainMethod(args)
 
     return
 
