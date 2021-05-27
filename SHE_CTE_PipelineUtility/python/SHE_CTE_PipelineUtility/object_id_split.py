@@ -36,39 +36,62 @@ from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog
 import SHE_CTE
 import numpy as np
 
-default_batch_size = 20
+default_batch_size = 400
 default_max_batches = 0
+
+default_sub_batch_size = 20
+default_max_sub_batches = 0
 
 logger = getLogger(__name__)
 
 
 def read_oid_split_pipeline_config(pipeline_config,
-                                   workdir):
+                                   workdir,
+                                   sub_batch=False):
+
+    if not sub_batch:
+        # Pipeline config keys for the outer loop
+        batch_size_key = AnalysisConfigKeys.OID_BATCH_SIZE.value
+        max_batches_key = AnalysisConfigKeys.OID_MAX_BATCHES.value
+        ids_key = AnalysisConfigKeys.OID_IDS.value
+
+        defaults_dict = {batch_size_key: default_batch_size,
+                         max_batches_key: default_max_batches,
+                         ids_key: None}
+    else:
+        # Pipeline config keys for the inner loop
+        batch_size_key = AnalysisConfigKeys.SOID_BATCH_SIZE.value
+        max_batches_key = AnalysisConfigKeys.SOID_MAX_BATCHES.value
+        ids_key = None
+
+        defaults_dict = {batch_size_key: default_sub_batch_size,
+                         max_batches_key: default_max_sub_batches,
+                         ids_key: None}
 
     pipeline_config = read_analysis_config(config_filename=pipeline_config,
                                            workdir=workdir,
                                            cline_args=None,
-                                           defaults={AnalysisConfigKeys.OID_BATCH_SIZE.value: default_batch_size,
-                                                     AnalysisConfigKeys.OID_MAX_BATCHES.value: default_max_batches,
-                                                     AnalysisConfigKeys.OID_IDS.value: None})
+                                           defaults=defaults_dict)
 
     # Convert values into the proper type and log values
 
-    batch_size = int(pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE.value])
+    batch_size = int(pipeline_config[batch_size_key])
     logger.info(f"Using batch size of: {batch_size}")
 
-    max_batches = int(pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES.value])
+    max_batches = int(pipeline_config[max_batches_key])
     logger.info(f"Using max batches of: {max_batches}")
 
-    ids_to_use = pipeline_config[AnalysisConfigKeys.OID_IDS.value]
-    logger.info(f"Using max batches of: {ids_to_use}")
+    if ids_key is not None:
+        ids_to_use = pipeline_config[ids_key]
+    else:
+        ids_to_use = None
 
     # Check for the IDs key
     if ids_to_use is None:
         logger.info("Using all IDs")
     else:
 
-        ids_to_use_str = pipeline_config[AnalysisConfigKeys.OID_IDS.value].split()
+        ids_to_use_str = pipeline_config[ids_key].split()
 
         if len(ids_to_use_str) == 0:
             ids_to_use = None
@@ -322,7 +345,8 @@ def write_oid_batch(workdir,
             batch_mer_catalog_product_filename)
 
 
-def object_id_split_from_args(args):
+def object_id_split_from_args(args,
+                              sub_batch=False):
     """ Core function for implementing a split by object ID
     """
 
@@ -331,7 +355,8 @@ def object_id_split_from_args(args):
     (ids_to_use,
      max_batches,
      batch_size) = read_oid_split_pipeline_config(pipeline_config=args.pipeline_confg,
-                                                  workdir=args.workdir)
+                                                  workdir=args.workdir,
+                                                  sub_batch=sub_batch)
 
     (limited_num_batches,
      id_arrays,
