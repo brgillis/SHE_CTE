@@ -129,7 +129,7 @@ def get_pointing_list_and_observation_id(data_stack):
     return pointing_list, observation_id
 
 
-def get_ids_array(ids_to_use, max_batches, batch_size, data_stack):
+def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=False):
 
     if ids_to_use is not None:
 
@@ -149,6 +149,12 @@ def get_ids_array(ids_to_use, max_batches, batch_size, data_stack):
         num_good_ids = 0
 
         for gal_id in all_ids:
+
+            # If this is a sub-batch, checking has already been done so we can trust all IDs are good
+            if sub_batch:
+                good_ids.append(gal_id)
+                num_good_ids += 1
+                continue
 
             # Get a stack of the galaxy images
             gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id,
@@ -171,17 +177,26 @@ def read_oid_input_data(data_images,
                         workdir,
                         ids_to_use,
                         max_batches,
-                        batch_size):
+                        batch_size,
+                        sub_batch=False):
 
     # Read in the data images
     logger.info("Reading data images...")
 
-    data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
-                                    detections_listfile_filename=mer_final_catalog_tables,
-                                    workdir=workdir,
-                                    save_products=True,
-                                    memmap=True,
-                                    mode='denywrite')
+    if not sub_batch:
+        data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
+                                        detections_listfile_filename=mer_final_catalog_tables,
+                                        workdir=workdir,
+                                        save_products=True,
+                                        memmap=True,
+                                        mode='denywrite')
+    else:
+        data_stack = SHEFrameStack.read(exposure_listfile_filename=None,
+                                        detections_listfile_filename=mer_final_catalog_tables,
+                                        workdir=workdir,
+                                        save_products=True,
+                                        memmap=True,
+                                        mode='denywrite')
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
@@ -191,7 +206,7 @@ def read_oid_input_data(data_images,
 
     pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
 
-    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack)
+    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=sub_batch)
 
     num_ids = len(all_ids_array)
 
@@ -354,7 +369,7 @@ def object_id_split_from_args(args,
 
     (ids_to_use,
      max_batches,
-     batch_size) = read_oid_split_pipeline_config(pipeline_config=args.pipeline_confg,
+     batch_size) = read_oid_split_pipeline_config(pipeline_config=args.pipeline_config,
                                                   workdir=args.workdir,
                                                   sub_batch=sub_batch)
 
@@ -369,7 +384,8 @@ def object_id_split_from_args(args,
                                                             workdir=args.workdir,
                                                             ids_to_use=ids_to_use,
                                                             max_batches=max_batches,
-                                                            batch_size=batch_size)
+                                                            batch_size=batch_size,
+                                                            sub_batch=sub_batch)
 
     # Start outputting the ID lists for each batch and creating trimmed catalogs
 
