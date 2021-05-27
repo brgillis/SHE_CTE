@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2021-03-12"
+__updated__ = "2021-05-27"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -64,7 +64,8 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input data
-    parser.add_argument('--she_measurements_and_chains_listfile', type=str)
+    parser.add_argument('--shear_estimates_product_listfile', type=str)
+    parser.add_argument('--she_lensmc_chains_listfile', type=str)
     parser.add_argument("--pipeline_config", default=None, type=str,
                         help="Pipeline-wide configuration file.")
 
@@ -233,12 +234,15 @@ def she_measurements_merge_from_args(args):
         # Start with an empty list of the tables
         she_measurements_tables[method] = []
 
-    logger.info("Loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
+    logger.info("Loading shear estimates from files listed in: " + args.shear_estimates_product_listfile)
 
-    measurements_and_chains_product_filenames = read_listfile(
-        os.path.join(args.workdir, args.she_measurements_and_chains_listfile))
+    measurements_product_filenames = read_listfile(
+        os.path.join(args.workdir, args.shear_estimates_product_listfile))
 
-    measurements_product_filenames, chains_product_filenames = zip(*measurements_and_chains_product_filenames)
+    logger.info("Loading chains from files listed in: " + args.she_lensmc_chains_listfile)
+
+    chains_product_filenames = read_listfile(
+        os.path.join(args.workdir, args.she_lensmc_chains_listfile))
 
     # If using just one thread, don't bother with multiprocessing to read tables
 
@@ -313,7 +317,7 @@ def she_measurements_merge_from_args(args):
                 continue
             she_measurements_tables[method].append(t)
 
-    logger.info("Finished loading shear estimates from files listed in: " + args.she_measurements_and_chains_listfile)
+    logger.info("Finished loading shear estimates from files listed in: " + args.shear_estimates_product_listfile)
 
     logger.info("Combining shear estimates tables.")
 
