@@ -188,7 +188,8 @@ def read_oid_input_data(data_images,
                                     workdir=workdir,
                                     save_products=True,
                                     memmap=True,
-                                    mode='denywrite')
+                                    mode='denywrite',
+                                    load_images=False)
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
