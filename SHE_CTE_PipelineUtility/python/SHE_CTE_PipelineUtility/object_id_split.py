@@ -103,6 +103,7 @@ def read_oid_split_pipeline_config(pipeline_config,
 
 
 def get_tile_list(data_stack):
+
     tile_list = []
     for detections_catalogue_product in data_stack.detections_catalogue_products:
         tile_index = detections_catalogue_product.Data.TileIndex
@@ -182,20 +183,12 @@ def read_oid_input_data(data_images,
     # Read in the data images
     logger.info("Reading data images...")
 
-    if not sub_batch:
-        data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
-                                        detections_listfile_filename=mer_final_catalog_tables,
-                                        workdir=workdir,
-                                        save_products=True,
-                                        memmap=True,
-                                        mode='denywrite')
-    else:
-        data_stack = SHEFrameStack.read(exposure_listfile_filename=None,
-                                        detections_listfile_filename=mer_final_catalog_tables,
-                                        workdir=workdir,
-                                        save_products=True,
-                                        memmap=True,
-                                        mode='denywrite')
+    data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
+                                    detections_listfile_filename=mer_final_catalog_tables,
+                                    workdir=workdir,
+                                    save_products=True,
+                                    memmap=True,
+                                    mode='denywrite')
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
