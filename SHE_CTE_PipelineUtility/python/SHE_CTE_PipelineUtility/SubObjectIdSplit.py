@@ -71,8 +71,6 @@ def mainMethod(args):
 
     logger.debug('# Exiting SHE_CTE_SubObjectIdSplit mainMethod()')
 
-    return
-
 
 def main():
     """
@@ -85,8 +83,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":
