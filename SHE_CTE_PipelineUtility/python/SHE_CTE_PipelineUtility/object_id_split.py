@@ -262,7 +262,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for this batch and store it in the list
     batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
-                                                          instance_id=f"os.getpid()-i",
+                                                          instance_id=f"{os.getpid()}-{i}",
                                                           extension=".xml",
                                                           version=SHE_CTE.__version__,
                                                           subdir=subfolder_name,
@@ -302,7 +302,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for the batch catalog
     batch_mer_catalog_filename = get_allowed_filename(type_name="BATCH-MER-CAT",
-                                                      instance_id=f"os.getpid()-i",
+                                                      instance_id=f"{os.getpid()}-{i}",
                                                       extension=".fits",
                                                       version=SHE_CTE.__version__,
                                                       subdir=subfolder_name,
@@ -328,7 +328,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for this product and store it in the list
     batch_mer_catalog_product_filename = get_allowed_filename(type_name="P-BATCH-MER-CAT",
-                                                              instance_id=f"os.getpid()-i",
+                                                              instance_id=f"{os.getpid()}-{i}",
                                                               extension=".xml",
                                                               version=SHE_CTE.__version__,
                                                               subdir=subfolder_name,
