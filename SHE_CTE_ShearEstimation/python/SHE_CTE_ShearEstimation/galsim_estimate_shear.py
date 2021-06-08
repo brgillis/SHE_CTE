@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-05-25"
+__updated__ = "2021-06-08"
 
 from copy import deepcopy
 from math import sqrt
@@ -27,6 +27,7 @@ from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
+from SHE_PPT.she_image import DEFAULT_STAMP_SIZE as stamp_size
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
@@ -38,7 +39,7 @@ import galsim
 
 import numpy as np
 
-stamp_size = 256
+
 x_buffer = -5
 y_buffer = -5
 get_exposure_estimates = False
