@@ -18,9 +18,8 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from os.path import join
-from astropy.io import fits
 import datetime
+from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT.file_io import (read_listfile, write_listfile,
@@ -31,11 +30,13 @@ from SHE_PPT.pipeline_utility import get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.she_psf_tm_state import initialise_psf_field_tm_state_table
 from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
-import SHE_PPT.table_formats.she_psf_zm_state as zm
-import SHE_PPT.table_formats.she_psf_om_state as om
-import SHE_PPT.table_formats.she_psf_dm_state as dm
+from astropy.io import fits
 
 import SHE_CTE
+import SHE_PPT.table_formats.she_psf_dm_state as dm
+import SHE_PPT.table_formats.she_psf_om_state as om
+import SHE_PPT.table_formats.she_psf_zm_state as zm
+
 
 test_mode = True
 
@@ -64,7 +65,8 @@ def fit_psfs(args, dry_run=False):
                                      workdir=args.workdir,
                                      clean_detections=True,
                                      apply_sc3_fix=True,
-                                     memmap=True,
+                                     memmap=False,
+                                     load_images=False,
                                      mode='denywrite')
 
     # AocsTimeSeries products
@@ -108,10 +110,10 @@ def fit_psfs(args, dry_run=False):
 
         # Get a filename for the table and write it out
         # @FIXME: create full field param MEF FITS....
-        
+
         field_param_table_filename = get_allowed_filename("PSF-FieldParam", str(i), extension=".fits",
                                                           version=SHE_CTE.__version__)
-        
+
         hdulist = fits.HDUList()
         tel_mode_table = initialise_psf_field_tm_state_table()
         tel_mode_table.add_row({})  # Add a row of zeros
@@ -119,20 +121,20 @@ def fit_psfs(args, dry_run=False):
         hdulist.append(tel_mode_hdu)
         # Add Zernike modes
         zern_mode_table = zm.initialise_psf_field_zm_state_table()
-        zern_mode_hdu=fits.BinTableHDU(zern_mode_table)
+        zern_mode_hdu = fits.BinTableHDU(zern_mode_table)
         hdulist.append(zern_mode_hdu)
         # Add Other modes
         oth_mode_table = om.initialise_psf_field_om_state_table()
-        oth_mode_hdu=fits.BinTableHDU(oth_mode_table)
+        oth_mode_hdu = fits.BinTableHDU(oth_mode_table)
         hdulist.append(oth_mode_hdu)
         # Add diagnostic
         diag_mode_table = dm.initialise_psf_field_dm_state_table()
-        diag_mode_hdu=fits.BinTableHDU(diag_mode_table)
+        diag_mode_hdu = fits.BinTableHDU(diag_mode_table)
         hdulist.append(diag_mode_hdu)
         # @TODO: Update primary header
         # Add in other headers..e.g. EXP_PID, OBS_ID, PNT_ID
-        
-        hdulist[0].header.set('DATE_OBS',datetime.datetime.now().isoformat())
+
+        hdulist[0].header.set('DATE_OBS', datetime.datetime.now().isoformat())
 
         qualified_field_param_table_filename = join(args.workdir, field_param_table_filename)
 
