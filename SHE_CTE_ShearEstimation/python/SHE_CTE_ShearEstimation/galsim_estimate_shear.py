@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-06-08"
+__updated__ = "2021-06-09"
 
 from copy import deepcopy
 from math import sqrt
@@ -288,6 +288,9 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
 
     # Check that there aren't any obvious issues with the data
     data_quality_flags = check_data_quality(gal_stamp, psf_stamp, stacked=stacked)
+
+    # Unset the insufficient data flag - TODO: Remove this after next SHE_PPT update to fix issue
+    data_quality_flags ^= (data_quality_flags & flags.flag_insufficient_data)
 
     # If we hit any failure flags, return now with an error
     if data_quality_flags & flags.failure_flags:
