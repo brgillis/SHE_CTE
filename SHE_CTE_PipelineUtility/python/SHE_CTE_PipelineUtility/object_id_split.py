@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-06-04"
+__updated__ = "2021-06-10"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -189,7 +189,7 @@ def read_oid_input_data(data_images,
                                     save_products=True,
                                     memmap=True,
                                     mode='denywrite',
-                                    load_images=False)
+                                    load_images=True)
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
