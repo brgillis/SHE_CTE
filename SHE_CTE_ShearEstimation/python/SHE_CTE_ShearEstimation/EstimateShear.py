@@ -21,9 +21,11 @@ __updated__ = "2020-08-04"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import os
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import read_config, AnalysisConfigKeys, CalibrationConfigKeys
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
@@ -152,14 +154,32 @@ def mainMethod(args):
 
     dry_run = args.dry_run or force_dry_run
 
-    if args.profile:
+    #load the pipeline config in
+    pipeline_config = read_config(args.pipeline_config,
+                                    workdir=args.workdir,
+                                    config_keys=(AnalysisConfigKeys, CalibrationConfigKeys),
+                                    defaults={AnalysisConfigKeys.PIP_PROFILE.value:"False"})
+    
+    #set args.pipeline_config to the read-in pipeline_config
+    args.pipeline_config = pipeline_config
+    
+    #check if profiling is to be enabled from the pipeline config
+    profiling = pipeline_config[AnalysisConfigKeys.PIP_PROFILE.value].lower() in ['true', 't']
+    
+    if args.profile or profiling:
         import cProfile
+        logger.info("Profiling enabled")
+        
+        filename = os.path.join(args.workdir,args.logdir,"estimate_shears.prof")
+        logger.info("Writing profiling data to %s",filename)
+
         cProfile.runctx("estimate_shears_from_args(args)", {},
                         {"estimate_shears_from_args": estimate_shears_from_args,
                          "args": args,
                          "dry_run": dry_run},
-                        filename="estimate_shears.prof")
+                        filename=filename)
     else:
+        logger.info("Profiling disabled")
         estimate_shears_from_args(args, dry_run)
 
     logger.debug('# Exiting SHE_CTE_EstimateShear mainMethod() successfully.')
