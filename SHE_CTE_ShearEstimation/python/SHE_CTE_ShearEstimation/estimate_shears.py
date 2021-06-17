@@ -29,8 +29,7 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys,
-                                      read_config, get_conditional_product)
+from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys, get_conditional_product)
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
@@ -269,9 +268,10 @@ def estimate_shears_from_args(args, dry_run=False):
         method_shear_estimates = {}
 
         # Check for methods in the pipeline options
-        pipeline_config = read_config(args.pipeline_config,
-                                      workdir=args.workdir,
-                                      config_keys=(AnalysisConfigKeys, CalibrationConfigKeys))
+
+        #extract pipeline_config from the args, this has already been read in by the calling program so no need to read it here
+        pipeline_config = args.pipeline_config
+       
 
         # Use methods specified in the command-line first
         if args.methods is not None and len(args.methods) > 0:
