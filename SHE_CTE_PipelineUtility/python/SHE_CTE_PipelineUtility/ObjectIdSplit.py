@@ -21,12 +21,16 @@ __updated__ = "2021-05-27"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import os
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
 
 import SHE_CTE
-from SHE_CTE_PipelineUtility.object_id_split import object_id_split_from_args
+from SHE_CTE_PipelineUtility.object_id_split import object_id_split_from_args, defaults_dict_batch
+
+
 
 
 logger = getLogger(__name__)
@@ -93,21 +97,39 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
+    pipeline_config = read_analysis_config(config_filename=args.pipeline_config,
+                                            workdir=args.workdir,
+                                            cline_args=None,
+                                            defaults=defaults_dict_batch)
+    
+    #set args.pipeline_config to the read-in pipeline_config
+    args.pipeline_config = pipeline_config
+    
+    #check if profiling is to be enabled from the pipeline config
+    profiling = pipeline_config[AnalysisConfigKeys.PIP_PROFILE.value].lower() in ['true', 't']
+
+
     try:
 
-        if args.profile:
+        if args.profile or profiling:
             import cProfile
+
+            logger.info("Profiling enabled")
+            filename = os.path.join(args.workdir,args.logdir,"object_id_split.prof")
+            logger.info("Writing profiling data to %s",filename)
+
             cProfile.runctx("object_id_split_from_args(args,sub_batch=False)", {},
                             {"object_id_split_from_args": object_id_split_from_args,
                              "args": args, },
-                            filename="object_id_split.prof")
+                            filename=filename)
         else:
+            logger.info("Profiling disabled")
             object_id_split_from_args(args,
                                       sub_batch=False)
 
     except Exception as e:
         # logger.warning(f"Failsafe exception block triggered with exception: {e}")
-        raise
+        raise e
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')
 
