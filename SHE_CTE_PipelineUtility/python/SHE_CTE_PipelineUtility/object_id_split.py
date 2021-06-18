@@ -42,6 +42,18 @@ default_max_batches = 0
 default_sub_batch_size = 20
 default_max_sub_batches = 0
 
+
+# Pipeline config keys for the outer loop (sub_batch=False)
+defaults_dict_batch = {AnalysisConfigKeys.OID_BATCH_SIZE.value: default_batch_size,
+                       AnalysisConfigKeys.OID_MAX_BATCHES.value: default_max_batches,
+                       AnalysisConfigKeys.OID_IDS.value: None,
+                       AnalysisConfigKeys.PIP_PROFILE.value: "False"}
+
+# Pipeline config keys for the inner loop (sub_batch=True)
+defaults_dict_sub_batch = {AnalysisConfigKeys.SOID_BATCH_SIZE.value: default_sub_batch_size,
+                           AnalysisConfigKeys.SOID_MAX_BATCHES.value: default_max_sub_batches,
+                           AnalysisConfigKeys.PIP_PROFILE.value: "False"}
+
 logger = getLogger(__name__)
 
 
@@ -50,27 +62,27 @@ def read_oid_split_pipeline_config(pipeline_config,
                                    sub_batch=False):
 
     if not sub_batch:
-        # Pipeline config keys for the outer loop
+        defaults_dict = defaults_dict_batch
         batch_size_key = AnalysisConfigKeys.OID_BATCH_SIZE.value
         max_batches_key = AnalysisConfigKeys.OID_MAX_BATCHES.value
         ids_key = AnalysisConfigKeys.OID_IDS.value
 
-        defaults_dict = {batch_size_key: default_batch_size,
-                         max_batches_key: default_max_batches,
-                         ids_key: None}
     else:
-        # Pipeline config keys for the inner loop
+        defaults_dict = defaults_dict_sub_batch
         batch_size_key = AnalysisConfigKeys.SOID_BATCH_SIZE.value
         max_batches_key = AnalysisConfigKeys.SOID_MAX_BATCHES.value
         ids_key = None
 
-        defaults_dict = {batch_size_key: default_sub_batch_size,
-                         max_batches_key: default_max_sub_batches}
+    if type(pipeline_config) is str:
+        pipeline_config = read_analysis_config(config_filename=pipeline_config,
+                                            workdir=workdir,
+                                            cline_args=None,
+                                            defaults=defaults_dict)
+    elif type(pipeline_config) is dict:
+        pass
+    else:
+        raise TypeError("read_oid_split_pipeline_config: pipeline_config is an unexpected type - %s"%type(pipeline_config))
 
-    pipeline_config = read_analysis_config(config_filename=pipeline_config,
-                                           workdir=workdir,
-                                           cline_args=None,
-                                           defaults=defaults_dict)
 
     # Convert values into the proper type and log values
 
