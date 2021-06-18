@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-05-27"
+__updated__ = "2021-06-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -73,16 +73,14 @@ def read_oid_split_pipeline_config(pipeline_config,
         max_batches_key = AnalysisConfigKeys.SOID_MAX_BATCHES.value
         ids_key = None
 
-    if type(pipeline_config) is str:
+    if type(pipeline_config) is str or pipeline_config is None:
         pipeline_config = read_analysis_config(config_filename=pipeline_config,
-                                            workdir=workdir,
-                                            cline_args=None,
-                                            defaults=defaults_dict)
-    elif type(pipeline_config) is dict:
-        pass
-    else:
-        raise TypeError("read_oid_split_pipeline_config: pipeline_config is an unexpected type - %s"%type(pipeline_config))
-
+                                               workdir=workdir,
+                                               cline_args=None,
+                                               defaults=defaults_dict)
+    elif type(pipeline_config) is not dict:
+        raise TypeError("read_oid_split_pipeline_config: pipeline_config is an unexpected type - %s" %
+                        type(pipeline_config))
 
     # Convert values into the proper type and log values
 
