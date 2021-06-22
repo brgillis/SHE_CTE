@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-06-09"
+__updated__ = "2021-06-22"
 
 from copy import deepcopy
 from math import sqrt
@@ -40,8 +40,8 @@ import galsim
 import numpy as np
 
 
-x_buffer = -5
-y_buffer = -5
+x_buffer = -3
+y_buffer = -3
 get_exposure_estimates = False
 
 default_galaxy_scale = 0.1 / 3600
