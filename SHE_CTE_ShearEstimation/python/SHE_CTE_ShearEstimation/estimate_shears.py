@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-05-25"
+__updated__ = "2021-06-23"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -269,9 +269,9 @@ def estimate_shears_from_args(args, dry_run=False):
 
         # Check for methods in the pipeline options
 
-        #extract pipeline_config from the args, this has already been read in by the calling program so no need to read it here
+        # extract pipeline_config from the args, this has already been read in by
+        # the calling program so no need to read it here
         pipeline_config = args.pipeline_config
-       
 
         # Use methods specified in the command-line first
         if args.methods is not None and len(args.methods) > 0:
@@ -301,7 +301,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
         # Determine whether or not to use fast mode
         if AnalysisConfigKeys.ES_FAST_MODE.value in pipeline_config:
-            fast_mode_bool = bool(pipeline_config[AnalysisConfigKeys.ES_FAST_MODE.value])
+            fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE.value].lower() in ["true", "t"]
             if fast_mode_bool:
                 fast_mode = "fast"
             else:
