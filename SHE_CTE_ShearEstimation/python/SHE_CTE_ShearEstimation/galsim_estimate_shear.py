@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-06-22"
+__updated__ = "2021-06-23"
 
 from copy import deepcopy
 from math import sqrt
@@ -507,7 +507,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                                                          y_world=gal_y_world,
                                                          width=stamp_size,
                                                          x_buffer=x_buffer,
-                                                         y_buffer=y_buffer,)
+                                                         y_buffer=y_buffer,
+                                                         extract_exposure_stamps=get_exposure_estimates)
 
         # Get stacks of the psf images
         bulge_psf_stack, disk_psf_stack = data_stack.extract_psf_stacks(gal_id=gal_id,
