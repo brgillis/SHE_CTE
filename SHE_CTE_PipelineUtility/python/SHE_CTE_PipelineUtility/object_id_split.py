@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-06-18"
+__updated__ = "2021-07-06"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -167,8 +167,7 @@ def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=Fal
                 continue
 
             # Get a stack of the galaxy images
-            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id,
-                                                              width=1,)
+            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id, width=1,)
 
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
@@ -226,15 +225,18 @@ def read_oid_input_data(data_images,
 
     logger.info(f"Splitting IDs into {limited_num_batches} batches of size {batch_size}.")
 
-    id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
-                                   num_batches - 1, endpoint=True, dtype=int)
+    if num_batches == 0:
+        id_arrays = []
+    else:
+        id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
+                                       num_batches - 1, endpoint=True, dtype=int)
 
-    id_arrays = np.split(all_ids_array, id_split_indices)
+        id_arrays = np.split(all_ids_array, id_split_indices)
 
-    # Perform some quick sanity checks
-    assert len(id_arrays) == num_batches
-    assert len(id_arrays[0]) == batch_size or num_batches == 1
-    assert len(id_arrays[-1]) <= batch_size
+        # Perform some quick sanity checks
+        assert len(id_arrays) == num_batches
+        assert len(id_arrays[0]) == batch_size or num_batches == 1
+        assert len(id_arrays[-1]) <= batch_size
 
     return (limited_num_batches,
             id_arrays,
@@ -421,5 +423,3 @@ def object_id_split_from_args(args,
     logger.info(f"Finished writing listfile of batch MER catalog products to {args.batch_mer_catalogs}")
 
     logger.debug('# Exiting object_id_split_from_args normally')
-
-    return
