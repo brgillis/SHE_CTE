@@ -167,7 +167,7 @@ def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=Fal
                 continue
 
             # Get a stack of the galaxy images
-            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id, width=1,)
+            gal_stamp_stack = data_stack.extract_galaxy_wcs_stack(gal_id=gal_id)
 
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
