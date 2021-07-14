@@ -27,6 +27,7 @@ from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
 from SHE_PPT.magic_values import scale_label, gain_label
+from SHE_PPT.she_image import DEFAULT_STAMP_SIZE as stamp_size
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
@@ -38,9 +39,9 @@ import galsim
 
 import numpy as np
 
-stamp_size = 256
-x_buffer = -5
-y_buffer = -5
+
+x_buffer = -3
+y_buffer = -3
 get_exposure_estimates = False
 
 default_galaxy_scale = 0.1 / 3600
@@ -287,6 +288,9 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
 
     # Check that there aren't any obvious issues with the data
     data_quality_flags = check_data_quality(gal_stamp, psf_stamp, stacked=stacked)
+
+    # Unset the insufficient data flag - TODO: Remove this after next SHE_PPT update to fix issue
+    data_quality_flags ^= (data_quality_flags & flags.flag_insufficient_data)
 
     # If we hit any failure flags, return now with an error
     if data_quality_flags & flags.failure_flags:

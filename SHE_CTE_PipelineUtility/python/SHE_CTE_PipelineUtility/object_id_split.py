@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-07-06"
+__updated__ = "2021-07-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -167,7 +167,7 @@ def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=Fal
                 continue
 
             # Get a stack of the galaxy images
-            gal_stamp_stack = data_stack.extract_galaxy_wcs_stack(gal_id=gal_id)
+            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id, width=1,)
 
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
@@ -196,9 +196,9 @@ def read_oid_input_data(data_images,
                                     detections_listfile_filename=mer_final_catalog_tables,
                                     workdir=workdir,
                                     save_products=True,
-                                    memmap=True,
+                                    memmap=(not sub_batch),
                                     mode='denywrite',
-                                    load_images=False)
+                                    load_images=(not sub_batch))
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
@@ -274,7 +274,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for this batch and store it in the list
     batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
-                                                          instance_id=str(i),
+                                                          instance_id=f"{os.getpid()}-{i}",
                                                           extension=".xml",
                                                           version=SHE_CTE.__version__,
                                                           subdir=subfolder_name,
@@ -314,7 +314,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for the batch catalog
     batch_mer_catalog_filename = get_allowed_filename(type_name="BATCH-MER-CAT",
-                                                      instance_id=str(i),
+                                                      instance_id=f"{os.getpid()}-{i}",
                                                       extension=".fits",
                                                       version=SHE_CTE.__version__,
                                                       subdir=subfolder_name,
@@ -340,7 +340,7 @@ def write_oid_batch(workdir,
 
     # Get a filename for this product and store it in the list
     batch_mer_catalog_product_filename = get_allowed_filename(type_name="P-BATCH-MER-CAT",
-                                                              instance_id=str(i),
+                                                              instance_id=f"{os.getpid()}-{i}",
                                                               extension=".xml",
                                                               version=SHE_CTE.__version__,
                                                               subdir=subfolder_name,

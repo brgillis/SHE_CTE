@@ -5,7 +5,7 @@
     SHE_CTE package, for modules general to SHE_CTE
 """
 
-__updated__ = "2021-05-26"
+__updated__ = "2021-07-14"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #

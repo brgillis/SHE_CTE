@@ -13,4 +13,3 @@ elements_project(SHE_CTE 8.2 USE SHE_LensMC 3.3
 # Indirect dependencies
 # ---------------------
 # SHE_PPT 8.10
-

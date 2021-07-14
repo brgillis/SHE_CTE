@@ -184,7 +184,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                     object_id_list_product_filename=args.object_ids,
                                     workdir=args.workdir,
                                     save_products=True,
-                                    memmap=True,
+                                    memmap=False,
+                                    load_images=False,
                                     mode='denywrite')
 
     # Read in the catalog and exposure data products, which we'll need for updating metadata
@@ -226,7 +227,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Determine the instance ID to use for the estimates file
     qualified_stacked_image_data_filename = os.path.join(
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
-    with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=True) as f:
+    with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=False, load_images=False) as f:
         header = f[0].header
         if ppt_mv.model_hash_label in header:
             estimates_instance_id = header[ppt_mv.model_hash_label]
