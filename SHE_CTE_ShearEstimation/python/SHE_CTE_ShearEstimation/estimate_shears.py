@@ -229,10 +229,10 @@ def estimate_shears_from_args(args, dry_run=False):
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=False, load_images=False) as f:
         header = f[0].header
-        if ppt_mv.model_hash_label in header:
-            estimates_instance_id = header[ppt_mv.model_hash_label]
-        elif ppt_mv.obs_id_label in header:
-            estimates_instance_id = str(header[ppt_mv.obs_id_label])
+        if ppt_mv.MODEL_HASH_LABEL in header:
+            estimates_instance_id = header[ppt_mv.MODEL_HASH_LABEL]
+        elif ppt_mv.OBS_ID_LABEL in header:
+            estimates_instance_id = str(header[ppt_mv.OBS_ID_LABEL])
         else:
             logger.warning("Cannot determine proper instance ID for filenames. Using hash of image header.")
             estimates_instance_id = hash_any(header, format="base64")
@@ -240,7 +240,7 @@ def estimate_shears_from_args(args, dry_run=False):
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
-        estimates_instance_id = estimates_instance_id[0:ppt_mv.short_instance_id_maxlen - 4]
+        estimates_instance_id = estimates_instance_id[0:ppt_mv.SHORT_INSTANCE_ID_MAXLEN - 4]
 
     shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
         BFD_filename=None,

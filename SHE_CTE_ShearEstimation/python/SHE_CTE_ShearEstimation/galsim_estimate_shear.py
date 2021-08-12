@@ -26,7 +26,7 @@ from math import sqrt
 from SHE_PPT import flags
 from SHE_PPT import mdb
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import scale_label, gain_label
+from SHE_PPT.magic_values import SCALE_LABEL, GAIN_LABEL
 from SHE_PPT.she_image import DEFAULT_STAMP_SIZE as stamp_size
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
@@ -105,8 +105,8 @@ def log_no_psf_scale():
 
 def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_ny, stacked=False):
 
-    if scale_label in initial_image.header:
-        in_scale = initial_image.header[scale_label]
+    if SCALE_LABEL in initial_image.header:
+        in_scale = initial_image.header[SCALE_LABEL]
     else:
         log_no_galaxy_scale()
         in_scale = default_galaxy_scale
@@ -147,7 +147,7 @@ def get_resampled_image(initial_image, resampled_scale, resampled_nx, resampled_
         resampled_image = SHEImage(resampled_gs_image.array)
 
     resampled_image.add_default_header()
-    resampled_image.header[scale_label] = resampled_scale
+    resampled_image.header[SCALE_LABEL] = resampled_scale
 
     return resampled_image
 
@@ -362,10 +362,10 @@ def get_shear_estimate(gal_stamp, psf_stamp, gal_scale, psf_scale, ID, method, s
     # Get a resampled badpix map
     supersampled_badpix = SHEImage((gal_stamp.boolmask).astype(float))
     supersampled_badpix.add_default_header()
-    if scale_label in gal_stamp.header:
-        supersampled_badpix.header[scale_label] = gal_stamp.header[scale_label]
+    if SCALE_LABEL in gal_stamp.header:
+        supersampled_badpix.header[SCALE_LABEL] = gal_stamp.header[SCALE_LABEL]
     else:
-        supersampled_badpix.header[scale_label] = default_galaxy_scale
+        supersampled_badpix.header[SCALE_LABEL] = default_galaxy_scale
     resampled_badpix = get_resampled_image(supersampled_badpix, psf_scale,
                                            resampled_gal_stamp_size, resampled_gal_stamp_size)
 
@@ -469,14 +469,14 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                                                                              tf.shape_weight,
                                                                              tf.shape_noise])
 
-    if scale_label in data_stack.stacked_image.header:
-        stacked_gal_scale = data_stack.stacked_image.header[scale_label]
+    if SCALE_LABEL in data_stack.stacked_image.header:
+        stacked_gal_scale = data_stack.stacked_image.header[SCALE_LABEL]
     else:
         log_no_galaxy_scale()
         stacked_gal_scale = default_galaxy_scale
 
-    if scale_label in data_stack.exposures[0].psf_data_hdulist[2].header:
-        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[scale_label]
+    if SCALE_LABEL in data_stack.exposures[0].psf_data_hdulist[2].header:
+        psf_scale = data_stack.exposures[0].psf_data_hdulist[2].header[SCALE_LABEL]
     else:
         log_no_psf_scale()
         psf_scale = default_psf_scale
@@ -537,11 +537,11 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
             stacked_disk_psf_stamp.add_default_header()
 
             # Note the galaxy scale and gain in the stamp's header
-            if scale_label in data_stack.stacked_image.header:
-                stacked_gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
+            if SCALE_LABEL in data_stack.stacked_image.header:
+                stacked_gal_stamp.header[SCALE_LABEL] = data_stack.stacked_image.header[SCALE_LABEL]
             else:
-                stacked_gal_stamp.header[scale_label] = default_galaxy_scale
-            stacked_gal_stamp.header[gain_label] = mdb.get_gain()
+                stacked_gal_stamp.header[SCALE_LABEL] = default_galaxy_scale
+            stacked_gal_stamp.header[GAIN_LABEL] = mdb.get_gain()
 
             try:
                 stack_shear_estimate = get_shear_estimate(stacked_gal_stamp,
@@ -589,8 +589,8 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
                     gal_stamp = gal_stamp_stack.exposures[x]
                     if gal_stamp is None:
                         continue
-                    gal_stamp.header[scale_label] = data_stack.stacked_image.header[scale_label]
-                    gal_stamp.header[gain_label] = mdb.get_gain()
+                    gal_stamp.header[SCALE_LABEL] = data_stack.stacked_image.header[SCALE_LABEL]
+                    gal_stamp.header[GAIN_LABEL] = mdb.get_gain()
 
                     # Make sure the wcs is correct
                     gal_stamp.wcs = gal_stamp.parent_image.wcs
