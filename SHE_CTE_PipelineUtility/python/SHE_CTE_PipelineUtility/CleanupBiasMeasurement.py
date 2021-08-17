@@ -28,7 +28,7 @@ from SHE_PPT import products  # Need to import in order to initialise all produc
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_calibration_config, CalibrationConfigKeys
-from SHE_PPT.utility import get_arguments_string
+from EL_PythonUtils.utilities import get_arguments_string
 
 import SHE_CTE
 

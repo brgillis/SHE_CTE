@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2021-03-12"
+__updated__ = "2021-08-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,12 +23,13 @@ __updated__ = "2021-03-12"
 import os
 import time
 
+import SHE_LensMC.she_measure_shear
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import mdb
 from SHE_PPT.file_io import read_xml_product, find_file, read_listfile
 from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.she_ksb_measurements import (tf as ksbm_tf,
-                                                        initialise_ksb_measurements_table)
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
@@ -38,12 +39,9 @@ from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.estimate_shears import fill_measurements_table_meta
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
-import SHE_LensMC.she_measure_shear
 import numpy as np
 
-# from SHE_MomentsML.estimate_shear import estimate_shear as
-# ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN
-# 2.1
+
 test_data_location = "/tmp"
 
 data_images_filename = "vis_calibrated_frames.json"
@@ -103,8 +101,6 @@ class TestCase:
                                             memmap=True,
                                             mode='denywrite')
 
-        return
-
     @classmethod
     def teardown_class(cls):
 
@@ -127,9 +123,7 @@ class TestCase:
             for colname in (ksbm_tf.g1, ksbm_tf.g2, ksbm_tf.g1_err, ksbm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
-                    raise Exception("Bad value for " + colname + ": " + str(g))
-
-        return
+                    raise AssertionError("Bad value for " + colname + ": " + str(g))
 
     def test_regauss(self):
         """Test that the interface for the REGAUSS method works properly.
@@ -148,9 +142,7 @@ class TestCase:
             for colname in (regm_tf.g1, regm_tf.g2, regm_tf.g1_err, regm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
-                    raise Exception("Bad value for " + colname + ": " + str(g))
-
-        return
+                    raise AssertionError("Bad value for " + colname + ": " + str(g))
 
     def test_return_chains(self):
 
@@ -191,8 +183,6 @@ class TestCase:
                 assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev /
                                   np.sqrt(len_chain)), "Error matching stddev for parameter " + param
 
-        return
-
     def test_fill_measurements_table_meta(self):
         """Test that the fill_measurements_table_meta utility function works as expected.
         """
@@ -205,7 +195,7 @@ class TestCase:
             vis_calibrated_frame_products.append(read_xml_product(
                 os.path.join(self.workdir, vis_calibrated_frame_filename)))
 
-        t = initialise_ksb_measurements_table()
+        t = ksbm_tf.init_table()
 
         fill_measurements_table_meta(t=t,
                                      mer_final_catalog_products=mer_final_catalog_products,
@@ -215,5 +205,3 @@ class TestCase:
         assert t.meta[sm_tf.m.observation_time] == expected_observation_time
         assert t.meta[sm_tf.m.pointing_id] == expected_pointing_id_list
         assert t.meta[sm_tf.m.tile_id] == expected_tile_id
-
-        return

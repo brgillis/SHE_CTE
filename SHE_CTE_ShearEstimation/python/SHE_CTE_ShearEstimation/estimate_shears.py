@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-06-23"
+__updated__ = "2021-08-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,57 +22,45 @@ __updated__ = "2021-06-23"
 
 import os
 
+from EL_PythonUtils.utilities import hash_any
+from SHE_LensMC import she_measure_shear
+from SHE_LensMC.training_data import load_training_data
+from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import flags
-from SHE_PPT import magic_values as ppt_mv
 from SHE_PPT import mdb
 from SHE_PPT import products
+from SHE_PPT.constants.fits import MODEL_HASH_LABEL, OBS_ID_LABEL
+from SHE_PPT.constants.misc import SHORT_INSTANCE_ID_MAXLEN
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile, find_file)
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys, get_conditional_product)
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
-from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
-from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
 from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.utility import hash_any
 from astropy.io import fits
 from astropy.io.fits import table_to_hdu
 
 import SHE_CTE
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import KSB_estimate_shear, REGAUSS_estimate_shear
-from SHE_LensMC import she_measure_shear
-from SHE_LensMC.training_data import load_training_data
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 import numpy as np
 
 
 logger = getLogger(__name__)
 
-loading_methods = {"KSB": load_control_training_data,
-                   "REGAUSS": load_control_training_data,
-                   "MomentsML": None,
-                   "LensMC": load_training_data}
+loading_methods = {ShearEstimationMethods.KSB: load_control_training_data,
+                   ShearEstimationMethods.REGAUSS: load_control_training_data,
+                   ShearEstimationMethods.MOMENTSML: None,
+                   ShearEstimationMethods.LENSMC: load_training_data}
 
-estimation_methods = {"KSB": KSB_estimate_shear,
-                      "REGAUSS": REGAUSS_estimate_shear,
-                      "MomentsML": ML_estimate_shear,
-                      "LensMC": she_measure_shear}
-
-initialisation_methods = {"KSB": initialise_ksb_measurements_table,
-                          "REGAUSS": initialise_regauss_measurements_table,
-                          "MomentsML": initialise_momentsml_measurements_table,
-                          "LensMC": initialise_lensmc_measurements_table}
-
-table_formats = {"KSB": ksbm_tf,
-                 "REGAUSS": regm_tf,
-                 "MomentsML": mmlm_tf,
-                 "LensMC": lmcm_tf}
+estimation_methods = {ShearEstimationMethods.KSB: KSB_estimate_shear,
+                      ShearEstimationMethods.REGAUSS: REGAUSS_estimate_shear,
+                      ShearEstimationMethods.MOMENTSML: ML_estimate_shear,
+                      ShearEstimationMethods.LENSMC: she_measure_shear}
 
 default_chains_method = "LensMC"
 default_fast_mode = "normal"
@@ -229,10 +217,10 @@ def estimate_shears_from_args(args, dry_run=False):
         args.workdir, get_data_filename(args.stacked_image, workdir=args.workdir))
     with fits.open(qualified_stacked_image_data_filename, mode='denywrite', memmap=False, load_images=False) as f:
         header = f[0].header
-        if ppt_mv.MODEL_HASH_LABEL in header:
-            estimates_instance_id = header[ppt_mv.MODEL_HASH_LABEL]
-        elif ppt_mv.OBS_ID_LABEL in header:
-            estimates_instance_id = str(header[ppt_mv.OBS_ID_LABEL])
+        if MODEL_HASH_LABEL in header:
+            estimates_instance_id = header[MODEL_HASH_LABEL]
+        elif OBS_ID_LABEL in header:
+            estimates_instance_id = str(header[OBS_ID_LABEL])
         else:
             logger.warning("Cannot determine proper instance ID for filenames. Using hash of image header.")
             estimates_instance_id = hash_any(header, format="base64")
@@ -240,7 +228,7 @@ def estimate_shears_from_args(args, dry_run=False):
         # Fix banned characters in the instance_id, add the pid, and enforce the maximum length
         estimates_instance_id = estimates_instance_id.replace('.', '-').replace('+', '-')
         estimates_instance_id = str(os.getpid()) + "-" + estimates_instance_id
-        estimates_instance_id = estimates_instance_id[0:ppt_mv.SHORT_INSTANCE_ID_MAXLEN - 4]
+        estimates_instance_id = estimates_instance_id[0:SHORT_INSTANCE_ID_MAXLEN - 4]
 
     shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
         BFD_filename=None,
@@ -277,10 +265,10 @@ def estimate_shears_from_args(args, dry_run=False):
         # Use methods specified in the command-line first
         if args.methods is not None and len(args.methods) > 0:
             methods = args.methods
-        elif AnalysisConfigKeys.ES_METHODS.value in pipeline_config:
-            methods = pipeline_config[AnalysisConfigKeys.ES_METHODS.value].split()
-        elif CalibrationConfigKeys.ES_METHODS.value in pipeline_config:
-            methods = pipeline_config[CalibrationConfigKeys.ES_METHODS.value].split()
+        elif AnalysisConfigKeys.ES_METHODS in pipeline_config:
+            methods = pipeline_config[AnalysisConfigKeys.ES_METHODS].split()
+        elif CalibrationConfigKeys.ES_METHODS in pipeline_config:
+            methods = pipeline_config[CalibrationConfigKeys.ES_METHODS].split()
         else:
             # Default to using all methods
             methods = list(estimation_methods.keys())
@@ -288,10 +276,10 @@ def estimate_shears_from_args(args, dry_run=False):
         # Determine which method we want chains from
         if args.chains_method is not None:
             chains_method = args.chains_method
-        elif AnalysisConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
-            chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD.value]
-        elif CalibrationConfigKeys.ES_CHAINS_METHOD.value in pipeline_config:
-            chains_method = pipeline_config[CalibrationConfigKeys.ES_CHAINS_METHOD.value]
+        elif AnalysisConfigKeys.ES_CHAINS_METHOD in pipeline_config:
+            chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD]
+        elif CalibrationConfigKeys.ES_CHAINS_METHOD in pipeline_config:
+            chains_method = pipeline_config[CalibrationConfigKeys.ES_CHAINS_METHOD]
         else:
             # Default to using all methods
             chains_method = default_chains_method
@@ -301,8 +289,8 @@ def estimate_shears_from_args(args, dry_run=False):
                              str(methods) + ").")
 
         # Determine whether or not to use fast mode
-        if AnalysisConfigKeys.ES_FAST_MODE.value in pipeline_config:
-            fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE.value].lower() in ["true", "t"]
+        if AnalysisConfigKeys.ES_FAST_MODE in pipeline_config:
+            fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE].lower() in ["true", "t"]
             if fast_mode_bool:
                 fast_mode = "fast"
             else:
@@ -423,8 +411,8 @@ def estimate_shears_from_args(args, dry_run=False):
                 hdulist = fits.HDUList()
 
                 # Create an empty estimates table
-                shear_estimates_table = initialisation_methods[method]()
-                tf = table_formats[method]
+                tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[method]
+                shear_estimates_table = tf.init_table()
 
                 for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
 
@@ -449,7 +437,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                                 subdir=subfolder_name)
 
                     # Create an empty chains table
-                    chains_table = initialise_lensmc_chains_table(optional_columns=[lmcc_tf.ra, lmcc_tf.dec])
+                    chains_table = lmcc_tf.init_table(optional_columns=[lmcc_tf.ra, lmcc_tf.dec])
 
                     for r in range(len(data_stack.detections_catalogue[mfc_tf.ID])):
 
@@ -489,7 +477,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
             hdulist = fits.HDUList()
 
-            shear_estimates_table = initialisation_methods[method]()
+            shear_estimates_table = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[method].init_table()
 
             shm_hdu = table_to_hdu(shear_estimates_table)
             hdulist.append(shm_hdu)

@@ -33,7 +33,7 @@ from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
-from SHE_PPT.utility import get_arguments_string
+from EL_PythonUtils.utilities import get_arguments_string
 from astropy import table
 
 import SHE_CTE

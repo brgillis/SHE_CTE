@@ -22,7 +22,7 @@ __updated__ = "2021-03-04"
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
-from SHE_PPT.utility import run_only_once
+from EL_PythonUtils.utilities import run_only_once
 from astropy.io.ascii.core import masked
 
 import numpy as np

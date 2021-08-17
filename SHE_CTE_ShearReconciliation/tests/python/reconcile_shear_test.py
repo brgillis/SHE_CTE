@@ -22,15 +22,10 @@ from copy import deepcopy
 import os
 
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
 from SHE_PPT.file_io import write_xml_product, read_xml_product, get_allowed_filename, write_listfile
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf, initialise_mer_final_catalog
-from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf, initialise_ksb_measurements_table
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, initialise_lensmc_chains_table, len_chain
-from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf, initialise_lensmc_measurements_table
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf, initialise_momentsml_measurements_table
-from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf, initialise_regauss_measurements_table
-from SHE_PPT.table_utility import is_in_format, add_row
 from astropy.table import Table, Row
 import pytest
 
@@ -44,22 +39,6 @@ from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best
                                                                   reconcile_shape_weight,
                                                                   reconcile_invvar)
 import numpy as np
-
-
-sem_names = ("KSB",
-             "LensMC",
-             "MomentsML",
-             "REGAUSS")
-
-sem_tfs = {"KSB": ksbm_tf,
-           "LensMC": lmcm_tf,
-           "MomentsML": mmlm_tf,
-           "REGAUSS": regm_tf}
-
-sem_initialisers = {"KSB": initialise_ksb_measurements_table,
-                    "LensMC": initialise_lensmc_measurements_table,
-                    "MomentsML": initialise_momentsml_measurements_table,
-                    "REGAUSS": initialise_regauss_measurements_table}
 
 
 class Args(object):
@@ -84,8 +63,6 @@ def assert_rows_equal(t1, t2, i, sem_tf):
     assert np.isclose(r1[sem_tf.weight], r2[sem_tf.weight]), "Row " + \
         str(i) + " doesn't match expected value for weight."
 
-    return
-
 
 def assert_chains_rows_equal(t1, t2, i, which_of_kept=None):
     """ Check that two chains rows match in shear parameters
@@ -105,8 +82,6 @@ def assert_chains_rows_equal(t1, t2, i, which_of_kept=None):
         str(i) + " doesn't match expected value for shape noise."
     assert np.isclose(r1[lmcc_tf.weight], r2[lmcc_tf.weight]), "Row " + \
         str(i) + " doesn't match expected value for weight."
-
-    return
 
 
 class TestReconcileShear:
@@ -130,9 +105,9 @@ class TestReconcileShear:
         # We'll set up some mock tables from each method, using the same values for each method
         cls.sem_table_lists = {}
         cls.chains_table_list = []
-        for sem in sem_names:
+        for sem in ShearEstimationMethods:
 
-            tf = sem_tfs[sem]
+            tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem]
 
             make_chains = sem == "LensMC"
 
@@ -158,7 +133,7 @@ class TestReconcileShear:
 
                 # Create the measurements table
 
-                t = sem_initialisers[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
+                t = tf.init_table[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
                 for _ in range(l):
                     t.add_row()
 
@@ -203,8 +178,6 @@ class TestReconcileShear:
 
             cls.sem_table_lists[sem] = tables
 
-        return
-
     @classmethod
     def teardown_class(cls):
 
@@ -215,8 +188,6 @@ class TestReconcileShear:
 
         self.workdir = tmpdir.strpath
         os.makedirs(self.workdir + "/data")
-
-        return
 
     def test_reconcile_best(self):
 
@@ -231,7 +202,7 @@ class TestReconcileShear:
 
         assert(len(reconciled_catalog) == 19)
 
-        sem_tf = sem_tfs[sem]
+        sem_tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem]
 
         reconciled_catalog.add_index(sem_tf.ID)
 
@@ -243,8 +214,6 @@ class TestReconcileShear:
 
         # Row 8 should be from table 2, which has the highest weight
         assert_rows_equal(reconciled_catalog, sem_table_list[2], 8, sem_tf)
-
-        return
 
     @pytest.mark.skip(reason="Not available until DM update")
     def test_reconcile_shape_weight(self):
@@ -260,7 +229,7 @@ class TestReconcileShear:
 
         assert(len(reconciled_catalog) == 19)
 
-        sem_tf = sem_tfs[sem]
+        sem_tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem]
 
         reconciled_catalog.add_index(sem_tf.ID)
 
@@ -280,13 +249,11 @@ class TestReconcileShear:
         assert (test_row[sem_tf.weight] > sem_table_list[0].loc[6][sem_tf.weight] or
                 test_row[sem_tf.weight] > sem_table_list[1].loc[6][sem_tf.weight])
 
-        return
-
     def test_reconcile_invvar(self):
 
-        for sem in sem_names:
+        for sem in ShearEstimationMethods:
 
-            sem_tf = sem_tfs[sem]
+            sem_tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem]
 
             sem_table_list = self.sem_table_lists[sem]
 
@@ -297,8 +264,6 @@ class TestReconcileShear:
                                                   workdir=self.workdir)
 
             assert(len(reconciled_catalog) == 19)
-
-            sem_tf = sem_tfs[sem]
 
             reconciled_catalog.add_index(sem_tf.ID)
 
@@ -339,15 +304,13 @@ class TestReconcileShear:
                                      workdir=self.workdir)
 
                 t_alt3 = deepcopy(t_alt2)
-                t_alt3[sem_tf.e1_err] == 0.
+                t_alt3[sem_tf.e1_err] = 0.
                 sem_table_list_alt = [t_alt3, t_alt3]
                 _ = reconcile_tables(shear_estimates_tables=sem_table_list_alt,
                                      shear_estimation_method=sem,
                                      object_ids_in_tile=self.object_ids_in_tile,
                                      reconciliation_function=reconcile_invvar,
                                      workdir=self.workdir)
-
-        return
 
     def test_reconcile_chains_best(self):
 
@@ -368,8 +331,6 @@ class TestReconcileShear:
 
         # Row 8 should be from table 2, which has the highest weight
         assert_chains_rows_equal(reconciled_chains, self.chains_table_list[2], 8)
-
-        return
 
     @pytest.mark.skip(reason="Not available until DM update")
     def test_reconcile_chains_shape_weight(self):
@@ -399,8 +360,6 @@ class TestReconcileShear:
         assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
                 test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
 
-        return
-
     def test_reconcile_chains_invvar(self):
 
         reconciled_chains = reconcile_chains(chains_tables=self.chains_table_list,
@@ -427,8 +386,6 @@ class TestReconcileShear:
         assert test_row[lmcc_tf.weight] < self.max_weight
         assert (test_row[lmcc_tf.weight] > self.chains_table_list[0].loc[6][lmcc_tf.weight] or
                 test_row[lmcc_tf.weight] > self.chains_table_list[1].loc[6][lmcc_tf.weight])
-
-        return
 
     def test_reconcile_chains_keep(self):
 
@@ -458,8 +415,6 @@ class TestReconcileShear:
         # Test that the weights add up properly
         assert test_row_0[lmcc_tf.weight] + test_row_1[lmcc_tf.weight] < self.max_weight
 
-        return
-
     def test_interface(self):
         """Run through the full executable, to test the interface.
         """
@@ -468,9 +423,9 @@ class TestReconcileShear:
 
         # Create a data table and product for the MER Final Catalog
         mer_final_catalog_table = initialise_mer_final_catalog()
-        for id in self.ids:
+        for object_id in self.ids:
             mer_final_catalog_table.add_row()
-            mer_final_catalog_table[-1][mfc_tf.ID] = id
+            mer_final_catalog_table[-1][mfc_tf.ID] = object_id
         mer_final_catalog_data_filename = get_allowed_filename("MFC", "TEST", version=SHE_CTE.__version__)
         mer_final_catalog_table.write(os.path.join(self.workdir, mer_final_catalog_data_filename))
 
@@ -485,7 +440,7 @@ class TestReconcileShear:
         sem_product_filename_list = []
         for i in range(len(self.sem_table_lists["LensMC"])):
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
-            for sem in sem_names:
+            for sem in ShearEstimationMethods:
                 sem_table_filename = get_allowed_filename(
                     "SEM-TEST-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
                 self.sem_table_lists[sem][i].write(os.path.join(self.workdir, sem_table_filename))
@@ -546,13 +501,14 @@ class TestReconcileShear:
         # Check the reconciled measurements results
         srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
 
-        for sem in sem_names:
+        for sem in ShearEstimationMethods:
             sem_table_filename = srm_product.get_method_filename(sem)
             loaded_sem_table = Table.read(os.path.join(self.workdir, sem_table_filename))
-            loaded_sem_table.add_index(sem_tfs[sem].ID)
+            loaded_sem_table.add_index(D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem].ID)
 
             # Just a quick test on results, since we do detailed tests elsewhere
-            assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem][0], 1, sem_tfs[sem])
+            assert_rows_equal(loaded_sem_table, self.sem_table_lists[sem]
+                              [0], 1, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem])
 
         # Check the reconciled chains results
         rec_chains_product = read_xml_product(rec_chains_product_filename, workdir=self.workdir, allow_pickled=False)
@@ -563,5 +519,3 @@ class TestReconcileShear:
 
         # Just a quick test on results, since we do detailed tests elsewhere
         assert_chains_rows_equal(reconciled_chains, self.chains_table_list[0], 1, 0)
-
-        return

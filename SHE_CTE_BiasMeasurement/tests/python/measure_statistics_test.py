@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-11-16"
+__updated__ = "2021-08-17"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -63,10 +63,10 @@ class TestMeasureStatistics:
     def setup_class(cls):
 
         # Set up some mock data for the test
-        cls.details_table = table_formats.she_simulated_catalog.initialise_simulated_catalog()
-        cls.details_table_group = table_formats.she_simulated_catalog.initialise_simulated_catalog()
-        cls.she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        cls.she_measurements_group = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        cls.details_table = table_formats.she_simulated_catalog.tf.init_table()
+        cls.details_table_group = table_formats.she_simulated_catalog.tf.init_table()
+        cls.she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        cls.she_measurements_group = table_formats.she_ksb_measurements.tf.init_table()
 
         cls.len_group = 2  # Number of galaxies per group
 
@@ -171,8 +171,8 @@ class TestMeasureStatistics:
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
 
         for i in range(len(self.she_measurements)):
             somebad_she_measurements.add_row(vals={ksbm_tf.ID: i})
@@ -224,8 +224,8 @@ class TestMeasureStatistics:
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
 
         for j in range(self.len_group):
             for i in range(len(self.she_measurements)):

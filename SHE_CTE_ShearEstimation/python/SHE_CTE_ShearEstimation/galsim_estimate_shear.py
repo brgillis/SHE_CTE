@@ -18,23 +18,23 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__updated__ = "2021-06-23"
+__updated__ = "2021-08-17"
 
 from copy import deepcopy
 from math import sqrt
 
+from EL_PythonUtils.utilities import run_only_once
 from SHE_PPT import flags
 from SHE_PPT import mdb
+from SHE_PPT.constants.fits import SCALE_LABEL, GAIN_LABEL
 from SHE_PPT.logging import getLogger
-from SHE_PPT.magic_values import SCALE_LABEL, GAIN_LABEL
 from SHE_PPT.she_image import DEFAULT_STAMP_SIZE as stamp_size
 from SHE_PPT.she_image import SHEImage
 from SHE_PPT.shear_utility import (get_g_from_e, correct_for_wcs_shear_and_rotation, check_data_quality)
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
-from SHE_PPT.table_formats.she_lensmc_chains import initialise_lensmc_chains_table, tf as lmcc_tf, len_chain
-from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
-from SHE_PPT.utility import run_only_once
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
+from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 import galsim
 
 import numpy as np
@@ -46,9 +46,6 @@ get_exposure_estimates = False
 
 default_galaxy_scale = 0.1 / 3600
 default_psf_scale = 0.02 / 3600
-
-initialisation_methods = {"KSB": initialise_ksb_measurements_table,
-                          "REGAUSS": initialise_regauss_measurements_table}
 
 table_formats = {"KSB": ksbm_tf,
                  "REGAUSS": regm_tf}
@@ -465,9 +462,9 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
     logger.debug("Entering GS_estimate_shear")
 
     tf = table_formats[method]
-    shear_estimates_table = initialisation_methods[method](optional_columns=[tf.e_var,
-                                                                             tf.shape_weight,
-                                                                             tf.shape_noise])
+    shear_estimates_table = table_formats[method].init_table(optional_columns=[tf.e_var,
+                                                                               tf.shape_weight,
+                                                                               tf.shape_noise])
 
     if SCALE_LABEL in data_stack.stacked_image.header:
         stacked_gal_scale = data_stack.stacked_image.header[SCALE_LABEL]
@@ -670,10 +667,10 @@ def GS_estimate_shear(data_stack, training_data, method, workdir, debug=False, r
         return shear_estimates_table
 
     # If requested, make a mock chains table
-    chains_table = initialise_lensmc_chains_table(optional_columns=(lmcc_tf.ra,
-                                                                    lmcc_tf.dec,
-                                                                    lmcc_tf.snr,
-                                                                    ))
+    chains_table = lmcc_tf.init_table(optional_columns=(lmcc_tf.ra,
+                                                        lmcc_tf.dec,
+                                                        lmcc_tf.snr,
+                                                        ))
 
     # Add rows matching each row in the estimates table
     for estimates_row in shear_estimates_table:

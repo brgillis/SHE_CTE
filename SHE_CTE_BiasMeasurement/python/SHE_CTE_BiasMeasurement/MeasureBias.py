@@ -21,7 +21,7 @@
 import argparse
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from EL_PythonUtils.utilities import get_arguments_string
 
 import SHE_CTE
 from SHE_CTE_BiasMeasurement import magic_values as mv

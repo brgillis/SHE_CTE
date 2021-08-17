@@ -23,7 +23,7 @@ __updated__ = "2021-05-27"
 import os
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
 
 import SHE_CTE

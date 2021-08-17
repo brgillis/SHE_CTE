@@ -27,7 +27,7 @@ __updated__ = "2020-10-05"
 import argparse
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from EL_PythonUtils.utilities import get_arguments_string
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
