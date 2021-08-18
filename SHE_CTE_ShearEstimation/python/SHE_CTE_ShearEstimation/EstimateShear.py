@@ -5,7 +5,7 @@
     Main program for estimating shears on simulation data.
 """
 
-__updated__ = "2020-08-04"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,14 +22,44 @@ __updated__ = "2020-08-04"
 
 import argparse
 import os
+from typing import Any, Dict, Union, Tuple, Type
 
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.classes import ShearEstimationMethods
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-from SHE_PPT.pipeline_utility import read_config, AnalysisConfigKeys, CalibrationConfigKeys
+from SHE_PPT.pipeline_utility import (read_config, AnalysisConfigKeys,
+                                      CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
+
+
+# Set up dicts for pipeline config defaults and types
+D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    AnalysisConfigKeys.ES_METHODS: list(ShearEstimationMethods),
+    AnalysisConfigKeys.ES_CHAINS_METHOD: ShearEstimationMethods.LENSMC,
+    AnalysisConfigKeys.ES_FAST_MODE: False,
+    AnalysisConfigKeys.ES_MEMMAP_IMAGES: False,
+}
+
+D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    AnalysisConfigKeys.ES_METHODS: (list, ShearEstimationMethods),
+    AnalysisConfigKeys.ES_CHAINS_METHOD: ShearEstimationMethods,
+    AnalysisConfigKeys.ES_FAST_MODE: bool,
+    AnalysisConfigKeys.ES_MEMMAP_IMAGES: bool,
+}
+
+D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    AnalysisConfigKeys.ES_METHODS: "methods",
+    AnalysisConfigKeys.ES_CHAINS_METHOD: "chains_method",
+    AnalysisConfigKeys.ES_FAST_MODE: "fast_mode",
+    AnalysisConfigKeys.ES_MEMMAP_IMAGES: "memmap_images",
+}
 
 
 def defineSpecificProgramOptions():
@@ -114,6 +144,12 @@ def defineSpecificProgramOptions():
     parser.add_argument('--chains_method', type=str, default=None,
                         help='Which shear estimation method to generate chains with.')
 
+    parser.add_argument('--fast_mode', action='store_true',
+                        help='Enable LensMC fast mode')
+
+    parser.add_argument('--memmap_images', action='store_true',
+                        help='Memory-map images rather than reading them on-demand.')
+
     # Output arguments
 
     parser.add_argument('--shear_estimates_product', type=str,
@@ -148,30 +184,30 @@ def mainMethod(args):
     logger.debug('#')
 
     exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_EstimateShear",
-                                    store_true=["profile", "debug", "dry_run"])
+                                    store_true=["profile", "debug", "dry_run", "fast_mode", "memmap_images"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
     dry_run = args.dry_run or force_dry_run
 
-    #load the pipeline config in
-    pipeline_config = read_config(args.pipeline_config,
-                                    workdir=args.workdir,
-                                    config_keys=(AnalysisConfigKeys, CalibrationConfigKeys),
-                                    defaults={AnalysisConfigKeys.PIP_PROFILE.value:"False"})
-    
-    #set args.pipeline_config to the read-in pipeline_config
-    args.pipeline_config = pipeline_config
-    
-    #check if profiling is to be enabled from the pipeline config
-    profiling = pipeline_config[AnalysisConfigKeys.PIP_PROFILE.value].lower() in ['true', 't']
-    
-    if args.profile or profiling:
+    # load the pipeline config in
+    args.pipeline_config = read_config(args.pipeline_config,
+                                       workdir=args.workdir,
+                                       config_keys=(AnalysisConfigKeys, CalibrationConfigKeys),
+                                       defaults=D_EST_SHEAR_CONFIG_DEFAULTS,
+                                       d_cline_args=D_EST_SHEAR_CONFIG_CLINE_ARGS,
+                                       parsed_args=args,
+                                       d_types=D_EST_SHEAR_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
+    if profiling:
         import cProfile
         logger.info("Profiling enabled")
-        
-        filename = os.path.join(args.workdir,args.logdir,"estimate_shears.prof")
-        logger.info("Writing profiling data to %s",filename)
+
+        filename = os.path.join(args.workdir, args.logdir, "estimate_shears.prof")
+        logger.info("Writing profiling data to %s", filename)
 
         cProfile.runctx("estimate_shears_from_args(args)", {},
                         {"estimate_shears_from_args": estimate_shears_from_args,
@@ -183,8 +219,6 @@ def mainMethod(args):
         estimate_shears_from_args(args, dry_run)
 
     logger.debug('# Exiting SHE_CTE_EstimateShear mainMethod() successfully.')
-
-    return
 
 
 def main():
@@ -198,8 +232,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

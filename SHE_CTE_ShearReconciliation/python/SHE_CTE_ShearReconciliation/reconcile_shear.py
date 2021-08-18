@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2021-03-16"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -24,21 +24,16 @@ __updated__ = "2021-03-16"
 import os
 
 from SHE_PPT import products
-from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
-                             read_listfile, find_file, read_xml_product)
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
+from SHE_PPT.file_io import (write_xml_product, get_allowed_filename,
+                             read_listfile, read_xml_product)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ReconciliationConfigKeys, read_reconciliation_config
+from SHE_PPT.pipeline_utility import ReconciliationConfigKeys
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
-from SHE_PPT.table_formats.she_bfd_moments import initialise_bfd_moments_table, tf as bfdm_tf
-from SHE_PPT.table_formats.she_ksb_measurements import initialise_ksb_measurements_table, tf as ksbm_tf
-from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, initialise_lensmc_chains_table
-from SHE_PPT.table_formats.she_lensmc_measurements import initialise_lensmc_measurements_table, tf as lmcm_tf
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_formats.she_momentsml_measurements import initialise_momentsml_measurements_table, tf as mmlm_tf
-from SHE_PPT.table_formats.she_regauss_measurements import initialise_regauss_measurements_table, tf as regm_tf
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.utility import is_any_type_of_none
 from astropy.table import Table
-from galsim import shear
 
 import SHE_CTE
 from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
@@ -48,7 +43,7 @@ from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconci
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
                                                                   reconcile_invvar,
                                                                   reconcile_shape_weight)
-import numpy as np
+
 
 logger = getLogger(__name__)
 
@@ -65,43 +60,29 @@ chains_reconciliation_methods = {"Best": reconcile_chains_best,
 
 default_chains_reconciliation_method = "Keep"
 
-shear_estimation_method_table_formats = {"KSB": ksbm_tf,
-                                         "REGAUSS": regm_tf,
-                                         "MomentsML": mmlm_tf,
-                                         "LensMC": lmcm_tf,
-                                         "BFD": bfdm_tf}
-
-shear_estimation_method_table_initialisers = {"KSB": initialise_ksb_measurements_table,
-                                              "REGAUSS": initialise_regauss_measurements_table,
-                                              "MomentsML": initialise_momentsml_measurements_table,
-                                              "LensMC": initialise_lensmc_measurements_table,
-                                              "BFD": initialise_bfd_moments_table}
-
 assert default_reconciliation_method in reconciliation_methods
 
 
-def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_columns, table_initialiser):
+def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_columns):
     """ Stores an object's info (from its row) in the proper table within the ids_to_reconcile dict, so it
         can be handled later.
     """
 
-    id = new_row[sem_tf.ID]
-    assert id == existing_row[sem_tf.ID]
+    object_id = new_row[sem_tf.ID]
+    assert object_id == existing_row[sem_tf.ID]
     assert len(new_row) == len(existing_row)
 
     # Is this the first conflict with this ID?
-    if not id in ids_to_reconcile:
+    if not object_id in ids_to_reconcile:
         # First conflict, so add the id with a table using the existing row, ensuring the right column order
-        t = table_initialiser(optional_columns=optional_columns)[optional_columns]
+        t = sem_tf.init_table(optional_columns=optional_columns)[optional_columns]
         t.add_row(existing_row)
-        ids_to_reconcile[id] = t
+        ids_to_reconcile[object_id] = t
     else:
-        t = ids_to_reconcile[id]
+        t = ids_to_reconcile[object_id]
 
     # Add the new row to the table for this ID's conflicts
     t.add_row(new_row)
-
-    return
 
 
 def reconcile_tables(shear_estimates_tables,
@@ -110,8 +91,7 @@ def reconcile_tables(shear_estimates_tables,
                      reconciliation_function,
                      workdir=None):
 
-    sem_tf = shear_estimation_method_table_formats[shear_estimation_method]
-    table_initialiser = shear_estimation_method_table_initialisers[shear_estimation_method]
+    sem_tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[shear_estimation_method]
 
     # We'll properly create the reconciled catalog once we know what optional columns to include in it
     reconciled_catalog = None
@@ -126,7 +106,7 @@ def reconcile_tables(shear_estimates_tables,
     # Loop through each table
     for estimates_table in shear_estimates_tables:
 
-        if estimates_table is None or estimates_table == "None" or estimates_table == "data/None":
+        if is_any_type_of_none(estimates_table):
             continue
 
         if isinstance(estimates_table, str):
@@ -153,40 +133,39 @@ def reconcile_tables(shear_estimates_tables,
             # TODO - set tile ID in header
 
             optional_columns = estimates_table.colnames
-            reconciled_catalog = table_initialiser(optional_columns=optional_columns)[optional_columns]
+            reconciled_catalog = sem_tf.init_table(optional_columns=optional_columns)[optional_columns]
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_catalog.add_index(sem_tf.ID)
 
         # Loop over the rows of the table
         for row in estimates_table:
-            id = row[sem_tf.ID]
+            object_id = row[sem_tf.ID]
 
             # Skip if this ID isn't in the MER catalog for the Tile
-            if id not in object_ids_in_tile:
+            if object_id not in object_ids_in_tile:
                 continue
 
             # Check if this ID is already in the reconciled catalog
-            if id in ids_in_reconciled_catalog:
+            if object_id in ids_in_reconciled_catalog:
                 store_object_info(new_row=row,
-                                  existing_row=reconciled_catalog.loc[id],
+                                  existing_row=reconciled_catalog.loc[object_id],
                                   ids_to_reconcile=ids_to_reconcile,
                                   sem_tf=sem_tf,
-                                  optional_columns=optional_columns,
-                                  table_initialiser=table_initialiser)
+                                  optional_columns=optional_columns,)
 
             else:
                 # Otherwise, add it to the reconciled catalog
                 reconciled_catalog.add_row(row)
-                ids_in_reconciled_catalog.add(id)
+                ids_in_reconciled_catalog.add(object_id)
 
         # End looping through rows of this table
     # End looping through tables
 
     # Now, we need to perform the reconciliation of each id
-    for id in ids_to_reconcile:
-        reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
-                                output_row=reconciled_catalog.loc[id],
+    for object_id in ids_to_reconcile:
+        reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[object_id],
+                                output_row=reconciled_catalog.loc[object_id],
                                 sem_tf=sem_tf)
     return reconciled_catalog
 
@@ -209,7 +188,7 @@ def reconcile_chains(chains_tables,
     # Loop through each table
     for chains_table in chains_tables:
 
-        if chains_table is None or chains_table == "None" or chains_table == "data/None":
+        if is_any_type_of_none(chains_table):
             continue
 
         if isinstance(chains_table, str):
@@ -237,41 +216,39 @@ def reconcile_chains(chains_tables,
             # TODO - set tile ID in header
 
             optional_columns = chains_table.colnames
-            reconciled_chains = initialise_lensmc_chains_table(
-                optional_columns=optional_columns)[optional_columns]
+            reconciled_chains = lmcc_tf.init_table(optional_columns=optional_columns)[optional_columns]
 
             # Set up the object ID to be used as an index for this catalog
             reconciled_chains.add_index(lmcc_tf.ID)
 
         # Loop over the rows of the table
         for row in chains_table:
-            id = row[lmcc_tf.ID]
+            object_id = row[lmcc_tf.ID]
 
             # Skip if this ID isn't in the MER catalog for the Tile
-            if id not in object_ids_in_tile:
+            if object_id not in object_ids_in_tile:
                 continue
 
             # Check if this ID is already in the reconciled catalog
-            if id in ids_in_reconciled_chains:
+            if object_id in ids_in_reconciled_chains:
                 store_object_info(new_row=row,
-                                  existing_row=reconciled_chains.loc[id],
+                                  existing_row=reconciled_chains.loc[object_id],
                                   ids_to_reconcile=ids_to_reconcile,
                                   sem_tf=lmcc_tf,
-                                  optional_columns=optional_columns,
-                                  table_initialiser=initialise_lensmc_chains_table)
+                                  optional_columns=optional_columns,)
 
             else:
                 # Otherwise, add it to the reconciled catalog
                 reconciled_chains.add_row(row)
-                ids_in_reconciled_chains.add(id)
+                ids_in_reconciled_chains.add(object_id)
 
         # End looping through rows of this table
     # End looping through tables
 
     # Now, we need to perform the reconciliation of each id
-    for id in ids_to_reconcile:
-        extra_rows = chains_reconciliation_function(chains_to_reconcile_table=ids_to_reconcile[id],
-                                                    output_row=reconciled_chains.loc[id])
+    for object_id in ids_to_reconcile:
+        extra_rows = chains_reconciliation_function(chains_to_reconcile_table=ids_to_reconcile[object_id],
+                                                    output_row=reconciled_chains.loc[object_id])
         if extra_rows is not None:
             for extra_row in extra_rows:
                 reconciled_chains.add_row(extra_row)
@@ -284,30 +261,12 @@ def reconcile_shear_from_args(args):
     """
 
     # Read in the pipeline config if supplied
-    if args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
-        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
-                                                     workdir=args.workdir)
-    else:
-        pipeline_config = None
+    pipeline_config = args.she_reconciliation_config
 
-    # Determine the reconciliation method to use
+    # Get the reconciliation method to use from the pipeline_config
 
-    method = None
-
-    if args.method is not None:
-        method = str(args.method)
-        logger.info("Using reconciliation method: '" + str(method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.REC_METHOD.value in pipeline_config:
-            method = str(pipeline_config[ReconciliationConfigKeys.REC_METHOD.value])
-            logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
-
-    if method is None:
-        # If we get here, it isn't yet determined, so use the default
-        method = default_reconciliation_method
-        logger.info("Using default reconciliation method: '" + str(method) + "'.")
+    method = pipeline_config[ReconciliationConfigKeys.REC_METHOD]
+    logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
 
     if not method in reconciliation_methods:
         allowed_method_str = ""
@@ -317,25 +276,11 @@ def reconcile_shear_from_args(args):
                          allowed_method_str)
     reconciliation_function = reconciliation_methods[method]
 
-    # Determine the chains reconciliation method to use
+    # Get the chains reconciliation method to use from the pipeline config
 
-    chains_method = None
-
-    if args.chains_method is not None:
-        chains_method = str(args.chains_method)
-        logger.info("Using chains reconciliation method: '" + str(chains_method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the chains method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.CHAINS_REC_METHOD.value in pipeline_config:
-            chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD.value])
-            logger.info("Using chains reconciliation method: '" +
-                        str(chains_method) + "', from pipeline configuration file.")
-
-    if chains_method is None:
-        # If we get here, it isn't yet determined, so use the default
-        chains_method = default_reconciliation_method
-        logger.info("Using default chains reconciliation method: '" + str(method) + "'.")
+    chains_method = pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD]
+    logger.info("Using chains reconciliation method: '" +
+                str(chains_method) + "', from pipeline configuration file.")
 
     # Check we're using a valid chains reconciliation method
     if not chains_method in chains_reconciliation_methods:
@@ -355,7 +300,7 @@ def reconcile_shear_from_args(args):
     # Load in the filenames of the tables for each method
 
     validated_shear_estimates_table_filenames = {}
-    for shear_estimation_method in shear_estimation_method_table_formats:
+    for shear_estimation_method in ShearEstimationMethods:
         validated_shear_estimates_table_filenames[shear_estimation_method] = []
 
     # Start by loading in the data products in the listfile
@@ -368,9 +313,9 @@ def reconcile_shear_from_args(args):
                                                              workdir=args.workdir)
 
         # Get the table filename for each method, and if it isn't None, add it to that method's list
-        for shear_estimation_method in shear_estimation_method_table_formats:
+        for shear_estimation_method in ShearEstimationMethods:
             estimates_table_filename = she_validated_measurement_product.get_method_filename(shear_estimation_method)
-            if estimates_table_filename is not None and estimates_table_filename != "None" and estimates_table_filename != "data/None":
+            if not is_any_type_of_none(estimates_table_filename):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
     # Create a data product for the output
@@ -384,8 +329,7 @@ def reconcile_shear_from_args(args):
     for she_lensmc_chains_product_filename in she_lensmc_chains_filename_list:
         she_lensmc_chains_product = read_xml_product(she_lensmc_chains_product_filename, workdir=args.workdir)
         she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
-        if (she_lensmc_chains_table_filename is not None and she_lensmc_chains_table_filename != "None"
-                and she_lensmc_chains_table_filename != "data/None"):
+        if not is_any_type_of_none(she_lensmc_chains_table_filename):
             lensmc_chains_table_filenames.append(she_lensmc_chains_table_filename)
 
     # Get the tile_id and set it for the new product
@@ -393,7 +337,7 @@ def reconcile_shear_from_args(args):
     reconciled_catalog_product.Data.TileIndex = tile_id
 
     # Loop over each method, and reconcile tables for that method
-    for shear_estimation_method in shear_estimation_method_table_formats:
+    for shear_estimation_method in ShearEstimationMethods:
 
         reconciled_catalog = reconcile_tables(shear_estimates_tables=validated_shear_estimates_table_filenames[shear_estimation_method],
                                               shear_estimation_method=shear_estimation_method,
@@ -412,14 +356,14 @@ def reconcile_shear_from_args(args):
         else:
 
             # The output table is now finalized, so output it and store the filename in the output data product
-            reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),
+            reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.name,
                                                                instance_id=str(tile_id),
                                                                extension=".fits",
                                                                version=SHE_CTE.__version__)
 
             qualified_reconciled_catalog_filename = os.path.join(args.workdir, reconciled_catalog_filename)
 
-            logger.info("Outputting reconciled catalog for method " + shear_estimation_method + " to " +
+            logger.info(f"Outputting reconciled catalog for method {shear_estimation_method.value} to " +
                         qualified_reconciled_catalog_filename)
 
             reconciled_catalog.write(qualified_reconciled_catalog_filename)
@@ -450,7 +394,7 @@ def reconcile_shear_from_args(args):
 
         logger.warning("No reconciled chains data to output.")
 
-        reconciled_chains_catalog = initialise_lensmc_chains_table()
+        reconciled_chains_catalog = lmcc_tf.init_table()
 
     # The output table is now finalized, so output it and store the filename in the output data product
     reconciled_chains_catalog_filename = get_allowed_filename(type_name="REC-LMC-CHAINS",
@@ -473,5 +417,3 @@ def reconcile_shear_from_args(args):
     write_xml_product(reconciled_chains_product, args.she_reconciled_lensmc_chains, workdir=args.workdir)
 
     logger.debug("# Exiting reconcile_shear_from_args() successfully.")
-
-    return

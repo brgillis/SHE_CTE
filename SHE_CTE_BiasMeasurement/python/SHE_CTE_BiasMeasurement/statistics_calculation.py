@@ -5,7 +5,7 @@
     Function to calculate bias statistics from tables of shear measurements and input details.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,7 +22,6 @@ __updated__ = "2020-07-10"
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import get_linregress_statistics, LinregressStatistics
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
 from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_measurements import tf as lmcm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
@@ -37,8 +36,7 @@ import numpy as np
 table_formats = {"she.ksbMeasurements": ksbm_tf,
                  "she.regaussMeasurements": regm_tf,
                  "she.momentsmlMeasurements": mmlm_tf,
-                 "she.lensmcMeasurements": lmcm_tf,
-                 "she.bfdMoments": bfdm_tf}
+                 "she.lensmcMeasurements": lmcm_tf, }
 
 
 def compress_details_and_measurements(combined_table):

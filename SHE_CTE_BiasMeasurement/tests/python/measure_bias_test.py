@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-07-29"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,12 +26,13 @@ from SHE_PPT import products
 from SHE_PPT.file_io import (write_xml_product, read_xml_product,
                              get_allowed_filename, write_listfile)
 from SHE_PPT.math import LinregressStatistics
+from SHE_PPT.pipeline_utility import read_calibration_config
 from numpy.testing import assert_almost_equal
 import pytest
 
 import SHE_CTE
+from SHE_CTE_BiasMeasurement.MeasureBias import D_MB_CONFIG_DEFAULTS, D_MB_CONFIG_TYPES
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-import numpy as np
 
 
 class Args(object):
@@ -47,7 +48,9 @@ class Args(object):
         self.webdav_archive = False
         self.bootstrap_seed = 1
         self.number_threads = 1
-        self.pipeline_config = "None"
+        self.pipeline_config = read_calibration_config(None,
+                                                       defaults=D_MB_CONFIG_DEFAULTS,
+                                                       d_types=D_MB_CONFIG_TYPES)
         self.store_measurements_only = False
         self.use_bias_only = False
 

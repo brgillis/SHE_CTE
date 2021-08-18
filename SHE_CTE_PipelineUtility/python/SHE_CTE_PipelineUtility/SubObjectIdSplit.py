@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2021-05-27"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,14 +21,40 @@ __updated__ = "2021-05-27"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
+from typing import Any, Dict, Union, Tuple, Type
 
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
-from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys
 
 import SHE_CTE
+
 from .ObjectIdSplit import defineSpecificProgramOptions
-from .object_id_split import object_id_split_from_args, defaults_dict_sub_batch
+from .object_id_split import object_id_split_from_args
+
+
+# Set up dicts for pipeline config defaults and types
+D_SOID_SPLIT_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    AnalysisConfigKeys.SOID_BATCH_SIZE: 20,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: 0,
+    AnalysisConfigKeys.SOID_IDS: None,
+}
+
+D_SOID_SPLIT_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    AnalysisConfigKeys.SOID_BATCH_SIZE: int,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: int,
+    AnalysisConfigKeys.SOID_IDS: (list, int),
+}
+
+D_SOID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    AnalysisConfigKeys.SOID_BATCH_SIZE: None,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: None,
+    AnalysisConfigKeys.SOID_IDS: None,
+}
 
 
 logger = getLogger(__name__)
@@ -56,38 +82,31 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    pipeline_config = read_analysis_config(config_filename=args.pipeline_config,
-                                            workdir=args.workdir,
-                                            cline_args=None,
-                                            defaults=defaults_dict_sub_batch)
-    
-    #set args.pipeline_config to the read-in pipeline_config
-    args.pipeline_config = pipeline_config
-    
-    #check if profiling is to be enabled from the pipeline config
-    profiling = pipeline_config[AnalysisConfigKeys.PIP_PROFILE.value].lower() in ['true', 't']
+    args.pipeline_config = read_analysis_config(config_filename=args.pipeline_config,
+                                                workdir=args.workdir,
+                                                defaults=D_SOID_SPLIT_CONFIG_DEFAULTS,
+                                                d_cline_args=D_SOID_SPLIT_CONFIG_CLINE_ARGS,
+                                                parsed_args=args,
+                                                d_types=D_SOID_SPLIT_CONFIG_TYPES)
 
-    try:
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
 
-        if args.profile or profiling:
-            import cProfile
+    if args.profile or profiling:
+        import cProfile
 
-            logger.info("Profiling enabled")
-            filename = os.path.join(args.workdir,args.logdir,"sub_object_id_split.prof")
-            logger.info("Writing profiling data to %s",filename)
+        logger.info("Profiling enabled")
+        filename = os.path.join(args.workdir, args.logdir, "sub_object_id_split.prof")
+        logger.info("Writing profiling data to %s", filename)
 
-            cProfile.runctx("object_id_split_from_args(args,sub_batch=True)", {},
-                            {"object_id_split_from_args": object_id_split_from_args,
-                             "args": args, },
-                            filename=filename)
-        else:
-            logger.info("Profiling disabled")
-            object_id_split_from_args(args,
-                                      sub_batch=True)
-
-    except Exception as e:
-        # logger.warning(f"Failsafe exception block triggered with exception: {e}")
-        raise
+        cProfile.runctx("object_id_split_from_args(args,sub_batch=True)", {},
+                        {"object_id_split_from_args": object_id_split_from_args,
+                         "args": args, },
+                        filename=filename)
+    else:
+        logger.info("Profiling disabled")
+        object_id_split_from_args(args,
+                                  sub_batch=True)
 
     logger.debug('# Exiting SHE_CTE_SubObjectIdSplit mainMethod()')
 

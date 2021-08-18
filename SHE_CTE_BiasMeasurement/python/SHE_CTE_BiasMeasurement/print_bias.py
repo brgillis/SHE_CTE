@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,16 +23,11 @@ __updated__ = "2020-07-02"
 import os
 
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 
 import numpy as np
-
-methods = ["BFD",
-           "KSB",
-           "LensMC",
-           "MomentsML",
-           "REGAUSS"]
 
 logger = getLogger(__name__)
 
@@ -43,29 +38,27 @@ def print_bias_from_product_filename(product_filename, workdir):
 
     print_bias_from_product(p, workdir)
 
-    return
-
 
 def print_bias_from_product(p, workdir):
 
-    for method in methods:
+    for method in ShearEstimationMethods:
 
         g1_bias, g2_bias = p.get_method_bias_measurements(method, workdir=workdir)
 
         if (g1_bias is None or g2_bias is None or g1_bias.m is None or g2_bias.m is None or
                 g1_bias.m == "" or g2_bias.m == ""):
             logger.warning('#')
-            logger.warning("No bias measurements available for method " + method)
+            logger.warning("No bias measurements available for method " + method.value)
             logger.warning('#')
             continue
 
         if (g1_bias.m == "NaN" or g2_bias.m == "NaN" or g1_bias.m == "Inf" or g2_bias.m == "Inf" or
-            np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m)):
-            logger.warning("Bad bias measurements for method " + method)
+                np.isnan(g1_bias.m) or np.isnan(g2_bias.m) or np.isinf(g1_bias.m) or np.isinf(g2_bias.m)):
+            logger.warning("Bad bias measurements for method " + method.value)
             continue
 
         logger.info('#')
-        logger.info('# Bias measurements for method "' + method + '":')
+        logger.info('# Bias measurements for method "' + method.value + '":')
         logger.info('#')
 
         for bias, label in ((g1_bias, "G1"),
@@ -73,5 +66,3 @@ def print_bias_from_product(p, workdir):
             logger.info(label + " component:")
             logger.info("m = " + str(bias.m) + " +/- " + str(bias.m_err))
             logger.info("c = " + str(bias.c) + " +/- " + str(bias.c_err))
-
-    return

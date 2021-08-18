@@ -4,7 +4,7 @@
     Author: Bryan Gillis
 """
 
-__updated__ = "2020-10-05"
+__updated__ = "2021-08-18"
 
 #
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
@@ -25,15 +25,39 @@ __updated__ = "2020-10-05"
 #
 
 import argparse
+import os
+from typing import Any, Dict, Union, Tuple, Type
 
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import (read_config, ReconciliationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
-from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
 
-logger = getLogger('SHE_CTE_ReconcileShear')
+
+# Set up dicts for pipeline config defaults and types
+D_REC_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    ReconciliationConfigKeys.REC_METHOD: "InvVar",
+    ReconciliationConfigKeys.CHAINS_REC_METHOD: "Keep",
+}
+
+D_REC_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    ReconciliationConfigKeys.REC_METHOD: str,
+    ReconciliationConfigKeys.CHAINS_REC_METHOD: str,
+}
+
+D_REC_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    ReconciliationConfigKeys.REC_METHOD: "method",
+    ReconciliationConfigKeys.CHAINS_REC_METHOD: "chains_method",
+}
+
+
+logger = getLogger(__name__)
 
 
 def defineSpecificProgramOptions():
@@ -117,13 +141,31 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    if args.profile:
+    # load the pipeline config in
+    args.pipeline_config = read_config(args.she_reconciliation_config,
+                                       workdir=args.workdir,
+                                       config_keys=ReconciliationConfigKeys,
+                                       defaults=D_REC_SHEAR_CONFIG_DEFAULTS,
+                                       d_cline_args=D_REC_SHEAR_CONFIG_CLINE_ARGS,
+                                       parsed_args=args,
+                                       d_types=D_REC_SHEAR_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
+    if profiling:
         import cProfile
+        logger.info("Profiling enabled")
+
+        filename = os.path.join(args.workdir, args.logdir, "reconcile_shear.prof")
+        logger.info("Writing profiling data to %s", filename)
+
         cProfile.runctx("reconcile_shear_from_args(args)", {},
                         {"reconcile_shear_from_args": reconcile_shear_from_args,
                          "args": args},
-                        filename="reconcile_shear.prof")
+                        filename=filename)
     else:
+        logger.info("Profiling disabled")
         reconcile_shear_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod() successfully.')

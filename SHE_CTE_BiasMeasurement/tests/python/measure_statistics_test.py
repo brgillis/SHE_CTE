@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-11-16"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,19 +20,20 @@ __updated__ = "2020-11-16"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from copy import deepcopy
 import os
 from os.path import join
 
 from SHE_PPT import products
 from SHE_PPT import table_formats
 from SHE_PPT.file_io import write_xml_product, read_xml_product
-from SHE_PPT.math import BiasMeasurements, LinregressResults, linregress_with_errors
+from SHE_PPT.math import BiasMeasurements, LinregressResults
+from SHE_PPT.pipeline_utility import read_calibration_config
 from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_simulated_catalog import tf as datf
 from numpy.testing import assert_almost_equal
 import pytest
 
+from SHE_CTE_BiasMeasurement.MeasureStatistics import D_MS_CONFIG_DEFAULTS, D_MS_CONFIG_TYPES
 from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 import numpy as np
@@ -51,7 +52,9 @@ class Args(object):
         self.webdav_dir = None
         self.webdav_archive = False
         self.number_threads = 1
-        self.pipeline_config = "None"
+        self.pipeline_config = read_calibration_config(None,
+                                                       defaults=D_MS_CONFIG_DEFAULTS,
+                                                       d_types=D_MS_CONFIG_TYPES)
         self.store_measurements_only = False
 
 
@@ -63,10 +66,10 @@ class TestMeasureStatistics:
     def setup_class(cls):
 
         # Set up some mock data for the test
-        cls.details_table = table_formats.she_simulated_catalog.initialise_simulated_catalog()
-        cls.details_table_group = table_formats.she_simulated_catalog.initialise_simulated_catalog()
-        cls.she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        cls.she_measurements_group = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        cls.details_table = table_formats.she_simulated_catalog.tf.init_table()
+        cls.details_table_group = table_formats.she_simulated_catalog.tf.init_table()
+        cls.she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        cls.she_measurements_group = table_formats.she_ksb_measurements.tf.init_table()
 
         cls.len_group = 2  # Number of galaxies per group
 
@@ -132,8 +135,6 @@ class TestMeasureStatistics:
         cls.she_measurements_group[ksbm_tf.g1_err] = g1_err_group
         cls.she_measurements_group[ksbm_tf.g2_err] = g2_err_group
 
-        return
-
     @classmethod
     def teardown_class(cls):
 
@@ -143,8 +144,6 @@ class TestMeasureStatistics:
     def setup(self, tmpdir):
         self.workdir = tmpdir.strpath
         self.logdir = join(tmpdir.strpath, "logs")
-
-        return
 
     def test_calculate_shear_bias_statistics(self):
         """Try using the calculate_shear_bias_statistics function and check the results.
@@ -163,16 +162,14 @@ class TestMeasureStatistics:
         assert_almost_equal(g2_bias.m, self.ex_m2, decimal=4)
         assert_almost_equal(g2_bias.c, self.ex_c2, decimal=4)
 
-        return
-
     def test_bad_shear_bias_input(self):
         """Tests that the calculate_shear_bias_statistics method is resilient to bad measurements.
         """
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
 
         for i in range(len(self.she_measurements)):
             somebad_she_measurements.add_row(vals={ksbm_tf.ID: i})
@@ -216,16 +213,14 @@ class TestMeasureStatistics:
         assert_almost_equal(g1_allbad_bias_stats.w, 0., decimal=4)
         assert_almost_equal(g2_allbad_bias_stats.w, 0., decimal=4)
 
-        return
-
     def test_bad_shear_bias_input_group(self):
         """Tests that the calculate_shear_bias_statistics method is resilient to bad measurements.
         """
 
         # Set up data with some bad input
 
-        somebad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
-        allbad_she_measurements = table_formats.she_ksb_measurements.initialise_ksb_measurements_table()
+        somebad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
+        allbad_she_measurements = table_formats.she_ksb_measurements.tf.init_table()
 
         for j in range(self.len_group):
             for i in range(len(self.she_measurements)):
@@ -270,8 +265,6 @@ class TestMeasureStatistics:
         assert_almost_equal(g1_allbad_bias_stats.w, 0., decimal=4)
         assert_almost_equal(g2_allbad_bias_stats.w, 0., decimal=4)
 
-        return
-
     def test_calculate_shear_bias_statistics_group(self):
         """Try using the calculate_shear_bias_statistics function and check the results on grouped data.
         """
@@ -286,8 +279,6 @@ class TestMeasureStatistics:
 
         assert_almost_equal(g2_bias.m, self.ex_m2, decimal=4)
         assert_almost_equal(g2_bias.c, self.ex_c2, decimal=4)
-
-        return
 
     def test_measure_statistics_from_args(self):
         """Try using the measure_statistics_from_args function and check the results.

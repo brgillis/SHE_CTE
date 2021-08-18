@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,18 +21,15 @@ __updated__ = "2020-07-02"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import os
 
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import read_config, CalibrationConfigKeys, GlobalConfigKeys
 
 import SHE_CTE
 from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product_filename
-
-methods = ["BFD",
-           "KSB",
-           "LensMC",
-           "MomentsML",
-           "REGAUSS"]
 
 
 def defineSpecificProgramOptions():
@@ -89,11 +86,35 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    print_bias_from_product_filename(args.she_bias_measurements, args.workdir)
+    # load the pipeline config in
+    args.pipeline_config = read_config(args.pipeline_config,
+                                       workdir=args.workdir,
+                                       config_keys=CalibrationConfigKeys,
+                                       defaults=D_GLOBAL_CONFIG_DEFAULTS,
+                                       d_cline_args=D_GLOBAL_CONFIG_CLINE_ARGS,
+                                       parsed_args=args,
+                                       d_types=D_GLOBAL_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
+    if profiling:
+        import cProfile
+        logger.info("Profiling enabled")
+
+        filename = os.path.join(args.workdir, args.logdir, "print_bias.prof")
+        logger.info("Writing profiling data to %s", filename)
+
+        cProfile.runctx("print_bias_from_product_filename(bias_measurements, workdir)", {},
+                        {"print_bias_from_product_filename": print_bias_from_product_filename,
+                         "bias_measurements": args.she_bias_measurements,
+                         "workdir": args.workdir, },
+                        filename=filename)
+    else:
+        logger.info("Profiling disabled")
+        print_bias_from_product_filename(args.she_bias_measurements, args.workdir)
 
     logger.debug('# Exiting SHE_CTE_PrintBias mainMethod()')
-
-    return
 
 
 def main():
@@ -107,8 +128,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":
