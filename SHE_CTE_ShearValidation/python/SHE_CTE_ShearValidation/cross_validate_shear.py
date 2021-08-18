@@ -160,7 +160,7 @@ def cross_validate_shear(args, dry_run=False):
         if method_table is None:
             method_table_filename = "None"
         else:
-            method_table_filename = get_allowed_filename("VAL-SHM-" + method.upper(), "0", ".fits",
+            method_table_filename = get_allowed_filename("VAL-SHM-" + method.name, "0", ".fits",
                                                          version=SHE_CTE.__version__)
             method_table.write(join(args.workdir, method_table_filename))
             logger.info("Wrote shear estimates table to " + method_table_filename)
