@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?eclipse-pydev version="1.0"?><pydev_project>
+        
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">python</pydev_property>
+        
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python interpreter</pydev_property>
+        
     
     <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
         <path>/${PROJECT_DIR_NAME}/SHE_CTE/python</path>
@@ -15,15 +18,22 @@
         <path>/${PROJECT_DIR_NAME}/SHE_CTE_BiasMeasurement/tests/python</path>
         <path>/${PROJECT_DIR_NAME}/SHE_CTE_ShearReconciliation/python</path>
         <path>/${PROJECT_DIR_NAME}/SHE_CTE_ShearReconciliation/tests/python</path>
-        <path>/${PROJECT_DIR_NAME}/SHE_CTE_ShearValidation/tests/python</path>
     </pydev_pathproperty>
+        
     
     <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+                
         <path>/home/user/Work/Projects/SHE_PPT/SHE_PPT/python</path>
+                
         <path>/home/user/Work/Projects/EL_Utils/EL_CoordsUtils/python</path>
+                
         <path>/home/user/Work/Projects/EL_Utils/EL_PythonUtils/python</path>
+                
         <path>/home/user/Work/Projects/SHE_LensMC/SHE_LensMC/python</path>
+                
         <path>/home/user/Work/Projects/SHE_MomentsML/SHE_MomentsML/python</path>
+            
     </pydev_pathproperty>
-    
+        
+
 </pydev_project>
