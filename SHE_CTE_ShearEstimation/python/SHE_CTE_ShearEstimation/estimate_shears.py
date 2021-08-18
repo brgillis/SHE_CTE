@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-08-17"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -61,9 +61,6 @@ estimation_methods = {ShearEstimationMethods.KSB: KSB_estimate_shear,
                       ShearEstimationMethods.REGAUSS: REGAUSS_estimate_shear,
                       ShearEstimationMethods.MOMENTSML: ML_estimate_shear,
                       ShearEstimationMethods.LENSMC: she_measure_shear}
-
-default_chains_method = "LensMC"
-default_fast_mode = "normal"
 
 
 def fill_measurements_table_meta(t,
@@ -161,6 +158,22 @@ def estimate_shears_from_args(args, dry_run=False):
         logger.warning("Unrecognized format for MDB file: " + os.path.splitext(args.mdb)[-1] +
                        ". Expected '.xml' or '.json'. Will attempt to proceed with default values.")
 
+    # extract pipeline_config from the args, this has already been read in by
+    # the calling program so no need to read it here
+    pipeline_config = args.pipeline_config
+
+    # Get info from the pipeline config
+    methods = pipeline_config[AnalysisConfigKeys.ES_METHODS]
+    chains_method = pipeline_config[AnalysisConfigKeys.ES_METHODS]
+
+    fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE]
+    if fast_mode_bool:
+        fast_mode = "fast"
+    else:
+        fast_mode = "normal"
+
+    memmap_images = pipeline_config[AnalysisConfigKeys.ES_MEMMAP_IMAGES]
+
     logger.info("Reading " + dry_label + "data images...")
 
     data_stack = SHEFrameStack.read(exposure_listfile_filename=args.data_images,
@@ -172,8 +185,8 @@ def estimate_shears_from_args(args, dry_run=False):
                                     object_id_list_product_filename=args.object_ids,
                                     workdir=args.workdir,
                                     save_products=True,
-                                    memmap=False,
-                                    load_images=False,
+                                    memmap=memmap_images,
+                                    load_images=memmap_images,
                                     mode='denywrite')
 
     # Read in the catalog and exposure data products, which we'll need for updating metadata
@@ -255,48 +268,6 @@ def estimate_shears_from_args(args, dry_run=False):
     if not dry_run:
 
         method_shear_estimates = {}
-
-        # Check for methods in the pipeline options
-
-        # extract pipeline_config from the args, this has already been read in by
-        # the calling program so no need to read it here
-        pipeline_config = args.pipeline_config
-
-        # Use methods specified in the command-line first
-        if args.methods is not None and len(args.methods) > 0:
-            methods = args.methods
-        elif AnalysisConfigKeys.ES_METHODS in pipeline_config:
-            methods = pipeline_config[AnalysisConfigKeys.ES_METHODS].split()
-        elif CalibrationConfigKeys.ES_METHODS in pipeline_config:
-            methods = pipeline_config[CalibrationConfigKeys.ES_METHODS].split()
-        else:
-            # Default to using all methods
-            methods = list(estimation_methods.keys())
-
-        # Determine which method we want chains from
-        if args.chains_method is not None:
-            chains_method = args.chains_method
-        elif AnalysisConfigKeys.ES_CHAINS_METHOD in pipeline_config:
-            chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD]
-        elif CalibrationConfigKeys.ES_CHAINS_METHOD in pipeline_config:
-            chains_method = pipeline_config[CalibrationConfigKeys.ES_CHAINS_METHOD]
-        else:
-            # Default to using all methods
-            chains_method = default_chains_method
-
-        if not chains_method in methods:
-            raise ValueError("chains_method (\"" + str(chains_method) + "\") not in methods to run (" +
-                             str(methods) + ").")
-
-        # Determine whether or not to use fast mode
-        if AnalysisConfigKeys.ES_FAST_MODE in pipeline_config:
-            fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE].lower() in ["true", "t"]
-            if fast_mode_bool:
-                fast_mode = "fast"
-            else:
-                fast_mode = "normal"
-        else:
-            fast_mode = default_fast_mode
 
         for method in methods:
 
