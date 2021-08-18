@@ -19,13 +19,42 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import os
+from typing import Any, Dict, Union, Tuple, Type
 
-from SHE_PPT.logging import getLogger
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import (read_calibration_config, CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
+
+from .measure_bias import measure_bias_from_args
+
+# Set up dicts for pipeline config defaults and types
+D_MB_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    CalibrationConfigKeys.MB_ARCHIVE_DIR: None,
+    CalibrationConfigKeys.MB_NUM_THREADS: 8,
+    CalibrationConfigKeys.MB_WEBDAV_ARCHIVE: False,
+    CalibrationConfigKeys.MB_WEBDAV_DIR: None,
+}
+
+D_MB_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    CalibrationConfigKeys.MB_ARCHIVE_DIR: str,
+    CalibrationConfigKeys.MB_NUM_THREADS: int,
+    CalibrationConfigKeys.MB_WEBDAV_ARCHIVE: bool,
+    CalibrationConfigKeys.MB_WEBDAV_DIR: str,
+}
+
+D_MB_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    CalibrationConfigKeys.MB_ARCHIVE_DIR: "archive_dir",
+    CalibrationConfigKeys.MB_NUM_THREADS: "number_threads",
+    CalibrationConfigKeys.MB_WEBDAV_ARCHIVE: "webdav_dir",
+    CalibrationConfigKeys.MB_WEBDAV_DIR: "webdav_archive",
+}
 
 
 def defineSpecificProgramOptions():
@@ -116,17 +145,33 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    if args.profile:
+    # load the pipeline config in
+    args.pipeline_config = read_calibration_config(args.pipeline_config,
+                                                   workdir=args.workdir,
+                                                   defaults=D_MB_CONFIG_DEFAULTS,
+                                                   d_cline_args=D_MB_CONFIG_CLINE_ARGS,
+                                                   parsed_args=args,
+                                                   d_types=D_MB_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
+    if profiling:
+
         import cProfile
+        logger.info("Profiling enabled")
+
+        filename = os.path.join(args.workdir, args.logdir, "measure_bias.prof")
+        logger.info("Writing profiling data to %s", filename)
+
         cProfile.runctx("measure_bias_from_args(args)", {},
                         {"measure_bias_from_args": measure_bias_from_args,
-                         "args": args}, filename="measure_bias.prof")
+                         "args": args}, filename=filename)
     else:
+        logger.info("Profiling disabled")
         measure_bias_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
-
-    return
 
 
 def main():
@@ -140,8 +185,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

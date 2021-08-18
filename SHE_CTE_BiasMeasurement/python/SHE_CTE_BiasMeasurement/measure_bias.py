@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2021-01-05"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,7 +28,7 @@ from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
                           LinregressStatistics)
-from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, CalibrationConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, CalibrationConfigKeys
 from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_from_stats
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -166,55 +166,17 @@ def measure_bias_from_args(args):
     """
     logger.debug("Entering measure_bias_from_args.")
 
-    # Read in the pipeline config
-    try:
-        pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
-        if pipeline_config is None:
-            pipeline_config = {}
-    except Exception as e:
-        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
-                       "Exception was: " + str(e))
-        pipeline_config = {}
+    # Read info from the pipeline config
+    pipeline_config = args.pipeline_config
 
-    if args.number_threads is not None:
-        number_threads = args.number_threads
-    elif CalibrationConfigKeys.MB_NUM_THREADS.value in pipeline_config:
-        number_threads = pipeline_config[CalibrationConfigKeys.MB_NUM_THREADS.value]
-        if number_threads.lower() == "none":
-            number_threads = default_number_threads
-    else:
-        number_threads = default_number_threads
-
+    number_threads = pipeline_config[CalibrationConfigKeys.MB_NUM_THREADS]
     # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
     if number_threads <= 0:
         number_threads = max(1, mp.cpu_count() + number_threads)
 
-    if args.archive_dir is not None:
-        archive_dir = args.archive_dir
-    elif CalibrationConfigKeys.MB_ARCHIVE_DIR.value in pipeline_config:
-        archive_dir = pipeline_config[CalibrationConfigKeys.MB_ARCHIVE_DIR.value]
-        if archive_dir.lower() == "none":
-            archive_dir = None
-    else:
-        archive_dir = None
-
-    if args.webdav_dir is not None:
-        webdav_dir = args.webdav_dir
-    elif CalibrationConfigKeys.MB_WEBDAV_DIR.value in pipeline_config:
-        webdav_dir = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_DIR.value]
-        if webdav_dir.lower() == "none":
-            webdav_dir = None
-    else:
-        webdav_dir = None
-
-    if args.webdav_archive is not None:
-        webdav_archive = args.webdav_archive
-    elif CalibrationConfigKeys.MB_WEBDAV_ARCHIVE.value in pipeline_config:
-        webdav_archive = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_ARCHIVE.value]
-        if webdav_archive.lower() == "none":
-            webdav_archive = None
-    else:
-        webdav_archive = None
+    archive_dir = pipeline_config[CalibrationConfigKeys.MB_ARCHIVE_DIR]
+    webdav_dir = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_DIR]
+    webdav_archive = pipeline_config[CalibrationConfigKeys.MB_WEBDAV_ARCHIVE]
 
     # Get a list of input files
 
@@ -372,7 +334,7 @@ def measure_bias_from_args(args):
                 g1_bias_measurements = calculate_bootstrap_bias_measurements_from_measurements(
                     method_bias_measurements_lists[method].g1_measurements_list, seed=args.bootstrap_seed)
 
-            elif len(method_bias_measurements_lists[method].g1_measurements_list) >= 0:
+            elif len(method_bias_measurements_lists[method].g1_measurements_list) > 0:
 
                 logger.info("Calculating non-bootstrap bias measurements for method " +
                             method + " from list of bias measurements.")
@@ -388,7 +350,7 @@ def measure_bias_from_args(args):
                 # We have enough data to calculate bootstrap errors
                 g2_bias_measurements = calculate_bootstrap_bias_measurements_from_measurements(
                     method_bias_measurements_lists[method].g2_measurements_list, seed=args.bootstrap_seed)
-            elif len(method_bias_measurements_lists[method].g2_measurements_list) >= 0:
+            elif len(method_bias_measurements_lists[method].g2_measurements_list) > 0:
                 # Not enough for bootstrap errors - calculate simply
                 g2_bias_measurements = combine_bias_measurements(
                     method_bias_measurements_lists[method].g2_measurements_list)
@@ -459,8 +421,6 @@ def measure_bias_from_args(args):
 
     logger.debug("Exiting measure_bias_from_args.")
 
-    return
-
 
 def combine_bias_statistics(l_bias_statistics):
     """ Simple passthrough function to combine stats into a BiasMeasurements object.
@@ -498,7 +458,7 @@ def combine_bias_measurements(l_bias_measurements):
     try:
         lwmc = np.where(np.logical_or(np.isinf(lmc_covar), np.isnan(lmc_covar)), 0, lmc_covar ** (-1))
         bad_covar = False
-    except TypeError as e:
+    except TypeError:
         # If we have bad covars, get covar weighting from regular vars
         bad_covar = True
 

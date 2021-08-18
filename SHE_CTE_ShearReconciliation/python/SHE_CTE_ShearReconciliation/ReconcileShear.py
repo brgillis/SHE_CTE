@@ -29,27 +29,29 @@ import os
 from typing import Any, Dict, Union, Tuple, Type
 
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (read_config, ReconciliationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
 
+
 # Set up dicts for pipeline config defaults and types
 D_REC_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
-    GlobalConfigKeys.PIP_PROFILE: False,
+    **D_GLOBAL_CONFIG_DEFAULTS,
     ReconciliationConfigKeys.REC_METHOD: "InvVar",
     ReconciliationConfigKeys.CHAINS_REC_METHOD: "Keep",
 }
 
 D_REC_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
-    GlobalConfigKeys.PIP_PROFILE: bool,
+    **D_GLOBAL_CONFIG_TYPES,
     ReconciliationConfigKeys.REC_METHOD: str,
     ReconciliationConfigKeys.CHAINS_REC_METHOD: str,
 }
 
 D_REC_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
-    GlobalConfigKeys.PIP_PROFILE: "profile",
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
     ReconciliationConfigKeys.REC_METHOD: "method",
     ReconciliationConfigKeys.CHAINS_REC_METHOD: "chains_method",
 }

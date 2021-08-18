@@ -24,6 +24,7 @@ import os
 from typing import Any, Dict, Union, Tuple, Type
 
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys
 
@@ -35,21 +36,21 @@ from .object_id_split import object_id_split_from_args
 
 # Set up dicts for pipeline config defaults and types
 D_SOID_SPLIT_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
-    GlobalConfigKeys.PIP_PROFILE: False,
+    **D_GLOBAL_CONFIG_DEFAULTS,
     AnalysisConfigKeys.SOID_BATCH_SIZE: 20,
     AnalysisConfigKeys.SOID_MAX_BATCHES: 0,
     AnalysisConfigKeys.SOID_IDS: None,
 }
 
 D_SOID_SPLIT_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
-    GlobalConfigKeys.PIP_PROFILE: bool,
+    **D_GLOBAL_CONFIG_TYPES,
     AnalysisConfigKeys.SOID_BATCH_SIZE: int,
     AnalysisConfigKeys.SOID_MAX_BATCHES: int,
     AnalysisConfigKeys.SOID_IDS: (list, int),
 }
 
 D_SOID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
-    GlobalConfigKeys.PIP_PROFILE: "profile",
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
     AnalysisConfigKeys.SOID_BATCH_SIZE: None,
     AnalysisConfigKeys.SOID_MAX_BATCHES: None,
     AnalysisConfigKeys.SOID_IDS: None,

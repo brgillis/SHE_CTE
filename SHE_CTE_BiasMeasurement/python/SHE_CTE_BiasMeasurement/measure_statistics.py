@@ -5,7 +5,7 @@
     Executable for measuring necessary statistics on a set of shearmeasurements.
 """
 
-__updated__ = "2020-11-13"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -26,7 +26,7 @@ import os
 from SHE_PPT import products
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import archive_product, read_calibration_config, CalibrationConfigKeys
+from SHE_PPT.pipeline_utility import archive_product, CalibrationConfigKeys
 from astropy.table import Table
 
 from SHE_CTE_BiasMeasurement import magic_values as mv
@@ -90,29 +90,11 @@ def measure_statistics_from_args(args):
     # Try to archive the product
 
     # First get the pipeline config so we can figure out where to archive it
-    try:
-        pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
-    except Exception as e:
-        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
-                       "Exception was: " + str(e))
-        pipeline_config = {}
+    pipeline_config = args.pipeline_config
 
-    if CalibrationConfigKeys.MS_ARCHIVE_DIR.value in pipeline_config:
-        archive_dir = pipeline_config[CalibrationConfigKeys.MS_ARCHIVE_DIR.value]
-        if archive_dir == "None":
-            archive_dir = None
-    else:
-        archive_dir = args.archive_dir
-
-    if CalibrationConfigKeys.MS_WEBDAV_ARCHIVE.value in pipeline_config:
-        webdav_dir = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_ARCHIVE.value]
-    else:
-        webdav_dir = args.webdav_dir
-
-    if CalibrationConfigKeys.MS_WEBDAV_DIR.value in pipeline_config:
-        webdav_archive = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_DIR.value].lower() == "true"
-    else:
-        webdav_archive = args.webdav_archive
+    archive_dir = pipeline_config[CalibrationConfigKeys.MS_ARCHIVE_DIR]
+    webdav_dir = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_ARCHIVE]
+    webdav_archive = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_DIR]
 
     # If we're archiving with webdav, determine its mount dir and the full archive directory
     if webdav_archive and archive_dir is not None:
@@ -130,5 +112,3 @@ def measure_statistics_from_args(args):
                            "Exception was: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics measure_statistics_from_args()')
-
-    return

@@ -27,6 +27,7 @@ from typing import Any, Dict, Union, Tuple, Type
 
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT import products
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
@@ -46,17 +47,17 @@ import numpy as np
 
 # Set up dicts for pipeline config defaults and types
 D_SEM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
-    GlobalConfigKeys.PIP_PROFILE: False,
+    **D_GLOBAL_CONFIG_DEFAULTS,
     AnalysisConfigKeys.SEM_NUM_THREADS: 8,
 }
 
 D_SEM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
-    GlobalConfigKeys.PIP_PROFILE: bool,
+    **D_GLOBAL_CONFIG_TYPES,
     AnalysisConfigKeys.SEM_NUM_THREADS: int,
 }
 
 D_SEM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
-    GlobalConfigKeys.PIP_PROFILE: "profile",
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
     AnalysisConfigKeys.SEM_NUM_THREADS: "number_threads",
 }
 

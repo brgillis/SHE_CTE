@@ -26,6 +26,7 @@ from typing import Any, Dict, Union, Tuple, Type
 
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT.constants.classes import ShearEstimationMethods
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (read_config, AnalysisConfigKeys,
                                       CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
@@ -34,9 +35,10 @@ import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 
+
 # Set up dicts for pipeline config defaults and types
 D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
-    GlobalConfigKeys.PIP_PROFILE: False,
+    **D_GLOBAL_CONFIG_DEFAULTS,
     AnalysisConfigKeys.ES_METHODS: list(ShearEstimationMethods),
     AnalysisConfigKeys.ES_CHAINS_METHOD: ShearEstimationMethods.LENSMC,
     AnalysisConfigKeys.ES_FAST_MODE: False,
@@ -44,7 +46,7 @@ D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
 }
 
 D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
-    GlobalConfigKeys.PIP_PROFILE: bool,
+    **D_GLOBAL_CONFIG_TYPES,
     AnalysisConfigKeys.ES_METHODS: (list, ShearEstimationMethods),
     AnalysisConfigKeys.ES_CHAINS_METHOD: ShearEstimationMethods,
     AnalysisConfigKeys.ES_FAST_MODE: bool,
@@ -52,7 +54,7 @@ D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
 }
 
 D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
-    GlobalConfigKeys.PIP_PROFILE: "profile",
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
     AnalysisConfigKeys.ES_METHODS: "methods",
     AnalysisConfigKeys.ES_CHAINS_METHOD: "chains_method",
     AnalysisConfigKeys.ES_FAST_MODE: "fast_mode",
