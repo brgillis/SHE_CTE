@@ -38,8 +38,6 @@ def print_bias_from_product_filename(product_filename, workdir):
 
     print_bias_from_product(p, workdir)
 
-    return
-
 
 def print_bias_from_product(p, workdir):
 
