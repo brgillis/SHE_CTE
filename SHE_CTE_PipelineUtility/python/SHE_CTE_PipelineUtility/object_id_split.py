@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-07-14"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -36,80 +36,7 @@ from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog
 import SHE_CTE
 import numpy as np
 
-default_batch_size = 400
-default_max_batches = 0
-
-default_sub_batch_size = 20
-default_max_sub_batches = 0
-
-
-# Pipeline config keys for the outer loop (sub_batch=False)
-defaults_dict_batch = {AnalysisConfigKeys.OID_BATCH_SIZE.value: default_batch_size,
-                       AnalysisConfigKeys.OID_MAX_BATCHES.value: default_max_batches,
-                       AnalysisConfigKeys.OID_IDS.value: None,
-                       AnalysisConfigKeys.PIP_PROFILE.value: "False"}
-
-# Pipeline config keys for the inner loop (sub_batch=True)
-defaults_dict_sub_batch = {AnalysisConfigKeys.SOID_BATCH_SIZE.value: default_sub_batch_size,
-                           AnalysisConfigKeys.SOID_MAX_BATCHES.value: default_max_sub_batches,
-                           AnalysisConfigKeys.PIP_PROFILE.value: "False"}
-
 logger = getLogger(__name__)
-
-
-def read_oid_split_pipeline_config(pipeline_config,
-                                   workdir,
-                                   sub_batch=False):
-
-    if not sub_batch:
-        defaults_dict = defaults_dict_batch
-        batch_size_key = AnalysisConfigKeys.OID_BATCH_SIZE.value
-        max_batches_key = AnalysisConfigKeys.OID_MAX_BATCHES.value
-        ids_key = AnalysisConfigKeys.OID_IDS.value
-
-    else:
-        defaults_dict = defaults_dict_sub_batch
-        batch_size_key = AnalysisConfigKeys.SOID_BATCH_SIZE.value
-        max_batches_key = AnalysisConfigKeys.SOID_MAX_BATCHES.value
-        ids_key = None
-
-    if type(pipeline_config) is str or pipeline_config is None:
-        pipeline_config = read_analysis_config(config_filename=pipeline_config,
-                                               workdir=workdir,
-                                               cline_args=None,
-                                               defaults=defaults_dict)
-    elif type(pipeline_config) is not dict:
-        raise TypeError("read_oid_split_pipeline_config: pipeline_config is an unexpected type - %s" %
-                        type(pipeline_config))
-
-    # Convert values into the proper type and log values
-
-    batch_size = int(pipeline_config[batch_size_key])
-    logger.info(f"Using batch size of: {batch_size}")
-
-    max_batches = int(pipeline_config[max_batches_key])
-    logger.info(f"Using max batches of: {max_batches}")
-
-    if ids_key is not None:
-        ids_to_use = pipeline_config[ids_key]
-    else:
-        ids_to_use = None
-
-    # Check for the IDs key
-    if ids_to_use is None:
-        logger.info("Using all IDs")
-    else:
-
-        ids_to_use_str = pipeline_config[ids_key].split()
-
-        if len(ids_to_use_str) == 0:
-            ids_to_use = None
-            logger.info("Using all IDs")
-        else:
-            ids_to_use = list(map(int, ids_to_use_str))
-            logger.info(f"Using limited selection of IDs: {ids_to_use}")
-
-    return ids_to_use, max_batches, batch_size
 
 
 def get_tile_list(data_stack):

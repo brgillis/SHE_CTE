@@ -5,7 +5,7 @@
     Split point executable for splitting up processing of objects into batches.
 """
 
-__updated__ = "2021-05-27"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,14 +21,39 @@ __updated__ = "2021-05-27"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
+from typing import Any, Dict, Union, Tuple, Type
 
-from SHE_PPT.logging import getLogger
 from EL_PythonUtils.utilities import get_arguments_string
-from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys
 
 import SHE_CTE
+
 from .ObjectIdSplit import defineSpecificProgramOptions
-from .object_id_split import object_id_split_from_args, defaults_dict_sub_batch
+from .object_id_split import object_id_split_from_args
+
+
+# Set up dicts for pipeline config defaults and types
+D_SOID_SPLIT_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    GlobalConfigKeys.PIP_PROFILE: False,
+    AnalysisConfigKeys.SOID_BATCH_SIZE: 20,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: 0,
+    AnalysisConfigKeys.SOID_IDS: None,
+}
+
+D_SOID_SPLIT_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    GlobalConfigKeys.PIP_PROFILE: bool,
+    AnalysisConfigKeys.SOID_BATCH_SIZE: int,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: int,
+    AnalysisConfigKeys.SOID_IDS: (list, int),
+}
+
+D_SOID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
+    GlobalConfigKeys.PIP_PROFILE: "profile",
+    AnalysisConfigKeys.SOID_BATCH_SIZE: None,
+    AnalysisConfigKeys.SOID_MAX_BATCHES: None,
+    AnalysisConfigKeys.SOID_IDS: None,
+}
 
 
 logger = getLogger(__name__)
@@ -56,16 +81,15 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    pipeline_config = read_analysis_config(config_filename=args.pipeline_config,
-                                            workdir=args.workdir,
-                                            cline_args=None,
-                                            defaults=defaults_dict_sub_batch)
-    
-    #set args.pipeline_config to the read-in pipeline_config
-    args.pipeline_config = pipeline_config
-    
-    #check if profiling is to be enabled from the pipeline config
-    profiling = pipeline_config[AnalysisConfigKeys.PIP_PROFILE.value].lower() in ['true', 't']
+    args.pipeline_config = read_analysis_config(config_filename=args.pipeline_config,
+                                                workdir=args.workdir,
+                                                defaults=D_SOID_SPLIT_CONFIG_DEFAULTS,
+                                                d_cline_args=D_SOID_SPLIT_CONFIG_CLINE_ARGS,
+                                                parsed_args=args,
+                                                d_types=D_SOID_SPLIT_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
 
     try:
 
@@ -73,8 +97,8 @@ def mainMethod(args):
             import cProfile
 
             logger.info("Profiling enabled")
-            filename = os.path.join(args.workdir,args.logdir,"sub_object_id_split.prof")
-            logger.info("Writing profiling data to %s",filename)
+            filename = os.path.join(args.workdir, args.logdir, "sub_object_id_split.prof")
+            logger.info("Writing profiling data to %s", filename)
 
             cProfile.runctx("object_id_split_from_args(args,sub_batch=True)", {},
                             {"object_id_split_from_args": object_id_split_from_args,

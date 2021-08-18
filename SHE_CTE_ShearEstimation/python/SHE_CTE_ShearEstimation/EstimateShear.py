@@ -22,7 +22,7 @@ __updated__ = "2021-08-18"
 
 import argparse
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Union, Tuple, Type
 
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT.constants.classes import ShearEstimationMethods
@@ -43,7 +43,7 @@ D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.ES_MEMMAP_IMAGES: False,
 }
 
-D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Any] = {
+D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
     GlobalConfigKeys.PIP_PROFILE: bool,
     AnalysisConfigKeys.ES_METHODS: (list, ShearEstimationMethods),
     AnalysisConfigKeys.ES_CHAINS_METHOD: ShearEstimationMethods,
@@ -51,7 +51,7 @@ D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.ES_MEMMAP_IMAGES: bool,
 }
 
-D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
+D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     GlobalConfigKeys.PIP_PROFILE: "profile",
     AnalysisConfigKeys.ES_METHODS: "methods",
     AnalysisConfigKeys.ES_CHAINS_METHOD: "chains_method",
@@ -195,7 +195,6 @@ def mainMethod(args):
                                        defaults=D_EST_SHEAR_CONFIG_DEFAULTS,
                                        d_cline_args=D_EST_SHEAR_CONFIG_CLINE_ARGS,
                                        parsed_args=args,
-                                       config_keys=AnalysisConfigKeys,
                                        d_types=D_EST_SHEAR_CONFIG_TYPES)
 
     # check if profiling is to be enabled from the pipeline config
