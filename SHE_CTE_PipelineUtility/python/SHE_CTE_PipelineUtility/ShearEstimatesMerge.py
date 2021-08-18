@@ -6,7 +6,7 @@
     per Field of View.
 """
 
-__updated__ = "2021-05-27"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,17 +23,20 @@ __updated__ = "2021-05-27"
 
 import argparse
 import os
+from typing import Any, Dict, Union, Tuple, Type
 
+from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import (read_listfile,
                              read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.pipeline_utility import (read_analysis_config, AnalysisConfigKeys,
+                                      ConfigKeys, GlobalConfigKeys)
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
-from EL_PythonUtils.utilities import get_arguments_string
 from astropy import table
 
 import SHE_CTE
@@ -41,11 +44,24 @@ import multiprocessing as mp
 import numpy as np
 
 
+# Set up dicts for pipeline config defaults and types
+D_SEM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    GlobalConfigKeys.PIP_PROFILE: False,
+    AnalysisConfigKeys.SEM_NUM_THREADS: 8,
+}
+
+D_SEM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    GlobalConfigKeys.PIP_PROFILE: bool,
+    AnalysisConfigKeys.SEM_NUM_THREADS: int,
+}
+
+D_SEM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    GlobalConfigKeys.PIP_PROFILE: "profile",
+    AnalysisConfigKeys.SEM_NUM_THREADS: "number_threads",
+}
+
+
 logger = getLogger(__name__)
-
-methods = ("KSB", "REGAUSS", "LensMC", "BFD", "MomentsML")
-
-default_number_threads = 8
 
 
 def defineSpecificProgramOptions():
@@ -169,21 +185,21 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
     she_measurements_tables = {}
 
-    for method in methods:
+    for method in ShearEstimationMethods:
 
         try:
 
             she_measurements_method_table_filename = she_measurements_table_product.get_method_filename(method)
 
             if she_measurements_method_table_filename is None or she_measurements_method_table_filename == "None":
-                logger.debug("No shear estimates available for method: " + method)
+                logger.debug(f"No shear estimates available for method {method}")
                 continue
 
             she_measurements_method_table = table.Table.read(os.path.join(
                 workdir, she_measurements_method_table_filename))
 
             if not is_in_format(she_measurements_method_table, sm_tf, verbose=True, ignore_metadata=True):
-                raise TypeError("Input shear estimates table for method {} is of invalid format.".format(method))
+                raise TypeError(f"Input shear estimates table for method {method} is of invalid format.")
 
             # Append the table to the list of tables
             she_measurements_tables[method] = she_measurements_method_table
@@ -215,22 +231,15 @@ def she_measurements_merge_from_args(args):
         pipeline_config = {}
 
     # Determine how many threads we'll use
-    if args.number_threads is not None:
-        number_threads = args.number_threads
-    elif AnalysisConfigKeys.SEM_NUM_THREADS.value in pipeline_config:
-        number_threads = pipeline_config[AnalysisConfigKeys.MB_NUM_THREADS.value]
-        if number_threads.lower() == "none":
-            number_threads = default_number_threads
-    else:
-        number_threads = default_number_threads
+    number_threads = args.pipeline_config[AnalysisConfigKeys.SEM_NUM_THREADS]
 
     # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
     if number_threads <= 0:
         number_threads = max(1, mp.cpu_count() + number_threads)
 
     # Keep a list of all shear estimates tables for each method
-    she_measurements_tables = dict.fromkeys(methods)
-    for method in methods:
+    she_measurements_tables = dict.fromkeys(ShearEstimationMethods)
+    for method in ShearEstimationMethods:
         # Start with an empty list of the tables
         she_measurements_tables[method] = []
 
@@ -307,7 +316,7 @@ def she_measurements_merge_from_args(args):
     # End section to handle multithreading
 
     # Sort the tables into the expected format
-    for method in methods:
+    for method in ShearEstimationMethods:
 
         for i in range(len(l_she_measurements_tables)):
             if method not in l_she_measurements_tables[i]:
@@ -323,7 +332,7 @@ def she_measurements_merge_from_args(args):
 
     # Combine the shear estimates tables for each method and output them
 
-    combined_she_measurements_tables = dict.fromkeys(methods)
+    combined_she_measurements_tables = dict.fromkeys(ShearEstimationMethods)
 
     # Create the output products
     combined_she_measurements_product = products.she_measurements.create_she_measurements_product(
@@ -343,7 +352,7 @@ def she_measurements_merge_from_args(args):
     combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
     combined_she_lensmc_chains_product.Data.TileList = tile_list
 
-    for method in methods:
+    for method in ShearEstimationMethods:
 
         # Skip if no data for this method
         if len(she_measurements_tables[method]) == 0:
@@ -354,7 +363,7 @@ def she_measurements_merge_from_args(args):
         combined_she_measurements_tables[method] = table.vstack(she_measurements_tables[method])
 
         # Get a filename for the table
-        combined_she_measurements_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.upper(),
+        combined_she_measurements_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.name,
                                                                         instance_id='MERGED',
                                                                         extension=".fits",
                                                                         version=SHE_CTE.__version__,
@@ -367,7 +376,7 @@ def she_measurements_merge_from_args(args):
                                                                     combined_she_measurements_table_filename),
                                                        format="fits")
 
-        logger.info("Combined shear estimates for method " + method +
+        logger.info("Combined shear estimates for method " + method.value +
                     " output to: " + combined_she_measurements_table_filename)
 
     # Combine the chains tables
@@ -389,7 +398,7 @@ def she_measurements_merge_from_args(args):
                                                          combined_she_lensmc_chains_table_filename),
                                             format="fits")
 
-    logger.info("Combined shear estimates for method " + method +
+    logger.info("Combined shear estimates for method " + method.value +
                 " output to: " + combined_she_measurements_table_filename)
 
     # Save the products
@@ -400,8 +409,6 @@ def she_measurements_merge_from_args(args):
     logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
 
     logger.debug('# Exiting she_measurements_merge_from_args normally')
-
-    return
 
 
 def mainMethod(args):
@@ -423,23 +430,38 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
+    # load the pipeline config in
+    args.pipeline_config = read_analysis_config(args.pipeline_config,
+                                                workdir=args.workdir,
+                                                defaults=D_SEM_CONFIG_DEFAULTS,
+                                                d_cline_args=D_SEM_CONFIG_CLINE_ARGS,
+                                                parsed_args=args,
+                                                d_types=D_SEM_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
     try:
 
-        if args.profile:
+        if profiling:
             import cProfile
+            logger.info("Profiling enabled")
+
+            filename = os.path.join(args.workdir, args.logdir, "estimate_shears.prof")
+            logger.info("Writing profiling data to %s", filename)
+
             cProfile.runctx("she_measurements_merge_from_args(args)", {},
                             {"she_measurements_merge_from_args": she_measurements_merge_from_args,
                              "args": args, },
-                            filename="she_measurements_merge.prof")
+                            filename=filename)
         else:
+            logger.info("Profiling disabled")
             she_measurements_merge_from_args(args)
     except Exception as e:
         # logger.warning("Failsafe exception block triggered with exception: " + str(e))
         raise
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')
-
-    return
 
 
 def main():
@@ -453,8 +475,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":
