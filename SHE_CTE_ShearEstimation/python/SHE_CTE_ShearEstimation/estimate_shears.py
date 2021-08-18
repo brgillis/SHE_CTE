@@ -35,7 +35,7 @@ from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename, get_data_filename,
                              read_listfile, find_file)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, CalibrationConfigKeys, get_conditional_product)
+from SHE_PPT.pipeline_utility import AnalysisConfigKeys, get_conditional_product
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
@@ -202,10 +202,10 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Set up method data filenames
 
-    training_data_filenames = {"KSB": args.ksb_training_data,
-                               "REGAUSS": args.regauss_training_data,
-                               "MomentsML": args.momentsml_training_data,
-                               "LensMC": args.lensmc_training_data}
+    training_data_filenames = {ShearEstimationMethods.KSB: args.ksb_training_data,
+                               ShearEstimationMethods.REGAUSS: args.regauss_training_data,
+                               ShearEstimationMethods.MOMENTSML: args.momentsml_training_data,
+                               ShearEstimationMethods.LENSMC: args.lensmc_training_data}
 
     # Set up output
 
@@ -271,7 +271,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
         for method in methods:
 
-            logger.info("Estimating shear with method " + method + "...")
+            logger.info("Estimating shear with method " + method.value + "...")
 
             load_training_data = loading_methods[method]
 
@@ -290,15 +290,15 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 # Check we've supplied a method for it
                 if estimate_shear is None:
-                    raise NotImplementedError("No shear measurement method supplied for method " + method + ".")
+                    raise NotImplementedError("No shear measurement method supplied for method " + method.value + ".")
 
                 if load_training_data is not None:
                     training_data_filename = training_data_filenames[method]
                     if training_data_filename == 'None':
                         training_data_filename = None
-                    if training_data_filename is None and method not in ("KSB", "LensMC", "REGAUSS"):
+                    if training_data_filename is None and method == ShearEstimationMethods.MOMENTSML:
                         raise ValueError(
-                            "Invalid implementation: No training data supplied for method " + method + ".")
+                            "Invalid implementation: No training data supplied for method " + method.value + ".")
                     training_data = load_training_data(training_data_filename, workdir=args.workdir)
                 else:
                     training_data = None
@@ -324,7 +324,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          return_chains=return_chains,
                                                          mode=fast_mode)
 
-                if return_chains or method == "LensMC":
+                if return_chains or method == ShearEstimationMethods.LENSMC:
                     shear_estimates_table, chains_table = shear_estimates_results
                 else:
                     shear_estimates_table = shear_estimates_results
@@ -343,7 +343,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 if return_chains:
 
-                    chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
+                    chains_data_filename = get_allowed_filename(method.name + "-CHAINS", estimates_instance_id,
                                                                 version=SHE_CTE.__version__,
                                                                 subdir=subfolder_name)
 
@@ -362,7 +362,7 @@ def estimate_shears_from_args(args, dry_run=False):
 
                 if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
-                                     "for method " + method + ".")
+                                     "for method " + method.value + ".")
 
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
@@ -403,7 +403,7 @@ def estimate_shears_from_args(args, dry_run=False):
                 hdulist.append(table_to_hdu(shear_estimates_table))
 
                 if return_chains:
-                    chains_data_filename = get_allowed_filename(method.upper() + "-CHAINS", estimates_instance_id,
+                    chains_data_filename = get_allowed_filename(method.name + "-CHAINS", estimates_instance_id,
                                                                 version=SHE_CTE.__version__,
                                                                 subdir=subfolder_name)
 
@@ -472,5 +472,3 @@ def estimate_shears_from_args(args, dry_run=False):
     logger.info("Finished shear estimation.")
 
     logger.debug("# Exiting estimate_shears_from_args() successfully.")
-
-    return

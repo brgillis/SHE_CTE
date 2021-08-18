@@ -24,12 +24,14 @@ import os
 from SHE_PPT import products
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
 from SHE_PPT.file_io import write_xml_product, read_xml_product, get_allowed_filename, write_listfile
+from SHE_PPT.pipeline_utility import read_config, ReconciliationConfigKeys
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf, initialise_mer_final_catalog
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, initialise_lensmc_chains_table, len_chain
 from astropy.table import Table, Row
 import pytest
 
 import SHE_CTE
+from SHE_CTE_ShearReconciliation.ReconcileShear import D_REC_SHEAR_CONFIG_DEFAULTS, D_REC_SHEAR_CONFIG_TYPES
 from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconcile_chains_best,
                                                                          reconcile_chains_shape_weight,
                                                                          reconcile_chains_invvar,
@@ -109,7 +111,7 @@ class TestReconcileShear:
 
             tf = D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem]
 
-            make_chains = sem == "LensMC"
+            make_chains = sem == ShearEstimationMethods.LENSMC
 
             tables = []
 
@@ -218,7 +220,7 @@ class TestReconcileShear:
     @pytest.mark.skip(reason="Not available until DM update")
     def test_reconcile_shape_weight(self):
 
-        sem = "LensMC"
+        sem = ShearEstimationMethods.LENSMC
 
         sem_table_list = self.sem_table_lists[sem]
         reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
@@ -487,7 +489,10 @@ class TestReconcileShear:
                     she_validated_measurements_listfile=sem_listfile_filename,
                     she_lensmc_chains_listfile=chains_listfile_filename,
                     mer_final_catalog=mer_final_catalog_product_filename,
-                    she_reconciliation_config="None",
+                    she_reconciliation_config=read_config(None,
+                                                          config_keys=ReconciliationConfigKeys,
+                                                          defaults=D_REC_SHEAR_CONFIG_DEFAULTS,
+                                                          d_types=D_REC_SHEAR_CONFIG_TYPES),
                     method=None,
                     chains_method=None,
                     she_reconciled_measurements=srm_product_filename,

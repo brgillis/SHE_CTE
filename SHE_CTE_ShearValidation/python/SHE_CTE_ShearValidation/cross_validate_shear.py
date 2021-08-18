@@ -21,22 +21,15 @@
 from os.path import join
 
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
 from SHE_PPT.file_io import (read_xml_product, write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.table_formats.she_bfd_moments import tf as bfdm_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 from astropy.table import Table
 
 import SHE_CTE
-
-
-sm_tfs = {"KSB": sm_tf,
-          "REGAUSS": sm_tf,
-          "MomentsML": sm_tf,
-          "LensMC": sm_tf,
-          "BFD": bfdm_tf}
 
 
 def cross_validate_shear_estimates(primary_shear_estimates_table,
@@ -70,8 +63,6 @@ def cross_validate_shear_estimates(primary_shear_estimates_table,
 
     logger.debug("Exiting validate_shear_estimates")
 
-    return
-
 
 def cross_validate_shear(args, dry_run=False):
     """
@@ -100,13 +91,13 @@ def cross_validate_shear(args, dry_run=False):
     primary_shear_estimates_table = None
     other_shear_estimates_tables = {}
 
-    for method in sm_tfs:
+    for method in ShearEstimationMethods:
 
         filename = shear_estimates_prod.get_method_filename(method)
 
         if filename not in (None, "None", "", "data/None", "data/"):
             shear_estimates_table = Table.read(join(args.workdir, filename), format='fits')
-            if not is_in_format(shear_estimates_table, sm_tfs[method], strict=False):
+            if not is_in_format(shear_estimates_table, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[method], strict=False):
                 logger.warning("Shear estimates table from " +
                                join(args.workdir, filename) + " is in invalid format.")
                 continue
@@ -197,5 +188,3 @@ def cross_validate_shear(args, dry_run=False):
     logger.info("Wrote cross-validated shear measurements product to " + args.cross_validated_shear_estimates_product)
 
     logger.info("Finished" + dry_label + " shear validation.")
-
-    return

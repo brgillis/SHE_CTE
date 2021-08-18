@@ -32,6 +32,7 @@ from SHE_PPT.pipeline_utility import ReconciliationConfigKeys
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_utility import is_in_format
+from SHE_PPT.utility import is_any_type_of_none
 from astropy.table import Table
 
 import SHE_CTE
@@ -105,7 +106,7 @@ def reconcile_tables(shear_estimates_tables,
     # Loop through each table
     for estimates_table in shear_estimates_tables:
 
-        if estimates_table is None or estimates_table == "None" or estimates_table == "data/None":
+        if is_any_type_of_none(estimates_table):
             continue
 
         if isinstance(estimates_table, str):
@@ -187,7 +188,7 @@ def reconcile_chains(chains_tables,
     # Loop through each table
     for chains_table in chains_tables:
 
-        if chains_table is None or chains_table == "None" or chains_table == "data/None":
+        if is_any_type_of_none(chains_table):
             continue
 
         if isinstance(chains_table, str):
@@ -314,8 +315,7 @@ def reconcile_shear_from_args(args):
         # Get the table filename for each method, and if it isn't None, add it to that method's list
         for shear_estimation_method in ShearEstimationMethods:
             estimates_table_filename = she_validated_measurement_product.get_method_filename(shear_estimation_method)
-            if (estimates_table_filename is not None and estimates_table_filename != "None" and
-                    estimates_table_filename != "data/None"):
+            if not is_any_type_of_none(estimates_table_filename):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
     # Create a data product for the output
@@ -329,8 +329,7 @@ def reconcile_shear_from_args(args):
     for she_lensmc_chains_product_filename in she_lensmc_chains_filename_list:
         she_lensmc_chains_product = read_xml_product(she_lensmc_chains_product_filename, workdir=args.workdir)
         she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
-        if (she_lensmc_chains_table_filename is not None and she_lensmc_chains_table_filename != "None"
-                and she_lensmc_chains_table_filename != "data/None"):
+        if not is_any_type_of_none(she_lensmc_chains_table_filename):
             lensmc_chains_table_filenames.append(she_lensmc_chains_table_filename)
 
     # Get the tile_id and set it for the new product
@@ -357,14 +356,14 @@ def reconcile_shear_from_args(args):
         else:
 
             # The output table is now finalized, so output it and store the filename in the output data product
-            reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.upper(),
+            reconciled_catalog_filename = get_allowed_filename(type_name="REC-SHM-" + shear_estimation_method.name,
                                                                instance_id=str(tile_id),
                                                                extension=".fits",
                                                                version=SHE_CTE.__version__)
 
             qualified_reconciled_catalog_filename = os.path.join(args.workdir, reconciled_catalog_filename)
 
-            logger.info("Outputting reconciled catalog for method " + shear_estimation_method + " to " +
+            logger.info(f"Outputting reconciled catalog for method {shear_estimation_method.value} to " +
                         qualified_reconciled_catalog_filename)
 
             reconciled_catalog.write(qualified_reconciled_catalog_filename)
@@ -418,5 +417,3 @@ def reconcile_shear_from_args(args):
     write_xml_product(reconciled_chains_product, args.she_reconciled_lensmc_chains, workdir=args.workdir)
 
     logger.debug("# Exiting reconcile_shear_from_args() successfully.")
-
-    return
