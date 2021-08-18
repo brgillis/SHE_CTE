@@ -24,6 +24,7 @@ from _pickle import UnpicklingError
 import os
 
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
@@ -31,7 +32,6 @@ from SHE_PPT.math import (combine_linregress_statistics, BiasMeasurements,
 from SHE_PPT.pipeline_utility import archive_product, CalibrationConfigKeys
 from SHE_PPT.products.she_bias_statistics import create_dpd_she_bias_statistics_from_stats
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.find_files import recursive_find_files
 from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product
 import multiprocessing as mp
@@ -112,7 +112,7 @@ def read_statistics(shear_statistics_file, workdir, recovery_mode, use_bias_only
     all_method_statistics = {}
     all_method_measurements = {}
 
-    for method in mv.estimation_methods:
+    for method in ShearEstimationMethods:
 
         if not use_bias_only:
 
@@ -226,7 +226,7 @@ def measure_bias_from_args(args):
 
     if not args.use_bias_only:
 
-        for method in mv.estimation_methods:
+        for method in ShearEstimationMethods:
 
             method_shear_statistics_list = MethodStatisticsList()
 
@@ -259,7 +259,7 @@ def measure_bias_from_args(args):
 
     if missing_shear_statistics or args.use_bias_only:
 
-        for method in mv.estimation_methods:
+        for method in ShearEstimationMethods:
 
             # Check if we have some bias measurements
 
@@ -305,18 +305,17 @@ def measure_bias_from_args(args):
                                                                                                    []),
                                                                           workdir=args.workdir)
     else:
-        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(BFD_bias_statistics=[],
-                                                                          KSB_bias_statistics=(method_shear_statistics_lists["KSB"].g1_statistics_list,
-                                                                                               method_shear_statistics_lists["KSB"].g2_statistics_list),
-                                                                          LensMC_bias_statistics=(method_shear_statistics_lists["LensMC"].g1_statistics_list,
-                                                                                                  method_shear_statistics_lists["LensMC"].g2_statistics_list),
-                                                                          MomentsML_bias_statistics=(method_shear_statistics_lists["MomentsML"].g1_statistics_list,
-                                                                                                     method_shear_statistics_lists["MomentsML"].g2_statistics_list),
-                                                                          REGAUSS_bias_statistics=(method_shear_statistics_lists["REGAUSS"].g1_statistics_list,
-                                                                                                   method_shear_statistics_lists["REGAUSS"].g2_statistics_list),
+        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(KSB_bias_statistics=(method_shear_statistics_lists[ShearEstimationMethods.KSB].g1_statistics_list,
+                                                                                               method_shear_statistics_lists[ShearEstimationMethods.KSB].g2_statistics_list),
+                                                                          LensMC_bias_statistics=(method_shear_statistics_lists[ShearEstimationMethods.LENSMC].g1_statistics_list,
+                                                                                                  method_shear_statistics_lists[ShearEstimationMethods.LENSMC].g2_statistics_list),
+                                                                          MomentsML_bias_statistics=(method_shear_statistics_lists[ShearEstimationMethods.MOMENTSML].g1_statistics_list,
+                                                                                                     method_shear_statistics_lists[ShearEstimationMethods.MOMENTSML].g2_statistics_list),
+                                                                          REGAUSS_bias_statistics=(method_shear_statistics_lists[ShearEstimationMethods.REGAUSS].g1_statistics_list,
+                                                                                                   method_shear_statistics_lists[ShearEstimationMethods.REGAUSS].g2_statistics_list),
                                                                           workdir=args.workdir)
 
-    for method in mv.estimation_methods:
+    for method in ShearEstimationMethods:
 
         if method == "BFD":
             continue
@@ -362,7 +361,7 @@ def measure_bias_from_args(args):
             if len(method_shear_statistics_lists[method].g1_statistics_list) >= bootstrap_threshold:
 
                 logger.info("Calculating bootstrap bias measurements for method " +
-                            method + " from list of bias statistics.")
+                            method.value + " from list of bias statistics.")
 
                 # We have enough data to calculate bootstrap errors
                 g1_bias_measurements = calculate_bootstrap_bias_measurements_from_statistics(
@@ -371,7 +370,7 @@ def measure_bias_from_args(args):
             elif len(method_shear_statistics_lists[method].g1_statistics_list) > 0:
 
                 logger.info("Calculating non-bootstrap bias measurements for method " +
-                            method + " from list of bias statistics.")
+                            method.value + " from list of bias statistics.")
 
                 # Not enough for bootstrap errors - calculate simply
                 g1_bias_measurements = BiasMeasurements(

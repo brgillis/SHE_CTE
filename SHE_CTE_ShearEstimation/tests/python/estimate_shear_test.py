@@ -21,17 +21,17 @@
 from copy import deepcopy
 import gc
 
+from SHE_PPT import flags
+from SHE_PPT import mdb
+from SHE_PPT.constants.fits import SCALE_LABEL, GAIN_LABEL
+from SHE_PPT.file_io import find_file
+from SHE_PPT.she_image import SHEImage
 from astropy.io import fits
 import galsim
 import pytest
 
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (get_resampled_image, inv_var_stack,
-                                                           get_shear_estimate, ShearEstimate)
-from SHE_PPT import flags
-from SHE_PPT import mdb
-from SHE_PPT.file_io import find_file
-from SHE_PPT.magic_values import SCALE_LABEL, GAIN_LABEL
-from SHE_PPT.she_image import SHEImage
+                                                           get_shear_estimate)
 import numpy as np
 
 

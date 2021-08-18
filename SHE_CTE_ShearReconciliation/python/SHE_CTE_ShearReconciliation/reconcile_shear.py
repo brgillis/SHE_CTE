@@ -260,7 +260,7 @@ def reconcile_shear_from_args(args):
     """
 
     # Read in the pipeline config if supplied
-    pipeline_config = args.pipeline_config
+    pipeline_config = args.she_reconciliation_config
 
     # Get the reconciliation method to use from the pipeline_config
 

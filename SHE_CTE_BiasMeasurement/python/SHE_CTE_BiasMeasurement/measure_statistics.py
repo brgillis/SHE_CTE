@@ -24,12 +24,12 @@ __updated__ = "2021-08-18"
 import os
 
 from SHE_PPT import products
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import archive_product, CalibrationConfigKeys
 from astropy.table import Table
 
-from SHE_CTE_BiasMeasurement import magic_values as mv
 from SHE_CTE_BiasMeasurement.statistics_calculation import calculate_shear_bias_statistics
 
 
@@ -60,7 +60,7 @@ def measure_statistics_from_args(args):
 
     # Read in shear estimates, and calculate statistics for each method
 
-    for method in mv.estimation_methods:
+    for method in ShearEstimationMethods:
 
         try:
 

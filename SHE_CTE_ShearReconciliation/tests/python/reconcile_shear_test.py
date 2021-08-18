@@ -133,7 +133,7 @@ class TestReconcileShear:
 
                 # Create the measurements table
 
-                t = tf.init_table[sem](optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
+                t = tf.init_table(optional_columns=(tf.shape_weight, tf.e_var, tf.shape_noise))
                 for _ in range(l):
                     t.add_row()
 
@@ -191,7 +191,7 @@ class TestReconcileShear:
 
     def test_reconcile_best(self):
 
-        sem = "LensMC"
+        sem = ShearEstimationMethods.LENSMC
 
         sem_table_list = self.sem_table_lists[sem]
         reconciled_catalog = reconcile_tables(shear_estimates_tables=sem_table_list,
@@ -438,11 +438,11 @@ class TestReconcileShear:
 
         # Create a data product for each input shear estimates table
         sem_product_filename_list = []
-        for i in range(len(self.sem_table_lists["LensMC"])):
+        for i in range(len(self.sem_table_lists[ShearEstimationMethods.LENSMC])):
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
             for sem in ShearEstimationMethods:
                 sem_table_filename = get_allowed_filename(
-                    "SEM-TEST-" + sem.upper(), str(i), version=SHE_CTE.__version__,)
+                    "SEM-TEST-" + sem.name, str(i), version=SHE_CTE.__version__,)
                 self.sem_table_lists[sem][i].write(os.path.join(self.workdir, sem_table_filename))
                 sem_product.set_method_filename(sem, sem_table_filename)
 

@@ -5,7 +5,7 @@
     Classes and functions related to loading KSB and REGAUSS training data.
 """
 
-__updated__ = "2020-07-10"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -63,10 +63,10 @@ class ControlTraining(object):
                 self.e1_var = t[lmcm_tf.g1].var()
                 self.e2_var = t[lmcm_tf.g2].var()
             else:
-                raise ValueError("Unrecognized table format for training data in file: " + qualified_training_data_filename)
+                raise ValueError("Unrecognized table format for training data in file: " +
+                                 qualified_training_data_filename)
 
         logger.debug("Exiting ControlTraining __init__")
-        return
 
     @property
     def e1_var(self):
@@ -79,7 +79,6 @@ class ControlTraining(object):
         """Set the variance of the ellipticity measurements, component 1.
         """
         self._e1_var = value
-        return
 
     @property
     def e2_var(self):
@@ -92,7 +91,6 @@ class ControlTraining(object):
         """Set the variance of the ellipticity measurements, component 2.
         """
         self._e2_var = value
-        return
 
 
 def load_control_training_data(training_data_filename, workdir="."):
