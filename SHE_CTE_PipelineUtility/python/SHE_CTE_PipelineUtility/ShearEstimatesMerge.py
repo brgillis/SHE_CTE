@@ -441,25 +441,20 @@ def mainMethod(args):
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
 
-    try:
+    if profiling:
+        import cProfile
+        logger.info("Profiling enabled")
 
-        if profiling:
-            import cProfile
-            logger.info("Profiling enabled")
+        filename = os.path.join(args.workdir, args.logdir, "shear_estimates_merge.prof")
+        logger.info("Writing profiling data to %s", filename)
 
-            filename = os.path.join(args.workdir, args.logdir, "estimate_shears.prof")
-            logger.info("Writing profiling data to %s", filename)
-
-            cProfile.runctx("she_measurements_merge_from_args(args)", {},
-                            {"she_measurements_merge_from_args": she_measurements_merge_from_args,
-                             "args": args, },
-                            filename=filename)
-        else:
-            logger.info("Profiling disabled")
-            she_measurements_merge_from_args(args)
-    except Exception as e:
-        # logger.warning("Failsafe exception block triggered with exception: " + str(e))
-        raise
+        cProfile.runctx("she_measurements_merge_from_args(args)", {},
+                        {"she_measurements_merge_from_args": she_measurements_merge_from_args,
+                         "args": args, },
+                        filename=filename)
+    else:
+        logger.info("Profiling disabled")
+        she_measurements_merge_from_args(args)
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')
 

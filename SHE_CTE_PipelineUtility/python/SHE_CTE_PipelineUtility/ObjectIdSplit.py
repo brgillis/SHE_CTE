@@ -127,27 +127,21 @@ def mainMethod(args):
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
 
-    try:
+    if args.profile or profiling:
+        import cProfile
 
-        if args.profile or profiling:
-            import cProfile
+        logger.info("Profiling enabled")
+        filename = os.path.join(args.workdir, args.logdir, "object_id_split.prof")
+        logger.info("Writing profiling data to %s", filename)
 
-            logger.info("Profiling enabled")
-            filename = os.path.join(args.workdir, args.logdir, "object_id_split.prof")
-            logger.info("Writing profiling data to %s", filename)
-
-            cProfile.runctx("object_id_split_from_args(args,sub_batch=False)", {},
-                            {"object_id_split_from_args": object_id_split_from_args,
-                             "args": args, },
-                            filename=filename)
-        else:
-            logger.info("Profiling disabled")
-            object_id_split_from_args(args,
-                                      sub_batch=False)
-
-    except Exception as e:
-        # logger.warning(f"Failsafe exception block triggered with exception: {e}")
-        raise e
+        cProfile.runctx("object_id_split_from_args(args,sub_batch=False)", {},
+                        {"object_id_split_from_args": object_id_split_from_args,
+                         "args": args, },
+                        filename=filename)
+    else:
+        logger.info("Profiling disabled")
+        object_id_split_from_args(args,
+                                  sub_batch=False)
 
     logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')
 

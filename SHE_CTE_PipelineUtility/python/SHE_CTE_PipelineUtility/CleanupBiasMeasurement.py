@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2020-11-13"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,14 +23,32 @@ __updated__ = "2020-11-13"
 import argparse
 import os
 import shutil
+from typing import Any, Dict, Union, Tuple, Type
 
+from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT import products  # Need to import in order to initialise all products
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_calibration_config, CalibrationConfigKeys
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.pipeline_utility import (read_calibration_config, CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
+
+
+# Set up dicts for pipeline config defaults and types
+D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    GlobalConfigKeys.PIP_PROFILE: False,
+    CalibrationConfigKeys.CBM_CLEANUP: True,
+}
+
+D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    GlobalConfigKeys.PIP_PROFILE: bool,
+    CalibrationConfigKeys.CBM_CLEANUP: bool,
+}
+
+D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    GlobalConfigKeys.PIP_PROFILE: "profile",
+    CalibrationConfigKeys.CBM_CLEANUP: None,
+}
 
 
 def defineSpecificProgramOptions():
@@ -98,14 +116,9 @@ def cleanup_bias_measurement_from_args(args):
     pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
 
     # Check for the cleanup key
-    if CalibrationConfigKeys.CBM_CLEANUP.value not in pipeline_config:
-        logger.warning("Key " + CalibrationConfigKeys.CBM_CLEANUP.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                       "Being safe and not cleaning up.")
-        return
-    clean_up = pipeline_config[CalibrationConfigKeys.CBM_CLEANUP.value]
-    if not clean_up.lower() == "true":
-        logger.info("Config is set to " + CalibrationConfigKeys.CBM_CLEANUP.value +
-                    "=" + clean_up + ", so not cleaning up.")
+    clean_up = pipeline_config[CalibrationConfigKeys.CBM_CLEANUP]
+    if not clean_up:
+        logger.info("Config is set to not clean up, so ending execution.")
 
         # Copy the statistics product to the new name
         shutil.copy(qualified_stats_in_filename, qualified_stats_out_filename)
@@ -121,7 +134,7 @@ def cleanup_bias_measurement_from_args(args):
             logger.warning("Attempted to remove directory " + qualified_filename)
             return 1
         if not os.path.exists(qualified_filename):
-            logger.warning("Expected file '" + qualified_filename + "' does not exist.")
+            logger.warning(f"Expected file '{qualified_filename}' does not exist.")
             return 1
         os.remove(qualified_filename)
         return 0
@@ -181,8 +194,6 @@ def cleanup_bias_measurement_from_args(args):
                              args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
 
-    return
-
 
 def mainMethod(args):
     """
@@ -205,22 +216,38 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
+    # load the pipeline config in
+    args.pipeline_config = read_calibration_config(args.pipeline_config,
+                                                   workdir=args.workdir,
+                                                   defaults=D_EST_SHEAR_CONFIG_DEFAULTS,
+                                                   d_cline_args=D_EST_SHEAR_CONFIG_CLINE_ARGS,
+                                                   parsed_args=args,
+                                                   d_types=D_EST_SHEAR_CONFIG_TYPES)
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
     try:
 
-        if args.profile:
+        if profiling:
+
             import cProfile
+            logger.info("Profiling enabled")
+
+            filename = os.path.join(args.workdir, args.logdir, "estimate_shears.prof")
+            logger.info("Writing profiling data to %s", filename)
+
             cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
                             {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
                              "args": args, },
-                            filename="cleanup_bias_measurement.prof")
+                            filename=filename)
         else:
+            logger.info("Profiling disabled")
             cleanup_bias_measurement_from_args(args)
     except Exception as e:
         logger.warning("Failsafe exception block triggered with exception: " + str(e))
 
     logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
-
-    return
 
 
 def main():
@@ -234,8 +261,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

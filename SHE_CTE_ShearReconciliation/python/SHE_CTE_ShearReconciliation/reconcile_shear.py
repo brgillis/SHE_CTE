@@ -5,7 +5,7 @@
     Primary execution loop for reconciling shear estimates into a per-tile catalog.
 """
 
-__updated__ = "2021-08-17"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,7 +28,7 @@ from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D
 from SHE_PPT.file_io import (write_xml_product, get_allowed_filename,
                              read_listfile, read_xml_product)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import ReconciliationConfigKeys, read_reconciliation_config
+from SHE_PPT.pipeline_utility import ReconciliationConfigKeys
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_utility import is_in_format
@@ -42,7 +42,6 @@ from SHE_CTE_ShearReconciliation.chains_reconciliation_functions import (reconci
 from SHE_CTE_ShearReconciliation.reconciliation_functions import (reconcile_best,
                                                                   reconcile_invvar,
                                                                   reconcile_shape_weight)
-import numpy as np
 
 
 logger = getLogger(__name__)
@@ -68,23 +67,21 @@ def store_object_info(new_row, existing_row, ids_to_reconcile, sem_tf, optional_
         can be handled later.
     """
 
-    id = new_row[sem_tf.ID]
-    assert id == existing_row[sem_tf.ID]
+    object_id = new_row[sem_tf.ID]
+    assert object_id == existing_row[sem_tf.ID]
     assert len(new_row) == len(existing_row)
 
     # Is this the first conflict with this ID?
-    if not id in ids_to_reconcile:
+    if not object_id in ids_to_reconcile:
         # First conflict, so add the id with a table using the existing row, ensuring the right column order
         t = sem_tf.init_table(optional_columns=optional_columns)[optional_columns]
         t.add_row(existing_row)
-        ids_to_reconcile[id] = t
+        ids_to_reconcile[object_id] = t
     else:
-        t = ids_to_reconcile[id]
+        t = ids_to_reconcile[object_id]
 
     # Add the new row to the table for this ID's conflicts
     t.add_row(new_row)
-
-    return
 
 
 def reconcile_tables(shear_estimates_tables,
@@ -142,16 +139,16 @@ def reconcile_tables(shear_estimates_tables,
 
         # Loop over the rows of the table
         for row in estimates_table:
-            id = row[sem_tf.ID]
+            object_id = row[sem_tf.ID]
 
             # Skip if this ID isn't in the MER catalog for the Tile
-            if id not in object_ids_in_tile:
+            if object_id not in object_ids_in_tile:
                 continue
 
             # Check if this ID is already in the reconciled catalog
-            if id in ids_in_reconciled_catalog:
+            if object_id in ids_in_reconciled_catalog:
                 store_object_info(new_row=row,
-                                  existing_row=reconciled_catalog.loc[id],
+                                  existing_row=reconciled_catalog.loc[object_id],
                                   ids_to_reconcile=ids_to_reconcile,
                                   sem_tf=sem_tf,
                                   optional_columns=optional_columns,)
@@ -159,15 +156,15 @@ def reconcile_tables(shear_estimates_tables,
             else:
                 # Otherwise, add it to the reconciled catalog
                 reconciled_catalog.add_row(row)
-                ids_in_reconciled_catalog.add(id)
+                ids_in_reconciled_catalog.add(object_id)
 
         # End looping through rows of this table
     # End looping through tables
 
     # Now, we need to perform the reconciliation of each id
-    for id in ids_to_reconcile:
-        reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[id],
-                                output_row=reconciled_catalog.loc[id],
+    for object_id in ids_to_reconcile:
+        reconciliation_function(measurements_to_reconcile_table=ids_to_reconcile[object_id],
+                                output_row=reconciled_catalog.loc[object_id],
                                 sem_tf=sem_tf)
     return reconciled_catalog
 
@@ -225,16 +222,16 @@ def reconcile_chains(chains_tables,
 
         # Loop over the rows of the table
         for row in chains_table:
-            id = row[lmcc_tf.ID]
+            object_id = row[lmcc_tf.ID]
 
             # Skip if this ID isn't in the MER catalog for the Tile
-            if id not in object_ids_in_tile:
+            if object_id not in object_ids_in_tile:
                 continue
 
             # Check if this ID is already in the reconciled catalog
-            if id in ids_in_reconciled_chains:
+            if object_id in ids_in_reconciled_chains:
                 store_object_info(new_row=row,
-                                  existing_row=reconciled_chains.loc[id],
+                                  existing_row=reconciled_chains.loc[object_id],
                                   ids_to_reconcile=ids_to_reconcile,
                                   sem_tf=lmcc_tf,
                                   optional_columns=optional_columns,)
@@ -242,15 +239,15 @@ def reconcile_chains(chains_tables,
             else:
                 # Otherwise, add it to the reconciled catalog
                 reconciled_chains.add_row(row)
-                ids_in_reconciled_chains.add(id)
+                ids_in_reconciled_chains.add(object_id)
 
         # End looping through rows of this table
     # End looping through tables
 
     # Now, we need to perform the reconciliation of each id
-    for id in ids_to_reconcile:
-        extra_rows = chains_reconciliation_function(chains_to_reconcile_table=ids_to_reconcile[id],
-                                                    output_row=reconciled_chains.loc[id])
+    for object_id in ids_to_reconcile:
+        extra_rows = chains_reconciliation_function(chains_to_reconcile_table=ids_to_reconcile[object_id],
+                                                    output_row=reconciled_chains.loc[object_id])
         if extra_rows is not None:
             for extra_row in extra_rows:
                 reconciled_chains.add_row(extra_row)
@@ -263,30 +260,12 @@ def reconcile_shear_from_args(args):
     """
 
     # Read in the pipeline config if supplied
-    if args.she_reconciliation_config is not None and args.she_reconciliation_config is not "None":
-        pipeline_config = read_reconciliation_config(args.she_reconciliation_config,
-                                                     workdir=args.workdir)
-    else:
-        pipeline_config = None
+    pipeline_config = args.pipeline_config
 
-    # Determine the reconciliation method to use
+    # Get the reconciliation method to use from the pipeline_config
 
-    method = None
-
-    if args.method is not None:
-        method = str(args.method)
-        logger.info("Using reconciliation method: '" + str(method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.REC_METHOD in pipeline_config:
-            method = str(pipeline_config[ReconciliationConfigKeys.REC_METHOD])
-            logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
-
-    if method is None:
-        # If we get here, it isn't yet determined, so use the default
-        method = default_reconciliation_method
-        logger.info("Using default reconciliation method: '" + str(method) + "'.")
+    method = pipeline_config[ReconciliationConfigKeys.REC_METHOD]
+    logger.info("Using reconciliation method: '" + str(method) + "', from pipeline configuration file.")
 
     if not method in reconciliation_methods:
         allowed_method_str = ""
@@ -296,25 +275,11 @@ def reconcile_shear_from_args(args):
                          allowed_method_str)
     reconciliation_function = reconciliation_methods[method]
 
-    # Determine the chains reconciliation method to use
+    # Get the chains reconciliation method to use from the pipeline config
 
-    chains_method = None
-
-    if args.chains_method is not None:
-        chains_method = str(args.chains_method)
-        logger.info("Using chains reconciliation method: '" + str(chains_method) + "', passed from command-line.")
-    elif pipeline_config is not None:
-        # See if the chains method is supplied in the pipeline config
-
-        if ReconciliationConfigKeys.CHAINS_REC_METHOD in pipeline_config:
-            chains_method = str(pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD])
-            logger.info("Using chains reconciliation method: '" +
-                        str(chains_method) + "', from pipeline configuration file.")
-
-    if chains_method is None:
-        # If we get here, it isn't yet determined, so use the default
-        chains_method = default_reconciliation_method
-        logger.info("Using default chains reconciliation method: '" + str(method) + "'.")
+    chains_method = pipeline_config[ReconciliationConfigKeys.CHAINS_REC_METHOD]
+    logger.info("Using chains reconciliation method: '" +
+                str(chains_method) + "', from pipeline configuration file.")
 
     # Check we're using a valid chains reconciliation method
     if not chains_method in chains_reconciliation_methods:
