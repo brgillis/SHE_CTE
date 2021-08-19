@@ -300,9 +300,14 @@ def object_id_split_from_args(args,
 
     logger.debug('# Entering object_id_split_from_args(args)')
 
-    ids_to_use = args.pipeline_config[AnalysisConfigKeys.OID_IDS]
-    max_batches = args.pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES]
-    batch_size = args.pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE]
+    if not sub_batch:
+        ids_to_use = args.pipeline_config[AnalysisConfigKeys.OID_IDS]
+        max_batches = args.pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES]
+        batch_size = args.pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE]
+    else:
+        ids_to_use = args.pipeline_config[AnalysisConfigKeys.SOID_IDS]
+        max_batches = args.pipeline_config[AnalysisConfigKeys.SOID_MAX_BATCHES]
+        batch_size = args.pipeline_config[AnalysisConfigKeys.SOID_BATCH_SIZE]
 
     (limited_num_batches,
      id_arrays,
