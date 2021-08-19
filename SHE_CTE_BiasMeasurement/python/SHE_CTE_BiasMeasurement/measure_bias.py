@@ -5,7 +5,7 @@
     Primary execution loop for measuring bias in shear estimates.
 """
 
-__updated__ = "2021-08-18"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -294,8 +294,7 @@ def measure_bias_from_args(args):
 
     # Calculate the bias and compile into a data product
     if args.store_measurements_only or missing_shear_statistics or args.use_bias_only:
-        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(BFD_bias_statistics=[],
-                                                                          KSB_bias_statistics=([],
+        bias_measurement_prod = create_dpd_she_bias_statistics_from_stats(KSB_bias_statistics=([],
                                                                                                []),
                                                                           LensMC_bias_statistics=([],
                                                                                                   []),
@@ -316,9 +315,6 @@ def measure_bias_from_args(args):
                                                                           workdir=args.workdir)
 
     for method in ShearEstimationMethods:
-
-        if method == "BFD":
-            continue
 
         if missing_shear_statistics or args.use_bias_only:
 

@@ -5,7 +5,7 @@
     Primary execution loop for measuring galaxy shapes from an image file.
 """
 
-__updated__ = "2021-08-18"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -244,7 +244,6 @@ def estimate_shears_from_args(args, dry_run=False):
         estimates_instance_id = estimates_instance_id[0:SHORT_INSTANCE_ID_MAXLEN - 4]
 
     shear_estimates_prod = products.she_measurements.create_dpd_she_measurements(
-        BFD_filename=None,
         KSB_filename=get_allowed_filename("KSB-SHM", estimates_instance_id,
                                           version=SHE_CTE.__version__,
                                           subdir=subfolder_name),

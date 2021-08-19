@@ -5,7 +5,7 @@
     Main program for estimating shears on simulation data.
 """
 
-__updated__ = "2021-08-18"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -108,9 +108,6 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--object_ids', type=str,
                         help='XML dataproduct that contains within it a list of object ids to loop over')
-
-    parser.add_argument('--bfd_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
-                        help='Data product for BFD training data.')
 
     parser.add_argument('--ksb_training_data', type=str, default=None,  # Use default in case we don't use it for SC4
                         help='Data product for KSB training data.')

@@ -5,7 +5,7 @@
     Main program for plotting bias sensitivity
 """
 
-__updated__ = "2021-08-18"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -48,7 +48,7 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input Data
-    parser.add_argument('--methods', nargs='*', default=["BFD", "KSB", "REGAUSS", "MomentsML", "LensMC"],
+    parser.add_argument('--methods', nargs='*', default=["KSB", "REGAUSS", "MomentsML", "LensMC"],
                         help='Methods to plot bias measurements for.')
     parser.add_argument('--root_data_folder', default=None,
                         help="Folder containing folders which contain bias measurements. Must be either absolute " +
