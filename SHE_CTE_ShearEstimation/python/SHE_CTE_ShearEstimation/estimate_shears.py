@@ -164,7 +164,10 @@ def estimate_shears_from_args(args, dry_run=False):
 
     # Get info from the pipeline config
     methods = pipeline_config[AnalysisConfigKeys.ES_METHODS]
-    chains_method = pipeline_config[AnalysisConfigKeys.ES_METHODS]
+    chains_method = pipeline_config[AnalysisConfigKeys.ES_CHAINS_METHOD]
+
+    if not chains_method in methods:
+        raise ValueError(f"Chains method {chains_method} is not in the methods being run: {methods}.")
 
     fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE]
     if fast_mode_bool:
@@ -224,6 +227,8 @@ def estimate_shears_from_args(args, dry_run=False):
         except Exception as e:
             logger.error("Directory (" + qualified_subfolder_name + ") does not exist and cannot be created.")
             raise e
+
+    qualified_chains_filename = os.path.join(args.workdir, args.she_lensmc_chains)
 
     # Determine the instance ID to use for the estimates file
     qualified_stacked_image_data_filename = os.path.join(
@@ -357,7 +362,8 @@ def estimate_shears_from_args(args, dry_run=False):
                     if data_stack.object_id_list_product is not None:
                         chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
-                    write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
+                    logger.info(f"Outputting chains from method {method.value} to {qualified_chains_filename}")
+                    write_xml_product(chains_prod, qualified_chains_filename)
 
                 if not is_in_format(shear_estimates_table, sm_tf):
                     raise ValueError("Invalid implementation: Shear estimation table returned in invalid format " +
@@ -432,7 +438,8 @@ def estimate_shears_from_args(args, dry_run=False):
                         if data_stack.object_id_list_product is not None:
                             chains_prod.Data.TileList = data_stack.object_id_list_product.Data.TileList
 
-                    write_xml_product(chains_prod, os.path.join(args.workdir, args.she_lensmc_chains))
+                    logger.info(f"Outputting chains from method {method.value} to {qualified_chains_filename}")
+                    write_xml_product(chains_prod, qualified_chains_filename)
 
             method_shear_estimates[method] = shear_estimates_table
 
