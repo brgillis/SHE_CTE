@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-08-18"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -28,13 +28,14 @@ from SHE_PPT.file_io import (write_listfile,
                              write_xml_product,
                              get_allowed_filename)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_analysis_config, AnalysisConfigKeys
+from SHE_PPT.pipeline_utility import AnalysisConfigKeys
 from SHE_PPT.products import she_object_id_list, mer_final_catalog
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 
 import SHE_CTE
 import numpy as np
+
 
 logger = getLogger(__name__)
 
@@ -299,11 +300,9 @@ def object_id_split_from_args(args,
 
     logger.debug('# Entering object_id_split_from_args(args)')
 
-    (ids_to_use,
-     max_batches,
-     batch_size) = read_oid_split_pipeline_config(pipeline_config=args.pipeline_config,
-                                                  workdir=args.workdir,
-                                                  sub_batch=sub_batch)
+    ids_to_use = args.pipeline_config[AnalysisConfigKeys.OID_IDS]
+    max_batches = args.pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES]
+    batch_size = args.pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE]
 
     (limited_num_batches,
      id_arrays,
