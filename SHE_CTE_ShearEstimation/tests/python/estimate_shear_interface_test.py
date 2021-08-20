@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2021-08-17"
+__updated__ = "2021-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,19 +21,14 @@ __updated__ = "2021-08-17"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
-import time
 
-import SHE_LensMC.she_measure_shear
-from SHE_MomentsML.estimate_shear import estimate_shear as ML_estimate_shear
 from SHE_PPT import mdb
 from SHE_PPT.file_io import read_xml_product, find_file, read_listfile
-from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
-import pytest
 
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
