@@ -22,12 +22,12 @@ import argparse
 import os
 
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, AnalysisConfigKeys, GlobalConfigKeys
 
 import SHE_CTE
 from SHE_CTE.magic_values import force_dry_run
-from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 
 from .cross_validate_shear import cross_validate_shear
 
@@ -105,7 +105,7 @@ def mainMethod(args):
     dry_run = args.dry_run or force_dry_run
 
     # load the pipeline config in
-    args.pipeline_config = read_config(args.pipeline_config,
+    args.pipeline_config = read_config(None,
                                        workdir=args.workdir,
                                        config_keys=AnalysisConfigKeys,
                                        defaults=D_GLOBAL_CONFIG_DEFAULTS,
