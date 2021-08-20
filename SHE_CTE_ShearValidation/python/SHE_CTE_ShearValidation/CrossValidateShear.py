@@ -113,6 +113,8 @@ def mainMethod(args):
                                        parsed_args=args,
                                        d_types=D_GLOBAL_CONFIG_TYPES)
 
+    args.primary_method = AnalysisConfigKeys.find_lower_value(args.primary_method.lower())
+
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
 
