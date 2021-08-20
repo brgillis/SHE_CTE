@@ -147,7 +147,7 @@ def cross_validate_shear(args, dry_run=False):
     if primary_shear_estimates_table is None:
         validated_primary_shear_estimates_filename = "None"
     else:
-        validated_primary_shear_estimates_filename = get_allowed_filename("VAL-SHM-" + args.primary_method.upper(), "0",
+        validated_primary_shear_estimates_filename = get_allowed_filename("VAL-SHM-" + args.primary_method.name, "0",
                                                                           ".fits", version=SHE_CTE.__version__)
         primary_shear_estimates_table.write(
             join(args.workdir, validated_primary_shear_estimates_filename))
