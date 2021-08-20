@@ -22,6 +22,7 @@ import argparse
 import os
 
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.classes import ShearEstimationMethods
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, AnalysisConfigKeys, GlobalConfigKeys
@@ -113,7 +114,7 @@ def mainMethod(args):
                                        parsed_args=args,
                                        d_types=D_GLOBAL_CONFIG_TYPES)
 
-    args.primary_method = AnalysisConfigKeys.find_lower_value(args.primary_method.lower())
+    args.primary_method = ShearEstimationMethods.find_lower_value(args.primary_method.lower())
 
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
