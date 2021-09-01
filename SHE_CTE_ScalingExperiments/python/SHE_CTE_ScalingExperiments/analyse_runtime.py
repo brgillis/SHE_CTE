@@ -71,6 +71,59 @@ def analyse_runtime_from_args(args):
 
         return
 
+    #dictionary to hold the results
+    results={}
+
+    #get statistics on SplitFits
+
+    #read listfile
+    split_listfile = get_qualified_filename(args.workdir, args.split_timing_listfile)
+    with open(split_listfile,"r") as f:
+        split_filelist = json.load(f)
+    
+    #get the individual files to read
+    files=[]
+    for item in split_filelist:
+        if type(item) is list:
+            files.append(get_qualified_filename(args.workdir,item[0]))
+        else:
+            files.append(get_qualified_filename(args.workdir,item))
+    
+    #read them in
+    split_timings = []
+    for f in files:
+        with open(f,"r") as fd:
+            split_timings.append(json.load(fd))
+    
+    split_stamp_walltimes = []
+    exposures=[]
+    split_tstarts = []
+    
+    #extract lists of the stamp_walltimess, exposure numbers and start times
+    for item in split_timings:
+        split_stamp_walltimes.append(item["walltime"])
+        exposures.append(int(item["exposure"]))
+        split_tstarts.append(str_to_datetime(item["tstart"]))
+
+    split_stamp_walltimes = np.asarray(split_stamp_walltimes)
+    split_tstarts = np.asarray(split_tstarts)
+    exposures = np.asarray(exposures)
+    
+    #calculate the stop time (start time + stamp_walltimes)
+    split_tstops=[]
+    for i in range(len(split_stamp_walltimes)):
+        split_tstops.append(split_tstarts[i]+datetime.timedelta(seconds=split_stamp_walltimes[i]))
+    split_tstops = np.asarray(split_tstops)
+
+    split_meantime = split_stamp_walltimes.mean()
+
+    total_splitfits_walltime = (np.max(split_tstops)-np.min(split_tstarts)).total_seconds()
+
+
+
+    
+    #get statistics for ExtractStamps
+    
     #open listfile from the SHE_ExtractStamps runs
     listfile = get_qualified_filename(workdir,args.stamp_timing_listfile)
 
@@ -88,62 +141,41 @@ def analyse_runtime_from_args(args):
         stamp_timings.append(load_timing_json(workdir,f))
     
     #convert to arrays
-    walltime = []
+    stamp_walltimes = []
     num_objects = []
     num_files = []
-    start_time = []
+    stamp_tstarts = []
     compute_time = []
     for timing in stamp_timings:
-        walltime.append(timing["walltime"])
+        stamp_walltimes.append(timing["walltime"])
         num_objects.append(timing["num_objects"])
         num_files.append(timing["num_files"])
-        start_time.append(timing["tstart"])
+        stamp_tstarts.append(timing["tstart"])
         compute_time.append(timing["compute_time"])
 
-    walltime = np.asarray(walltime)
+    stamp_walltimes = np.asarray(stamp_walltimes)
     compute_time = np.asarray(compute_time)
     num_objects = np.asarray(num_objects)
     num_files = np.asarray(num_files)
-    start_time = np.asarray(start_time)
+    stamp_tstarts = np.asarray(stamp_tstarts)
     
-    #calculate the finish times of each task (start time + walltime)
-    finish_times=[]
-    for i in range(len(walltime)):
-        finish_times.append(start_time[i] + datetime.timedelta(seconds=walltime[i]))
-    finish_times = np.asarray(finish_times)
+    #calculate the finish times of each task (start time + stamp_walltimes)
+    stamp_tstops=[]
+    for i in range(len(stamp_walltimes)):
+        stamp_tstops.append(stamp_tstarts[i] + datetime.timedelta(seconds=stamp_walltimes[i]))
+    stamp_tstops = np.asarray(stamp_tstops)
+
+    meanstamptime = stamp_walltimes.mean()
     
-    iotime = walltime-compute_time
+    iotime = stamp_walltimes-compute_time
 
     iocpuh = np.sum(iotime)/3600
-    stampcpuh = np.sum(walltime)/3600.
+    stampcpuh = np.sum(stamp_walltimes)/3600.
     
     meaniotime = iotime.mean()
     iotimemin = iotime.min()
     iotimemax = iotime.max()
     iotimestd = iotime.std()
-
-    results={}
-
-    logger.info("Mean I/O time per task = %fs",meaniotime)
-    logger.info("Min/Max time = %f/%f s",iotimemin,iotimemax)
-    logger.info("Standard Deviation in time = %fs",iotimestd)
-    logger.info("CPUh for I/O =  %f",iocpuh)
-    logger.info("Total CPUh = %f",stampcpuh)
-    
-    
-
-    total_walltime = (np.max(finish_times)-np.min(start_time)).total_seconds()
-
-    logger.info("Walltime for all the tasks = %fs",total_walltime)
-
-
-    results["Mean stamp IO time"]=meaniotime
-    results["Min stamp IO time"]=iotimemin
-    results["Max stamp IO time"]=iotimemax
-    results["Standard Deviation of stamp time"]=iotimestd
-    results["Total stamp Walltime"]=total_walltime
-    results["Stamp IO CPUh"] = iocpuh
-    results["Total stamp CPUh"] = stampcpuh
 
 
     #calculate number of concurrent jobs as a function of time
@@ -152,14 +184,14 @@ def analyse_runtime_from_args(args):
     njobs = []
     times = []
 
-    tstart = np.min(start_time)
-    tstop = np.max(finish_times)
+    tstart = np.min(stamp_tstarts)
+    tstop = np.max(stamp_tstops)
 
     t = tstart + dt
     while (t < tstop):
         n=0
-        for i in range(len(start_time)):
-            if start_time[i] < t and finish_times[i] > t:
+        for i in range(len(stamp_tstarts)):
+            if stamp_tstarts[i] < t and stamp_tstops[i] > t:
                 n+=1
         njobs.append(n)
         times.append(t)
@@ -167,12 +199,56 @@ def analyse_runtime_from_args(args):
         t+= dt
 
     njobs = np.asarray(njobs)
-    
-    logger.info("Mean number of running jobs at any given time = %f",njobs.mean())
-    logger.info("Max number of running jobs at any given time = %d",njobs.max())
 
-    results["Mean number of running jobs at any given time"] = float(njobs.mean())
-    results["Max number of running jobs at any given time"] = int(njobs.max())
+
+
+    total_pipeline_walltime = (np.max(stamp_tstops) - np.min(split_tstarts)).total_seconds()
+    
+    #print/record total pipeline runtime
+    logger.info("Total Pipeline Runtime = %fs",total_pipeline_walltime)
+    results["Total runtime for whole pipeline"] = total_pipeline_walltime
+
+    #print/record SplitFits info
+    logger.info("Total SplitFits Walltime = %fs",total_splitfits_walltime)
+    results["Total SplitFits Walltime"] = total_splitfits_walltime
+    
+    logger.info("Mean walltime for SplitFits tasks = %fs",split_meantime)
+    results["Mean SplitFits task walltime"] = split_meantime
+
+    splitcpuh = np.sum(split_stamp_walltimes)/3600.
+    logger.info("Total CPUh for SplitFits tasks = %f",splitcpuh)
+    results["Total SplitFits CPUh"] = splitcpuh
+
+
+    
+    #print/record ExtractStamps info
+
+    total_stamp_walltimes = (np.max(stamp_tstops)-np.min(stamp_tstarts)).total_seconds()
+
+    results["Total ExtractStamps walltime"]=total_stamp_walltimes
+    logger.info("Total ExtractStamps walltime = %fs",total_stamp_walltimes)
+
+    logger.info("Mean walltime for ExtractStamps tasks = %fs",meanstamptime)
+    logger.info("Mean I/O time per ExtractStamps task = %fs",meaniotime)
+    logger.info("Min/Max I/O time per ExtractStamps task = %f/%f s",iotimemin,iotimemax)
+    logger.info("Standard Deviation in ExtractStamps I/O time = %fs",iotimestd)
+    logger.info("CPUh for ExtractStamps I/O =  %f",iocpuh)
+    logger.info("Total CPUh for ExtractStamps = %f",stampcpuh)
+    
+    results["Mean walltime for ExtractStamps tasks"]=meanstamptime
+    results["Mean ExtractStamps task I/O time"]=meaniotime
+    results["Min ExtractStamps task I/O time"]=iotimemin
+    results["Max ExtractStamps task I/O time"]=iotimemax
+    results["Standard Deviation of ExtractStamps task I/O time"]=iotimestd
+    
+    results["ExtractStamps I/O CPUh"] = iocpuh
+    results["Total ExtractStamps CPUh"] = stampcpuh
+
+    logger.info("Mean number of running ExtractStamps tasks at any given time = %f",njobs.mean())
+    logger.info("Max number of running ExtractStamps tasks at any given time = %d",njobs.max())
+
+    results["Mean number of running ExtractStamps tasks at any given time"] = float(njobs.mean())
+    results["Max number of running ExtractStamps tasks at any given time"] = int(njobs.max())
     
     plotsdir=os.path.join(workdir,"plots")
     try:
@@ -203,7 +279,7 @@ def analyse_runtime_from_args(args):
     results["I/O time Vs Num Files"] = filename
     plt.clf()
 
-    plt.plot(start_time,iotime,".")
+    plt.plot(stamp_tstarts,iotime,".")
     plt.xlabel("Start time")
     plt.ylabel("I/O time taken per task (s)")
     plt.title("ExtractStamps I/O time")
@@ -213,9 +289,9 @@ def analyse_runtime_from_args(args):
     results["Start Time Vs I/O time"] = filename
     plt.clf()
 
-    for i in range(len(walltime)):
-        tstart = start_time[i]
-        tstop = finish_times[i]
+    for i in range(len(stamp_walltimes)):
+        tstart = stamp_tstarts[i]
+        tstop = stamp_tstops[i]
         plt.plot([tstart,tstop],[i,i],color="blue")
     plt.xlabel("Time")
     plt.ylabel("Task number")
@@ -237,63 +313,10 @@ def analyse_runtime_from_args(args):
     results["Number of running tasks with time"] = filename
     plt.clf()
 
-    results["pipeline_config"] = config
 
-    
-    #get statistics on SplitFits
-    split_listfile = get_qualified_filename(args.workdir, args.split_timing_listfile)
-    with open(split_listfile,"r") as f:
-        split_filelist = json.load(f)
-    
-    files=[]
-    for item in split_filelist:
-        if type(item) is list:
-            files.append(get_qualified_filename(args.workdir,item[0]))
-        else:
-            files.append(get_qualified_filename(args.workdir,item))
-
-    split_timings = []
-    for f in files:
-        with open(f,"r") as fd:
-            split_timings.append(json.load(fd))
-    
-    walltimes = []
-    exposures=[]
-    tstarts = []
-
-    for item in split_timings:
-        walltimes.append(item["walltime"])
-        exposures.append(int(item["exposure"]))
-        tstarts.append(str_to_datetime(item["tstart"]))
-
-    walltimes = np.asarray(walltimes)
-    tstarts = np.asarray(tstarts)
-    exposures = np.asarray(exposures)
-
-    meantime = walltimes.mean()
-
-    logger.info("Mean time for SplitFits = %fs",meantime)
-    results["Mean SplitFits time"] = meantime
-
-    tstops=[]
-    for i in range(len(walltimes)):
-        tstops.append(tstarts[i]+datetime.timedelta(seconds=walltimes[i]))
-    
-    tstops = np.asarray(tstops)
-
-    splitcpuh = np.sum(walltimes)/3600.
-    logger.info("CPUh for SplitFits = %f",splitcpuh)
-    results["Total split CPUh"] = splitcpuh
-    results["Total CPUh"] = splitcpuh + stampcpuh
-
-
-
-
-
-
-    for i in range(len(walltimes)):
-        tstart = tstarts[i]
-        tstop = tstops[i]
+    for i in range(len(split_stamp_walltimes)):
+        tstart = split_tstarts[i]
+        tstop = split_tstops[i]
         plt.plot([tstart,tstop],[exposures[i],exposures[i]],color="blue")
     plt.xlabel("Time")
     plt.ylabel("Exposure")
@@ -305,18 +328,16 @@ def analyse_runtime_from_args(args):
     plt.clf()
 
 
-    plt.bar(exposures,walltimes)
+    plt.bar(exposures,split_stamp_walltimes)
     plt.xlabel("Exposure")
-    plt.ylabel("Walltime (s)")
+    plt.ylabel("stamp_walltimes (s)")
     plt.title("Runtime of SplitFits per exposure")
-    filename=os.path.join(plotsdir,"exposure_walltimes.png")
+    filename=os.path.join(plotsdir,"split_stamp_exposure_walltimes.png")
     plt.savefig(filename)
-    results["Walltimes for Exposures"] = filename
+    results["split_stamp_walltimess for Exposures"] = filename
 
-
-
-
-    
+    #add pipeline_config to the results dict
+    results["pipeline_config"] = config
 
 
 
@@ -326,6 +347,11 @@ def analyse_runtime_from_args(args):
     logger.info("Writing results to %s",output_json)
     with open(output_json,"w") as f:
         json.dump(results,f,indent=4)
+    
+    #also write it to the plots directory
+    with open(os.path.join(plotsdir,"results.json"),"w") as f:
+        json.dump(results,f,indent=4)
+    
 
 
 
