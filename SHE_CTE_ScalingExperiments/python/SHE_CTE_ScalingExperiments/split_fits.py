@@ -55,7 +55,7 @@ def extract_ccd_to_fits(exposure_no, ccd_no, hdul_det, hdul_wgt, hdul_bkg, workd
     ccd_id = "CCDID "+ccd_no
     
     #Determine the name of the file to write to
-    filename = os.path.join(workdir,"%03d_"%(exposure_no)+ccd_no+".fits")
+    filename = os.path.join(workdir,"CCDs/FITS","%03d_"%(exposure_no)+ccd_no+".fits")
 
     if os.path.exists(filename):
         logger.warning("FITS file %s exists. Skipping.",filename)
@@ -140,7 +140,7 @@ def extract_ccd_to_hdf5(exposure_no, ccd_no, hdul_det, hdul_wgt, hdul_bkg ,workd
     else:
         chunkname = "NoChunks"
     
-    filename = os.path.join(workdir,"%03d_"%(exposure_no)+ccd_no+"_"+chunkname+".hdf5")
+    filename = os.path.join(workdir,"CCDs/HDF5","%03d_"%(exposure_no)+ccd_no+"_"+chunkname+".hdf5")
 
     if os.path.exists(filename):
         logger.warning("HDF5 file %s exists. Skipping.",filename)
@@ -260,10 +260,10 @@ def split_fits_from_args(args):
             
             #create HDF5 files
             if hdf5:
-                filename=extract_ccd_to_hdf5(exp, ccd_no, hdul_det, hdul_wgt, hdul_bkg,"CCDs/HDF5",chunks,compression)
+                filename=extract_ccd_to_hdf5(exp, ccd_no, hdul_det, hdul_wgt, hdul_bkg,workdir,chunks,compression)
             #create FITS files
             else:
-                filename=extract_ccd_to_fits(exp, ccd_no, hdul_det, hdul_wgt, hdul_bkg, "CCDs/FITS")
+                filename=extract_ccd_to_fits(exp, ccd_no, hdul_det, hdul_wgt, hdul_bkg, workdir)
 
             files_dict[ccd_no] = filename
 
