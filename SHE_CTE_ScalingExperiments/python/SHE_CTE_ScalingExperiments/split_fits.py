@@ -163,7 +163,9 @@ def extract_ccd_to_hdf5(exposure_no, ccd_no, hdul_det, hdul_wgt, hdul_bkg ,workd
         _make_dataset(f,"BKG",bkg,chunks=chunks,compression=compression)
         
         #add dummy segmentation mask
+        logger.info("Begin writing dummy segmentation map dataset")
         msk = f.create_dataset("SEG", data = mask, chunks=chunks)
+        logger.info("End writing dummy segmentation map dataset")
         header = str(fits.ImageHDU(name="SEG",data = mask).header)
         msk.attrs["header"]=header
 
