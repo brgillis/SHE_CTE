@@ -62,7 +62,6 @@ def extract_ccd_to_fits(exposure_no, ccd_no, hdul_det, hdul_wgt, hdul_bkg, workd
         return filename
     
     #get the HDUs we need from the fits files
-
     sci = hdul_det[ccd_id+".SCI"]
     sci.header["EXTNAME"] = "SCI"
     flg = hdul_det[ccd_id+".FLG"]
@@ -82,9 +81,11 @@ def extract_ccd_to_fits(exposure_no, ccd_no, hdul_det, hdul_wgt, hdul_bkg, workd
     hdul.append(msk)
 
     
-    logger.info("Writing CCD to %s",filename)
+    logger.info("Beginning writing CCD to %s",filename)
 
     hdul.writeto(filename,overwrite=True)
+
+    logger.info("Completed writing CCD to %s",filename)
     
     #make sure to remove the open file handles to the memmapped HDUs
     del(sci.data)
@@ -105,7 +106,11 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
         compression = None
     
     #create the dataset
+    logger.info("Begin writing dataset %s", name)
     dataset=hdf_file.create_dataset(name,data=hdu.data,chunks=chunks,compression=compression)
+    logger.info("End writing dataset %s", name)
+
+    logger.info("Begin writing dataset %s metadata", name)
 
     #put the fits header into a "header" attribute
     dataset.attrs["header"] = str(hdu.header)
@@ -116,6 +121,8 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
         if key == "":
             continue
         dataset.attrs[key] = value
+
+    logger.info("End writing dataset %s metadata", name)
     
     #make sure we delete the reference to the data from the HDU
     del(hdu.data)
@@ -183,6 +190,13 @@ def split_fits_from_args(args):
     memmap = bool(config["memmap"])
     dry_run = bool(config["dry_run"])
     compression = bool(config["compression"])
+
+    logger.info("Use HDF5 outputs? %s",hdf5)
+    if hdf5:
+        logger.info("Chunked HDF5? %s",chunked)
+        logger.info("HDF5 compression? %s",compression)
+
+    logger.info("Memmapped input FITS? %s",memmap)
 
     if dry_run:
         #check all the input files exist, create dummy output files, then exit
