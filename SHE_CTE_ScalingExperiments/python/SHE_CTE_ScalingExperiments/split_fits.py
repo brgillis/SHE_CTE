@@ -105,10 +105,15 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
     else:
         compression = None
     
+    #fetch the data explicitly so we can time this operation
+    logger.info("Begin reading %s data from input fits",name)
+    data = hdu.data[:]
+    logger.info("Finish reading %s data from input fits",name)
+
     #create the dataset
-    logger.info("Begin writing dataset %s", name)
-    dataset=hdf_file.create_dataset(name,data=hdu.data,chunks=chunks,compression=compression)
-    logger.info("End writing dataset %s", name)
+    logger.info("Begin writing dataset %s to HDF5", name)
+    dataset=hdf_file.create_dataset(name,data=data,chunks=chunks,compression=compression)
+    logger.info("End writing dataset %s to HDF5", name)
 
     logger.info("Begin writing dataset %s metadata", name)
 
@@ -126,6 +131,7 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
     
     #make sure we delete the reference to the data from the HDU
     del(hdu.data)
+    del(data)
 
 
 
