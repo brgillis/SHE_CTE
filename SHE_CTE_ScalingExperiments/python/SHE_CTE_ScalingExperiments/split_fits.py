@@ -106,16 +106,21 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
         compression = None
     
     #fetch the data explicitly so we can time this operation
-    logger.info("Begin reading %s data from input fits",name)
-    data = hdu.data[:]
-    logger.info("Finish reading %s data from input fits",name)
+    t0=time.time()
+    data = np.copy(hdu.data)
+    t1=time.time()
+    size = data.nbytes
+    t = t1-t0
+    rate = size/t/1024/1024
+    logger.info("Read %s data from input fits in %fs. Read rate of %d MB/s",name,t,rate)
 
     #create the dataset
-    logger.info("Begin writing dataset %s to HDF5", name)
+    t0 = time.time()
     dataset=hdf_file.create_dataset(name,data=data,chunks=chunks,compression=compression)
-    logger.info("End writing dataset %s to HDF5", name)
-
-    logger.info("Begin writing dataset %s metadata", name)
+    t1 = time.time()
+    t=t1-t0
+    rate = size/t/1024/1024
+    logger.info("Written dataset for %s in %fs. Write rate of %d MB/s",name,t,rate)
 
     #put the fits header into a "header" attribute
     dataset.attrs["header"] = str(hdu.header)
@@ -127,8 +132,6 @@ def _make_dataset(hdf_file, name, hdu, chunks=True, compression=False):
             continue
         dataset.attrs[key] = value
 
-    logger.info("End writing dataset %s metadata", name)
-    
     #make sure we delete the reference to the data from the HDU
     del(hdu.data)
     del(data)
