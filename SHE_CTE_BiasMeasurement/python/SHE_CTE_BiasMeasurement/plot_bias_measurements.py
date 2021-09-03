@@ -156,7 +156,7 @@ method_offsets = {"KSB": 0,
                   "REGAUSS": 0.01,
                   "REGAUSS_big": 0.015,
                   "LensMC": -0.01,
-                  "MomentsML": -0.02,
+                  "MomentsML": -0.02,}
 
 target_labels = {"base": r"$0.05\times$",
                  "high": r"$1.00\times$", }
