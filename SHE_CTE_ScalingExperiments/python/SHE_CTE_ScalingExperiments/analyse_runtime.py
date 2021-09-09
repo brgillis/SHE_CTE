@@ -99,7 +99,7 @@ def analyse_runtime_from_args(args):
     exposures=[]
     split_tstarts = []
     
-    #extract lists of the stamp_walltimess, exposure numbers and start times
+    #extract lists of the stamp_walltimes, exposure numbers and start times
     for item in split_timings:
         split_stamp_walltimes.append(item["walltime"])
         exposures.append(int(item["exposure"]))

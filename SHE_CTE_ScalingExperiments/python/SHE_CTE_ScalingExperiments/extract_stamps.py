@@ -44,13 +44,10 @@ from SHE_PPT.logging import getLogger
 logger = getLogger(__name__)
 
 
-
-
-
-def extract_stamp_hdf5(f, xp, yp):
+def extract_stamp(ccd, xp, yp):
     """returns 400x400 postage stamps of the various images centred on (xp,yp)"""
-    
-    ny, nx = f["SCI"].shape
+
+    ny, nx = ccd.sci.shape
 
     if xp >= nx or xp < 0 or yp >= ny or yp < 0:
         logger.warn("Object lies outwith this CCD's boundary: (%d, %d)",xp,yp)
@@ -63,12 +60,13 @@ def extract_stamp_hdf5(f, xp, yp):
     j_max = min(yp+200,ny-1)
 
     #extract postage stamps
-    sci = f["SCI"][j_min:j_max, i_min:i_max]
-    flg = f["FLG"][j_min:j_max, i_min:i_max]
-    rms = f["RMS"][j_min:j_max, i_min:i_max]
-    wgt = f["WGT"][j_min:j_max, i_min:i_max]
-    bkg = f["BKG"][j_min:j_max, i_min:i_max]
-    seg = f["SEG"][j_min:j_max, i_min:i_max]
+    sci = ccd.sci[j_min:j_max, i_min:i_max]
+    flg = ccd.flg[j_min:j_max, i_min:i_max]
+    rms = ccd.rms[j_min:j_max, i_min:i_max]
+    wgt = ccd.wgt[j_min:j_max, i_min:i_max]
+    bkg = ccd.bkg[j_min:j_max, i_min:i_max]
+    seg = ccd.seg[j_min:j_max, i_min:i_max]
+
     
     #if the postage stamps extracted are smaller than 400x400, zero pad so that they are
     if sci.shape[0] != 400 or sci.shape[1] != 400:
@@ -79,42 +77,7 @@ def extract_stamp_hdf5(f, xp, yp):
         sci, flg, rms, wgt, bkg, seg = _zero_pad(xc, yc, sci, flg, rms, wgt, bkg, seg)
     
 
-    #multiply return values by 2 in order to match extract_stamp_fits
-    return sci*2, flg*2, rms*2, wgt*2, bkg*2, seg*2
-
-
-def extract_stamp_fits(f, xp, yp):
-    """returns 400x400 postage stamps of the various images centred on (xp,yp)"""
-    
-    ny, nx = f["SCI"].data.shape
-
-    if xp >= nx or xp < 0 or yp >= ny or yp < 0:
-        logger.warn("Object lies outwith this CCD's boundary (%d, %d)",xp,yp)
-
-    #determine coordinates for the maximum and minimum extents of the postage stamp
-    i_min = max(xp-200,0)
-    i_max = min(xp+200,nx-1)
-
-    j_min = max(yp-200,0)
-    j_max = min(yp+200,ny-1)
-   
-    #extract postage stamps
-    sci = f["SCI"].data[j_min:j_max, i_min:i_max]
-    flg = f["FLG"].data[j_min:j_max, i_min:i_max]
-    rms = f["RMS"].data[j_min:j_max, i_min:i_max]
-    wgt = f["WGT"].data[j_min:j_max, i_min:i_max]
-    bkg = f["BKG"].data[j_min:j_max, i_min:i_max]
-    seg = f["SEG"].data[j_min:j_max, i_min:i_max]
-
-    #if the postage stamps extracted are smalelr than 400x400, zero pad so that they are
-    if sci.shape[0] != 400 or sci.shape[1] != 400:
-        #coordinates of lower left corner of the provided stamp in a 400x400 stamp, S.T. (xc, yc) is in the centre
-        xc = 200 - (xp - i_min)
-        yc = 200 - (yp - j_min)
-
-        sci, flg, rms, wgt, bkg, seg = _zero_pad(xc, yc, sci, flg, rms, wgt, bkg, seg)
-    
-    #multiply return values by 2 to ensure the arrays are actually fetched from the memmapped array
+    #multiply return values by 2 in order to ensure the stamps are actually read from disk
     return sci*2, flg*2, rms*2, wgt*2, bkg*2, seg*2
 
 
@@ -147,7 +110,7 @@ def _zero_pad(xc, yc, sci, flg, rms, wgt, bkg, seg):
 
 
 class CCD():
-    """Object for a CCD which contains its wcs and file object"""
+    """Object for a CCD which contains its wcs, file object, and references to the images it contains"""
     def __init__(self, exposure_number, exposures, ccd_id, hdf5, chunked,workdir):
         """Sets up everything we need, but does not open the file yet, to save having open file handles when not needed"""
         self.exposure_number = int(exposure_number)
@@ -176,16 +139,44 @@ class CCD():
 
         if  not os.path.exists(self.qualified_filename):
             raise FileNotFoundError('CCD file "%s" not found')
-
+        
+        #if using HDF5 files
         if self.hdf5:
             if self.chunked:
-                self.file = h5py.File(self.qualified_filename,"r",rdcc_nbytes = 200*200*4*60, rdcc_nslots=5987)
+                chunksize = 200*200*8 #size of a chunk in bytes (we go by 8 bytes per element to accommodate the segmentation maps which are int64)
+                cachesize = chunksize*25 # (5x5 chunks = 1000x1000 pixels)
+                logger.info("Using HDF5 chunk cache size of %fMB",cachesize/(1024)**2 )
+
+                # rdcc_nbytes - size of chunk cache in bytes per dataset
+                # rdcc_nslots - number of entries in hash table for chunks. Should be 100 x number of chunks in cache x number of datasets and a prime
+                # rdcc_w0 - weighting factor for calculating which chunks to evict from the cache if it fills up (range [0,1])
+                self.file = h5py.File(self.qualified_filename,"r",rdcc_nbytes = cachesize, rdcc_nslots=40013, rdcc_w0=0)
             else:
                 self.file = h5py.File(self.qualified_filename,"r")
 
             self.wcs = WCS(self.file["SCI"].attrs["header"])
+            
+            #We must do this to overcome a bug/feature in h5py whereby it seems to wipe/drop the chunk cache
+            # any time f[dataset] goes out of scope
+            # See my bug report here: https://github.com/h5py/h5py/issues/1960
+            self.sci = self.file["SCI"]
+            self.flg = self.file["FLG"]
+            self.rms = self.file["RMS"]
+            self.wgt = self.file["WGT"]
+            self.bkg = self.file["BKG"]
+            self.seg = self.file["SEG"]
+
+
         else:
             self.file = fits.open(self.qualified_filename)
+            
+            #doing this for the FITS to be consistent with the HDF5 code above.
+            self.sci = self.file["SCI"].data
+            self.flg = self.file["FLG"].data
+            self.rms = self.file["RMS"].data
+            self.wgt = self.file["WGT"].data
+            self.bkg = self.file["BKG"].data
+            self.seg = self.file["SEG"].data
 
             self.wcs = WCS(self.file["SCI"].header)
 
@@ -263,10 +254,8 @@ def extract_stamps_for_batch(batch, files,hdf5, tpause):
 
             x, y = ccd.wcs.world_to_pixel(SkyCoord(ra, dec, frame="icrs", unit="deg"))
 
-            if hdf5:
-                extract_stamp_hdf5(ccd.file,int(x),int(y))
-            else:
-                extract_stamp_fits(ccd.file,int(x),int(y))
+            extract_stamp(ccd,int(x),int(y))
+
         t1 = time.time()
         logger.info("Stamp extraction took %fs",t1-t0)
         
