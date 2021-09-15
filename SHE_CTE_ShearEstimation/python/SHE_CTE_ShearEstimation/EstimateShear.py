@@ -5,7 +5,7 @@
     Main program for estimating shears on simulation data.
 """
 
-__updated__ = "2021-08-19"
+__updated__ = "2021-09-15"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -32,7 +32,6 @@ from SHE_PPT.pipeline_utility import (read_config, AnalysisConfigKeys,
                                       CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
 
 import SHE_CTE
-from SHE_CTE.magic_values import force_dry_run
 from SHE_CTE_ShearEstimation.estimate_shears import estimate_shears_from_args
 
 
@@ -185,7 +184,7 @@ def mainMethod(args):
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    dry_run = args.dry_run or force_dry_run
+    dry_run = args.dry_run
 
     # load the pipeline config in
     args.pipeline_config = read_config(args.pipeline_config,

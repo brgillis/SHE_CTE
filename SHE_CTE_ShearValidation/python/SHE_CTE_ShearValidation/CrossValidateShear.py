@@ -28,7 +28,6 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import read_config, AnalysisConfigKeys, GlobalConfigKeys
 
 import SHE_CTE
-from SHE_CTE.magic_values import force_dry_run
 
 from .cross_validate_shear import cross_validate_shear
 
@@ -102,8 +101,6 @@ def mainMethod(args):
                                     store_true=["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
-
-    dry_run = args.dry_run or force_dry_run
 
     # load the pipeline config in
     args.pipeline_config = read_config(None,
