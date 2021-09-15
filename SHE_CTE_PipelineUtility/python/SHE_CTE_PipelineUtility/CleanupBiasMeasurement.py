@@ -114,7 +114,7 @@ def cleanup_bias_measurement_from_args(args):
     if args.pipeline_config is None:
         logger.warning("No pipeline configuration found. Being safe and not cleaning up.")
         return
-    pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
+    pipeline_config = args.pipeline_config
 
     # Check for the cleanup key
     clean_up = pipeline_config[CalibrationConfigKeys.CBM_CLEANUP]
