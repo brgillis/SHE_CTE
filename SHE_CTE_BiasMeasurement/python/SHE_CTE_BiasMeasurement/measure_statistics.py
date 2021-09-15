@@ -93,8 +93,8 @@ def measure_statistics_from_args(args):
     pipeline_config = args.pipeline_config
 
     archive_dir = pipeline_config[CalibrationConfigKeys.MS_ARCHIVE_DIR]
-    webdav_dir = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_ARCHIVE]
-    webdav_archive = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_DIR]
+    webdav_dir = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_DIR]
+    webdav_archive = pipeline_config[CalibrationConfigKeys.MS_WEBDAV_ARCHIVE]
 
     # If we're archiving with webdav, determine its mount dir and the full archive directory
     if webdav_archive and archive_dir is not None:
