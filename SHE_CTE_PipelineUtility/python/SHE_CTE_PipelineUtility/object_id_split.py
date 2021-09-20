@@ -20,28 +20,24 @@ __updated__ = "2021-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from copy import deepcopy
 import math
 import os
+from copy import deepcopy
 
-from SHE_PPT.file_io import (write_listfile,
-                             write_xml_product,
-                             get_allowed_filename)
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import AnalysisConfigKeys
-from SHE_PPT.products import she_object_id_list, mer_final_catalog
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
-
-import SHE_CTE
 import numpy as np
 
+import SHE_CTE
+from SHE_PPT.file_io import (get_allowed_filename, write_listfile, write_xml_product)
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import AnalysisConfigKeys
+from SHE_PPT.products import mer_final_catalog, she_object_id_list
+from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 
 logger = getLogger(__name__)
 
 
 def get_tile_list(data_stack):
-
     tile_list = []
     for detections_catalogue_product in data_stack.detections_catalogue_products:
         tile_index = detections_catalogue_product.Data.TileIndex
@@ -67,8 +63,7 @@ def get_pointing_list_and_observation_id(data_stack):
     return pointing_list, observation_id
 
 
-def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=False):
-
+def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch = False):
     if ids_to_use is not None:
 
         all_ids_array = np.array(ids_to_use)
@@ -95,13 +90,13 @@ def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=Fal
                 continue
 
             # Get a stack of the galaxy images
-            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id=gal_id, width=1,)
+            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id = gal_id, width = 1, )
 
             # Do we have any data for this object?
             if not gal_stamp_stack.is_empty():
                 good_ids.append(gal_id)
                 num_good_ids += 1
-                if num_ids_desired > 0 and num_good_ids >= num_ids_desired:
+                if num_good_ids >= num_ids_desired > 0:
                     break
 
         all_ids_array = np.array(good_ids)
@@ -115,18 +110,17 @@ def read_oid_input_data(data_images,
                         ids_to_use,
                         max_batches,
                         batch_size,
-                        sub_batch=False):
-
+                        sub_batch = False):
     # Read in the data images
     logger.info("Reading data images...")
 
-    data_stack = SHEFrameStack.read(exposure_listfile_filename=data_images,
-                                    detections_listfile_filename=mer_final_catalog_tables,
-                                    workdir=workdir,
-                                    save_products=True,
-                                    memmap=(not sub_batch),
-                                    mode='denywrite',
-                                    load_images=(not sub_batch))
+    data_stack = SHEFrameStack.read(exposure_listfile_filename = data_images,
+                                    detections_listfile_filename = mer_final_catalog_tables,
+                                    workdir = workdir,
+                                    save_products = True,
+                                    memmap = (not sub_batch),
+                                    mode = 'denywrite',
+                                    load_images = (not sub_batch))
 
     first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
 
@@ -136,7 +130,7 @@ def read_oid_input_data(data_images,
 
     pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
 
-    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch=sub_batch)
+    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch = sub_batch)
 
     num_ids = len(all_ids_array)
 
@@ -157,7 +151,7 @@ def read_oid_input_data(data_images,
         id_arrays = []
     else:
         id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
-                                       num_batches - 1, endpoint=True, dtype=int)
+                                       num_batches - 1, endpoint = True, dtype = int)
 
         id_arrays = np.split(all_ids_array, id_split_indices)
 
@@ -183,7 +177,6 @@ def write_oid_batch(workdir,
                     data_stack,
                     first_mer_final_catalog_product,
                     i):
-
     # For the filenames, we want to set it up in a subfolder so we don't get too many files
     subfolder_number = i % 256
     subfolder_name = f"data/s{subfolder_number}"
@@ -201,15 +194,15 @@ def write_oid_batch(workdir,
     logger.debug(f"Writing ID list #{i} to product.")
 
     # Get a filename for this batch and store it in the list
-    batch_id_list_product_filename = get_allowed_filename(type_name="OBJ-ID-LIST",
-                                                          instance_id=f"{os.getpid()}-{i}",
-                                                          extension=".xml",
-                                                          version=SHE_CTE.__version__,
-                                                          subdir=subfolder_name,
-                                                          processing_function="SHE")
+    batch_id_list_product_filename = get_allowed_filename(type_name = "OBJ-ID-LIST",
+                                                          instance_id = f"{os.getpid()}-{i}",
+                                                          extension = ".xml",
+                                                          version = SHE_CTE.__version__,
+                                                          subdir = subfolder_name,
+                                                          processing_function = "SHE")
 
     # Create the product and fill out metadata
-    batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list=list(id_arrays[i]))
+    batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list = list(id_arrays[i]))
 
     batch_id_list_product.Data.BatchIndex = i
     batch_id_list_product.Data.PointingIdList = pointing_list
@@ -234,22 +227,22 @@ def write_oid_batch(workdir,
         tile_list_binding.TileProductId = tile_list[0][1]
 
     # Save the product
-    write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir=workdir)
+    write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir = workdir)
 
     logger.debug(f"Successfully wrote ID list #{i} to product: {batch_id_list_product_filename}")
 
     # Create and write out the batch catalog
 
     # Get a filename for the batch catalog
-    batch_mer_catalog_filename = get_allowed_filename(type_name="BATCH-MER-CAT",
-                                                      instance_id=f"{os.getpid()}-{i}",
-                                                      extension=".fits",
-                                                      version=SHE_CTE.__version__,
-                                                      subdir=subfolder_name,
-                                                      processing_function="SHE")
+    batch_mer_catalog_filename = get_allowed_filename(type_name = "BATCH-MER-CAT",
+                                                      instance_id = f"{os.getpid()}-{i}",
+                                                      extension = ".fits",
+                                                      version = SHE_CTE.__version__,
+                                                      subdir = subfolder_name,
+                                                      processing_function = "SHE")
 
     # Init the catalog and copy over metadata
-    batch_mer_catalog = initialise_mer_final_catalog(optional_columns=data_stack.detections_catalogue.colnames)
+    batch_mer_catalog = initialise_mer_final_catalog(optional_columns = data_stack.detections_catalogue.colnames)
     for key in data_stack.detections_catalogue.meta:
         batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
 
@@ -267,12 +260,12 @@ def write_oid_batch(workdir,
     logger.debug(f"Writing batch MER catalog product #{i}.")
 
     # Get a filename for this product and store it in the list
-    batch_mer_catalog_product_filename = get_allowed_filename(type_name="P-BATCH-MER-CAT",
-                                                              instance_id=f"{os.getpid()}-{i}",
-                                                              extension=".xml",
-                                                              version=SHE_CTE.__version__,
-                                                              subdir=subfolder_name,
-                                                              processing_function="SHE")
+    batch_mer_catalog_product_filename = get_allowed_filename(type_name = "P-BATCH-MER-CAT",
+                                                              instance_id = f"{os.getpid()}-{i}",
+                                                              extension = ".xml",
+                                                              version = SHE_CTE.__version__,
+                                                              subdir = subfolder_name,
+                                                              processing_function = "SHE")
 
     # Create the product and copy metadata from the first catalogue
     batch_mer_catalog_product = mer_final_catalog.create_dpd_mer_final_catalog()
@@ -285,7 +278,7 @@ def write_oid_batch(workdir,
     batch_mer_catalog_product.set_data_filename(batch_mer_catalog_filename)
 
     # Save the product
-    write_xml_product(batch_mer_catalog_product, batch_mer_catalog_product_filename, workdir=workdir)
+    write_xml_product(batch_mer_catalog_product, batch_mer_catalog_product_filename, workdir = workdir)
 
     logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
 
@@ -294,7 +287,7 @@ def write_oid_batch(workdir,
 
 
 def object_id_split_from_args(args,
-                              sub_batch=False):
+                              sub_batch = False):
     """ Core function for implementing a split by object ID
     """
 
@@ -315,13 +308,13 @@ def object_id_split_from_args(args,
      observation_id,
      tile_list,
      data_stack,
-     first_mer_final_catalog_product) = read_oid_input_data(data_images=args.data_images,
-                                                            mer_final_catalog_tables=args.mer_final_catalog_tables,
-                                                            workdir=args.workdir,
-                                                            ids_to_use=ids_to_use,
-                                                            max_batches=max_batches,
-                                                            batch_size=batch_size,
-                                                            sub_batch=sub_batch)
+     first_mer_final_catalog_product) = read_oid_input_data(data_images = args.data_images,
+                                                            mer_final_catalog_tables = args.mer_final_catalog_tables,
+                                                            workdir = args.workdir,
+                                                            ids_to_use = ids_to_use,
+                                                            max_batches = max_batches,
+                                                            batch_size = batch_size,
+                                                            sub_batch = sub_batch)
 
     # Start outputting the ID lists for each batch and creating trimmed catalogs
 
@@ -334,14 +327,15 @@ def object_id_split_from_args(args,
     for i in range(limited_num_batches):
 
         (batch_id_list_product_filename,
-         batch_mer_catalog_product_filename) = write_oid_batch(workdir=args.workdir,
-                                                               id_arrays=id_arrays,
-                                                               pointing_list=pointing_list,
-                                                               observation_id=observation_id,
-                                                               tile_list=tile_list,
-                                                               data_stack=data_stack,
-                                                               first_mer_final_catalog_product=first_mer_final_catalog_product,
-                                                               i=i)
+         batch_mer_catalog_product_filename) = write_oid_batch(
+            workdir = args.workdir,
+            id_arrays = id_arrays,
+            pointing_list = pointing_list,
+            observation_id = observation_id,
+            tile_list = tile_list,
+            data_stack = data_stack,
+            first_mer_final_catalog_product = first_mer_final_catalog_product,
+            i = i)
 
         id_list_product_filename_list.append(batch_id_list_product_filename)
         batch_mer_catalog_product_filename_list.append(batch_mer_catalog_product_filename)
