@@ -23,6 +23,7 @@ __updated__ = "2021-08-19"
 import math
 import os
 from copy import deepcopy
+from typing import List, Optional, Sequence, Set
 
 import numpy as np
 
@@ -32,6 +33,7 @@ from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import AnalysisConfigKeys
 from SHE_PPT.products import mer_final_catalog, she_object_id_list
 from SHE_PPT.she_frame_stack import SHEFrameStack
+from SHE_PPT.she_image_stack import SHEImageStack
 from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 
 logger = getLogger(__name__)
@@ -63,43 +65,64 @@ def get_pointing_list_and_observation_id(data_stack):
     return pointing_list, observation_id
 
 
-def get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch = False):
+def get_ids_array(ids_to_use: Optional[Sequence[int]],
+                  max_batches: int,
+                  batch_size: int,
+                  data_stack: SHEFrameStack,
+                  sub_batch: bool = False):
+    s_all_ids: Set[int]
+    ids_supplied: bool
+    num_ids_desired: int
+
     if ids_to_use is not None:
 
-        all_ids_array = np.array(ids_to_use)
+        ids_supplied = True
+
+        # Set the number of IDs desired - 0 indicates all available
+        num_ids_desired = 0
+        s_all_ids = set(np.array(ids_to_use))
+
+        logger.info("Using input list of IDs.")
 
     else:
+
+        ids_supplied = False
 
         # Get the number of IDs desired - 0 indicates all available
         num_ids_desired = max_batches * batch_size
 
-        all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
+        s_all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
 
         logger.info("Finished reading in IDs from mer_final_catalog.")
 
-        # Prune IDs that aren't in the images
-        good_ids = []
-        num_good_ids = 0
+    # Prune IDs that aren't in the images
+    good_ids: List[int] = []
+    num_good_ids: int = 0
 
-        for gal_id in all_ids:
+    gal_id: int
+    for gal_id in s_all_ids:
 
-            # If this is a sub-batch, checking has already been done so we can trust all IDs are good
-            if sub_batch:
-                good_ids.append(gal_id)
-                num_good_ids += 1
-                continue
+        # If this is a sub-batch, checking has already been done so we can trust all IDs are good
+        if sub_batch:
+            good_ids.append(gal_id)
+            num_good_ids += 1
+            continue
 
-            # Get a stack of the galaxy images
-            gal_stamp_stack = data_stack.extract_galaxy_stack(gal_id = gal_id, width = 1, )
+        # Get a stack of the galaxy images
+        gal_stamp_stack: SHEImageStack = data_stack.extract_galaxy_wcs_stack(gal_id = gal_id, )
 
-            # Do we have any data for this object?
-            if not gal_stamp_stack.is_empty():
-                good_ids.append(gal_id)
-                num_good_ids += 1
-                if num_good_ids >= num_ids_desired > 0:
-                    break
+        # Do we have any data for this object?
+        if not gal_stamp_stack.is_empty():
+            good_ids.append(gal_id)
+            num_good_ids += 1
+            if num_good_ids >= num_ids_desired > 0:
+                break
 
-        all_ids_array = np.array(good_ids)
+    if ids_supplied and len(good_ids) == 0:
+        raise ValueError("No ids in supplied list were found in observation. IDs supplied were: "
+                         f"{ids_to_use}")
+
+    all_ids_array = np.array(good_ids)
 
     return all_ids_array
 
@@ -130,7 +153,11 @@ def read_oid_input_data(data_images,
 
     pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
 
-    all_ids_array = get_ids_array(ids_to_use, max_batches, batch_size, data_stack, sub_batch = sub_batch)
+    all_ids_array = get_ids_array(ids_to_use = ids_to_use,
+                                  max_batches = max_batches,
+                                  batch_size = batch_size,
+                                  data_stack = data_stack,
+                                  sub_batch = sub_batch)
 
     num_ids = len(all_ids_array)
 
@@ -219,7 +246,7 @@ def write_oid_batch(workdir,
             tile_list_binding[tile_i].TileIndex = tile_index
             tile_list_binding[tile_i].TileProductId = tile_product_id
     except TypeError as e:
-        if not "object does not support indexing" in str(e):
+        if "object does not support indexing" not in str(e):
             raise
         logger.warning("Cannot list all tiles in data product; will only list first tile.")
         tile_list_binding = batch_id_list_product.Data.TileList
