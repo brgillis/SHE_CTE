@@ -309,8 +309,17 @@ def write_oid_batch(workdir,
 
     logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
 
+    # Write a listfile for this product for a consistent interface
+    batch_mer_catalog_listfile_filename = get_allowed_filename(type_name = "L-BATCH-MER-CAT",
+                                                               instance_id = f"{os.getpid()}-{i}",
+                                                               extension = ".json",
+                                                               version = SHE_CTE.__version__,
+                                                               subdir = subfolder_name,
+                                                               processing_function = "SHE")
+    write_listfile(os.path.join(workdir, batch_mer_catalog_listfile_filename), [batch_mer_catalog_product_filename])
+
     return (batch_id_list_product_filename,
-            batch_mer_catalog_product_filename)
+            batch_mer_catalog_listfile_filename)
 
 
 def object_id_split_from_args(args,
