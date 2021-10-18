@@ -356,14 +356,14 @@ def object_id_split_from_args(args,
 
     # Keep a list of all product filenames
     id_list_product_filename_list = []
-    batch_mer_catalog_product_filename_list = []
+    batch_mer_catalog_listfile_filename_list = []
 
     logger.info("Writing ID lists and batch catalogs into products.")
 
     for i in range(limited_num_batches):
 
         (batch_id_list_product_filename,
-         batch_mer_catalog_product_filename) = write_oid_batch(
+         batch_mer_catalog_listfile_filename) = write_oid_batch(
             workdir = args.workdir,
             id_arrays = id_arrays,
             pointing_list = pointing_list,
@@ -374,13 +374,13 @@ def object_id_split_from_args(args,
             i = i)
 
         id_list_product_filename_list.append(batch_id_list_product_filename)
-        batch_mer_catalog_product_filename_list.append(batch_mer_catalog_product_filename)
+        batch_mer_catalog_listfile_filename_list.append(batch_mer_catalog_listfile_filename)
 
     # Output the listfiles
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
     logger.info(f"Finished writing listfile of object ID list products to {args.object_ids}")
 
-    write_listfile(os.path.join(args.workdir, args.batch_mer_catalogs), batch_mer_catalog_product_filename_list)
+    write_listfile(os.path.join(args.workdir, args.batch_mer_catalogs), batch_mer_catalog_listfile_filename_list)
     logger.info(f"Finished writing listfile of batch MER catalog products to {args.batch_mer_catalogs}")
 
     logger.debug('# Exiting object_id_split_from_args normally')
