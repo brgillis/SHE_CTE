@@ -22,45 +22,40 @@ __updated__ = "2021-08-18"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import multiprocessing as mp
 import os
-from typing import Any, Dict, Union, Tuple, Type
+from typing import Any, Dict, Tuple, Type, Union
 
-from EL_PythonUtils.utilities import get_arguments_string
-from SHE_PPT import products
-from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
-from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
-from SHE_PPT.file_io import (read_listfile,
-                             read_xml_product, write_xml_product,
-                             get_allowed_filename)
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (read_analysis_config, AnalysisConfigKeys,
-                                      ConfigKeys, GlobalConfigKeys)
-from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
-from SHE_PPT.table_formats.she_measurements import tf as sm_tf
-from SHE_PPT.table_utility import is_in_format
+import numpy as np
 from astropy import table
 
 import SHE_CTE
-import multiprocessing as mp
-import numpy as np
-
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT import products
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
+from SHE_PPT.file_io import (get_allowed_filename, read_listfile, read_xml_product, write_xml_product)
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys, read_analysis_config)
+from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
+from SHE_PPT.table_formats.she_measurements import tf as sm_tf
+from SHE_PPT.table_utility import is_in_format
 
 # Set up dicts for pipeline config defaults and types
 D_SEM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     **D_GLOBAL_CONFIG_DEFAULTS,
     AnalysisConfigKeys.SEM_NUM_THREADS: 8,
-}
+    }
 
 D_SEM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
     **D_GLOBAL_CONFIG_TYPES,
     AnalysisConfigKeys.SEM_NUM_THREADS: int,
-}
+    }
 
 D_SEM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     **D_GLOBAL_CONFIG_CLINE_ARGS,
     AnalysisConfigKeys.SEM_NUM_THREADS: "number_threads",
-}
-
+    }
 
 logger = getLogger(__name__)
 
@@ -81,26 +76,26 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input data
-    parser.add_argument('--shear_estimates_product_listfile', type=str)
-    parser.add_argument('--she_lensmc_chains_listfile', type=str)
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
+    parser.add_argument('--shear_estimates_product_listfile', type = str)
+    parser.add_argument('--she_lensmc_chains_listfile', type = str)
+    parser.add_argument("--pipeline_config", default = None, type = str,
+                        help = "Pipeline-wide configuration file.")
 
     # Output data
-    parser.add_argument('--merged_she_measurements', type=str)
-    parser.add_argument('--merged_she_lensmc_chains', type=str,
-                        help='XML data product to contain LensMC chains data.')
+    parser.add_argument('--merged_she_measurements', type = str)
+    parser.add_argument('--merged_she_lensmc_chains', type = str,
+                        help = 'XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
-    parser.add_argument('--number_threads', type=int, default=None,
-                        help='Number of parallel threads to use.')
+    parser.add_argument('--number_threads', type = int, default = None,
+                        help = 'Number of parallel threads to use.')
 
     # Required pipeline arguments
-    parser.add_argument('--workdir', type=str,)
-    parser.add_argument('--logdir', type=str,)
-    parser.add_argument('--debug', action='store_true',
-                        help="Set to enable debugging protocols")
-    parser.add_argument('--profile', action='store_true')
+    parser.add_argument('--workdir', type = str, )
+    parser.add_argument('--logdir', type = str, )
+    parser.add_argument('--debug', action = 'store_true',
+                        help = "Set to enable debugging protocols")
+    parser.add_argument('--profile', action = 'store_true')
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
 
@@ -108,7 +103,6 @@ def defineSpecificProgramOptions():
 
 
 def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir):
-
     try:
 
         logger.debug("Loading chains from file: " + she_lensmc_chains_table_product_filename)
@@ -139,7 +133,7 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
             she_lensmc_chains_table = table.Table.read(os.path.join(
                 workdir, she_lensmc_chains_table_filename))
 
-            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
+            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose = True, ignore_metadata = True):
                 raise TypeError("Input chains table is of invalid format.")
 
     except Exception as e:
@@ -153,7 +147,6 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
 
 
 def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
-
     observation_id = None
     observation_time = None
     pointing_id_list = None
@@ -199,7 +192,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
             she_measurements_method_table = table.Table.read(os.path.join(
                 workdir, she_measurements_method_table_filename))
 
-            if not is_in_format(she_measurements_method_table, sm_tf, verbose=True, ignore_metadata=True):
+            if not is_in_format(she_measurements_method_table, sm_tf, verbose = True, ignore_metadata = True):
                 raise TypeError(f"Input shear estimates table for method {method} is of invalid format.")
 
             # Append the table to the list of tables
@@ -223,7 +216,7 @@ def she_measurements_merge_from_args(args):
 
     # Read in the pipeline config
     try:
-        pipeline_config = read_analysis_config(args.pipeline_config, workdir=args.workdir)
+        pipeline_config = read_analysis_config(args.pipeline_config, workdir = args.workdir)
         if pipeline_config is None:
             pipeline_config = {}
     except Exception as e:
@@ -263,7 +256,7 @@ def she_measurements_merge_from_args(args):
          full_l_observation_times,
          full_l_pointing_id_lists,
          full_l_tile_lists) = zip(*[read_method_estimates_tables(
-             f, args.workdir) for f in measurements_product_filenames])
+            f, args.workdir) for f in measurements_product_filenames])
 
         full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
             f, args.workdir) for f in chains_product_filenames]
@@ -274,10 +267,10 @@ def she_measurements_merge_from_args(args):
 
         # Read the measurements tables
 
-        pool = mp.Pool(processes=number_threads)
-        pool_she_measurements_tables_and_metadata = [pool.apply_async(read_method_estimates_tables, args=(
+        pool = mp.Pool(processes = number_threads)
+        pool_she_measurements_tables_and_metadata = [pool.apply_async(read_method_estimates_tables, args = (
             she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename
-            in measurements_product_filenames]
+                                                     in measurements_product_filenames]
 
         pool.close()
         pool.join()
@@ -290,9 +283,10 @@ def she_measurements_merge_from_args(args):
 
         # Read the chains tables
 
-        pool = mp.Pool(processes=number_threads)
-        pool_she_lensmc_chains_tables = [pool.apply_async(read_lensmc_chains_tables, args=(
-            she_lensmc_chains_table_product_filename, args.workdir)) for she_lensmc_chains_table_product_filename in chains_product_filenames]
+        pool = mp.Pool(processes = number_threads)
+        pool_she_lensmc_chains_tables = [pool.apply_async(read_lensmc_chains_tables, args = (
+            she_lensmc_chains_table_product_filename, args.workdir)) for she_lensmc_chains_table_product_filename in
+                                         chains_product_filenames]
 
         pool.close()
         pool.join()
@@ -337,9 +331,9 @@ def she_measurements_merge_from_args(args):
 
     # Create the output products
     combined_she_measurements_product = products.she_measurements.create_she_measurements_product(
-        spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
+        spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
     combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
-        spatial_footprint=os.path.join(args.workdir, measurements_product_filenames[0]))
+        spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
 
     # Set the metadata for the measurements product
     combined_she_measurements_product.Data.ObservationId = observation_id
@@ -361,21 +355,22 @@ def she_measurements_merge_from_args(args):
             continue
 
         # Combine the tables
-        combined_she_measurements_tables[method] = table.vstack(she_measurements_tables[method])
+        combined_she_measurements_tables[method] = table.vstack(she_measurements_tables[method],
+                                                                metadata_conflicts = "silent")
 
         # Get a filename for the table
-        combined_she_measurements_table_filename = get_allowed_filename(type_name="SHEAR-EST-" + method.name,
-                                                                        instance_id='MERGED',
-                                                                        extension=".fits",
-                                                                        version=SHE_CTE.__version__,
-                                                                        subdir="data",
-                                                                        processing_function="SHE")
+        combined_she_measurements_table_filename = get_allowed_filename(type_name = "SHEAR-EST-" + method.name,
+                                                                        instance_id = 'MERGED',
+                                                                        extension = ".fits",
+                                                                        version = SHE_CTE.__version__,
+                                                                        subdir = "data",
+                                                                        processing_function = "SHE")
         combined_she_measurements_product.set_method_filename(method, combined_she_measurements_table_filename)
 
         # Output the combined table
         combined_she_measurements_tables[method].write(os.path.join(args.workdir,
                                                                     combined_she_measurements_table_filename),
-                                                       format="fits")
+                                                       format = "fits")
 
         logger.info("Combined shear estimates for method " + method.value +
                     " output to: " + combined_she_measurements_table_filename)
@@ -383,21 +378,22 @@ def she_measurements_merge_from_args(args):
     # Combine the chains tables
 
     # Combine the tables
-    combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables)
+    combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables,
+                                                     metadata_conflicts = "silent")
 
     # Get a filename for the table
-    combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name="SHEAR-CHAIN",
-                                                                     instance_id='MERGED',
-                                                                     extension=".fits",
-                                                                     version=SHE_CTE.__version__,
-                                                                     subdir="data",
-                                                                     processing_function="SHE")
+    combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name = "SHEAR-CHAIN",
+                                                                     instance_id = 'MERGED',
+                                                                     extension = ".fits",
+                                                                     version = SHE_CTE.__version__,
+                                                                     subdir = "data",
+                                                                     processing_function = "SHE")
     combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)
 
     # Output the combined table
     combined_she_lensmc_chains_tables.write(os.path.join(args.workdir,
                                                          combined_she_lensmc_chains_table_filename),
-                                            format="fits")
+                                            format = "fits")
 
     logger.info("Combined shear estimates for method " + method.value +
                 " output to: " + combined_she_measurements_table_filename)
@@ -426,18 +422,18 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ShearEstimatesMerge",
-                                    store_true=["profile", "debug"])
+    exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ShearEstimatesMerge",
+                                    store_true = ["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
     # load the pipeline config in
     args.pipeline_config = read_analysis_config(args.pipeline_config,
-                                                workdir=args.workdir,
-                                                defaults=D_SEM_CONFIG_DEFAULTS,
-                                                d_cline_args=D_SEM_CONFIG_CLINE_ARGS,
-                                                parsed_args=args,
-                                                d_types=D_SEM_CONFIG_TYPES)
+                                                workdir = args.workdir,
+                                                defaults = D_SEM_CONFIG_DEFAULTS,
+                                                d_cline_args = D_SEM_CONFIG_CLINE_ARGS,
+                                                parsed_args = args,
+                                                d_types = D_SEM_CONFIG_TYPES)
 
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
@@ -451,8 +447,8 @@ def mainMethod(args):
 
         cProfile.runctx("she_measurements_merge_from_args(args)", {},
                         {"she_measurements_merge_from_args": she_measurements_merge_from_args,
-                         "args": args, },
-                        filename=filename)
+                         "args"                            : args, },
+                        filename = filename)
     else:
         logger.info("Profiling disabled")
         she_measurements_merge_from_args(args)
