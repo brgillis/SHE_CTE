@@ -23,33 +23,30 @@ __updated__ = "2021-08-18"
 import argparse
 import os
 import shutil
-from typing import Any, Dict, Union, Tuple, Type
-
-from EL_PythonUtils.utilities import get_arguments_string
-from SHE_PPT import products  # Need to import in order to initialise all products
-from SHE_PPT.constants.config import D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES, D_GLOBAL_CONFIG_CLINE_ARGS
-from SHE_PPT.file_io import read_listfile, read_xml_product
-from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (read_calibration_config, CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys)
+from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
-
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.file_io import read_listfile, read_xml_product
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys, read_calibration_config)
 
 # Set up dicts for pipeline config defaults and types
 D_CBM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     **D_GLOBAL_CONFIG_DEFAULTS,
     CalibrationConfigKeys.CBM_CLEANUP: True,
-}
+    }
 
 D_CBM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
     **D_GLOBAL_CONFIG_TYPES,
     CalibrationConfigKeys.CBM_CLEANUP: bool,
-}
+    }
 
 D_CBM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     **D_GLOBAL_CONFIG_CLINE_ARGS,
     CalibrationConfigKeys.CBM_CLEANUP: None,
-}
+    }
 
 
 def defineSpecificProgramOptions():
@@ -70,30 +67,30 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Input arguments
-    parser.add_argument('--simulation_config', type=str)
-    parser.add_argument('--data_images', type=str)
-    parser.add_argument('--stacked_data_image', type=str)
-    parser.add_argument('--psf_images_and_tables', type=str)
-    parser.add_argument('--segmentation_images', type=str)
-    parser.add_argument('--stacked_segmentation_image', type=str)
-    parser.add_argument('--detections_tables', type=str)
-    parser.add_argument('--details_table', type=str)
-    parser.add_argument('--shear_estimates', type=str)
+    parser.add_argument('--simulation_config', type = str)
+    parser.add_argument('--data_images', type = str)
+    parser.add_argument('--stacked_data_image', type = str)
+    parser.add_argument('--psf_images_and_tables', type = str)
+    parser.add_argument('--segmentation_images', type = str)
+    parser.add_argument('--stacked_segmentation_image', type = str)
+    parser.add_argument('--detections_tables', type = str)
+    parser.add_argument('--details_table', type = str)
+    parser.add_argument('--shear_estimates', type = str)
 
-    parser.add_argument('--shear_bias_statistics_in', type=str)  # Needed to ensure it waits until ready
+    parser.add_argument('--shear_bias_statistics_in', type = str)  # Needed to ensure it waits until ready
 
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
+    parser.add_argument("--pipeline_config", default = None, type = str,
+                        help = "Pipeline-wide configuration file.")
 
     # Output arguments
-    parser.add_argument('--shear_bias_statistics_out', type=str)
+    parser.add_argument('--shear_bias_statistics_out', type = str)
 
     # Required pipeline arguments
-    parser.add_argument('--workdir', type=str,)
-    parser.add_argument('--logdir', type=str,)
-    parser.add_argument('--debug', action='store_true',
-                        help="Set to enable debugging protocols")
-    parser.add_argument('--profile', action='store_true')
+    parser.add_argument('--workdir', type = str, )
+    parser.add_argument('--logdir', type = str, )
+    parser.add_argument('--debug', action = 'store_true',
+                        help = "Set to enable debugging protocols")
+    parser.add_argument('--profile', action = 'store_true')
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 
@@ -212,18 +209,19 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CleanupBiasMeasurement",
-                                    store_true=["profile", "debug"])
+    exec_cmd = get_arguments_string(args,
+                                    cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CleanupBiasMeasurement",
+                                    store_true = ["profile", "debug"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
     # load the pipeline config in
     args.pipeline_config = read_calibration_config(args.pipeline_config,
-                                                   workdir=args.workdir,
-                                                   defaults=D_CBM_CONFIG_DEFAULTS,
-                                                   d_cline_args=D_CBM_CONFIG_CLINE_ARGS,
-                                                   parsed_args=args,
-                                                   d_types=D_CBM_CONFIG_TYPES)
+                                                   workdir = args.workdir,
+                                                   d_defaults = D_CBM_CONFIG_DEFAULTS,
+                                                   d_cline_args = D_CBM_CONFIG_CLINE_ARGS,
+                                                   parsed_args = args,
+                                                   d_types = D_CBM_CONFIG_TYPES)
 
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
@@ -240,8 +238,8 @@ def mainMethod(args):
 
             cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
                             {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
-                             "args": args, },
-                            filename=filename)
+                             "args"                              : args, },
+                            filename = filename)
         else:
             logger.info("Profiling disabled")
             cleanup_bias_measurement_from_args(args)

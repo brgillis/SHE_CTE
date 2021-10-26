@@ -180,13 +180,11 @@ def mainMethod(args):
     dry_run = args.dry_run
 
     # load the pipeline config in
-    args.pipeline_config = read_config(args.pipeline_config,
-                                       workdir = args.workdir,
+    args.pipeline_config = read_config(args.pipeline_config, workdir = args.workdir,
                                        config_keys = (AnalysisConfigKeys, CalibrationConfigKeys),
-                                       defaults = D_EST_SHEAR_CONFIG_DEFAULTS,
                                        d_cline_args = D_EST_SHEAR_CONFIG_CLINE_ARGS,
-                                       parsed_args = args,
-                                       d_types = D_EST_SHEAR_CONFIG_TYPES)
+                                       d_defaults = D_EST_SHEAR_CONFIG_DEFAULTS, d_types = D_EST_SHEAR_CONFIG_TYPES,
+                                       parsed_args = args)
 
     # check if profiling is to be enabled from the pipeline config
     profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]

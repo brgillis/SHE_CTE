@@ -113,7 +113,7 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
             os.path.join(workdir, she_lensmc_chains_table_product_filename))
 
         if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensMcChains):
-            raise TypeError("Shear product is of invalid type: " + type(she_lensmc_chains_product))
+            raise TypeError(f"Shear product is of invalid type: {type(she_lensmc_chains_product)}")
 
     except Exception as e:
 
@@ -162,7 +162,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
             os.path.join(workdir, she_measurements_table_product_filename))
 
         if not isinstance(she_measurements_table_product, products.she_measurements.dpdSheMeasurements):
-            raise TypeError("Shear product is of invalid type: " + type(she_measurements_table_product))
+            raise TypeError(f"Shear product is of invalid type: {type(she_measurements_table_product)}")
 
         if observation_id is None:
             observation_id = she_measurements_table_product.Data.ObservationId
@@ -430,7 +430,7 @@ def mainMethod(args):
     # load the pipeline config in
     args.pipeline_config = read_analysis_config(args.pipeline_config,
                                                 workdir = args.workdir,
-                                                defaults = D_SEM_CONFIG_DEFAULTS,
+                                                d_defaults = D_SEM_CONFIG_DEFAULTS,
                                                 d_cline_args = D_SEM_CONFIG_CLINE_ARGS,
                                                 parsed_args = args,
                                                 d_types = D_SEM_CONFIG_TYPES)
