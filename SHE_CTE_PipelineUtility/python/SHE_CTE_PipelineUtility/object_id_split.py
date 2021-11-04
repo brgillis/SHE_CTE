@@ -24,8 +24,11 @@ import math
 import os
 from copy import deepcopy
 from typing import List, Optional, Sequence, Set
+import time
 
 import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.units import deg as degrees
 
 import SHE_CTE
 from SHE_PPT.file_io import (get_allowed_filename, write_listfile, write_xml_product)
@@ -35,6 +38,8 @@ from SHE_PPT.products import mer_final_catalog, she_object_id_list
 from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.she_image_stack import SHEImageStack
 from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
+from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR, RTOD
+from SHE_PPT.clustering import identify_all_blends, partition_into_batches
 
 logger = getLogger(__name__)
 
@@ -70,17 +75,41 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
                   batch_size: int,
                   data_stack: SHEFrameStack,
                   sub_batch: bool = False):
+    """Gets the list of all valid object IDs from the catalogue that are in the observation, and the indices of these objects in the catalogue
+       if ids_to_use is not None, get the valid object IDs and indices from this list rather than the whole catalogue"""
+
     s_all_ids: Set[int]
     ids_supplied: bool
     num_ids_desired: int
-
+    
+    #get the list of object ids we want, and their indices in the catalogue
     if ids_to_use is not None:
 
         ids_supplied = True
 
         # Set the number of IDs desired - 0 indicates all available
         num_ids_desired = 0
-        s_all_ids = set(np.array(ids_to_use))
+
+        #get the unique objects in the catalogue and their indices
+        catalogue_ids, unique_catalogue_indices = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
+
+        #get the unique ids_to_use
+        ids_to_use = np.unique(np.asarray(ids_to_use))
+
+        #get the indices of the catalogue object that are in ids_to_use (e.g. we don't want ids that are not in the catalogue)
+        ids_to_use_indices = np.where(np.isin(catalogue_ids,ids_to_use))
+        
+        #now get the indices of these points in the original catalogue, and their ids
+        indices_in_catalogue = unique_catalogue_indices[ids_to_use_indices]
+        s_all_ids = catalogue_ids[ids_to_use_indices]
+
+        
+        # #select only the ids_to_use that are in the catalogue, removing duplicates
+        # catalogue_ids = data_stack.detections_catalogue[mfc_tf.ID].data
+        # valid_ids = np.unique(catalogue_ids[np.where(np.isin(catalogue_ids,ids_to_use))])
+
+        # # s_all_ids = set(np.array(ids_to_use))
+        # s_all_ids, unique_indices = np.unique(np.array(ids_to_use),return_index=True)
 
         logger.info("Using input list of IDs.")
 
@@ -91,40 +120,46 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
         # Get the number of IDs desired - 0 indicates all available
         num_ids_desired = max_batches * batch_size
 
-        s_all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
+        #s_all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
+        #get the unique object ids in the catalogue, and their indices
+        s_all_ids, indices_in_catalogue = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
 
         logger.info("Finished reading in IDs from mer_final_catalog.")
 
-    # Prune IDs that aren't in the images
-    good_ids: List[int] = []
-    num_good_ids: int = 0
-
-    gal_id: int
-    for gal_id in s_all_ids:
-
+   
+    #get the objects in the observation
+    
+    if sub_batch:
         # If this is a sub-batch, checking has already been done so we can trust all IDs are good
-        if sub_batch:
-            good_ids.append(gal_id)
-            num_good_ids += 1
-            continue
+        all_ids_indices = indices
+        all_ids_array = s_all_ids
+    else:
+        t0 = time.time()
+        logger.info("Extracting objecs in the observation from the catalogue")
 
-        # Get a stack of the galaxy images
-        gal_stamp_stack: SHEImageStack = data_stack.extract_galaxy_wcs_stack(gal_id = gal_id, )
+        #first get the sky coordinates of all the objects in the candidate list, convert to SkyCoords
+        ras = data_stack.detections_catalogue[mfc_tf.gal_x_world].data[indices_in_catalogue]
+        decs = data_stack.detections_catalogue[mfc_tf.gal_y_world].data[indices_in_catalogue]
+        object_coords = SkyCoord(ras,decs,unit=degrees)
+        
+        #get the indices of all the objects found in the observation (these are relative to the indices in s_all_ids)
+        found_object_indices = data_stack.get_objects_in_observation(object_coords)
+        
+        #get the (catalogue) indices and ids for these objects
+        all_ids_indices = indices_in_catalogue[found_object_indices]
+        all_ids_array = s_all_ids[found_object_indices]
 
-        # Do we have any data for this object?
-        if not gal_stamp_stack.is_empty():
-            good_ids.append(gal_id)
-            num_good_ids += 1
-            if num_good_ids >= num_ids_desired > 0:
-                break
+        t1 = time.time()
+        logger.info(f"Extracted {len(all_ids_array)} objects in observation from catalogue in {t1-t0}s")
 
-    if ids_supplied and len(good_ids) == 0:
-        raise ValueError("No ids in supplied list were found in observation. IDs supplied were: "
-                         f"{ids_to_use}")
+    
+    #if we don't want all the IDs, trim the list down to the specified size
+    if num_ids_desired > 0:
+        all_ids_array = all_ids_array[0:num_ids_desired]
+        all_ids_indices = all_ids_indices[0:num_ids_desired]
 
-    all_ids_array = np.array(good_ids)
 
-    return all_ids_array
+    return all_ids_array, all_ids_indices
 
 
 def read_oid_input_data(data_images,
@@ -153,11 +188,13 @@ def read_oid_input_data(data_images,
 
     pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
 
-    all_ids_array = get_ids_array(ids_to_use = ids_to_use,
-                                  max_batches = max_batches,
-                                  batch_size = batch_size,
-                                  data_stack = data_stack,
-                                  sub_batch = sub_batch)
+
+    #get the list of object IDs (and their indices in the catalogue) for objects in the observation
+    all_ids_array, all_ids_indices = get_ids_array(ids_to_use = ids_to_use,
+                                                    max_batches = max_batches,
+                                                    batch_size = batch_size,
+                                                    data_stack = data_stack,
+                                                    sub_batch = sub_batch)
 
     num_ids = len(all_ids_array)
 
@@ -172,23 +209,67 @@ def read_oid_input_data(data_images,
     else:
         limited_num_batches = num_batches
 
-    logger.info(f"Splitting IDs into {limited_num_batches} batches of size {batch_size}.")
+    
+    #get ras and decs of the objects
+    ras = data_stack.detections_catalogue[mfc_tf.gal_x_world].data[all_ids_indices]
+    decs = data_stack.detections_catalogue[mfc_tf.gal_y_world].data[all_ids_indices]
+    
+    #  change coordinate system to one centred about the celestial equator so that over the half degree or so
+    #  range we can approximate ra/dec as cartesian
+    ras_eq, decs_eq = reproject_to_equator(ras,decs)
 
-    if num_batches == 0:
-        id_arrays = []
-    else:
-        id_split_indices = np.linspace(batch_size, (num_batches - 1) * batch_size,
-                                       num_batches - 1, endpoint = True, dtype = int)
+    logger.info("Identifying blended objects...")
 
-        id_arrays = np.split(all_ids_array, id_split_indices)
+    #  first we want to identify blends. In order to do this, we want to further improve the coordinates such
+    #  that they're as close to cartesian as possible. To do this, remember that an small distance in
+    #  spherical coordinates is delta l**2 = (delta dec)**2 + (cos(dec) * delta lon)**2. As we're only interested
+    #  in accurate small distances (for the blend) we can use a cartesian coordinate system where
+    #  x = cos(dec)*ra
+    #  y = dec
+    
+    # calculate the new x and y coordinates, converting to arcseconds
+    x = np.cos(decs_eq*DTOR)*ras_eq * 3600.
+    y = decs_eq * 3600.
+    
+    #get the blends (separation <= 1"), and the updated positions of all objects for batching (all blends have the same position)
+    x_blend, y_blend, blend_ids = identify_all_blends(x, y, sep=1, metric=euclidean_metric)
 
-        # Perform some quick sanity checks
-        assert len(id_arrays) == num_batches
-        assert len(id_arrays[0]) == batch_size or num_batches == 1
-        assert len(id_arrays[-1]) <= batch_size
+    logger.info(f"Splitting objects into batches of mean size {batch_size}")
+    
+    #spatially batch objects into batches of mean size batch_size
+    clusters, batch_ids, ns = partition_into_batches(x_blend, y_blend, batchsize = batch_size)
+
+    
+    #now construct the lists of IDs and indices for each batch
+
+    id_arrays = []
+    index_arrays = []
+
+    unique_batch_ids = set(batch_ids)
+
+    n=1
+    for batch in unique_batch_ids:
+        if n > limited_num_batches:
+            #if we've reached the maximum number of batches required, we are done
+            break
+
+        inds = np.where(batch_ids == batch)
+
+        ids = all_ids_array[inds]
+        indices = all_ids_indices[inds]
+
+        id_arrays.append(ids)
+        index_arrays.append(indices)
+
+        n+=1
+
+    #make sure we do have num_batches batches
+    assert len(id_arrays) == num_batches
+
 
     return (limited_num_batches,
             id_arrays,
+            index_arrays,
             pointing_list,
             observation_id,
             tile_list,
@@ -198,6 +279,7 @@ def read_oid_input_data(data_images,
 
 def write_oid_batch(workdir,
                     id_arrays,
+                    index_arrays,
                     pointing_list,
                     observation_id,
                     tile_list,
@@ -267,16 +349,16 @@ def write_oid_batch(workdir,
                                                       version = SHE_CTE.__version__,
                                                       subdir = subfolder_name,
                                                       processing_function = "SHE")
+    
+    #get the data from the detections_catalogue for this batch
+    batch_table = data_stack.detections_catalogue[index_arrays[i]].filled()
+    
+    # Init the catalog and copy over metadata and the batch's data
+    #batch_mer_catalog = initialise_mer_final_catalog(optional_columns = data_stack.detections_catalogue.colnames, init_cols = batch_table.columns)
+    batch_mer_catalog = batch_table
 
-    # Init the catalog and copy over metadata
-    batch_mer_catalog = initialise_mer_final_catalog(optional_columns = data_stack.detections_catalogue.colnames)
     for key in data_stack.detections_catalogue.meta:
         batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
-
-    # Add a row to the catalog for each ID, taking the row from the combined catalogue
-    for object_id in id_arrays[i]:
-        object_row = data_stack.detections_catalogue.loc[object_id]
-        batch_mer_catalog.add_row(object_row)
 
     # Write out the catalog
     batch_mer_catalog.write(os.path.join(workdir, batch_mer_catalog_filename))
@@ -340,6 +422,7 @@ def object_id_split_from_args(args,
 
     (limited_num_batches,
      id_arrays,
+     index_arrays,
      pointing_list,
      observation_id,
      tile_list,
@@ -361,11 +444,13 @@ def object_id_split_from_args(args,
     logger.info("Writing ID lists and batch catalogs into products.")
 
     for i in range(limited_num_batches):
+        t0 = time.time()
 
         (batch_id_list_product_filename,
          batch_mer_catalog_listfile_filename) = write_oid_batch(
             workdir = args.workdir,
             id_arrays = id_arrays,
+            index_arrays = index_arrays,
             pointing_list = pointing_list,
             observation_id = observation_id,
             tile_list = tile_list,
@@ -375,6 +460,9 @@ def object_id_split_from_args(args,
 
         id_list_product_filename_list.append(batch_id_list_product_filename)
         batch_mer_catalog_listfile_filename_list.append(batch_mer_catalog_listfile_filename)
+
+        t1=time.time()
+        logger.info(f"Written batch {i+1} of {limited_num_batches} in {t1-t0} seconds")
 
     # Output the listfiles
     write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
