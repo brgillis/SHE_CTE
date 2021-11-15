@@ -194,11 +194,115 @@ def defineSpecificProgramOptions():
     parser.add_argument('--chains_method', type = str, default = None,
                         help = 'Which shear estimation method to generate chains with.')
 
-    parser.add_argument('--fast_mode', action = 'store_true',
-                        help = 'Enable LensMC fast mode')
-
     parser.add_argument('--memmap_images', action = 'store_true',
                         help = 'Memory-map images rather than reading them on-demand.')
+
+    # LensMC-specific input arguments
+
+    parser.add_argument('--lensmc_stamp_size',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_STAMP_SIZE],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_STAMP_SIZE],
+                        help='LensMC: Requested stamp size in pixels.')
+
+    parser.add_argument('--lensmc_x_buffer',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_X_BUFFER],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_X_BUFFER],
+                        help='LensMC: Do not fit object if closer to edge of detector by this number of pixels '
+                             'along the x coordinate.')
+
+    parser.add_argument('--lensmc_y_buffer',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_Y_BUFFER],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_Y_BUFFER],
+                        help='LensMC: Do not fit object if closer to edge of detector by this number of pixels '
+                             'along the y coordinate.')
+
+    parser.add_argument('--lensmc_dilate_mask',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DILATE_MASK],
+                        help='LensMC: Dilate mask by one pixel.')
+    # TODO: Switch to lensmc_no_mask_dilation so the default is always False
+
+    parser.add_argument('--lensmc_hl_to_exp',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.AnalysisConfigKeys.LENSMC_HL_TO_EXP],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_HL_TO_EXP],
+                        help='LensMC: Half-light radius of the bulge to exponential scalelength of the disc.')
+
+    parser.add_argument('--lensmc_n_bulge',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_N_BULGE],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_N_BULGE],
+                        help='LensMC: Bulge Sersic index; available: n=(1., 1.5, 2., 2.5, 3., 3.5, 4.).')
+
+    parser.add_argument('--lensmc_n_disc',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_N_DISC],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_N_DISC],
+                        help='LensMC: Disc Sersic index; available: n=1.')
+
+    parser.add_argument('--lensmc_e_max',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_E_MAX],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_E_MAX],
+                        help='LensMC: Hard upper bound on ellipticity.')
+
+    parser.add_argument('--lensmc_re_max',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_RE_MAX],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RE_MAX],
+                        help='LensMC: Hard upper bound on effective radius.')
+
+    parser.add_argument('--lensmc_delta_max',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_DELTA_MAX],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DELTA_MAX],
+                        help='LensMC: Hard upper bound on position offset.')
+
+    parser.add_argument('--lensmc_e_flag',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_E_FLAG],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_E_FLAG],
+                        help='LensMC: Flagging threshold for ellipticity.')
+
+    parser.add_argument('--lensmc_re_flag',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_RE_FLAG],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RE_FLAG],
+                        help='LensMC: Flagging threshold for effective radius.')
+
+    parser.add_argument('--lensmc_delta_flag',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_DELTA_FLAG],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DELTA_FLAG],
+                        help='LensMC: Flagging threshold for position offset.')
+
+    parser.add_argument('--lensmc_disc_only',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DISC_ONLY],
+                        help='LensMC: Whether to fit only for a disc component.')
+
+    parser.add_argument('--lensmc_psf_oversampling',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING],
+                        help='LensMC: PSF oversampling factor.')
+
+    parser.add_argument('--lensmc_seed',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_SEED],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_SEED],
+                        help='LensMC: Seed the random sampler.')
+
+    parser.add_argument('--lensmc_shape_noise',
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
+                        help='LensMC: Shape noise standard deviation if not provided by training data.')
+
+    parser.add_argument('--lensmc_fast_mode',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_FAST_MODE],
+                        help='Enable LensMC fast mode. Override any sampling settings and produce MAP estimate '
+                             '(without MCMC/errors/intcal).')
+
+    parser.add_argument('--lensmc_only_vis_detected',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_ONLY_VIS_DETECTED],
+                        help='LensMC: Measure only objects that have been detected in VIS.')
+    # TODO: Switch to lensmc_include_vis_undetected sot the default is always False
+
+    parser.add_argument('--lensmc_monitor',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_MONITOR],
+                        help='LensMC: Monitor data and visually check consistency of input data.')
 
     # Output arguments
 
