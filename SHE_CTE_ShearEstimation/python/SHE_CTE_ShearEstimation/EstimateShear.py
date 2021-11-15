@@ -216,11 +216,10 @@ def defineSpecificProgramOptions():
                         help='LensMC: Do not fit object if closer to edge of detector by this number of pixels '
                              'along the y coordinate.')
 
-    parser.add_argument('--lensmc_dilate_mask',
+    parser.add_argument('--lensmc_no_mask_dilation',
                         action='store_true',
                         default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DILATE_MASK],
-                        help='LensMC: Dilate mask by one pixel.')
-    # TODO: Switch to lensmc_no_mask_dilation so the default is always False
+                        help='LensMC: Do not dilate mask by one pixel.')
 
     parser.add_argument('--lensmc_hl_to_exp',
                         type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.AnalysisConfigKeys.LENSMC_HL_TO_EXP],
@@ -293,11 +292,10 @@ def defineSpecificProgramOptions():
                         help='Enable LensMC fast mode. Override any sampling settings and produce MAP estimate '
                              '(without MCMC/errors/intcal).')
 
-    parser.add_argument('--lensmc_only_vis_detected',
+    parser.add_argument('--lensmc_include_vis_undetected',
                         action='store_true',
                         default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_ONLY_VIS_DETECTED],
-                        help='LensMC: Measure only objects that have been detected in VIS.')
-    # TODO: Switch to lensmc_include_vis_undetected sot the default is always False
+                        help='LensMC: Measure all objects, including those that have not been detected by VIS.')
 
     parser.add_argument('--lensmc_monitor',
                         action='store_true',
