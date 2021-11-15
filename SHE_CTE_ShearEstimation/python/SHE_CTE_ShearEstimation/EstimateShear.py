@@ -218,7 +218,7 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--lensmc_no_mask_dilation',
                         action='store_true',
-                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DILATE_MASK],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_NO_MASK_DILATION],
                         help='LensMC: Do not dilate mask by one pixel.')
 
     parser.add_argument('--lensmc_hl_to_exp',
@@ -294,7 +294,7 @@ def defineSpecificProgramOptions():
 
     parser.add_argument('--lensmc_include_vis_undetected',
                         action='store_true',
-                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_ONLY_VIS_DETECTED],
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED],
                         help='LensMC: Measure all objects, including those that have not been detected by VIS.')
 
     parser.add_argument('--lensmc_monitor',
