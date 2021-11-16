@@ -169,9 +169,29 @@ def estimate_shears_from_args(args, dry_run=False):
     if not chains_method in methods:
         raise ValueError(f"Chains method {chains_method} is not in the methods being run: {methods}.")
 
-    fast_mode = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE]
-
     memmap_images = pipeline_config[AnalysisConfigKeys.ES_MEMMAP_IMAGES]
+
+    # LensMC specific options
+    lensmc_stamp_size = pipeline_config[AnalysisConfigKeys.LENSMC_STAMP_SIZE]
+    lensmc_x_buffer = pipeline_config[AnalysisConfigKeys.LENSMC_X_BUFFER]
+    lensmc_y_buffer = pipeline_config[AnalysisConfigKeys.LENSMC_Y_BUFFER]
+    lensmc_no_mask_dilation = pipeline_config[AnalysisConfigKeys.LENSMC_NO_MASK_DILATION]
+    lensmc_hl_to_exp = pipeline_config[AnalysisConfigKeys.LENSMC_HL_TO_EXP]
+    lensmc_n_bulge = pipeline_config[AnalysisConfigKeys.LENSMC_N_BULGE]
+    lensmc_n_disc = pipeline_config[AnalysisConfigKeys.LENSMC_N_DISC]
+    lensmc_e_max = pipeline_config[AnalysisConfigKeys.LENSMC_E_MAX]
+    lensmc_re_max = pipeline_config[AnalysisConfigKeys.LENSMC_RE_MAX]
+    lensmc_delta_max = pipeline_config[AnalysisConfigKeys.LENSMC_DELTA_MAX]
+    lensmc_e_flag = pipeline_config[AnalysisConfigKeys.LENSMC_E_FLAG]
+    lensmc_re_flag = pipeline_config[AnalysisConfigKeys.LENSMC_RE_FLAG]
+    lensmc_delta_flag = pipeline_config[AnalysisConfigKeys.LENSMC_DELTA_FLAG]
+    lensmc_disc_only = pipeline_config[AnalysisConfigKeys.LENSMC_DISC_ONLY]
+    lensmc_psf_oversampling = pipeline_config[AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING]
+    lensmc_seed = pipeline_config[AnalysisConfigKeys.LENSMC_SEED]
+    lensmc_shape_noise = pipeline_config[AnalysisConfigKeys.LENSMC_SHAPE_NOISE]
+    lensmc_fast_mode = pipeline_config[AnalysisConfigKeys.LENSMC_FAST_MODE]
+    lensmc_included_vis_undetected = pipeline_config[AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED]
+    lensmc_monitor = pipeline_config[AnalysisConfigKeys.LENSMC_MONITOR]
 
     logger.info("Reading " + dry_label + "data images...")
 
@@ -322,7 +342,20 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          workdir=args.workdir,
                                                          debug=args.debug,
                                                          return_chains=return_chains,
-                                                         fast_mode=fast_mode)
+                                                         stamp_size=lensmc_stamp_size,
+                                                         x_buffer=lensmc_x_buffer, y_buffer=lensmc_y_buffer,
+                                                         no_mask_dilation=lensmc_no_mask_dilation,
+                                                         hl_to_exp=lensmc_hl_to_exp,
+                                                         n_bulge=lensmc_n_bulge, n_disc=lensmc_n_disc,
+                                                         e_max=lensmc_e_max, re_max=lensmc_re_max,
+                                                         delta_max=lensmc_delta_max,
+                                                         e_flag=lensmc_e_flag, re_flag=lensmc_re_flag,
+                                                         delta_flag=lensmc_delta_flag,
+                                                         disc_only=lensmc_disc_only,
+                                                         psf_oversampling=lensmc_psf_oversampling, seed=lensmc_seed,
+                                                         shape_noise=lensmc_shape_noise, fast_mode=lensmc_fast_mode,
+                                                         included_vis_undetected=lensmc_included_vis_undetected,
+                                                         monitor=lensmc_monitor)
 
                 if return_chains or method == ShearEstimationMethods.LENSMC:
                     shear_estimates_table, chains_table = shear_estimates_results
