@@ -56,6 +56,7 @@ D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING      : 5,
     AnalysisConfigKeys.LENSMC_SEED                  : None,
     AnalysisConfigKeys.LENSMC_SHAPE_NOISE           : 0.25,
+    AnalysisConfigKeys.LENSMC_RETURN_CHAINS         : False,
     AnalysisConfigKeys.LENSMC_FAST_MODE             : False,
     AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED: False,
     AnalysisConfigKeys.LENSMC_MONITOR               : False,
@@ -83,6 +84,7 @@ D_EST_SHEAR_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
     AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING      : int,
     AnalysisConfigKeys.LENSMC_SEED                  : int,
     AnalysisConfigKeys.LENSMC_SHAPE_NOISE           : float,
+    AnalysisConfigKeys.LENSMC_RETURN_CHAINS         : bool,
     AnalysisConfigKeys.LENSMC_FAST_MODE             : bool,
     AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED: bool,
     AnalysisConfigKeys.LENSMC_MONITOR               : bool,
@@ -110,6 +112,7 @@ D_EST_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING      : "lensmc_psf_oversampling",
     AnalysisConfigKeys.LENSMC_SEED                  : "lensmc_seed",
     AnalysisConfigKeys.LENSMC_SHAPE_NOISE           : "lensmc_shape_noise",
+    AnalysisConfigKeys.LENSMC_RETURN_CHAINS         : "lensmc_return_chains",
     AnalysisConfigKeys.LENSMC_FAST_MODE             : "lensmc_fast_mode",
     AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED: "lensmc_include_vis_undetected",
     AnalysisConfigKeys.LENSMC_MONITOR               : "lensmc_monitor",
@@ -285,6 +288,11 @@ def defineSpecificProgramOptions():
                         type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
                         default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
                         help='LensMC: Shape noise standard deviation if not provided by training data.')
+
+    parser.add_argument('--lensmc_return_chains',
+                        action='store_true',
+                        default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RETURN_CHAINS],
+                        help='LensMC: Whether to return the chains.')
 
     parser.add_argument('--lensmc_fast_mode',
                         action='store_true',
