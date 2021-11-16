@@ -169,11 +169,7 @@ def estimate_shears_from_args(args, dry_run=False):
     if not chains_method in methods:
         raise ValueError(f"Chains method {chains_method} is not in the methods being run: {methods}.")
 
-    fast_mode_bool = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE]
-    if fast_mode_bool:
-        fast_mode = "fast"
-    else:
-        fast_mode = "normal"
+    fast_mode = pipeline_config[AnalysisConfigKeys.ES_FAST_MODE]
 
     memmap_images = pipeline_config[AnalysisConfigKeys.ES_MEMMAP_IMAGES]
 
@@ -326,7 +322,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          workdir=args.workdir,
                                                          debug=args.debug,
                                                          return_chains=return_chains,
-                                                         mode=fast_mode)
+                                                         fast_mode=fast_mode)
 
                 if return_chains or method == ShearEstimationMethods.LENSMC:
                     shear_estimates_table, chains_table = shear_estimates_results
