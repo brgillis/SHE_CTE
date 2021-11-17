@@ -320,7 +320,7 @@ def estimate_shears_from_args(args, dry_run=False):
                                                          workdir=args.workdir,
                                                          debug=args.debug,
                                                          return_chains=return_chains,
-                                                         config=pipeline_config)
+                                                         pipeline_config=pipeline_config)
 
                 if return_chains or method == ShearEstimationMethods.LENSMC:
                     shear_estimates_table, chains_table = shear_estimates_results
