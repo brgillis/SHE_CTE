@@ -225,7 +225,7 @@ def defineSpecificProgramOptions():
                         help='LensMC: Do not dilate mask by one pixel.')
 
     parser.add_argument('--lensmc_hl_to_exp',
-                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.AnalysisConfigKeys.LENSMC_HL_TO_EXP],
+                        type=D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_HL_TO_EXP],
                         default=D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_HL_TO_EXP],
                         help='LensMC: Half-light radius of the bulge to exponential scalelength of the disc.')
 
