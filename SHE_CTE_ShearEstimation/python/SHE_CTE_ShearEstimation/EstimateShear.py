@@ -54,7 +54,7 @@ D_EST_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.LENSMC_DELTA_FLAG            : 0.28,
     AnalysisConfigKeys.LENSMC_DISC_ONLY             : False,
     AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING      : 5,
-    AnalysisConfigKeys.LENSMC_SEED                  : None,
+    AnalysisConfigKeys.LENSMC_SEED                  : -1,
     AnalysisConfigKeys.LENSMC_SHAPE_NOISE           : 0.25,
     AnalysisConfigKeys.LENSMC_RETURN_CHAINS         : False,
     AnalysisConfigKeys.LENSMC_FAST_MODE             : False,
