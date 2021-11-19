@@ -2,7 +2,7 @@
 
 ## Software identification
 * Processing Element Name: PF-SHE
-* Project Name: SHE_CTE (Common testing Environment)
+* Project Name: SHE_CTE (Common Testing Environment)
 * Profile: develop
 * Version: 8.3 (10/11/2021)
 
@@ -21,17 +21,12 @@
 * Christoper Duncan (christopher.duncan@physics.ox.ac.uk)
 
 ## Purpose
-This project contains various executables which constitute components in the shear estimation, validation and calibration pipelines.
+This project contains various executables which constitute components in various SHE pipelines, in particular the analysis, calibration and validation pipelines. For info on these pipelines, please see the [SHE_IAL_pipelines](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) project.
 
 
 ## Relevant Documents
-> `Boilerplate section which links any Euclid related documents that are relevant for the project`
+* [OU-SHE Common Testing Environment](https://euclid.roe.ac.uk/projects/sgsshear/wiki/OUSHE_Common_Testing_Environment) on Redmine
 
-* [RSD](link here)
-* [SDD]()
-* [VP/STS]()
-* [STP/STR]()
-* Any other relevant documents
 
 ## Dependencies
 
@@ -67,12 +62,11 @@ This project contains various executables which constitute components in the she
 
 ### Dependant Pipelines
 
-* [SHE Analysis](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) 
-* [Shear Calibration](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py)
-* [SHE Global Validation](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Global_Validation/PipDef_SHE_Global_Validation.xml)
-* [SHE_Scaling_Experiments](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py)
-* [SHE_Shear_Reconciliation](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Reconciliation/PipScript_SHE_Shear_Reconciliation.py)
-
+* [Analysis](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) 
+* [Calibration](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py)
+* [Global Validation](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Global_Validation/PipScript_SHE_Global_Validation.py)
+* [Reconciliation](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Reconciliation/PipScript_SHE_Shear_Reconciliation.py)
+* [Scaling Experiments](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py)
 
 
 ## Installation
@@ -92,29 +86,29 @@ make install
 ## Main Programs Available
 
 * SHE_CTE_BiasMeasurement: Executables for bias measurement
-  - `SHE_CTE_MeasureStatistics`: For a set of shear measurements, computes statistics on them
-  - `SHE_CTE_MeasureBias`: Given a set of statistics files (from `SHE_CTE_MeasureStatistics`), calculates the bias
-  - `SHE_CTE_PlotBias`: Plots the bias as determined by `SHE_CTE_MeasureBias`
-  - `SHE_CTE_PlotPsfSensitivity`: Plots the PSF sensitivity
-  - `SHE_CTE_PrintBias`: Prints the bias as determined by `SHE_CTE_MeasureBias`
+  - [`SHE_CTE_MeasureStatistics`](#she_cte_measurestatistics): For a set of shear measurements, computes statistics on them
+  - [`SHE_CTE_MeasureBias`](#she_cte_measurebias): Given a set of statistics files (from `SHE_CTE_MeasureStatistics`), calculates the bias
+  - [`SHE_CTE_PlotBias`](#she_cte_plotbias):(Deprecated) Plots the bias as determined by `SHE_CTE_MeasureBias`
+  - [`SHE_CTE_PlotPsfSensitivity`](#she_cte_plotpsfsensitivity): (Deprecated)
+  - [`SHE_CTE_PrintBias`](#she_cte_printbias): Prints the bias as determined by `SHE_CTE_MeasureBias`
 * SHE_CTE_PipelineUtility: Miscellaneous helper executables
-  - `SHE_CTE_ObjectIdSplit`: Splits a list of objects from the input catalogue into a number of smaller batches
-  - `SHE_CTE_SubObjectIdSplit`: Splits batches of objects into even smaller batches (see `SHE_CTE_ObjectIdSplit`)
-  - `SHE_CTE_ShearEstimatesMerge`: ??
-  - `SHE_CTE_CleanupBiasMeasurement`: Cleans up intermediate files involved in bias measurement
+  - [`SHE_CTE_ObjectIdSplit`](#she_cte_objectidsplit): Splits a list of objects from the input catalogue into a number of smaller batches
+  - [`SHE_CTE_SubObjectIdSplit`](#she_cte_subobjectidsplit): Splits batches of objects into even smaller batches (see `SHE_CTE_ObjectIdSplit`)
+  - [`SHE_CTE_ShearEstimatesMerge`](#she_cte_shearestimatesmerge): Merges multiple shear estimate products into one.
+  - [`SHE_CTE_CleanupBiasMeasurement`](#she_cte_cleanupbiasmeasurement): Cleans up intermediate files involved in bias measurement
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
-  - `SHE_CTE_SplitFits`: splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
-  - `SHE_CTE_CombineSplitFitsListfile`: Combines output from `SHE_CTE_SplitFits` into a single json
-  - `SHE_CTE_ExtractObjects`: For an input catalogue and observation, extracts all the objects from the catalogue that are present in the observation
-  - `SHE_CTE_MakeBatches`: Splits the list of objects in the observation into small batches
-  - `SHE_CTE_ExtractStamps`: Given a list of objects, times itself extracting 400x400 pixel postage stamps around the objects
-  - `SHE_CTE_AnalyseRuntime`: Analyses the runtime of the pipeline, producing graphs
+  - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
+  - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
+  - [`SHE_CTE_ExtractObjects`](#she_cte_extractobjects): For an input catalogue and observation, extracts all the objects from the catalogue that are present in the observation
+  - [`SHE_CTE_MakeBatches`](#she_cte_makebatches): Splits the list of objects in the observation into small batches
+  - [`SHE_CTE_ExtractStamps`](#she_cte_extractstamps): Given a list of objects, times itself extracting 400x400 pixel postage stamps around the objects
+  - [`SHE_CTE_AnalyseRuntime`](#she_cte_analyseruntime): Analyses the runtime of the pipeline, producing graphs
 * SHE_CTE_ShearEstimation: Shear Estimation executables
-  - `SHE_CTE_EstimateShear`: Given a list of objects, estimates their shear
+  - [`SHE_CTE_EstimateShear`](#she_cte_estimateshear): Given a list of objects, estimates their shear
 * SHE_CTE_ShearReconcilliation: Shear Reconciliation Executables
-  - `SHE_CTE_ReconcileShear`: ??
+  - [`SHE_CTE_ReconcileShear`](#she_cte_reconcileshear): Reconciles different shear measurements for objects from multiple observations.
 * SHE_CTE_ShearValidation: Shear validation executables
-  - `SHE_CTE_CrossValidateShear`: ??
+  - [`SHE_CTE_CrossValidateShear`](#she_cte_crossvalidateshear): (Deprecated)
 
 
 ## Running the software
@@ -144,7 +138,7 @@ with the following options:
 
 |  **Argument**               | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --details_table `<filename>`     | `.xml` data product pointing to the details table (OU-MER Final Catalogue??) | yes    | N/A         |
+| --details_table `<filename>`     | `.xml` intermediate data product pointing to sheSimulatedCatalog FITS tables | yes    | N/A         |
 | --shear_estimates `<filename>`  | `.xml` data product pointing to the shear measurement tables for each measurement method   | yes | N/A |
 | --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
 
@@ -166,16 +160,16 @@ _**Inputs**_
 
 _`details_table`_:
 
-**Description:** The filename of an `.xml` MerFinalCatalog data product in the workdir. This data product and the format of the associated data table are described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html.
+**Description:** The filename of an `.xml` data product in the workdir pointing to [sheSimulatedCatalog](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_simulated_catalog.py) FITS tables.
 
 **Source:**  Generated by the `SHE_GST_GenGalaxyImages` executable from [`SHE_GST`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_GST)
 
 
 _`shear_estimates`_:
 
-**Description** The filename of a sheMeasurements `.xml` data product in the workdir. This data product and the format of the associated data table are described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_measurements.html.
+**Description:** The filename of an `.xml` [sheMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_measurements.html) data product in the workdir. 
 
-**Source** Generated by `SHE_CTE_EstimateShear`
+**Source:** Generated by `SHE_CTE_EstimateShear`
 
 _`pipeline_config`_:
 
@@ -192,11 +186,11 @@ Any of the latter three options may be used for equivalent functionality.
 The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
 
 
-|  **Options**                | **Description**                                                       | **Default behaviour** |
+|  **Options**                | **Description**                                                       | **Default value** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_MeasureStatistics_archive_dir `<dir>` | The directory for archiving the data.   | N/A |
-| SHE_CTE_MeasureStatistics_webdav_archive `<True/False>`  | Sets whether to archive to webdav or not | Does not archive to webdav |
-| SHE_CTE_MeasureStatistics_webdav_dir `<dir>` | The webdav directory to archive to | N/A |
+| SHE_CTE_MeasureStatistics_archive_dir `<dir>` | The directory for archiving the data.   | None |
+| SHE_CTE_MeasureStatistics_webdav_archive `<True/False>`  | Sets whether to archive to webdav or not | False |
+| SHE_CTE_MeasureStatistics_webdav_dir `<dir>` | The webdav directory to archive to | None |
 
 If both these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
 
@@ -210,19 +204,14 @@ _**Outputs**_
 
 _`she_bias_statistics`_ 
 
-**Description** The desired name of the output shear statistics `.xml` data product
+**Description:** The desired name of the output shear statistics `.xml` data product. This is a sheIntermediateGeneral data product, and points to a number of shear bias statistics [FITS tables](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py), one per estimation method.
 
-**Details** The product is of the type sheIntermediateGeneral, and points to a shear bias statistics table FITS file (described [here](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py))
+
 
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
-
-
-
-
-
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -284,9 +273,9 @@ _**Inputs**_
 
 _`she_bias_statistics`_:
 
-**Description:** The filename of a `.json` listfile pointing to a number of `.xml` sheIntermediateGeneral data products, that point to a shear bias statistics FITS tables (described [here](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py))
+**Description:** The filename of a `.json` listfile pointing to a number of `.xml` sheIntermediateGeneral data products, that point to a shear bias statistics [FITS tables](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py))
 
-**Source:**  Files pointed to in the listfile are generated by the `SHE_CTE_MeasureStatistics` executable. The listfile is generated automatically by the shear calibration pipeline when combining parallel branches of the pipeline together.
+**Source:**  Files pointed to in the listfile are generated by the `SHE_CTE_MeasureStatistics` executable (see above). The listfile is generated automatically by the shear calibration pipeline when combining parallel branches of the pipeline together.
 
 
 _`pipeline_config`_:
@@ -304,13 +293,15 @@ Any of the latter three options may be used for equivalent functionality.
 The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
 
 
-|  **Options**                | **Description**                                                       | **Default behaviour** |
+|  **Options**                | **Description**                                                       | **Default value** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_MeasureBias_archive_dir `<dir>` | The directory for archiving the data.   | N/A |
-| SHE_CTE_MeasureBias_webdav_archive `<True/False>`  | Sets whether to archive to webdav or not | Does not archive to webdav |
-| SHE_CTE_MeasureBias_webdav_dir `<dir>` | The webdav directory to archive to | N/A |
+| SHE_CTE_MeasureBias_archive_dir `<dir>` | The directory for archiving the data.   | None |
+| SHE_CTE_MeasureBias_webdav_archive `<True/False>`  | Sets whether to archive to webdav or not | False |
+| SHE_CTE_MeasureBias_webdav_dir `<dir>` | The webdav directory to archive to | None |
+| SHE_CTE_MeasureBias_number_threads `<int>` | The number of threads (processes) used when reading in the bias statistics files | 8 |
 
-If both these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
+
+If these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
 
 **Source:** One of the following:
 
@@ -322,14 +313,14 @@ _**Outputs**_
 
 _`she_bias_measurements`_ 
 
-**Description** The desired name of the output bias measurements `.xml` data product
+**Description:** The desired name of the output bias measurements `.xml` data product
 
-**Details** The product is of the type sheIntermediateGeneral, and points to a shear bias statistics table FITS file (described [here](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py)) which contains the bias measurements in its header, but also can contain the bias statistics in the body of the table. 
+**Details:** The product is of the type sheIntermediateGeneral, and points to a number of shear bias statistics [FITS tables](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_bias_statistics.py), one per measurement method, which contain the bias measurements in their headers, but also can contain the bias statistics in the body of the table. 
 
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -338,9 +329,9 @@ This program is designed to be run on intermediate data generated within an exec
 
 ### `SHE_CTE_PlotBias`
 
-Plots Bias? To do with sensitivity? This executable does not seem to be run in any pipeline, but is instead run manually in post-processing.
+This executable is deprecated, although may be resurrected in the future.
 
-_**Running the Program on EDEN/LODEEN**_
+<!-- _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
@@ -393,7 +384,7 @@ Presumably a series of plots of various quantities, but this is not documented a
 
 _**Example**_
 
-Unknown
+Unknown -->
 
 
 
@@ -404,9 +395,9 @@ Unknown
 
 ### `SHE_CTE_PlotPsfSensitivity`
 
-Plots PSF Sensitivity? This executable does not seem to be run in any pipeline, but is instead run manually in post-processing.
+This executable is deprecated.
 
-_**Running the Program on EDEN/LODEEN**_
+<!-- _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_PlotPsfSensitivity` on Elements use the following command:
 ```bash
@@ -458,7 +449,7 @@ Presumably a series of plots of various quantities, but this is not documented a
 
 _**Example**_
 
-Unknown
+Unknown -->
 
 
 
@@ -616,14 +607,14 @@ _`stacked_segmentation_image`_:
 
 _`detections_tables`_:
 
-**Description:** A Listfile pointing to detection table data products?
+**Description:** A Listfile pointing to detection table ([MER Final Catalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html)) data products
 
 **Source:**  Generated by `SHE_GST_GenGalaxyImages` (See [SHE_GST](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_GST))
 
 
 _`details_table`_:
 
-**Description:** An `.xml` details_table data product?
+**Description:** An `.xml` product pointing to [sheSimulatedCatalog](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT/-/blob/develop/SHE_PPT/python/SHE_PPT/table_formats/she_simulated_catalog.py) FITS tables.
 
 **Source:**  Generated by `SHE_GST_GenGalaxyImages` (See [SHE_GST](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_GST))
 
@@ -679,7 +670,7 @@ _`she_bias_statistics_out`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data, *_although as its job is to delete files it may throw an exception as the files it has to delete will no longer exist!_* The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data, *_although as its job is to delete files it may throw an exception as the files it has to delete will no longer exist!_* The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -765,7 +756,7 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
 | SHE_CTE_ObjectIdSplit_batch_size `<int>` | The number of objects per batch.   | 400 |
 | SHE_CTE_ObjectIdSplit_max_batches `<int>`  | The maximum number of batches to use. If it's 0, the number of batches is unlimited | 0 |
-| SHE_CTE_ObjectIdSplit_batch_ids `<str?>` | A list of object IDs to use | None |
+| SHE_CTE_ObjectIdSplit_batch_ids `<str>` | A list of object IDs to use | None |
 
 
 **Source:** One of the following:
@@ -786,7 +777,7 @@ _`batch_mer_catalogs`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -871,7 +862,7 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
 | SHE_CTE_SubObjectIdSplit_batch_size `<int>` | The number of objects per batch.   | 20 |
 | SHE_CTE_SubObjectIdSplit_max_batches `<int>`  | The maximum number of batches to use. If it's 0, the number of batches is unlimited | 0 |
-| SHE_CTE_SubObjectIdSplit_batch_ids `<str?>` | A list of object IDs to use | None |
+| SHE_CTE_SubObjectIdSplit_batch_ids `<str>` | A list of object IDs to use | None |
 
 
 **Source:** One of the following:
@@ -892,7 +883,7 @@ _`batch_mer_catalogs`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -997,7 +988,7 @@ _`merged_she_lensmc_chains`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE Analysis`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1110,7 +1101,7 @@ _`timing_info`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1204,7 +1195,7 @@ _`output_json`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1319,7 +1310,7 @@ _`combined_catalogue`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1401,7 +1392,7 @@ _`batch_listfile`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1502,7 +1493,7 @@ Where it provides the number of objects that had stamps extracted, the number of
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1622,7 +1613,7 @@ _`results`_
 
 _**Example**_
 
-This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This program is designed to be run on intermediate data generated within an execution of the [`SHE ScalingExperiments`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Scaling_Experiments/PipScript_SHE_Scaling_Experiments.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
@@ -1631,18 +1622,488 @@ This program is designed to be run on intermediate data generated within an exec
 
 
 
+### `SHE_CTE_EstimateShear`
+
+This executable measures the shear for a list of input objects. It is used in the analysis pipeline, as well as the calibration pipeline.
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_EstimateShear` on Elements use the following command:
+```bash
+E-Run SHE_CTE 8.3 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--fast_mode] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+| --log-dir `<file>`    | The name of the file to output the executable logs to. If not provided, logging data will only be output to the terminal. When run via the pipeline runner, this will be set to a file in the directory `<workdir>/logs/<task_name>/` with a name based off of the command used to call this executable, such as "E_Run_SHE_MyProject_0.1_SHE_MyProject_GenCatPic_retry_0.out" | no           | .        |
 
 
-### `SHE_MyProject_ShowCatPic`
-> `Same structure as before: how to run the code on Elements, what are the options for the command line with descriptions and what each external file and a simple example for the user to run`
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --data_images `<filename>`     | `.json` listfile pointing to a series of data image products | yes    | N/A         |
+| --stacked_image `<filename>`     | `.xml` data product for the stacked image | yes    | N/A         |
+| --psf_images_and_tables `<filename>`     | `.json` listfile pointing to psf image products | yes    | N/A         |
+| --segmentation_images `<filename>`     | `.json` listfile pointing to a series of segmentation map data products | yes    | N/A         |
+| --stacked_segmentation_image `<filename>`     | `.xml` data product for the segmentation map for the stacked image | yes    | N/A         |
+| --detections_tables `<filename>`     | `.json` listfile pointing to a series of detections table products | yes    | N/A         |
+| --object_ids `<filename>`     | `.xml` data product containing the list of objects to have their shear measured | yes    | N/A         |
+| --ksb_training_data `<filename>`     | `.xml` data product containing KSB training data | yes    | N/A         |
+| --lensmc_training_data `<filename>`     | `.xml` data product containing LensMC training data | yes    | N/A         |
+| --momentsml_training_data `<filename>`     | `.xml` data product containing MomentsML training data | yes    | N/A         |
+| --regauss_training_data `<filename>`     | `.xml` data product containing REGAUSS training data | yes    | N/A         |
+| --mdb `<filename>`     | `.xml` mission database data product | yes    | N/A         |
+| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --shear_estimates_product `<filename>`  | `.xml` data product for the shear estimates | yes          | N/A |
+| --she_lensmc_chains `<filename>`  | `.xml` data product for the LensMC chains | yes          | N/A |
+
+
+**Options**
+
+|  **Options**                | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+| --debug (`store true`)    | If set, will only process the first 1000 objects in the input object list  | no           | false       |
+| --methods `<str>`    | The list of shear estimation methods to use. If blank, will use all the methods  | no           | None       |
+| --chains_method `<str>`    | Which shear estimation method to generate chains with  | no           | None      |
+| --memmap_images (`store true`)    | if set, opens the images with memmap | no           | false       |
+| --lensmc_stamp_size `<int>`    | The requested stamp size in pixels | no           | 384       |
+| --lensmc_x_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (x direction) | no           | 3       |
+| --lensmc_y_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (y direction) | no           | 3       |
+| --lensmc_no_mask_dilation `<bool>`    | do not dilate mask by 1 pixel | no           | false       |
+| --lensmc_hl_to_exp `<float>`    |Half-light radius of the bulge to exponential scalelength of the disc | no           | 0.15       |
+| --lensmc_n_bulge `<float>`    | Bulge Sersic index; available: n=(1., 1.5, 2., 2.5, 3., 3.5, 4.) | no           | 1       |
+| --lensmc_n_disc `<float>`    | Disc Sersic index; available: n=1 | no           | 1       |
+| --lensmc_e_max `<float>`    | Hard upper bound on ellipticity | no           | 0.99       |
+| --lensmc_re_max `<float>`    | Hard upper bound on effective radius | no           | 2.0       |
+| --lensmc_delta_max `<float>`    | Hard upper bound on position offset | no           | 0.3       |
+| --lensmc_e_flag `<float>`    | Flagging threshold for ellipticity | no           | 0.98       |
+| --lensmc_re_flag `<float>`    | Flagging threshold for effective radius | no           | 1.8       |
+| --lensmc_delta_flag`<float>`    | Flagging threshold for position offset | no           | 0.28       |
+| --lensmc_disc_only `<bool>`    | Whether to fit only for a disc component | no           | False       |
+| --lensmc_psf_oversampling `<int>`    | PSF oversampling factor | no           | 5       |
+| --lensmc_seed `<int>`    | Seed the random sampler (-1 means use the has of the object's ID) | no           | -1       |
+| --lensmc_shape_noise `<float>`    | Shape noise standard deviation if not provided by training data | no           | 0.25       |
+| --lensmc_return_chains `<bool>`    | Whether to return the chains | no           | false       |
+| --lensmc_fast_mode `<bool>`    | Enable LensMC fast mode. Override any sampling settings and produce MAP estimate (without MCMC/errors/intcal) | no           | false       |
+| --lensmc_include_vis_undetected `<bool>`    | Measure all objects, including those that have not been detected by VIS | no           | false       |
+| --lensmc_monitor `<bool>`    | Monitor data and visually check consistency of input data | no           | false       |
+
+
+_**Inputs**_
+
+_`data_images`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [visCalibratedFrame](https://euclid.esac.esa.int/dm/dpdd/latest/visdpd/dpcards/vis_calibratedframe.html) data products.
+
+**Source:**  This is provied as input to the analysis pipeline
+
+
+_`stacked_image`_:
+
+**Description** The filename of a [visStackedFrame](https://euclid.esac.esa.int/dm/dpdd/latest/visdpd/dpcards/vis_visstackedframe.html) data product.
+
+**Source** This is provied as input to the analysis pipeline
+
+
+_`psf_images_and_tables`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [shePSFModelImage](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_psfmodelimage.html) data products.
+
+**Source:**  This is produced by SHE_PSFToolkit_ModelPSFs
+
+
+_`segmentation_images`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [sheExposureReprojectedSegmentationMap](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_exposurereprojectedsegmentationmap.html) data products.
+
+**Source:**  This is produced by SHE_MER_RemapMosaic
+
+
+_`stacked_segmentation_image`_:
+
+**Description:** The filename of a [sheStackReprojectedSegmentationMap](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_stackreprojectedsegmentationmap.html) data product.
+
+**Source:**  This is produced by SHE_MER_RemapMosaic
+
+
+_`detections_tables`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) data products.
+
+**Source:**  This can be produced in a number of different ways depending upon where this executable is called, but in the simplest case, it is provided as an input to the pipeline. Another source is from SHE_CTE_(Sub)ObjectIdSplit, which takes the pipeline's input detections tables and extracts only the relevant rows from them.
+
+
+_`object_ids`_:
+
+**Description:** The filename of a [sheObjectIdList](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_objectidlist.html) data product.
+
+**Source:**  This is produced by SHE_CTE_SubObjectIdSplit in the analysis pipeline.
+
+
+_`ksb_training_data`_:
+
+**Description:** The filename of a [sheKsbTraining](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_ksbtraining.html) data product.
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`lensmc_training_data`_:
+
+**Description:** The filename of a [sheLensMcTraining](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_lensmctraining.html) data product.
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`momentsml_training_data`_:
+
+**Description:** The filename of a [sheMomentsMlTraining](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_momentsmltraining.html) data product.
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`regauss_training_data`_:
+
+**Description:** The filename of a [sheRegaussTraining](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_regausstraining.html) data product.
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`mdb`_:
+
+**Description:** The filename of the `.xml` [mission database](https://euclid.roe.ac.uk/projects/missiondatabase/wiki/Wiki).
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`pipeline_config`_:
+
+**Description:** One of the following:
+
+1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
+1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
+1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
+1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
+1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
+
+Any of the latter three options may be used for equivalent functionality.
+
+The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
+
+
+|  **Options**                | **Description**                                                       | **Default values** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------:|
+| SHE_CTE_EstimateShear_methods `<str>` | A list of shear estimation methods to use   | `["KSB","REGAUSS","MomentsML","LensMC"]` |
+| SHE_CTE_EstimateShear_chains_method `<str>`  | The method to generate chains for | `"LensMC"` |
+| SHE_CTE_EstimateShear_memmap_images `<True/False>` | Use memmap for opening images or not| False |
+| SHE_LensMC_stamp_size `<int>`    | The requested stamp size in pixels  | 384       |
+| SHE_LensMC_x_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (x direction)           | 3       |
+|  SHE_LensMC_y_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (y direction)          | 3       |
+|  SHE_LensMC_no_mask_dilation `<bool>`    | do not dilate mask by 1 pixel          | false       |
+|  SHE_LensMC_hl_to_exp `<float>`    |Half-light radius of the bulge to exponential scalelength of the disc          | 0.15       |
+|  SHE_LensMC_n_bulge `<float>`    | Bulge Sersic index; available: n=(1., 1.5, 2., 2.5, 3., 3.5, 4.)           | 1       |
+|  SHE_LensMC_n_disc `<float>`    | Disc Sersic index; available: n=1          | 1       |
+|  SHE_LensMC_e_max `<float>`    | Hard upper bound on ellipticity         | 0.99       |
+|  SHE_LensMC_re_max `<float>`    | Hard upper bound on effective radius           | 2.0       |
+|  SHE_LensMC_delta_max `<float>`    | Hard upper bound on position offset         | 0.3       |
+|  SHE_LensMC_e_flag `<float>`    | Flagging threshold for ellipticity       | 0.98       |
+|  SHE_LensMC_re_flag `<float>`    | Flagging threshold for effective radius        | 1.8       |
+|  SHE_LensMC_delta_flag`<float>`    | Flagging threshold for position offset       | 0.28       |
+|  SHE_LensMC_disc_only `<bool>`    | Whether to fit only for a disc component       | False       |
+|  SHE_LensMC_oversampling `<int>`    | PSF oversampling factor      | 5       |
+|  SHE_LensMC_seed `<int>`    | Seed the random sampler (-1 means use the hash of the object's ID)       | -1       |
+|  SHE_LensMC_shape_noise `<float>`    | Shape noise standard deviation if not provided by training data       | 0.25       |
+|  SHE_LensMC_return_chains `<bool>`    | Whether to return the chains        | false       |
+|  SHE_LensMC_fast_mode `<bool>`    | Enable LensMC fast mode. Override any sampling settings and produce MAP estimate (without MCMC/errors/intcal)     | false       |
+|  SHE_LensMC_include_vis_undetected `<bool>`    | Measure all objects, including those that have not been detected by VIS       | false       |
+|  SHE_LensMC_monitor `<bool>`    | Monitor data and visually check consistency of input data        | false       |
+
+If both these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
+
+**Source:** One of the following:
+
+1. May be generated manually, creating the `.txt` file with your text editor of choice.
+1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
+1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
+
+_**Outputs**_
+
+_`shear_estimates_product`_ 
+
+**Description** The desired name of the output shear measurements `.xml` data product
+
+**Details** The product is of the type [sheMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_measurements.html).
+
+
+_`she_lensmc_chains`_ 
+
+**Description** The desired name of the output LensMC chains `.xml` data product
+
+**Details** The product is of the type [sheLensMcChains](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_lensmcchains.html).
+
+
+_**Example**_
+
+This program is designed to be run on intermediate data generated within an execution of the [Calibration](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) and [Analysis](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Analysis/PipScript_SHE_Shear_Analysis.py) pipelines. Please see the documentation for these pipelines for an example run. After the pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+
+
+
+
+
+
+### `SHE_CTE_ReconcileShear`
+
+This executable takes all the shear measurements for objects (from different observations) for a given MER tile, and reconciles any different measurements for each individual object. This is the main executable in the Reconciliation pipeline.
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_ReconcileShear` on Elements use the following command:
+```bash
+E-Run SHE_CTE 8.3 SHE_CTE_ReconcileShear --she_validated_measurements_listfile <file> --she_lensmc_chains_listfile <file> --mer-final-catalog <file> --she_reconciliation_config <file> --pipeline_config <file> --she_reconciled_measurements <file> --she_reconciled_lensmc_chains <file>  [--method <str>] [--chains_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+| --log-dir `<file>`    | The name of the file to output the executable logs to. If not provided, logging data will only be output to the terminal. When run via the pipeline runner, this will be set to a file in the directory `<workdir>/logs/<task_name>/` with a name based off of the command used to call this executable, such as "E_Run_SHE_MyProject_0.1_SHE_MyProject_GenCatPic_retry_0.out" | no           | .        |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --she_validated_measurements_listfile `<filename>`     | `.json` listfile pointing to a series validated measurements | yes    | N/A         |
+| --she_lensmc_chains_listfile `<filename>`     | `.json` listfile pointing to a series of LensMC chains | yes    | N/A         |
+| --psf_images_and_tables `<filename>`     | `.json` listfile pointing to psf image products | yes    | N/A         |
+| --mer_final_catalog `<filename>`     | `.xml` data product for a MER tile | yes    | N/A         |
+| --she_reconciliation_config `<filename>`     | `.xml` data product for the reconciliation configuration | yes    | N/A         |
+| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --she_reconciled_measurements `<filename>`  | `.xml` data product for the reconciled measurements | yes          | N/A |
+| --she_reconciled_lensmc_chains `<filename>`  | `.xml` data product for reconciled LensMC chains | yes          | N/A |
+
+**Options**
+
+|  **Options**                | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --method `<str>`   | Which reconciliation method to use | no           | `"InvVar"`       |
+| --chains_method `<str>`   | Which LensMc chains reconciliation method to use | no           | `"keep"`     |
+| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+
+
+_**Inputs**_
+
+_`she_validated_measurements_listfile`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [sheValidatedMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_validatedmeasurements.html) data products.
+
+**Source:**  This is provied as an input to the pipeline
+
+
+_`she_lensmc_chains_listfile`_:
+
+**Description** The filename of a `.json` Listfile pointing to a number of [sheLensMcChains](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_lensmcchains.html) data products.
+
+**Source** This is the output from SHE_CTE_EstimateShear
+
+
+_`mer_final_catalog`_:
+
+**Description:** The filename of a [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) data product.
+
+**Source:**  This is provided as an input to the pipeline
+
+
+_`segmentation_images`_:
+
+**Description:** The filename of a `.json` Listfile pointing to a number of [sheExposureReprojectedSegmentationMap](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_exposurereprojectedsegmentationmap.html) data products.
+
+**Source:**  This is produced by SHE_MER_RemapMosaic
+
+
+_`she_reconciliation_config`_:
+
+**Description:** The filename of a sheReconciliationConfig (no link available) data product.
+
+**Source:**  This is provided as input to the pipeline
+
+
+_`pipeline_config`_:
+
+**Description:** One of the following:
+
+1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
+1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
+1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
+1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
+1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
+
+Any of the latter three options may be used for equivalent functionality.
+
+The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
+
+
+|  **Options**                | **Description**                                                       | **Default values** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------:|
+| SHE_CTE_ReconcileMeasurements_method `<str>` | The reconciliation method to use   | `"InvVar"` |
+| SHE_CTE_ReconcileMeasurements_chains_method `<str>`  | The LensMC reconciliation method to use | `"keep"` |
+
+If both these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
+
+**Source:** One of the following:
+
+1. May be generated manually, creating the `.txt` file with your text editor of choice.
+1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
+1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
+
+_**Outputs**_
+
+_`she_reconciled_measurements`_ 
+
+**Description** The desired name of the output shear reconciled measurements `.xml` data product
+
+**Details** The product is of the type [sheReconciledMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_reconciledmeasurements.html).
+
+
+_`she_reconciled_lensmc_chains`_ 
+
+**Description** The desired name of the output LensMC chains `.xml` data product
+
+**Details** The product is of the type [sheReconciledLensMcChains](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_reconciledlensmcchains.html).
+
+
+_**Example**_
+
+This executable is part of the [Reconciliation pipeline]https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Reconciliation/PipScript_SHE_Shear_Reconciliation.py).Please see the documentation for that pipeline for an example run. After the pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+
+
+
+
+
+
+### `SHE_CTE_CrossValidateShear`
+
+This executable is deprecated.
+
+<!-- _**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_CrossValidateShear` on Elements use the following command:
+```bash
+E-Run SHE_CTE 8.3 SHE_CTE_CrossValidateShear --shear_estimates_product <file> --shear_lensmc_chains <file> --pipeline_config <file> --cross_validated_shear_estimates_product <file> [--primary_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--dry_run]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+| --log-dir `<file>`    | The name of the file to output the executable logs to. If not provided, logging data will only be output to the terminal. When run via the pipeline runner, this will be set to a file in the directory `<workdir>/logs/<task_name>/` with a name based off of the command used to call this executable, such as "E_Run_SHE_MyProject_0.1_SHE_MyProject_GenCatPic_retry_0.out" | no           | .        |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --she_estimates_product `<filename>`     | `.xml` shear estimates data product | yes    | N/A         |
+| --she_lensmc_chains `<filename>`     | `.xml` LensMC chains data product | yes    | N/A         |
+| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --cross_validated_shear_estimates_product `<filename>`  | `.xml` data product for the cross validated shear measurements | yes          | N/A |
+
+**Options**
+
+|  **Options**                | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --primary_method `<str>`   | Which estimation method to consider the primary one, and compare against the other methods | no           | `"LensMC"`       |
+| --dry_run (`store true`)   | If set, will not actually process any data | no           | `False`     |
+| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+
+
+_**Inputs**_
+
+_`she_estimates_product`_:
+
+**Description:** The filename of an `.xml` [sheMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_measurements.html) data product.
+
+**Source:**  This is produced by SHE_CTE_EstimateShear
+
+
+_`she_lensmc_chains`_:
+
+**Description** The filename of an `.xml` [sheLensMcChains](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_lensmcchains.html) data product.
+
+**Source** This is the output from SHE_CTE_EstimateShear
+
+
+_`pipeline_config`_:
+
+**Description:** One of the following:
+
+This executable takes `pipeline_config` as an input, however it does not use any of the config options contained within the file.
+
+1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
+1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
+1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
+1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
+1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
+
+Any of the latter three options may be used for equivalent functionality.
+
+
+**Source:** One of the following:
+
+1. May be generated manually, creating the `.txt` file with your text editor of choice.
+1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
+1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
+
+_**Outputs**_
+
+_`cross_validated_shear_estimates_product`_ 
+
+**Description** The desired name of the output cross validated shear measurements `.xml` data product
+
+**Details** The product is of the type [sheValidateddMeasurements](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_validatedmeasurements.html).
+
+
+_**Example**_
+
+?? Output from whcih pipeline? -->
+
+
+
+
+
 
 ## Troubleshooting
-> `If any problems are anticipated, add a section here for them to help users resolve them on their own before they need to appeal to a developer for help.`
 
-### The cat in the generated picture appears to be wearing both a standard tie and a bowtie
-> `For known problems which can occur if the user makes a common error, explain how it can be resolved.`
-
-This is a known bug which occurs if the user requests `--use_tie=bowtie`. The correct argument is `--use_tie=bow`.
 
 ### A test failed when I ran "make test"
 
@@ -1659,7 +2120,6 @@ _**Try running the desired code**_
 Tests can fail for many reasons, and a common reason is that the code is updated but not the test. This could lead to the test failing even if the code works properly. After you've reported the issue, you can try to run the desired code before the issue with the failing test has been fixed. There's a decent chance that the bug might only be in the test code, and the executable code will still function.
 
 ### An exception was raised, what do I do?
-> `General instructions for how to figure out what to do when an exception is raised, which can be copied for all projects.`
 
 _**Check for an issue with the input**_
 
