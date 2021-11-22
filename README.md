@@ -1679,8 +1679,8 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
 | --debug (`store true`)    | If set, will only process the first 1000 objects in the input object list  | no           | false       |
-| --methods `<str>`    | The list of shear estimation methods to use. If blank, will use all the methods  | no           | None       |
-| --chains_method `<str>`    | Which shear estimation method to generate chains with  | no           | None      |
+| --methods `<str>`    | The list of shear estimation methods to use. If blank, will use all the methods. The methods to choose from are "KSB", "REGAUSS", "LensMC" and "MomentsML"  | no           | None       |
+| --chains_method `<str>`    | Which shear estimation method to generate chains with. The methods to choose from are "KSB", "REGAUSS", "LensMC" and "MomentsML"  | no           | "LensMC"      |
 | --memmap_images (`store true`)    | if set, opens the images with memmap | no           | false       |
 | --lensmc_stamp_size `<int>`    | The requested stamp size in pixels | no           | 384       |
 | --lensmc_x_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (x direction) | no           | 3       |
