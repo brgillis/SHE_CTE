@@ -788,7 +788,7 @@ This program is designed to be run on intermediate data generated within an exec
 
 ### `SHE_CTE_SubObjectIdSplit`
 
-This executable is virtually identical to SHE_CTE_ObjectIdSplit, save for its pipeline_config options.
+This executable is virtually identical to SHE_CTE_ObjectIdSplit, save for its pipeline_config options. It further splits a batch of objects (from SHE_CTE_ObjctIDSplit) into smaller sub-batches.
 
 _**Running the Program on EDEN/LODEEN**_
 
@@ -821,7 +821,7 @@ with the following options:
 |  **Argument**               | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --object_ids `<filename>`  | Name of the `.json` listfile containing the list of sheObjectIdList data products for each batch | yes          | N/A |
-| --batch_mer_catalogs `<filename>`  | Name of the `.json` listfile containing the list of merFinalCatalog products for each batch | yes          | N/A |
+| --batch_mer_catalogs `<filename>`  | Name of the `.json` listfile containing the list of merFinalCatalog products for each sub-batch | yes          | N/A |
 
 **Options**
 
@@ -834,9 +834,9 @@ _**Inputs**_
 
 _`mer_final_catalog_tables`_:
 
-**Description:** The filename of a `.json` listfile pointing to a number of `.xml` [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) data products.
+**Description:** The filename of a `.json` listfile pointing to an `.xml` [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) data product from a batch.
 
-**Source:** This is provided as input to the Analysis pipeline
+**Source:** This is produced by SHE_CTE_ObjectIdSplit
 
 
 _`data_images`_:
@@ -878,11 +878,11 @@ _**Outputs**_
 
 _`object_ids`_ 
 
-**Description** The desired name for a listfile pointing to numerous [sheObjectIdList](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_objectidlist.html) products, one per batch.
+**Description** The desired name for a listfile pointing to numerous [sheObjectIdList](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_objectidlist.html) products, one per sub-batch.
 
 _`batch_mer_catalogs`_ 
 
-**Description** The desired name for a listfile pointing to numerous [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) products, one per batch. These contain the same information as the input MER final catalogues, just only the rows for each object in the batch.
+**Description** The desired name for a listfile pointing to numerous [merFinalCatalog](https://euclid.esac.esa.int/dm/dpdd/latest/merdpd/dpcards/mer_finalcatalog.html) products, one per batch. These contain the same information as the input MER final catalogues, just only the rows for each object in the sub-batch.
 
 _**Example**_
 
