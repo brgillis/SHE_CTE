@@ -1998,7 +1998,7 @@ _`she_reconciled_lensmc_chains`_
 
 _**Example**_
 
-This executable is part of the [Reconciliation pipeline]https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Reconciliation/PipScript_SHE_Shear_Reconciliation.py).Please see the documentation for that pipeline for an example run. After the pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+This executable is part of the [Reconciliation pipeline](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Reconciliation/PipScript_SHE_Shear_Reconciliation.py). Please see the documentation for that pipeline for an example run. After the pipeline has been run once, this program can be re-run on the generated intermediate data. The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
 
