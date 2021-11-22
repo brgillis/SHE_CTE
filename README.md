@@ -1809,7 +1809,7 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 |  **Options**                | **Description**                                                       | **Default values** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
 | SHE_CTE_EstimateShear_methods `<str>` | A list of shear estimation methods to use   | `["KSB","REGAUSS","MomentsML","LensMC"]` |
-| SHE_CTE_EstimateShear_chains_method `<str>`  | The method to generate chains for | `"LensMC"` |
+| SHE_CTE_EstimateShear_chains_method `<str>`  | The method to generate chains for. The methods to choose from are "KSB", "REGAUSS", "LensMC" and "MomentsML". | `"LensMC"` |
 | SHE_CTE_EstimateShear_memmap_images `<True/False>` | Use memmap for opening images or not| False |
 | SHE_LensMC_stamp_size `<int>`    | The requested stamp size in pixels  | 384       |
 | SHE_LensMC_x_buffer `<int>`    | Do not fit object if closer to the edge of the detector than this number of pixels (x direction)           | 3       |
@@ -1910,8 +1910,8 @@ with the following options:
 
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --method `<str>`   | Which reconciliation method to use | no           | `"InvVar"`       |
-| --chains_method `<str>`   | Which LensMc chains reconciliation method to use | no           | `"keep"`     |
+| --method `<str>`   | Which reconciliation method to use. The options are "InvVar", "Best" and "ShapeWeight". | no           | `"InvVar"`       |
+| --chains_method `<str>`   | Which LensMc chains reconciliation method to use. The options are "InvVar", "Best", "ShapeWeight" and "keep" | no           | `"keep"`     |
 | --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
 
 
@@ -1969,8 +1969,8 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 
 |  **Options**                | **Description**                                                       | **Default values** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_ReconcileMeasurements_method `<str>` | The reconciliation method to use   | `"InvVar"` |
-| SHE_CTE_ReconcileMeasurements_chains_method `<str>`  | The LensMC reconciliation method to use | `"keep"` |
+| SHE_CTE_ReconcileMeasurements_method `<str>` | The reconciliation method to use. The options are "InvVar", "Best" and "ShapeWeight"  | `"InvVar"` |
+| SHE_CTE_ReconcileMeasurements_chains_method `<str>`  | The LensMC reconciliation method to use. The options are "InvVar", "Best", "ShapeWeight" and "keep"  | `"keep"` |
 
 If both these arguments are supplied in the pipeline configuration file and the equivalent command-line arguments are set, the command-line arguments will take precedence.
 
