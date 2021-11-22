@@ -497,6 +497,9 @@ _`she_bias_measurements`_:
 
 **Source:**  The bias measurement file is produced by `SHE_CTE_MeasureBias` executable during execution of the Calibration pipeline.
 
+_**Outputs**_
+This executable produces no outputs. It only prints values to the screen.
+
 
 _**Example**_
 
