@@ -1630,7 +1630,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_EstimateShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--fast_mode] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+E-Run SHE_CTE 8.3 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
 ```
 with the following options:
 
