@@ -29,6 +29,7 @@ import time
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.units import deg as degrees
+from astropy.table import Column
 
 import SHE_CTE
 from SHE_PPT.file_io import (get_allowed_filename, write_listfile, write_xml_product)
@@ -40,6 +41,8 @@ from SHE_PPT.she_image_stack import SHEImageStack
 from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR, RTOD
 from SHE_PPT.clustering import identify_all_blends, partition_into_batches
+
+from SHE_PPT.table_utility import is_in_format
 
 logger = getLogger(__name__)
 
@@ -244,6 +247,7 @@ def read_oid_input_data(data_images,
 
     id_arrays = []
     index_arrays = []
+    blend_arrays=[]
 
     unique_batch_ids = set(batch_ids)
 
@@ -257,9 +261,11 @@ def read_oid_input_data(data_images,
 
         ids = all_ids_array[inds]
         indices = all_ids_indices[inds]
+        blends = blend_ids[inds]
 
         id_arrays.append(ids)
         index_arrays.append(indices)
+        blend_arrays.append(blends)
 
         n+=1
 
@@ -269,6 +275,7 @@ def read_oid_input_data(data_images,
 
     return (limited_num_batches,
             id_arrays,
+            blend_arrays,
             index_arrays,
             pointing_list,
             observation_id,
@@ -279,6 +286,7 @@ def read_oid_input_data(data_images,
 
 def write_oid_batch(workdir,
                     id_arrays,
+                    blend_arrays,
                     index_arrays,
                     pointing_list,
                     observation_id,
@@ -350,8 +358,15 @@ def write_oid_batch(workdir,
                                                       subdir = subfolder_name,
                                                       processing_function = "SHE")
     
-    #get the data from the detections_catalogue for this batch
+    #get the data from the detections_catalogue for this batch, creating a new table
+    # (The filled() method creates a copy with this data only)
     batch_table = data_stack.detections_catalogue[index_arrays[i]].filled()
+    
+    #IF the group id is not already in the table, add it
+    if mfc_tf.GROUP_ID not in batch_table.columns:
+        col = Column(name = mfc_tf.GROUP_ID, data = blend_arrays[i])
+        batch_table.add_column(col)
+
     
     # Init the catalog and copy over metadata and the batch's data
     #batch_mer_catalog = initialise_mer_final_catalog(optional_columns = data_stack.detections_catalogue.colnames, init_cols = batch_table.columns)
@@ -359,6 +374,9 @@ def write_oid_batch(workdir,
 
     for key in data_stack.detections_catalogue.meta:
         batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
+    
+    # This could be included, but it ads 0.5s time per table... 150s alltogether on runtime
+    assert(is_in_format(batch_mer_catalog, mfc_tf, verbose=True))
 
     # Write out the catalog
     batch_mer_catalog.write(os.path.join(workdir, batch_mer_catalog_filename))
@@ -422,6 +440,7 @@ def object_id_split_from_args(args,
 
     (limited_num_batches,
      id_arrays,
+     blend_arrays,
      index_arrays,
      pointing_list,
      observation_id,
@@ -450,6 +469,7 @@ def object_id_split_from_args(args,
          batch_mer_catalog_listfile_filename) = write_oid_batch(
             workdir = args.workdir,
             id_arrays = id_arrays,
+            blend_arrays = blend_arrays,
             index_arrays = index_arrays,
             pointing_list = pointing_list,
             observation_id = observation_id,
