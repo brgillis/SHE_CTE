@@ -40,7 +40,7 @@ from SHE_PPT.she_frame_stack import SHEFrameStack
 from SHE_PPT.she_image_stack import SHEImageStack
 from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
 from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR, RTOD
-from SHE_PPT.clustering import identify_all_blends, partition_into_batches
+from SHE_PPT.clustering import identify_all_groups, partition_into_batches
 
 from SHE_PPT.table_utility import is_in_format
 
@@ -134,7 +134,7 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
     
     if sub_batch:
         # If this is a sub-batch, checking has already been done so we can trust all IDs are good
-        all_ids_indices = indices
+        all_ids_indices = indices_in_catalogue
         all_ids_array = s_all_ids
     else:
         t0 = time.time()
@@ -212,6 +212,8 @@ def read_oid_input_data(data_images,
     else:
         limited_num_batches = num_batches
 
+    # We now want to group objects that are possibly blended (separation of <= 1") together.
+    logger.info("Grouping objects into possible blends")
     
     #get ras and decs of the objects
     ras = data_stack.detections_catalogue[mfc_tf.gal_x_world].data[all_ids_indices]
@@ -221,11 +223,9 @@ def read_oid_input_data(data_images,
     #  range we can approximate ra/dec as cartesian
     ras_eq, decs_eq = reproject_to_equator(ras,decs)
 
-    logger.info("Identifying blended objects...")
-
-    #  first we want to identify blends. In order to do this, we want to further improve the coordinates such
-    #  that they're as close to cartesian as possible. To do this, remember that an small distance in
-    #  spherical coordinates is delta l**2 = (delta dec)**2 + (cos(dec) * delta lon)**2. As we're only interested
+    #  Now we want to further improve the coordinates such that they're as close to cartesian as possible. 
+    #  To do this, remember that a small distance in spherical coordinates is 
+    #  delta l**2 = (delta dec)**2 + (cos(dec) * delta lon)**2. As we're only interested
     #  in accurate small distances (for the blend) we can use a cartesian coordinate system where
     #  x = cos(dec)*ra
     #  y = dec
@@ -234,20 +234,21 @@ def read_oid_input_data(data_images,
     x = np.cos(decs_eq*DTOR)*ras_eq * 3600.
     y = decs_eq * 3600.
     
-    #get the blends (separation <= 1"), and the updated positions of all objects for batching (all blends have the same position)
-    x_blend, y_blend, blend_ids = identify_all_blends(x, y, sep=1, metric=euclidean_metric)
+    # get the groups (separation <= 1"), and the updated positions of all objects for batching (all objects
+    # belonging to the same group have the same position to ensure they are partitioned into the same batches below)
+    x_group, y_group, group_ids = identify_all_groups(x, y, sep=1, metric=euclidean_metric)
 
     logger.info(f"Splitting objects into batches of mean size {batch_size}")
     
     #spatially batch objects into batches of mean size batch_size
-    clusters, batch_ids, ns = partition_into_batches(x_blend, y_blend, batchsize = batch_size)
+    clusters, batch_ids, ns = partition_into_batches(x_group, y_group, batchsize = batch_size)
 
     
     #now construct the lists of IDs and indices for each batch
 
     id_arrays = []
     index_arrays = []
-    blend_arrays=[]
+    group_arrays=[]
 
     unique_batch_ids = set(batch_ids)
 
@@ -261,11 +262,11 @@ def read_oid_input_data(data_images,
 
         ids = all_ids_array[inds]
         indices = all_ids_indices[inds]
-        blends = blend_ids[inds]
+        group = group_ids[inds]
 
         id_arrays.append(ids)
         index_arrays.append(indices)
-        blend_arrays.append(blends)
+        group_arrays.append(group)
 
         n+=1
 
@@ -275,7 +276,7 @@ def read_oid_input_data(data_images,
 
     return (limited_num_batches,
             id_arrays,
-            blend_arrays,
+            group_arrays,
             index_arrays,
             pointing_list,
             observation_id,
@@ -286,7 +287,7 @@ def read_oid_input_data(data_images,
 
 def write_oid_batch(workdir,
                     id_arrays,
-                    blend_arrays,
+                    group_arrays,
                     index_arrays,
                     pointing_list,
                     observation_id,
@@ -364,7 +365,7 @@ def write_oid_batch(workdir,
     
     #IF the group id is not already in the table, add it
     if mfc_tf.GROUP_ID not in batch_table.columns:
-        col = Column(name = mfc_tf.GROUP_ID, data = blend_arrays[i])
+        col = Column(name = mfc_tf.GROUP_ID, data = group_arrays[i])
         batch_table.add_column(col)
 
     
@@ -440,7 +441,7 @@ def object_id_split_from_args(args,
 
     (limited_num_batches,
      id_arrays,
-     blend_arrays,
+     group_arrays,
      index_arrays,
      pointing_list,
      observation_id,
@@ -469,7 +470,7 @@ def object_id_split_from_args(args,
          batch_mer_catalog_listfile_filename) = write_oid_batch(
             workdir = args.workdir,
             id_arrays = id_arrays,
-            blend_arrays = blend_arrays,
+            group_arrays = group_arrays,
             index_arrays = index_arrays,
             pointing_list = pointing_list,
             observation_id = observation_id,
