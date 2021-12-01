@@ -171,6 +171,7 @@ def read_oid_input_data(data_images,
                         ids_to_use,
                         max_batches,
                         batch_size,
+                        blend_radius,
                         sub_batch = False):
     # Read in the data images
     logger.info("Reading data images...")
@@ -236,7 +237,7 @@ def read_oid_input_data(data_images,
     
     # get the groups (separation <= 1"), and the updated positions of all objects for batching (all objects
     # belonging to the same group have the same position to ensure they are partitioned into the same batches below)
-    x_group, y_group, group_ids = identify_all_groups(x, y, sep=1, metric=euclidean_metric)
+    x_group, y_group, group_ids = identify_all_groups(x, y, sep=blend_radius, metric=euclidean_metric)
 
     logger.info(f"Splitting objects into batches of mean size {batch_size}")
     
@@ -439,6 +440,8 @@ def object_id_split_from_args(args,
         max_batches = args.pipeline_config[AnalysisConfigKeys.SOID_MAX_BATCHES]
         batch_size = args.pipeline_config[AnalysisConfigKeys.SOID_BATCH_SIZE]
 
+    blend_radius = args.pipeline_config[AnalysisConfigKeys.OID_BLEND_RADIUS]
+
     (limited_num_batches,
      id_arrays,
      group_arrays,
@@ -453,6 +456,7 @@ def object_id_split_from_args(args,
                                                             ids_to_use = ids_to_use,
                                                             max_batches = max_batches,
                                                             batch_size = batch_size,
+                                                            blend_radius = blend_radius,
                                                             sub_batch = sub_batch)
 
     # Start outputting the ID lists for each batch and creating trimmed catalogs
