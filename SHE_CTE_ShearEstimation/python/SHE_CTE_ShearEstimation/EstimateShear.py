@@ -341,7 +341,7 @@ def mainMethod(args):
 
     exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_EstimateShear",
                                     store_true = ["profile", "debug", "dry_run", "memmap_images",
-                                                  "lensmc_no_mask_dilation", "lensmc_disck_only",
+                                                  "lensmc_no_mask_dilation", "lensmc_disc_only",
                                                   "lensmc_return_chains", "lensmc_fast_mode",
                                                   "lensmc_include_vis_undetected", "lensmc_monitor"])
     logger.info('Execution command for this step:')
