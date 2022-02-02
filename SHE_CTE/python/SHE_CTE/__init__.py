@@ -20,7 +20,8 @@ __updated__ = "2021-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "8.3"
+__version__ = "8.4"
 
 from pkgutil import extend_path
+
 __path__ = extend_path(__path__, __name__)
