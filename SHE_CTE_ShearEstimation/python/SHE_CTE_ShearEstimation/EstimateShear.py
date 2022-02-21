@@ -159,31 +159,25 @@ def defineSpecificProgramOptions():
     parser.add_input_arg('--object_ids', type = str,
                          help = 'XML dataproduct that contains within it a list of object ids to loop over')
 
-    parser.add_input_arg('--ksb_training_data', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--ksb_training_data', type = str,
                          help = 'Data product for KSB training data.')
 
-    parser.add_input_arg('--lensmc_training_data', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--lensmc_training_data', type = str,
                          help = 'Data product for LensMC training data.')
 
-    parser.add_input_arg('--momentsml_training_data', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--momentsml_training_data', type = str,
                          help = 'Data product for MomentsML training data.')
 
-    parser.add_input_arg('--regauss_training_data', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--regauss_training_data', type = str,
                          help = 'Data product for REGAUSS training data.')
 
-    parser.add_input_arg('--mdb', type = str, default = None,  # Use default to allow simple running with default values
+    parser.add_input_arg('--mdb', type = str,
                          help = 'Mission Database .xml file')
 
-    parser.add_input_arg('--galaxy_population_priors_table', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--galaxy_population_priors_table', type = str,
                          help = '.json listfile containing filenames of detections table products.')
 
-    parser.add_input_arg('--calibration_parameters_product', type = str, default = None,
-                         # Use default in case we don't use it for SC4
+    parser.add_input_arg('--calibration_parameters_product', type = str,
                          help = 'Filename of calibration parameters product (XML data product).')
 
     # Option arguments (cannot be used in pipeline)
@@ -191,10 +185,10 @@ def defineSpecificProgramOptions():
     parser.add_option_arg('--debug', action = 'store_true',
                           help = 'Enables debug mode - only process first 1000 galaxies.')
 
-    parser.add_option_arg('--methods', type = str, nargs = '*', default = None,
+    parser.add_option_arg('--methods', type = str, nargs = '*',
                           help = 'Which shear estimation methods to apply. If not specified, all will be run.')
 
-    parser.add_option_arg('--chains_method', type = str, default = None,
+    parser.add_option_arg('--chains_method', type = str,
                           help = 'Which shear estimation method to generate chains with.')
 
     parser.add_option_arg('--memmap_images', action = 'store_true',
@@ -204,110 +198,89 @@ def defineSpecificProgramOptions():
 
     parser.add_option_arg('--lensmc_stamp_size',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_STAMP_SIZE],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_STAMP_SIZE],
                           help = 'LensMC: Requested stamp size in pixels.')
 
     parser.add_option_arg('--lensmc_x_buffer',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_X_BUFFER],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_X_BUFFER],
                           help = 'LensMC: Do not fit object if closer to edge of detector by this number of pixels '
                                  'along the x coordinate.')
 
     parser.add_option_arg('--lensmc_y_buffer',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_Y_BUFFER],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_Y_BUFFER],
                           help = 'LensMC: Do not fit object if closer to edge of detector by this number of pixels '
                                  'along the y coordinate.')
 
     parser.add_option_arg('--lensmc_no_mask_dilation',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_NO_MASK_DILATION],
                           help = 'LensMC: Do not dilate mask by one pixel.')
 
     parser.add_option_arg('--lensmc_hl_to_exp',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_HL_TO_EXP],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_HL_TO_EXP],
                           help = 'LensMC: Half-light radius of the bulge to exponential scalelength of the disc.')
 
     parser.add_option_arg('--lensmc_n_bulge',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_N_BULGE],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_N_BULGE],
                           help = 'LensMC: Bulge Sersic index; available: n=(1., 1.5, 2., 2.5, 3., 3.5, 4.).')
 
     parser.add_option_arg('--lensmc_n_disc',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_N_DISC],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_N_DISC],
                           help = 'LensMC: Disc Sersic index; available: n=1.')
 
     parser.add_option_arg('--lensmc_e_max',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_E_MAX],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_E_MAX],
                           help = 'LensMC: Hard upper bound on ellipticity.')
 
     parser.add_option_arg('--lensmc_re_max',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_RE_MAX],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RE_MAX],
                           help = 'LensMC: Hard upper bound on effective radius.')
 
     parser.add_option_arg('--lensmc_delta_max',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_DELTA_MAX],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DELTA_MAX],
                           help = 'LensMC: Hard upper bound on position offset.')
 
     parser.add_option_arg('--lensmc_e_flag',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_E_FLAG],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_E_FLAG],
                           help = 'LensMC: Flagging threshold for ellipticity.')
 
     parser.add_option_arg('--lensmc_re_flag',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_RE_FLAG],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RE_FLAG],
                           help = 'LensMC: Flagging threshold for effective radius.')
 
     parser.add_option_arg('--lensmc_delta_flag',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_DELTA_FLAG],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DELTA_FLAG],
                           help = 'LensMC: Flagging threshold for position offset.')
 
     parser.add_option_arg('--lensmc_disc_only',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_DISC_ONLY],
                           help = 'LensMC: Whether to fit only for a disc component.')
 
     parser.add_option_arg('--lensmc_psf_oversampling',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_PSF_OVERSAMPLING],
                           help = 'LensMC: PSF oversampling factor.')
 
     parser.add_option_arg('--lensmc_seed',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_SEED],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_SEED],
                           help = 'LensMC: Seed the random sampler.')
 
     parser.add_option_arg('--lensmc_shape_noise',
                           type = D_EST_SHEAR_CONFIG_TYPES[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_SHAPE_NOISE],
                           help = 'LensMC: Shape noise standard deviation if not provided by training data.')
 
     parser.add_option_arg('--lensmc_return_chains',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_RETURN_CHAINS],
                           help = 'LensMC: Whether to return the chains.')
 
     parser.add_option_arg('--lensmc_fast_mode',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_FAST_MODE],
                           help = 'Enable LensMC fast mode. Override any sampling settings and produce MAP estimate '
                                  '(without MCMC/errors/intcal).')
 
     parser.add_option_arg('--lensmc_include_vis_undetected',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_INCLUDE_VIS_UNDETECTED],
                           help = 'LensMC: Measure all objects, including those that have not been detected by VIS.')
 
     parser.add_option_arg('--lensmc_monitor',
                           action = 'store_true',
-                          default = D_EST_SHEAR_CONFIG_DEFAULTS[AnalysisConfigKeys.LENSMC_MONITOR],
                           help = 'LensMC: Monitor data and visually check consistency of input data.')
 
     # Output arguments
