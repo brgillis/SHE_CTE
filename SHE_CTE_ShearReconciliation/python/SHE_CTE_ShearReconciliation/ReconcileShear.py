@@ -24,13 +24,13 @@ __updated__ = "2021-08-18"
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-import argparse
 import os
 from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (ConfigKeys, GlobalConfigKeys, ReconciliationConfigKeys, read_config)
@@ -68,58 +68,46 @@ def defineSpecificProgramOptions():
         An  ArgumentParser.
     """
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
-    parser.add_argument('--dry_run', action = 'store_true',
-                        help = 'Dry run (no data processed).')
-    parser.add_argument('--debug', action = 'store_true',
-                        help = 'Enables debug mode - currently no functional difference.')
+    parser = SheArgumentParser()
 
     # Required input arguments
 
-    parser.add_argument('--she_validated_measurements_listfile', type = str,
-                        help = '.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
-                               'to be reconciled and combined.')
+    parser.add_input_arg('--she_validated_measurements_listfile', type = str,
+                         help = '.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
+                                'to be reconciled and combined.')
 
-    parser.add_argument('--she_lensmc_chains_listfile', type = str,
-                        help = '.json listfile containing filenames of DpdSheLensMcChains data products ' +
-                               'to be reconciled and combined.')
+    parser.add_input_arg('--she_lensmc_chains_listfile', type = str,
+                         help = '.json listfile containing filenames of DpdSheLensMcChains data products ' +
+                                'to be reconciled and combined.')
 
-    parser.add_argument('--mer_final_catalog', type = str,
-                        help = 'DpdMerFinalCatalog data product for this tile, which is used to determine the objects '
-                               '' +
-                               'to include in the output catalog.')
+    parser.add_input_arg('--mer_final_catalog', type = str,
+                         help = 'DpdMerFinalCatalog data product for this tile, which is used to determine the objects '
+                                'to include in the output catalog.')
 
-    parser.add_argument('--she_reconciliation_config', type = str, default = None,
-                        help = 'DpdSheReconciliationConfig data product, which stores configuration options for this ' +
-                               'executable, such as the reconciliation method to use.')
-
-    # Optional input arguments (cannot be used in pipeline)
-
-    parser.add_argument('--method', type = str, default = None,
-                        help = "Which reconciliation method to use. If not specified, will take value from pipeline " +
-                               "config if available. If that's not available either, will use default of InvVar " +
-                               "(Inverse Variance) combination.")
-
-    parser.add_argument('--chains_method', type = str, default = None,
-                        help = "Which chains reconciliation method to use. If not specified, will take value from "
-                               "pipeline " +
-                               "config if available. If that's not available either, will use default of keeping all "
-                               "chains.")
+    # TODO: Remove this, and update port in pipeline script and package def
+    parser.add_input_arg('--she_reconciliation_config', type = str,
+                         help = 'DpdSheReconciliationConfig data product, which stores configuration options for this '
+                                'executable, such as the reconciliation method to use.')
 
     # Output arguments
 
-    parser.add_argument('--she_reconciled_measurements', type = str,
-                        help = 'Desired filename to contain the output DpdSheReconciledMeasurements data product.')
+    parser.add_output_arg('--she_reconciled_measurements', type = str,
+                          help = 'Desired filename to contain the output DpdSheReconciledMeasurements data product.')
 
-    parser.add_argument('--she_reconciled_lensmc_chains', type = str,
-                        help = 'Desired filename to contain the output DpdSheReconciledLensMcChains data product.')
+    parser.add_output_arg('--she_reconciled_lensmc_chains', type = str,
+                          help = 'Desired filename to contain the output DpdSheReconciledLensMcChains data product.')
 
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
+    # Optional input arguments (cannot be used in pipeline)
+
+    parser.add_option_arg('--method', type = str,
+                          help = "Which reconciliation method to use. If not specified, will take value from pipeline "
+                                 "config if available. If that's not available either, will use default of InvVar " +
+                                 "(Inverse Variance) combination.")
+
+    parser.add_option_arg('--chains_method', type = str,
+                          help = "Which chains reconciliation method to use. If not specified, will take value from "
+                                 "pipeline config if available. If that's not available either, will use default of "
+                                 "keeping all chains.")
 
     return parser
 

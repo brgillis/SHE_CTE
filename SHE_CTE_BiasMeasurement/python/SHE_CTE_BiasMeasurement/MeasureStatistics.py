@@ -23,12 +23,12 @@ __updated__ = "2021-08-18"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301 USA
 
-import argparse
 import os
 from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys, read_calibration_config)
@@ -39,7 +39,7 @@ D_MS_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     **D_GLOBAL_CONFIG_DEFAULTS,
     CalibrationConfigKeys.MS_ARCHIVE_DIR   : None,
     CalibrationConfigKeys.MS_WEBDAV_ARCHIVE: False,
-    CalibrationConfigKeys.MS_WEBDAV_DIR    : None,
+    CalibrationConfigKeys.MS_WEBDAV_DIR    : "/mnt/webdav",
     }
 
 D_MS_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
@@ -72,37 +72,27 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_MeasureStatistics defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--details_table', type = str,
-                        help = "Details table data product")
-    parser.add_argument('--shear_estimates', type = str,
-                        help = "Shear estimates data product")
-
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--details_table', type = str,
+                         help = "Details table data product")
+    parser.add_input_arg('--shear_estimates', type = str,
+                         help = "Shear estimates data product")
 
     # Output data
-    parser.add_argument('--she_bias_statistics', type = str,
-                        help = 'Desired name of the output shear bias statistics data product')
+    parser.add_output_arg('--she_bias_statistics', type = str,
+                          help = 'Desired name of the output shear bias statistics data product')
 
     # Archive directory - only default value can be used in pipeline
-    parser.add_argument('--archive_dir', type = str, default = None)
+    parser.add_option_arg('--archive_dir', type = str)
 
-    parser.add_argument('--webdav_dir', type = str, default = "/mnt/webdav",
-                        help = "Path of the WebDAV mount.")
+    parser.add_option_arg('--webdav_dir', type = str,
+                          help = "Path of the WebDAV mount.")
 
-    parser.add_argument('--webdav_archive', action = "store_true",
-                        help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
-                               "the webdav mount.")
-
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
+    parser.add_option_arg('--webdav_archive', action = "store_true",
+                          help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
+                                 "the webdav mount.")
 
     logger.debug('# Exiting SHE_CTE_MeasureStatistics mainMethod()')
 

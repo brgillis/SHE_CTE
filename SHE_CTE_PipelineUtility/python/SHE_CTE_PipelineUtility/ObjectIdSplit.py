@@ -20,12 +20,12 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys, read_analysis_config
@@ -69,30 +69,20 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input arguments
-    parser.add_argument('--mer_final_catalog_tables', type = str)
+    parser.add_input_arg('--mer_final_catalog_tables', type = str)
 
-    parser.add_argument('--data_images', type = str, default = None,
-                        help = '.json listfile containing filenames of data image products.')
-
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--data_images', type = str, default = None,
+                         help = '.json listfile containing filenames of data image products.')
 
     # Output arguments
-    parser.add_argument('--object_ids', type = str, default = "object_ids.json",
-                        help = 'Desired filename for output .json listfile of object ID list products.')
-    parser.add_argument('--batch_mer_catalogs', type = str, default = "batch_mer_catalogs.json",
-                        help = 'Desired filename for output .json listfile of MER catalogues for each batch of '
-                               'objects.')
-
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type = str, )
-    parser.add_argument('--logdir', type = str, )
-    parser.add_argument('--debug', action = 'store_true',
-                        help = "Set to enable debugging protocols")
-    parser.add_argument('--profile', action = 'store_true')
+    parser.add_output_arg('--object_ids', type = str, default = "object_ids.json",
+                          help = 'Desired filename for output .json listfile of object ID list products.')
+    parser.add_output_arg('--batch_mer_catalogs', type = str, default = "batch_mer_catalogs.json",
+                          help = 'Desired filename for output .json listfile of MER catalogues for each batch of '
+                                 'objects.')
 
     logger.debug('# Exiting SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
 

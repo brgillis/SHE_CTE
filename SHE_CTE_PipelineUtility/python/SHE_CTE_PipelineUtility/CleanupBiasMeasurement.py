@@ -20,13 +20,13 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 import shutil
 from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
@@ -45,7 +45,6 @@ D_CBM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
 
 D_CBM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     **D_GLOBAL_CONFIG_CLINE_ARGS,
-    CalibrationConfigKeys.CBM_CLEANUP: None,
     }
 
 
@@ -64,33 +63,23 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input arguments
-    parser.add_argument('--simulation_config', type = str)
-    parser.add_argument('--data_images', type = str)
-    parser.add_argument('--stacked_data_image', type = str)
-    parser.add_argument('--psf_images_and_tables', type = str)
-    parser.add_argument('--segmentation_images', type = str)
-    parser.add_argument('--stacked_segmentation_image', type = str)
-    parser.add_argument('--detections_tables', type = str)
-    parser.add_argument('--details_table', type = str)
-    parser.add_argument('--shear_estimates', type = str)
+    parser.add_input_arg('--simulation_config', type = str)
+    parser.add_input_arg('--data_images', type = str)
+    parser.add_input_arg('--stacked_data_image', type = str)
+    parser.add_input_arg('--psf_images_and_tables', type = str)
+    parser.add_input_arg('--segmentation_images', type = str)
+    parser.add_input_arg('--stacked_segmentation_image', type = str)
+    parser.add_input_arg('--detections_tables', type = str)
+    parser.add_input_arg('--details_table', type = str)
+    parser.add_input_arg('--shear_estimates', type = str)
 
-    parser.add_argument('--shear_bias_statistics_in', type = str)  # Needed to ensure it waits until ready
-
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--shear_bias_statistics_in', type = str)  # Needed to ensure it waits until ready
 
     # Output arguments
-    parser.add_argument('--shear_bias_statistics_out', type = str)
-
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type = str, )
-    parser.add_argument('--logdir', type = str, )
-    parser.add_argument('--debug', action = 'store_true',
-                        help = "Set to enable debugging protocols")
-    parser.add_argument('--profile', action = 'store_true')
+    parser.add_output_arg('--shear_bias_statistics_out', type = str)
 
     logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
 

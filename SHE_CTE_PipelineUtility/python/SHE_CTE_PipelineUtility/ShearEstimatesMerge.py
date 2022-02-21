@@ -21,7 +21,6 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import multiprocessing as mp
 import os
 from typing import Any, Dict, Tuple, Type, Union
@@ -32,6 +31,7 @@ from astropy import table
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_PPT import products
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import (get_allowed_filename, read_listfile, read_xml_product, write_xml_product)
@@ -73,29 +73,20 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--shear_estimates_product_listfile', type = str)
-    parser.add_argument('--she_lensmc_chains_listfile', type = str)
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--shear_estimates_product_listfile', type = str)
+    parser.add_input_arg('--she_lensmc_chains_listfile', type = str)
 
     # Output data
-    parser.add_argument('--merged_she_measurements', type = str)
-    parser.add_argument('--merged_she_lensmc_chains', type = str,
-                        help = 'XML data product to contain LensMC chains data.')
+    parser.add_output_arg('--merged_she_measurements', type = str)
+    parser.add_output_arg('--merged_she_lensmc_chains', type = str,
+                          help = 'XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
-    parser.add_argument('--number_threads', type = int, default = None,
-                        help = 'Number of parallel threads to use.')
-
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type = str, )
-    parser.add_argument('--logdir', type = str, )
-    parser.add_argument('--debug', action = 'store_true',
-                        help = "Set to enable debugging protocols")
-    parser.add_argument('--profile', action = 'store_true')
+    parser.add_option_arg('--number_threads', type = int,
+                          help = 'Number of parallel threads to use.')
 
     logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
 

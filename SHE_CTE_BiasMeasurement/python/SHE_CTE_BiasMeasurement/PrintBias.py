@@ -20,12 +20,12 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
 from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product_filename
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import CalibrationConfigKeys, GlobalConfigKeys, read_config
@@ -46,18 +46,11 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_PrintBias defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--she_bias_measurements', type = str,
-                        help = 'Desired name of the output shear bias statistics data product')
-
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
+    parser.add_input_arg('--she_bias_measurements', type = str,
+                         help = 'Desired name of the output shear bias statistics data product')
 
     logger.debug('# Exiting SHE_CTE_PrintBias defineSpecificProgramOptions()')
 
