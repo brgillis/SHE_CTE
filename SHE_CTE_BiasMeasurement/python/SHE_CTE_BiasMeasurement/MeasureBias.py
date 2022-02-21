@@ -18,12 +18,12 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 from typing import Any, Dict, Tuple, Type, Union
 
 import SHE_CTE
 from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys, read_calibration_config)
@@ -35,7 +35,7 @@ D_MB_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     CalibrationConfigKeys.MB_ARCHIVE_DIR   : None,
     CalibrationConfigKeys.MB_NUM_THREADS   : 8,
     CalibrationConfigKeys.MB_WEBDAV_ARCHIVE: False,
-    CalibrationConfigKeys.MB_WEBDAV_DIR    : None,
+    CalibrationConfigKeys.MB_WEBDAV_DIR    : "/mnt/webdav",
     }
 
 D_MB_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
@@ -70,52 +70,45 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--she_bias_statistics', type = str,
-                        help = 'Listfile pointing to shear bias statistics objects.')
-    parser.add_argument('--bootstrap_seed', type = int, default = 0,
-                        help = 'Seed for bootstrapping of errors')
-
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--she_bias_statistics', type = str,
+                         help = 'Listfile pointing to shear bias statistics objects.')
 
     # Output data
-    parser.add_argument('--she_bias_measurements', type = str,
-                        help = 'Desired name of the output shear bias statistics data product')
-    parser.add_argument('--details_table_head', type = str, default = None,
-                        help = 'Desired head for the filenames of the output details tables')
+    parser.add_option_arg('--she_bias_measurements', type = str,
+                          help = 'Desired name of the output shear bias statistics data product')
 
-    # Input arguments
-    parser.add_argument('--number_threads', type = int, default = None,
-                        help = 'Number of parallel threads to use.')
-    parser.add_argument('--recovery_bias_statistics_filename', type = str, default = "she_bias_statistics.xml",
-                        help = 'Expected name of bias statistics files for when operating in recovery mode')
-    parser.add_argument('--recovery_bias_measurements_filename', type = str, default = "she_bias_measurements.xml",
-                        help = 'Expected name of bias measurements files for when operating in recovery mode')
-    parser.add_argument('--store_measurements_only', action = 'store_true',
-                        help = 'If set, the resulting bias measurements file will contain only the measurements. ' +
-                               'Otherwise, it will also store data for all individual galaxy measurements.')
-    parser.add_argument('--use_bias_only', action = 'store_true',
-                        help = 'If set will calculate using only bias measurements and not full statistics.')
+    # Option arguments
+    parser.add_option_arg('--bootstrap_seed', type = int, default = 0, suppress_warnings = True,
+                          help = 'Seed for bootstrapping of errors')
+    parser.add_option_arg('--details_table_head', type = str,
+                          help = 'Desired head for the filenames of the output details tables')
+    parser.add_option_arg('--number_threads', type = int,
+                          help = 'Number of parallel threads to use.')
+    parser.add_option_arg('--recovery_bias_statistics_filename', type = str, default = "she_bias_statistics.xml",
+                          suppress_warnings = True,
+                          help = 'Expected name of bias statistics files for when operating in recovery mode')
+    parser.add_option_arg('--recovery_bias_measurements_filename', type = str, default = "she_bias_measurements.xml",
+                          suppress_warnings = True,
+                          help = 'Expected name of bias measurements files for when operating in recovery mode')
+    parser.add_option_arg('--store_measurements_only', action = 'store_true',
+                          help = 'If set, the resulting bias measurements file will contain only the measurements. ' +
+                                 'Otherwise, it will also store data for all individual galaxy measurements.')
+    parser.add_option_arg('--use_bias_only', action = 'store_true',
+                          help = 'If set will calculate using only bias measurements and not full statistics.')
 
     # Archive directory
-    parser.add_argument('--archive_dir', type = str, default = None)
+    parser.add_option_arg('--archive_dir', type = str,
+                          help = "Directory to copy resulting data to as an archive.")
 
-    parser.add_argument('--webdav_dir', type = str, default = "/mnt/webdav",
-                        help = "Path of the WebDAV mount.")
+    parser.add_option_arg('--webdav_dir', type = str,
+                          help = "Path of the WebDAV mount.")
 
-    parser.add_argument('--webdav_archive', action = "store_true",
-                        help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
-                               "the webdav mount.")
-
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
+    parser.add_option_arg('--webdav_archive', action = "store_true",
+                          help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
+                                 "the webdav mount.")
 
     logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
 
