@@ -131,7 +131,7 @@ def defineSpecificProgramOptions():
     """
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_EstimateShear defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = SheArgumentParser()
@@ -291,7 +291,7 @@ def defineSpecificProgramOptions():
     parser.add_output_arg('--she_lensmc_chains', type = str,
                           help = 'XML data product to contain LensMC chains data.')
 
-    logger.debug('# Exiting SHE_CTE_EstimateShear defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 

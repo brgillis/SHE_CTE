@@ -22,28 +22,30 @@ __updated__ = "2021-08-18"
 
 import os
 
-from SHE_PPT import products
+import numpy as np
+
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
 from SHE_PPT.file_io import read_xml_product
 from SHE_PPT.logging import getLogger
 
-import numpy as np
-
 logger = getLogger(__name__)
 
 
-def print_bias_from_product_filename(product_filename, workdir):
+def print_bias_from_args(args):
+    return print_bias_from_product_filename(product_filename = args.she_bias_statistics,
+                                            workdir = args.workdir)
 
-    p = read_xml_product(os.path.join(workdir, product_filename), allow_pickled=True)
+
+def print_bias_from_product_filename(product_filename, workdir):
+    p = read_xml_product(os.path.join(workdir, product_filename), allow_pickled = True)
 
     print_bias_from_product(p, workdir)
 
 
 def print_bias_from_product(p, workdir):
-
     for method in ShearEstimationMethods:
 
-        g1_bias, g2_bias = p.get_method_bias_measurements(method, workdir=workdir)
+        g1_bias, g2_bias = p.get_method_bias_measurements(method, workdir = workdir)
 
         if (g1_bias is None or g2_bias is None or g1_bias.m is None or g2_bias.m is None or
                 g1_bias.m == "" or g2_bias.m == ""):

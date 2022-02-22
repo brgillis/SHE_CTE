@@ -24,13 +24,13 @@ import os
 import shutil
 from typing import Any, Dict, Tuple, Type, Union
 
-import SHE_CTE
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
 from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys, read_calibration_config)
+from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys)
 
 # Set up dicts for pipeline config defaults and types
 D_CBM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
@@ -47,6 +47,10 @@ D_CBM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     **D_GLOBAL_CONFIG_CLINE_ARGS,
     }
 
+EXEC_NAME = "SHE_CTE_CleanupBiasMeasurement"
+
+logger = getLogger(__name__)
+
 
 def defineSpecificProgramOptions():
     """
@@ -57,10 +61,8 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(__name__)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = SheArgumentParser()
@@ -81,7 +83,7 @@ def defineSpecificProgramOptions():
     # Output arguments
     parser.add_output_arg('--shear_bias_statistics_out', type = str)
 
-    logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -90,8 +92,6 @@ def cleanup_bias_measurement_from_args(args):
     """ Function which performs the heavy lifting of actually cleaning up unneeded intermediate files
         in the bias measurement pipeline.
     """
-
-    logger = getLogger(__name__)
 
     qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
     qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
@@ -192,50 +192,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(__name__)
+    executor = SheCteExecutor(run_from_args_function = cleanup_bias_measurement_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_CBM_CONFIG_DEFAULTS,
+                                                           d_config_types = D_CBM_CONFIG_TYPES,
+                                                           d_config_cline_args = D_CBM_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {CalibrationConfigKeys},
+                                                           ))
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args,
-                                    cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CleanupBiasMeasurement",
-                                    store_true = ["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    # load the pipeline config in
-    args.pipeline_config = read_calibration_config(args.pipeline_config,
-                                                   workdir = args.workdir,
-                                                   d_defaults = D_CBM_CONFIG_DEFAULTS,
-                                                   d_cline_args = D_CBM_CONFIG_CLINE_ARGS,
-                                                   parsed_args = args,
-                                                   d_types = D_CBM_CONFIG_TYPES)
-
-    # check if profiling is to be enabled from the pipeline config
-    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
-
-    try:
-
-        if profiling:
-
-            import cProfile
-            logger.info("Profiling enabled")
-
-            filename = os.path.join(args.workdir, args.logdir, "cleanup_bias_measurement.prof")
-            logger.info("Writing profiling data to %s", filename)
-
-            cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
-                            {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
-                             "args"                              : args, },
-                            filename = filename)
-        else:
-            logger.info("Profiling disabled")
-            cleanup_bias_measurement_from_args(args)
-    except Exception as e:
-        logger.warning("Failsafe exception block triggered with exception: " + str(e))
-
-    logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():

@@ -18,15 +18,14 @@
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import os
 from typing import Any, Dict, Tuple, Type, Union
 
-import SHE_CTE
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
 from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys, GlobalConfigKeys, read_calibration_config)
+from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys)
 from .measure_bias import measure_bias_from_args
 
 # Set up dicts for pipeline config defaults and types
@@ -54,6 +53,10 @@ D_MB_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     CalibrationConfigKeys.MB_WEBDAV_DIR    : "webdav_archive",
     }
 
+EXEC_NAME = "SHE_CTE_MeasureBias"
+
+logger = getLogger(__name__)
+
 
 def defineSpecificProgramOptions():
     """
@@ -64,10 +67,8 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(__name__)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
     parser = SheArgumentParser()
@@ -110,7 +111,7 @@ def defineSpecificProgramOptions():
                           help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
                                  "the webdav mount.")
 
-    logger.debug('# Exiting SHE_CTE_MeasureBias defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -125,44 +126,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(__name__)
+    executor = SheCteExecutor(run_from_args_function = measure_bias_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_MB_CONFIG_DEFAULTS,
+                                                           d_config_types = D_MB_CONFIG_TYPES,
+                                                           d_config_cline_args = D_MB_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {CalibrationConfigKeys},
+                                                           ))
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_MeasureBias mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MeasureBias",
-                                    store_true = ["profile", "debug", "webdav_archive", "store_measurements_only"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    # load the pipeline config in
-    args.pipeline_config = read_calibration_config(args.pipeline_config,
-                                                   workdir = args.workdir,
-                                                   d_defaults = D_MB_CONFIG_DEFAULTS,
-                                                   d_cline_args = D_MB_CONFIG_CLINE_ARGS,
-                                                   parsed_args = args,
-                                                   d_types = D_MB_CONFIG_TYPES)
-
-    # check if profiling is to be enabled from the pipeline config
-    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
-
-    if profiling:
-
-        import cProfile
-        logger.info("Profiling enabled")
-
-        filename = os.path.join(args.workdir, args.logdir, "measure_bias.prof")
-        logger.info("Writing profiling data to %s", filename)
-
-        cProfile.runctx("measure_bias_from_args(args)", {},
-                        {"measure_bias_from_args": measure_bias_from_args,
-                         "args"                  : args}, filename = filename)
-    else:
-        logger.info("Profiling disabled")
-        measure_bias_from_args(args)
-
-    logger.debug('# Exiting SHE_CTE_MeasureBias mainMethod()')
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
