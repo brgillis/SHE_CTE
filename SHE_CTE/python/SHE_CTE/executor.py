@@ -30,7 +30,7 @@ from . import __version__
 class CteLogOptions(LogOptions):
     """ Subclass of LogOptions which overrides defaults for project_name and project_version.
     """
-    project_name: str = "SHE_Validation"
+    project_name: str = "SHE_CTE"
     project_version: str = __version__
 
 
