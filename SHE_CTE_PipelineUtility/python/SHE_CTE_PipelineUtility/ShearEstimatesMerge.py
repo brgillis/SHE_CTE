@@ -420,7 +420,7 @@ def mainMethod(args):
                                                            s_config_keys_types = {AnalysisConfigKeys},
                                                            ), )
 
-    executor.run()
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
