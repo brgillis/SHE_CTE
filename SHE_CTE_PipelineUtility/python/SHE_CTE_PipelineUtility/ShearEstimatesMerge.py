@@ -420,6 +420,8 @@ def mainMethod(args):
                                                            s_config_keys_types = {AnalysisConfigKeys},
                                                            ), )
 
+    executor.run()
+
 
 def main():
     """
