@@ -29,7 +29,7 @@ import math
 from astropy.table import Table
 
 from SHE_PPT.testing import generate_mock_mer_catalogues, generate_mock_vis_images
-from SHE_PPT.file_io import read_listfile, read_xml_product
+from SHE_PPT.file_io import read_listfile, read_xml_product, write_listfile
 from SHE_PPT.products.mer_final_catalog import dpdMerFinalCatalog
 from SHE_PPT.products.she_object_id_list import dpdSheObjectIdList
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
@@ -72,12 +72,10 @@ class TestCase:
 
         #write them to disk
         cls.data_images = os.path.join(cls.workdir,"data_images.json")
-        with open(cls.data_images,"w") as f:
-            json.dump(exposure_list,f)
-
+        write_listfile(cls.data_images, exposure_list)
+       
         cls.mer_final_catalog_tables = os.path.join(cls.workdir,"mer_final_catalog_tables.json")
-        with open(cls.mer_final_catalog_tables,"w") as f:
-            json.dump(catalogue_list,f)
+        write_listfile(cls.mer_final_catalog_tables, catalogue_list)
         
         #create the pipeline config, specifying the batch size
         cls.pipeline_config = os.path.join(cls.workdir,"pipeline_config.txt")
