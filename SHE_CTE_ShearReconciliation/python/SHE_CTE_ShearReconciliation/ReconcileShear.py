@@ -24,16 +24,15 @@ __updated__ = "2021-08-18"
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-import argparse
-import os
 from typing import Any, Dict, Tuple, Type, Union
 
-import SHE_CTE
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
 from SHE_CTE_ShearReconciliation.reconcile_shear import reconcile_shear_from_args
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (ConfigKeys, GlobalConfigKeys, ReconciliationConfigKeys, read_config)
+from SHE_PPT.pipeline_utility import (ConfigKeys, ReconciliationConfigKeys)
 
 # Set up dicts for pipeline config defaults and types
 D_REC_SHEAR_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
@@ -54,6 +53,8 @@ D_REC_SHEAR_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     ReconciliationConfigKeys.CHAINS_REC_METHOD: "chains_method",
     }
 
+EXEC_NAME = "SHE_CTE_ReconcileShear"
+
 logger = getLogger(__name__)
 
 
@@ -68,58 +69,52 @@ def defineSpecificProgramOptions():
         An  ArgumentParser.
     """
 
-    parser = argparse.ArgumentParser()
+    logger.debug('#')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
+    logger.debug('#')
 
-    parser.add_argument('--profile', action = 'store_true',
-                        help = 'Store profiling data for execution.')
-    parser.add_argument('--dry_run', action = 'store_true',
-                        help = 'Dry run (no data processed).')
-    parser.add_argument('--debug', action = 'store_true',
-                        help = 'Enables debug mode - currently no functional difference.')
+    parser = SheArgumentParser()
 
     # Required input arguments
 
-    parser.add_argument('--she_validated_measurements_listfile', type = str,
-                        help = '.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
-                               'to be reconciled and combined.')
+    parser.add_input_arg('--she_validated_measurements_listfile', type = str,
+                         help = '.json listfile containing filenames of DpdSheValidatedMeasurements data products ' +
+                                'to be reconciled and combined.')
 
-    parser.add_argument('--she_lensmc_chains_listfile', type = str,
-                        help = '.json listfile containing filenames of DpdSheLensMcChains data products ' +
-                               'to be reconciled and combined.')
+    parser.add_input_arg('--she_lensmc_chains_listfile', type = str,
+                         help = '.json listfile containing filenames of DpdSheLensMcChains data products ' +
+                                'to be reconciled and combined.')
 
-    parser.add_argument('--mer_final_catalog', type = str,
-                        help = 'DpdMerFinalCatalog data product for this tile, which is used to determine the objects '
-                               '' +
-                               'to include in the output catalog.')
+    parser.add_input_arg('--mer_final_catalog', type = str,
+                         help = 'DpdMerFinalCatalog data product for this tile, which is used to determine the objects '
+                                'to include in the output catalog.')
 
-    parser.add_argument('--she_reconciliation_config', type = str, default = None,
-                        help = 'DpdSheReconciliationConfig data product, which stores configuration options for this ' +
-                               'executable, such as the reconciliation method to use.')
-
-    # Optional input arguments (cannot be used in pipeline)
-
-    parser.add_argument('--method', type = str, default = None,
-                        help = "Which reconciliation method to use. If not specified, will take value from pipeline " +
-                               "config if available. If that's not available either, will use default of InvVar " +
-                               "(Inverse Variance) combination.")
-
-    parser.add_argument('--chains_method', type = str, default = None,
-                        help = "Which chains reconciliation method to use. If not specified, will take value from "
-                               "pipeline " +
-                               "config if available. If that's not available either, will use default of keeping all "
-                               "chains.")
+    # TODO: Remove this, and update port in pipeline script and package def
+    parser.add_input_arg('--she_reconciliation_config', type = str,
+                         help = 'DpdSheReconciliationConfig data product, which stores configuration options for this '
+                                'executable, such as the reconciliation method to use.')
 
     # Output arguments
 
-    parser.add_argument('--she_reconciled_measurements', type = str,
-                        help = 'Desired filename to contain the output DpdSheReconciledMeasurements data product.')
+    parser.add_output_arg('--she_reconciled_measurements', type = str,
+                          help = 'Desired filename to contain the output DpdSheReconciledMeasurements data product.')
 
-    parser.add_argument('--she_reconciled_lensmc_chains', type = str,
-                        help = 'Desired filename to contain the output DpdSheReconciledLensMcChains data product.')
+    parser.add_output_arg('--she_reconciled_lensmc_chains', type = str,
+                          help = 'Desired filename to contain the output DpdSheReconciledLensMcChains data product.')
 
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type = str, default = ".")
-    parser.add_argument('--logdir', type = str, default = ".")
+    # Optional input arguments (cannot be used in pipeline)
+
+    parser.add_option_arg('--method', type = str,
+                          help = "Which reconciliation method to use. If not specified, will take value from pipeline "
+                                 "config if available. If that's not available either, will use default of InvVar " +
+                                 "(Inverse Variance) combination.")
+
+    parser.add_option_arg('--chains_method', type = str,
+                          help = "Which chains reconciliation method to use. If not specified, will take value from "
+                                 "pipeline config if available. If that's not available either, will use default of "
+                                 "keeping all chains.")
+
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -132,38 +127,29 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ReconcileShear mainMethod()')
-    logger.debug('#')
+    executor = SheCteExecutor(run_from_args_function = reconcile_shear_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_REC_SHEAR_CONFIG_DEFAULTS,
+                                                           d_config_types = D_REC_SHEAR_CONFIG_TYPES,
+                                                           d_config_cline_args = D_REC_SHEAR_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {ReconciliationConfigKeys},
+                                                           ))
 
-    exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ReconcileShear",
-                                    store_true = ["profile", "debug", "dry_run"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
-    # load the pipeline config in
-    args.pipeline_config = read_config(args.she_reconciliation_config, workdir = args.workdir,
-                                       config_keys = ReconciliationConfigKeys,
-                                       d_cline_args = D_REC_SHEAR_CONFIG_CLINE_ARGS,
-                                       d_defaults = D_REC_SHEAR_CONFIG_DEFAULTS, d_types = D_REC_SHEAR_CONFIG_TYPES,
-                                       parsed_args = args)
 
-    # check if profiling is to be enabled from the pipeline config
-    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+def main():
+    """
+    @brief
+        Alternate entry point for non-Elements execution.
+    """
 
-    if profiling:
-        import cProfile
-        logger.info("Profiling enabled")
+    parser = defineSpecificProgramOptions()
 
-        filename = os.path.join(args.workdir, args.logdir, "reconcile_shear.prof")
-        logger.info("Writing profiling data to %s", filename)
+    args = parser.parse_args()
 
-        cProfile.runctx("reconcile_shear_from_args(args)", {},
-                        {"reconcile_shear_from_args": reconcile_shear_from_args,
-                         "args"                     : args},
-                        filename = filename)
-    else:
-        logger.info("Profiling disabled")
-        reconcile_shear_from_args(args)
+    mainMethod(args)
 
-    logger.debug('# Exiting SHE_CTE_ReconcileShear mainMethod() successfully.')
+
+if __name__ == "__main__":
+    main()

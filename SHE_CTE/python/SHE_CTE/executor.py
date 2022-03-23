@@ -1,11 +1,11 @@
-""" @file __init__.py
+""" @file executor.py
 
-    Created 22 April 2019
+    Created 22 Feb 2022
 
-    SHE_CTE package, for modules general to SHE_CTE
+    Class to handle primary execution of SHE_CTE executables.
 """
 
-__updated__ = "2021-08-19"
+__updated__ = "2022-02-22"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,8 +20,23 @@ __updated__ = "2021-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "8.4"
+from dataclasses import dataclass
 
-from pkgutil import extend_path
+from SHE_PPT.executor import LogOptions, SheExecutor
+from . import __version__
 
-__path__ = extend_path(__path__, __name__)
+
+@dataclass
+class CteLogOptions(LogOptions):
+    """ Subclass of LogOptions which overrides defaults for project_name and project_version.
+    """
+    project_name: str = "SHE_CTE"
+    project_version: str = __version__
+
+
+class SheCteExecutor(SheExecutor):
+    """ Subclass of SheExecutor which overrides attribute types.
+    """
+
+    # Attributes with different types from base class
+    log_options: CteLogOptions

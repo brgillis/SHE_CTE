@@ -20,15 +20,14 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
-import os
 from typing import Any, Dict, Tuple, Type, Union
 
-import SHE_CTE
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs, RunArgs
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys, read_analysis_config
+from SHE_PPT.pipeline_utility import AnalysisConfigKeys, ConfigKeys
 from .object_id_split import object_id_split_from_args
 
 # Set up dicts for pipeline config defaults and types
@@ -56,6 +55,8 @@ D_OID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.OID_GROUPING_RADIUS: None
     }
 
+EXEC_NAME = "SHE_CTE_ObjectIdSplit"
+
 logger = getLogger(__name__)
 
 
@@ -72,30 +73,20 @@ def defineSpecificProgramOptions():
     logger.debug('# Entering SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input arguments
-    parser.add_argument('--mer_final_catalog_tables', type = str)
+    parser.add_input_arg('--mer_final_catalog_tables', type = str)
 
-    parser.add_argument('--data_images', type = str, default = None,
-                        help = '.json listfile containing filenames of data image products.')
-
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--data_images', type = str, default = None,
+                         help = '.json listfile containing filenames of data image products.')
 
     # Output arguments
-    parser.add_argument('--object_ids', type = str, default = "object_ids.json",
-                        help = 'Desired filename for output .json listfile of object ID list products.')
-    parser.add_argument('--batch_mer_catalogs', type = str, default = "batch_mer_catalogs.json",
-                        help = 'Desired filename for output .json listfile of MER catalogues for each batch of '
-                               'objects.')
-
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type = str, )
-    parser.add_argument('--logdir', type = str, )
-    parser.add_argument('--debug', action = 'store_true',
-                        help = "Set to enable debugging protocols")
-    parser.add_argument('--profile', action = 'store_true')
+    parser.add_output_arg('--object_ids', type = str, default = "object_ids.json",
+                          help = 'Desired filename for output .json listfile of object ID list products.')
+    parser.add_output_arg('--batch_mer_catalogs', type = str, default = "batch_mer_catalogs.json",
+                          help = 'Desired filename for output .json listfile of MER catalogues for each batch of '
+                                 'objects.')
 
     logger.debug('# Exiting SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')
 
@@ -112,42 +103,16 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ObjectIdSplit mainMethod()')
-    logger.debug('#')
+    executor = SheCteExecutor(run_from_args_function = object_id_split_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_OID_SPLIT_CONFIG_DEFAULTS,
+                                                           d_config_types = D_OID_SPLIT_CONFIG_TYPES,
+                                                           d_config_cline_args = D_OID_SPLIT_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {AnalysisConfigKeys},
+                                                           ),
+                              run_args = RunArgs(d_run_kwargs = {"sub_batch": False}))
 
-    exec_cmd = get_arguments_string(args, cmd = f"E-Run SHE_CTE {SHE_CTE.__version__} SHE_CTE_ObjectIdSplit",
-                                    store_true = ["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    args.pipeline_config = read_analysis_config(config_filename = args.pipeline_config,
-                                                workdir = args.workdir,
-                                                d_defaults = D_OID_SPLIT_CONFIG_DEFAULTS,
-                                                d_cline_args = D_OID_SPLIT_CONFIG_CLINE_ARGS,
-                                                parsed_args = args,
-                                                d_types = D_OID_SPLIT_CONFIG_TYPES)
-
-    # check if profiling is to be enabled from the pipeline config
-    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
-
-    if args.profile or profiling:
-        import cProfile
-
-        logger.info("Profiling enabled")
-        filename = os.path.join(args.workdir, args.logdir, "object_id_split.prof")
-        logger.info("Writing profiling data to %s", filename)
-
-        cProfile.runctx("object_id_split_from_args(args,sub_batch=False)", {},
-                        {"object_id_split_from_args": object_id_split_from_args,
-                         "args"                     : args, },
-                        filename = filename)
-    else:
-        logger.info("Profiling disabled")
-        object_id_split_from_args(args,
-                                  sub_batch = False)
-
-    logger.debug('# Exiting SHE_CTE_ObjectIdSplit mainMethod()')
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
