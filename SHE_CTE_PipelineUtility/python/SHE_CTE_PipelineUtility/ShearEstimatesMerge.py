@@ -21,7 +21,6 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import multiprocessing as mp
 import os
 from typing import Any, Dict, Tuple, Type, Union
@@ -30,13 +29,15 @@ import numpy as np
 from astropy import table
 
 import SHE_CTE
-from EL_PythonUtils.utilities import get_arguments_string
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
 from SHE_PPT import products
+from SHE_PPT.argument_parser import SheArgumentParser
 from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.file_io import (get_allowed_filename, read_listfile, read_xml_product, write_xml_product)
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, ConfigKeys, GlobalConfigKeys, read_analysis_config)
+from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, ConfigKeys, read_analysis_config)
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
@@ -57,6 +58,8 @@ D_SEM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
     AnalysisConfigKeys.SEM_NUM_THREADS: "number_threads",
     }
 
+EXEC_NAME = "SHE_CTE_ShearEstimatesMerge"
+
 logger = getLogger(__name__)
 
 
@@ -70,34 +73,25 @@ def defineSpecificProgramOptions():
     """
 
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--shear_estimates_product_listfile', type = str)
-    parser.add_argument('--she_lensmc_chains_listfile', type = str)
-    parser.add_argument("--pipeline_config", default = None, type = str,
-                        help = "Pipeline-wide configuration file.")
+    parser.add_input_arg('--shear_estimates_product_listfile', type = str)
+    parser.add_input_arg('--she_lensmc_chains_listfile', type = str)
 
     # Output data
-    parser.add_argument('--merged_she_measurements', type = str)
-    parser.add_argument('--merged_she_lensmc_chains', type = str,
-                        help = 'XML data product to contain LensMC chains data.')
+    parser.add_output_arg('--merged_she_measurements', type = str)
+    parser.add_output_arg('--merged_she_lensmc_chains', type = str,
+                          help = 'XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
-    parser.add_argument('--number_threads', type = int, default = None,
-                        help = 'Number of parallel threads to use.')
+    parser.add_option_arg('--number_threads', type = int,
+                          help = 'Number of parallel threads to use.')
 
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type = str, )
-    parser.add_argument('--logdir', type = str, )
-    parser.add_argument('--debug', action = 'store_true',
-                        help = "Set to enable debugging protocols")
-    parser.add_argument('--profile', action = 'store_true')
-
-    logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -418,42 +412,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
-    logger.debug('#')
+    executor = SheCteExecutor(run_from_args_function = she_measurements_merge_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_SEM_CONFIG_DEFAULTS,
+                                                           d_config_types = D_SEM_CONFIG_TYPES,
+                                                           d_config_cline_args = D_SEM_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {AnalysisConfigKeys},
+                                                           ), )
 
-    exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_ShearEstimatesMerge",
-                                    store_true = ["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    # load the pipeline config in
-    args.pipeline_config = read_analysis_config(args.pipeline_config,
-                                                workdir = args.workdir,
-                                                d_defaults = D_SEM_CONFIG_DEFAULTS,
-                                                d_cline_args = D_SEM_CONFIG_CLINE_ARGS,
-                                                parsed_args = args,
-                                                d_types = D_SEM_CONFIG_TYPES)
-
-    # check if profiling is to be enabled from the pipeline config
-    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
-
-    if profiling:
-        import cProfile
-        logger.info("Profiling enabled")
-
-        filename = os.path.join(args.workdir, args.logdir, "shear_estimates_merge.prof")
-        logger.info("Writing profiling data to %s", filename)
-
-        cProfile.runctx("she_measurements_merge_from_args(args)", {},
-                        {"she_measurements_merge_from_args": she_measurements_merge_from_args,
-                         "args"                            : args, },
-                        filename = filename)
-    else:
-        logger.info("Profiling disabled")
-        she_measurements_merge_from_args(args)
-
-    logger.debug('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
