@@ -82,13 +82,10 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
        if ids_to_use is not None, get the valid object IDs and indices from this list rather than the whole catalogue"""
 
     s_all_ids: Set[int]
-    ids_supplied: bool
     num_ids_desired: int
     
     #get the list of object ids we want, and their indices in the catalogue
     if ids_to_use is not None:
-
-        ids_supplied = True
 
         # Set the number of IDs desired - 0 indicates all available
         num_ids_desired = 0
@@ -117,8 +114,6 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
         logger.info("Using input list of IDs.")
 
     else:
-
-        ids_supplied = False
 
         # Get the number of IDs desired - 0 indicates all available
         num_ids_desired = max_batches * batch_size
