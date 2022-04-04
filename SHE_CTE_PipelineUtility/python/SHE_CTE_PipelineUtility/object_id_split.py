@@ -104,12 +104,6 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
         s_all_ids = catalogue_ids[ids_to_use_indices]
 
         
-        # #select only the ids_to_use that are in the catalogue, removing duplicates
-        # catalogue_ids = data_stack.detections_catalogue[mfc_tf.ID].data
-        # valid_ids = np.unique(catalogue_ids[np.where(np.isin(catalogue_ids,ids_to_use))])
-
-        # # s_all_ids = set(np.array(ids_to_use))
-        # s_all_ids, unique_indices = np.unique(np.array(ids_to_use),return_index=True)
 
         logger.info("Using input list of IDs.")
 
