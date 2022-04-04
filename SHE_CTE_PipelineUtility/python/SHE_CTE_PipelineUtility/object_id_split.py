@@ -82,13 +82,11 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
        if ids_to_use is not None, get the valid object IDs and indices from this list rather than the whole catalogue"""
 
     s_all_ids: Set[int]
-    num_ids_desired: int
+  
+    max_num_ids = None
     
     #get the list of object ids we want, and their indices in the catalogue
     if ids_to_use is not None:
-
-        # Set the number of IDs desired - 0 indicates all available
-        num_ids_desired = 0
 
         #get the unique objects in the catalogue and their indices
         catalogue_ids, unique_catalogue_indices = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
@@ -109,10 +107,10 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
 
     else:
 
-        # Get the number of IDs desired - 0 indicates all available
-        num_ids_desired = max_batches * batch_size
+        # Do we need to limit the number of objects to process?
+        if max_batches > 0:
+            max_num_ids = max_batches * batch_size
 
-        #s_all_ids = set(data_stack.detections_catalogue[mfc_tf.ID].data)
         #get the unique object ids in the catalogue, and their indices
         s_all_ids, indices_in_catalogue = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
 
@@ -146,9 +144,10 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
 
     
     #if we don't want all the IDs, trim the list down to the specified size
-    if num_ids_desired > 0:
-        all_ids_array = all_ids_array[0:num_ids_desired]
-        all_ids_indices = all_ids_indices[0:num_ids_desired]
+    if max_num_ids is not None:
+        if max_num_ids < len(all_ids_array):
+            all_ids_array = all_ids_array[:max_num_ids]
+            all_ids_indices = all_ids_indices[:max_num_ids]
 
 
     return all_ids_array, all_ids_indices
