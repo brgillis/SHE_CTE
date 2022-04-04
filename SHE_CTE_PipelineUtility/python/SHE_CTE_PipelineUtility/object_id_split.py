@@ -239,13 +239,9 @@ def read_oid_input_data(data_images,
     index_arrays = []
     group_arrays=[]
 
-    unique_batch_ids = set(batch_ids)
+    unique_batch_ids = list(set(batch_ids))
 
-    n=1
-    for batch in unique_batch_ids:
-        if n > limited_num_batches:
-            #if we've reached the maximum number of batches required, we are done
-            break
+    for batch in unique_batch_ids[:limited_num_batches]:
 
         inds = np.where(batch_ids == batch)
 
@@ -257,7 +253,6 @@ def read_oid_input_data(data_images,
         index_arrays.append(indices)
         group_arrays.append(group)
 
-        n+=1
 
     #make sure we do have num_batches batches
     assert len(id_arrays) == num_batches
