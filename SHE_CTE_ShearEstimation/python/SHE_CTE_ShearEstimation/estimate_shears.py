@@ -347,7 +347,8 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_table.write(os.path.join(args.workdir, chains_data_filename))
 
-                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename,
+                                              spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
                     # Fill in metadata for the chains product
                     chains_prod.Data.ObservationId = observation_id
@@ -422,7 +423,8 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_table.write(os.path.join(args.workdir, chains_data_filename))
 
-                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename,
+                                              spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
                     # Fill in metadata for the chains product if possible
                     if observation_id is not None:
