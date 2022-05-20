@@ -20,7 +20,11 @@ __updated__ = "2021-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-__version__ = "8.4"
+
+# Get the version from the compiled file created by Elements
+from SHE_CTE_VERSION import SHE_CTE_VERSION_STRING
+
+__version__ = SHE_CTE_VERSION_STRING
 
 from pkgutil import extend_path
 

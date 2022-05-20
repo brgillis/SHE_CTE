@@ -1,6 +1,6 @@
 Changelog for SHE_CTE Common Testing Environment
 
-Changes in v8.2
+Changes in v8.4
 =========================
 
 API Changes
@@ -23,6 +23,8 @@ New Config Features
 
 Miscellaneous
 -------------
+- Version number is now determined in the code directly from what's in the CMakeLists.txt file, and no longer needs to
+  be maintained separately
 
 
 Changes in v8.1
