@@ -66,7 +66,7 @@ class TestCase:
         # Download the MDB from WebDAV
         sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
         sync_mdb.download()
-        mdb_filename = sync_mdb.absolutePath("SHE_PPT_8_7/sample_mdb-SC8.xml")
+        mdb_filename = sync_mdb.absolutePath("SHE_PPT_9_0/sample_mdb-SC8.xml")
 
         mdb.init(mdb_filename)
 
@@ -77,7 +77,7 @@ class TestCase:
         # Download the data stack files from WebDAV
         sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
         sync_datastack.download()
-        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_8_7/vis_calibrated_frames.json")
+        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_9_0/vis_calibrated_frames.json")
         assert os.path.isfile(qualified_data_images_filename), f"Cannot find file: {qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
