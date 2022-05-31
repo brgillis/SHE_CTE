@@ -219,10 +219,10 @@ def reconcile_chains_weight(chains_to_reconcile_table,
             continue
         column = chains_to_reconcile_table[colname]
         if len(column.ravel()) == len_weights:
-            masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m, fill=0)
+            masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m, fill_value=0)
             new_props[colname] = (masked_column * masked_weights).sum(axis=0) / tot_weight
         elif len(column.ravel()) == len_weights * len_chain:
-            masked_column = np.ma.masked_array(chains_to_reconcile_table[colname].data.ravel(), chain_m, fill=0)
+            masked_column = np.ma.masked_array(chains_to_reconcile_table[colname].data.ravel(), chain_m, fill_value=0)
             new_props[colname] = (masked_column * masked_chain_weights).reshape((len_weights,
                                                                                  len_chain)).sum(axis=0) / tot_weight
         else:
@@ -235,7 +235,7 @@ def reconcile_chains_weight(chains_to_reconcile_table,
         if not colname in chains_to_reconcile_table.colnames:
             continue
         column = chains_to_reconcile_table[colname]
-        masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m, fill=0)
+        masked_column = np.ma.masked_array(chains_to_reconcile_table[colname], m, fill_value=0)
         new_props[colname] = masked_column.sum(axis=0)
 
     # Combine properties bitwise or
