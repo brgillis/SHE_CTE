@@ -4,7 +4,7 @@
 * Processing Element Name: PF-SHE
 * Project Name: SHE_CTE (Common Testing Environment)
 * Profile: develop
-* Version: 8.3 (10/11/2021)
+* Version: 9.0 (01/06/2022)
 
 ## Contributors
 ### Active Contributors
@@ -32,26 +32,26 @@ This project contains various executables which constitute components in various
 
 ### Internal Euclid Dependencies
 
-* [SHE_LensMC 3.3](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_LensMC)
-* [SHE_MomentsML 8.2](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_MomentsML)
-* [SHE_PPT 8.11 (indirect)](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
+* [SHE_LensMC 9.0](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_LensMC)
+* [SHE_MomentsML 9.0](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_MomentsML)
+* [SHE_PPT 9.1 (indirect)](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
 
 
 ### External Euclid Dependencies
 
-* [EL_Utils 1.1.0](https://gitlab.euclid-sgs.uk/EuclidLibs/EL_Utils)
-* [ST_DataModelTools 8.0.5](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelTools)
-* [ST_DataModelBindings 8.0.5](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelBindings)
-* [ST_DataModel 8.0.5](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModel)
-* [Elements 5.15](https://gitlab.euclid-sgs.uk/ST-TOOLS/Elements)
+* [EL_Utils 1.2.2](https://gitlab.euclid-sgs.uk/EuclidLibs/EL_Utils)
+* [ST_DataModelTools 9.0.2](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelTools)
+* [ST_DataModelBindings 9.0.2](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelBindings)
+* [ST_DataModel 9.0.2](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModel)
+* [Elements 6.0.1](https://gitlab.euclid-sgs.uk/ST-TOOLS/Elements)
 
 
 ### Configuration
 
-**EDEN 2.1**
+**EDEN 3.0**
 ```
-- astropy 3.2.1
-- numpy 1.17.2
+- astropy 5.0
+- numpy 1.20.3
 - etc
 ```
 
@@ -121,7 +121,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_MeasureStatistics --details_table <file> --shear_estimates <file> --pipeline_config <file> --she_bias_statistics <file> [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_MeasureStatistics --details_table <file> --shear_estimates <file> --pipeline_config <file> --she_bias_statistics <file> [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
 ```
 with the following options:
 
@@ -228,7 +228,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_MeasureBias --she_bias_statistics <file>  --pipeline_config <file> --she_bias_measurements <file> [--details_table_head <str>] [--bootstrap-seed <int>] [--recovery_bias_statistics_filename <filename>] [--recovery_bias_measurements_filename <filename>] [--store_measurements_only] [--use_bias_only] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_MeasureBias --she_bias_statistics <file>  --pipeline_config <file> --she_bias_measurements <file> [--details_table_head <str>] [--bootstrap-seed <int>] [--recovery_bias_statistics_filename <filename>] [--recovery_bias_measurements_filename <filename>] [--store_measurements_only] [--use_bias_only] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
 ```
 with the following options:
 
@@ -335,7 +335,7 @@ This executable is deprecated, although may be resurrected in the future.
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_PlotBias --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--plot_slopes] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_PlotBias --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--plot_slopes] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -401,7 +401,7 @@ This executable is deprecated.
 
 To run `SHE_CTE_PlotPsfSensitivity` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_PlotPsfSensitivity --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_PlotPsfSensitivity --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -461,7 +461,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_PrintBias` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_PlotPsfSensitivity --she_bias_measurements <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_PlotPsfSensitivity --she_bias_measurements <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -521,7 +521,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_CleanupBiasMeasurement` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_CleanupBiasMeasurement --simulation_config <file> --data_images <file> --stacked_data_image <file> --psf_images_and_tables <file> --segmentation_images <file> --stacked_segmentation_image <file> --detections_tables <file> --details_table <file> --shear_estimates <file> --shear_bias_statistics_in <file> --shear_bias_statistics_out <file> --pipeline_config <file>  [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_CleanupBiasMeasurement --simulation_config <file> --data_images <file> --stacked_data_image <file> --psf_images_and_tables <file> --segmentation_images <file> --stacked_segmentation_image <file> --detections_tables <file> --details_table <file> --shear_estimates <file> --shear_bias_statistics_in <file> --shear_bias_statistics_out <file> --pipeline_config <file>  [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -688,7 +688,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -794,7 +794,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_SubObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_SubObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_SubObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -901,7 +901,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ShearEstimatesMerge` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.0 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -1006,7 +1006,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_SplitFits` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_SplitFits --input_fits_json <file> --pipeline_config <file> --output_json <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_SplitFits --input_fits_json <file> --pipeline_config <file> --output_json <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1117,7 +1117,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_CombineSplitFitsListfile` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_CombineSplitFitsListfile --input_listfile <file> --pipeline_config <file> --output_json <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_CombineSplitFitsListfile --input_listfile <file> --pipeline_config <file> --output_json <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1210,7 +1210,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ExtractObjects` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_ExtractObjects --stacked_image <file> --exposures <file> --catalogue_listfile <file> --pipeline_config <file> --output_objects_list <file> --combined_catalogue <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_ExtractObjects --stacked_image <file> --exposures <file> --catalogue_listfile <file> --pipeline_config <file> --output_objects_list <file> --combined_catalogue <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1326,7 +1326,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MakeBatches` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_MakeBatches --objects_list <file> --pipeline_config <file> --batch_listfile <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_MakeBatches --objects_list <file> --pipeline_config <file> --batch_listfile <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1411,7 +1411,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ExtractStamps` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_ExtractStamps --batch_file <file> --exposures <file> --pipeline_config <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_ExtractStamps --batch_file <file> --exposures <file> --pipeline_config <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1512,7 +1512,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_AnalyseRuntime` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_AnalyseRuntime --stamp_timing_listfile <file> --split_timing_listfile <file> --pipeline_config <file> --results <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.0 SHE_CTE_AnalyseRuntime --stamp_timing_listfile <file> --split_timing_listfile <file> --pipeline_config <file> --results <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1633,7 +1633,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_EstimateShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+E-Run SHE_CTE 9.0 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
 ```
 with the following options:
 
@@ -1874,7 +1874,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ReconcileShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_ReconcileShear --she_validated_measurements_listfile <file> --she_lensmc_chains_listfile <file> --mer-final-catalog <file> --she_reconciliation_config <file> --pipeline_config <file> --she_reconciled_measurements <file> --she_reconciled_lensmc_chains <file>  [--method <str>] [--chains_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+E-Run SHE_CTE 9.0 SHE_CTE_ReconcileShear --she_validated_measurements_listfile <file> --she_lensmc_chains_listfile <file> --mer-final-catalog <file> --she_reconciliation_config <file> --pipeline_config <file> --she_reconciled_measurements <file> --she_reconciled_lensmc_chains <file>  [--method <str>] [--chains_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
 ```
 with the following options:
 
@@ -2013,7 +2013,7 @@ This executable is deprecated.
 
 To run `SHE_CTE_CrossValidateShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 8.3 SHE_CTE_CrossValidateShear --shear_estimates_product <file> --shear_lensmc_chains <file> --pipeline_config <file> --cross_validated_shear_estimates_product <file> [--primary_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--dry_run]
+E-Run SHE_CTE 9.0 SHE_CTE_CrossValidateShear --shear_estimates_product <file> --shear_lensmc_chains <file> --pipeline_config <file> --cross_validated_shear_estimates_product <file> [--primary_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--dry_run]
 ```
 with the following options:
 
