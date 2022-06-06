@@ -1,5 +1,31 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes in v9.0
+=========================
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
+Now depends on DataModel 9.1 indirectly through LensMC 9.0 and MomentsML 9.0
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
+
 Changes in v8.4
 =========================
 
