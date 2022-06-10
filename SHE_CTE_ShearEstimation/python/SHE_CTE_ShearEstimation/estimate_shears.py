@@ -148,7 +148,7 @@ def estimate_shears_from_args(args, dry_run=False):
     # Load in the MDB
     if args.mdb is None:
         logger.warning("No MDB file provided as input. Default values will be used where necessary.")
-        mdb.init(find_file("WEB/SHE_PPT_8_7/sample_mdb-SC8.xml"))
+        mdb.init(find_file("WEB/SHE_PPT_9_0/sample_mdb-SC8.xml"))
     elif args.mdb[-5:] == ".json":
         mdb_files = read_listfile(os.path.join(args.workdir, args.mdb))
         mdb.init(mdb_files=mdb_files, path=args.workdir)
@@ -347,7 +347,8 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_table.write(os.path.join(args.workdir, chains_data_filename))
 
-                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename,
+                                              spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
                     # Fill in metadata for the chains product
                     chains_prod.Data.ObservationId = observation_id
@@ -422,7 +423,8 @@ def estimate_shears_from_args(args, dry_run=False):
 
                     chains_table.write(os.path.join(args.workdir, chains_data_filename))
 
-                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename)
+                    chains_prod = products.she_lensmc_chains.create_lensmc_chains_product(chains_data_filename,
+                                              spatial_footprint=os.path.join(args.workdir, args.stacked_image))
 
                     # Fill in metadata for the chains product if possible
                     if observation_id is not None:
