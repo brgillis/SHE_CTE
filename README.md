@@ -760,6 +760,7 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 | SHE_CTE_ObjectIdSplit_batch_size `<int>` | The number of objects per batch.   | 400 |
 | SHE_CTE_ObjectIdSplit_max_batches `<int>`  | The maximum number of batches to use. If it's 0, the number of batches is unlimited | 0 |
 | SHE_CTE_ObjectIdSplit_batch_ids `<str>` | A list of object IDs to use | None |
+| SHE_CTE_ObjectIdSplit_grouping_radius `<float>` | The grouping radius (in arcseconds) | 1.0 |
 
 
 **Source:** One of the following:
@@ -866,6 +867,7 @@ The `.txt` pipeline configuration file may have any number of configuration argu
 | SHE_CTE_SubObjectIdSplit_batch_size `<int>` | The number of objects per batch.   | 20 |
 | SHE_CTE_SubObjectIdSplit_max_batches `<int>`  | The maximum number of batches to use. If it's 0, the number of batches is unlimited | 0 |
 | SHE_CTE_SubObjectIdSplit_batch_ids `<str>` | A list of object IDs to use | None |
+| SHE_CTE_ObjectIdSplit_grouping_radius `<float>` | The grouping radius (in arcseconds) *note: this is the same option as for SHE_CTE_ObjectIdSplit* | 1.0 |
 
 
 **Source:** One of the following:
