@@ -63,8 +63,8 @@ class TestCase:
         os.makedirs(cls.workdir)
 
         #create the vis images and mer catalogue
-        exposure_product, obj_coords = generate_mock_vis_images.create_exposure(workdir=cls.workdir, n_objs_per_det=num_objects)
-        catalogue_product = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=cls.workdir)
+        exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=cls.workdir, n_objs_per_det=num_objects, objsize=2)
+        catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=cls.workdir)
         
         #create the contents of the listfiles for the vis and mer products
         exposure_list = [exposure_product for i in range(4)]
