@@ -18,9 +18,11 @@ Bug Fixes
 
 New Features
 ------------
+- Batching is now carried out spatially, and objects within the user-specified grouping radius are grouped together and flagged as such (for LensMC to do joint fitting on these objects)
 
 New Config Features
 -------------------
+- added the SHE_CTE_ObjectIdSplit_grouping_radius config option to SHE_CTE_ObjectIdSplit. (Default is 1")
 
 Miscellaneous
 -------------

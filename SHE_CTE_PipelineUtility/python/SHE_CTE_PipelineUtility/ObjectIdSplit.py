@@ -36,6 +36,7 @@ D_OID_SPLIT_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.OID_BATCH_SIZE : 400,
     AnalysisConfigKeys.OID_MAX_BATCHES: 0,
     AnalysisConfigKeys.OID_IDS        : None,
+    AnalysisConfigKeys.OID_GROUPING_RADIUS: 1.0
     }
 
 D_OID_SPLIT_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
@@ -43,6 +44,7 @@ D_OID_SPLIT_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
     AnalysisConfigKeys.OID_BATCH_SIZE : int,
     AnalysisConfigKeys.OID_MAX_BATCHES: int,
     AnalysisConfigKeys.OID_IDS        : (list, int),
+    AnalysisConfigKeys.OID_GROUPING_RADIUS: float
     }
 
 D_OID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
@@ -50,6 +52,7 @@ D_OID_SPLIT_CONFIG_CLINE_ARGS: Dict[ConfigKeys, Any] = {
     AnalysisConfigKeys.OID_BATCH_SIZE : None,
     AnalysisConfigKeys.OID_MAX_BATCHES: None,
     AnalysisConfigKeys.OID_IDS        : None,
+    AnalysisConfigKeys.OID_GROUPING_RADIUS: None
     }
 
 EXEC_NAME = "SHE_CTE_ObjectIdSplit"
