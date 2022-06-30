@@ -1,5 +1,33 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes in v9.1
+=========================
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
+- LensMC 9.1, MomentsML 9.1, PPT 9.2
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+- Fix for test_shear_estimate_flags not setting the image header correctly
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+
+Miscellaneous
+-------------
+
+
 Changes in v9.0
 =========================
 
