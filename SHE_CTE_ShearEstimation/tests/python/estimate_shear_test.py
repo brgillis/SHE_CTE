@@ -23,7 +23,7 @@ import gc
 
 from SHE_PPT import flags
 from SHE_PPT import mdb
-from SHE_PPT.constants.fits import SCALE_LABEL, GAIN_LABEL
+from SHE_PPT.constants.fits import SCALE_LABEL, GAIN_LABEL, READ_NOISE_LABEL
 from SHE_PPT.file_io import find_file
 from SHE_PPT.she_image import SHEImage
 from astropy.io import fits
@@ -97,6 +97,7 @@ class TestCase:
         self.gal_stamp.add_default_header()
         self.gal_stamp.header[SCALE_LABEL] = self.observed_gal_image.scale
         self.gal_stamp.header[GAIN_LABEL] = 1.0
+        self.gal_stamp.header[READ_NOISE_LABEL] = 1.0
 
         return
 
