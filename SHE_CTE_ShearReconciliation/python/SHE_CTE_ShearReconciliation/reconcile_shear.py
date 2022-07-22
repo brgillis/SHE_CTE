@@ -321,7 +321,7 @@ def reconcile_shear_from_args(args):
             if not is_any_type_of_none(estimates_table_filename):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
-        # Add to observation and pointing id lists
+        # Add to pointing id list
         measurements_pointing_id_list = she_validated_measurement_product.Data.PointingIdList
 
         for measurements_pointing_id in measurements_pointing_id_list:
