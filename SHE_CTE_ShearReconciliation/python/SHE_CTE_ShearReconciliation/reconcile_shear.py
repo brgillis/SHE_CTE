@@ -324,8 +324,7 @@ def reconcile_shear_from_args(args):
     she_validated_measurements_filename_list = read_listfile(os.path.join(args.workdir,
                                                                           args.she_validated_measurements_listfile))
 
-    # Start lists of all observation IDs and pointing IDs
-    observation_id_list = []
+    # Start lists of all pointing IDs
     pointing_id_list = []
 
     # Loop over each product (representing a different observation)
@@ -340,11 +339,8 @@ def reconcile_shear_from_args(args):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
         # Add to observation and pointing id lists
-        measurements_observation_id = she_validated_measurement_product.Data.ObservationId
         measurements_pointing_id_list = she_validated_measurement_product.Data.PointingIdList
 
-        if measurements_observation_id not in observation_id_list:
-            observation_id_list.append(measurements_observation_id)
         for measurements_pointing_id in measurements_pointing_id_list:
             if measurements_pointing_id not in pointing_id_list:
                 pointing_id_list.append(measurements_pointing_id)
@@ -366,7 +362,6 @@ def reconcile_shear_from_args(args):
     # Get the tile_id and set it for the new product
     tile_id = mer_final_catalog_product.Data.TileIndex
     reconciled_catalog_product.Data.TileIndex = tile_id
-    reconciled_catalog_product.Data.ObservationIdList = observation_id_list
     reconciled_catalog_product.Data.PointingIdList = pointing_id_list
 
     # Loop over each method, and reconcile tables for that method
@@ -421,7 +416,6 @@ def reconcile_shear_from_args(args):
     reconciled_chains_product = products.she_reconciled_lensmc_chains.create_dpd_she_reconciled_lensmc_chains(
         spatial_footprint=mer_final_catalog_product)
     reconciled_chains_product.Data.TileIndex = tile_id
-    reconciled_chains_product.Data.ObservationIdList = observation_id_list
     reconciled_chains_product.Data.PointingIdList = pointing_id_list
 
     # If we don't have any data, create an empty table
