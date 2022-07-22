@@ -1,13 +1,13 @@
 """ @file MeasureStatistics.py
 
     Created 7 Apr 2017
-    
+
 
     Executable for measuring necessary statistics on a set of shear
     measurements.
 """
 
-__updated__ = "2019-04-24"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -23,14 +23,41 @@ __updated__ = "2019-04-24"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301 USA
 
-import argparse
+from typing import Any, Dict, Tuple, Type, Union
 
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
+from SHE_PPT.argument_parser import SheArgumentParser
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys)
+from .measure_statistics import measure_statistics_from_args
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement import magic_values as mv
-from SHE_CTE_BiasMeasurement.measure_statistics import measure_statistics_from_args
+# Set up dicts for pipeline config defaults and types
+D_MS_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    CalibrationConfigKeys.MS_ARCHIVE_DIR   : None,
+    CalibrationConfigKeys.MS_WEBDAV_ARCHIVE: False,
+    CalibrationConfigKeys.MS_WEBDAV_DIR    : "/mnt/webdav",
+    }
+
+D_MS_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    CalibrationConfigKeys.MS_ARCHIVE_DIR   : str,
+    CalibrationConfigKeys.MS_WEBDAV_ARCHIVE: bool,
+    CalibrationConfigKeys.MS_WEBDAV_DIR    : str,
+    }
+
+D_MS_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    CalibrationConfigKeys.MS_ARCHIVE_DIR   : "archive_dir",
+    CalibrationConfigKeys.MS_WEBDAV_ARCHIVE: "webdav_dir",
+    CalibrationConfigKeys.MS_WEBDAV_DIR    : "webdav_archive",
+    }
+
+EXEC_NAME = 'SHE_CTE_EstimateShears'
+
+logger = getLogger(__name__)
 
 
 def defineSpecificProgramOptions():
@@ -42,45 +69,33 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(__name__)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_MeasureStatistics defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--details_table', type=str,
-                        help="Details table data product")
-    parser.add_argument('--shear_estimates', type=str,
-                        help="Shear estimates data product")
-
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
+    parser.add_input_arg('--details_table', type = str,
+                         help = "Details table data product")
+    parser.add_input_arg('--shear_estimates', type = str,
+                         help = "Shear estimates data product")
 
     # Output data
-    parser.add_argument('--she_bias_statistics', type=str,
-                        help='Desired name of the output shear bias statistics data product')
+    parser.add_output_arg('--she_bias_statistics', type = str,
+                          help = 'Desired name of the output shear bias statistics data product')
 
     # Archive directory - only default value can be used in pipeline
-    parser.add_argument('--archive_dir', type=str, default=None)
+    parser.add_option_arg('--archive_dir', type = str)
 
-    parser.add_argument('--webdav_dir', type=str, default="/mnt/webdav",
-                        help="Path of the WebDAV mount.")
+    parser.add_option_arg('--webdav_dir', type = str,
+                          help = "Path of the WebDAV mount.")
 
-    parser.add_argument('--webdav_archive', action="store_true",
-                        help="If set, will mount/demount webdav for archiving, and workspace will be relative to " +
-                        "the webdav mount.")
+    parser.add_option_arg('--webdav_archive', action = "store_true",
+                          help = "If set, will mount/demount webdav for archiving, and workspace will be relative to " +
+                                 "the webdav mount.")
 
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type=str, default=".")
-    parser.add_argument('--logdir', type=str, default=".")
-
-    logger.debug('# Exiting SHE_CTE_MeasureStatistics mainMethod()')
+    logger.debug(f'# Exiting {EXEC_NAME} mainMethod()')
 
     return parser
 
@@ -95,28 +110,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(__name__)
+    executor = SheCteExecutor(run_from_args_function = measure_statistics_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_MS_CONFIG_DEFAULTS,
+                                                           d_config_types = D_MS_CONFIG_TYPES,
+                                                           d_config_cline_args = D_MS_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {CalibrationConfigKeys},
+                                                           ))
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_EstimateShears mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_MeasureStatistics",
-                                    store_true=["profile", "debug", "webdav_archive"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    if args.profile:
-        import cProfile
-        cProfile.runctx("measure_statistics_from_args(args)", {},
-                        {"measure_statistics_from_args": measure_statistics_from_args,
-                         "args": args}, filename="measure_statistics.prof")
-    else:
-        measure_statistics_from_args(args)
-
-    logger.debug('# Exiting MeasureStatistics mainMethod()')
-
-    return
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
@@ -130,8 +132,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

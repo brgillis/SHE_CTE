@@ -19,14 +19,15 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import argparse
+import os
 
-from SHE_PPT.utility import get_arguments_string
-
-from ElementsKernel.Logging import getLogger
 import SHE_CTE
-from SHE_CTE.magic_values import force_dry_run
-from SHE_CTE_ShearValidation import magic_values as mv
-from SHE_CTE_ShearValidation.cross_validate_shear import cross_validate_shear
+from EL_PythonUtils.utilities import get_arguments_string
+from SHE_PPT.constants.classes import ShearEstimationMethods
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.logging import getLogger
+from SHE_PPT.pipeline_utility import AnalysisConfigKeys, GlobalConfigKeys, read_config
+from .cross_validate_shear import cross_validate_shear
 
 
 def defineSpecificProgramOptions():
@@ -47,31 +48,31 @@ def defineSpecificProgramOptions():
     parser = argparse.ArgumentParser()
 
     # Option for profiling
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
-    parser.add_argument('--dry_run', action='store_true',
-                        help='Dry run (no data processed).')
+    parser.add_argument('--profile', action = 'store_true',
+                        help = 'Store profiling data for execution.')
+    parser.add_argument('--dry_run', action = 'store_true',
+                        help = 'Dry run (no data processed).')
 
     # Input filenames
-    parser.add_argument('--shear_estimates_product', type=str,
-                        help='Filename for shear estimates data product (XML data product)')
-    parser.add_argument('--she_lensmc_chains', type=str,
-                        help='Filename for LensMC chains data product (XML data product)')
+    parser.add_argument('--shear_estimates_product', type = str,
+                        help = 'Filename for shear estimates data product (XML data product)')
+    parser.add_argument('--she_lensmc_chains', type = str,
+                        help = 'Filename for LensMC chains data product (XML data product)')
 
-#     parser.add_argument('--shear_validation_statistics_table',type=str, # Disabled until it exists
-#                         help='Filename for table of shear validation statistics.')
+    #     parser.add_argument('--shear_validation_statistics_table',type=str, # Disabled until it exists
+    #                         help='Filename for table of shear validation statistics.')
 
     # Output filenames
-    parser.add_argument('--cross_validated_shear_estimates_product', type=str,
-                        help='Desired filename for output shear estimates table (multi-HDU fits file).')
+    parser.add_argument('--cross_validated_shear_estimates_product', type = str,
+                        help = 'Desired filename for output shear estimates table (multi-HDU fits file).')
 
     # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type=str, default=".")
-    parser.add_argument('--logdir', type=str, default=".")
+    parser.add_argument('--workdir', type = str, default = ".")
+    parser.add_argument('--logdir', type = str, default = ".")
 
     # Optional arguments (can't be used with pipeline runner)
-    parser.add_argument('--primary_method', type=str, default="LensMC",
-                        help="Shear measurement method to consider primary, and compare against others.")
+    parser.add_argument('--primary_method', type = str, default = "LensMC",
+                        help = "Shear measurement method to consider primary, and compare against others.")
 
     logger.debug('Exiting SHE_CTE_CrossValidateShear defineSpecificProgramOptions()')
 
@@ -94,26 +95,38 @@ def mainMethod(args):
     logger.debug('# Entering SHE_CTE_CrossValidateShear mainMethod()')
     logger.debug('#')
 
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CrossValidateShear",
-                                    store_true=["profile", "debug", "dry_run"])
+    exec_cmd = get_arguments_string(args, cmd = "E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CrossValidateShear",
+                                    store_true = ["profile", "debug", "dry_run"])
     logger.info('Execution command for this step:')
     logger.info(exec_cmd)
 
-    dry_run = args.dry_run or force_dry_run
+    # load the pipeline config in
+    args.pipeline_config = read_config(None, workdir = args.workdir, config_keys = AnalysisConfigKeys,
+                                       d_cline_args = D_GLOBAL_CONFIG_CLINE_ARGS, d_defaults = D_GLOBAL_CONFIG_DEFAULTS,
+                                       d_types = D_GLOBAL_CONFIG_TYPES, parsed_args = args)
 
-    if args.profile:
+    args.primary_method = ShearEstimationMethods.find_lower_value(args.primary_method.lower())
+
+    # check if profiling is to be enabled from the pipeline config
+    profiling = args.pipeline_config[GlobalConfigKeys.PIP_PROFILE]
+
+    if profiling:
         import cProfile
+        logger.info("Profiling enabled")
+
+        filename = os.path.join(args.workdir, args.logdir, "cross_validate_shear.prof")
+        logger.info("Writing profiling data to %s", filename)
+
         cProfile.runctx("cross_validate_shear(args,dry_run=dry_run)", {},
                         {"cross_validate_shear": cross_validate_shear,
-                         "args": args,
-                         "dry_run": dry_run, },
-                        filename="cross_validate_shear.prof")
+                         "args"                : args,
+                         "dry_run"             : dry_run, },
+                        filename = filename)
     else:
+        logger.info("Profiling disabled")
         cross_validate_shear(args)
 
     logger.debug('Exiting SHE_CTE_CrossValidateShear mainMethod()')
-
-    return
 
 
 def main():
@@ -127,8 +140,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

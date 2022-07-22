@@ -5,7 +5,7 @@
     Main function to plot bias measurements.
 """
 
-__updated__ = "2021-02-02"
+__updated__ = "2021-08-19"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -150,15 +150,13 @@ method_colors = {"KSB": "k",
                  "REGAUSS": "r",
                  "REGAUSS_big": (1.0, 0.5, 0.5),
                  "LensMC": "b",
-                 "MomentsML": "m",
-                 "BFD": "g", }
+                 "MomentsML": "m",}
 method_offsets = {"KSB": 0,
                   "KSB_big": 0.005,
                   "REGAUSS": 0.01,
                   "REGAUSS_big": 0.015,
                   "LensMC": -0.01,
-                  "MomentsML": -0.02,
-                  "BFD": 0.02, }
+                  "MomentsML": -0.02,}
 
 target_labels = {"base": r"$0.05\times$",
                  "high": r"$1.00\times$", }

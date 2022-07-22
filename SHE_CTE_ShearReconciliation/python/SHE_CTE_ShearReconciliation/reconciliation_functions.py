@@ -5,7 +5,7 @@
     Functions to handle different ways of reconciling different shear estimates.
 """
 
-__updated__ = "2021-03-10"
+__updated__ = "2021-03-11"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,7 +21,7 @@ __updated__ = "2021-03-10"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import run_only_once
+from EL_PythonUtils.utilities import run_only_once
 from astropy.io.ascii.core import masked
 
 import numpy as np

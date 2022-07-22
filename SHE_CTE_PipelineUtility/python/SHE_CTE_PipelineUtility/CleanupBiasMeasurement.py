@@ -5,7 +5,7 @@
     Main program for cleaning up intermediate files created for the bias measurement pipeline.
 """
 
-__updated__ = "2020-11-13"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,17 +20,36 @@ __updated__ = "2020-11-13"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
 import os
 import shutil
+from typing import Any, Dict, Tuple, Type, Union
 
-from SHE_PPT import products  # Need to import in order to initialise all products
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
+from SHE_PPT.argument_parser import SheArgumentParser
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.file_io import read_listfile, read_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import read_calibration_config, CalibrationConfigKeys
-from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import (CalibrationConfigKeys, ConfigKeys)
 
-import SHE_CTE
+# Set up dicts for pipeline config defaults and types
+D_CBM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
+    **D_GLOBAL_CONFIG_DEFAULTS,
+    CalibrationConfigKeys.CBM_CLEANUP: True,
+    }
+
+D_CBM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
+    **D_GLOBAL_CONFIG_TYPES,
+    CalibrationConfigKeys.CBM_CLEANUP: bool,
+    }
+
+D_CBM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
+    **D_GLOBAL_CONFIG_CLINE_ARGS,
+    }
+
+EXEC_NAME = "SHE_CTE_CleanupBiasMeasurement"
+
+logger = getLogger(__name__)
 
 
 def defineSpecificProgramOptions():
@@ -42,41 +61,29 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(__name__)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
+    parser = SheArgumentParser()
 
     # Input arguments
-    parser.add_argument('--simulation_config', type=str)
-    parser.add_argument('--data_images', type=str)
-    parser.add_argument('--stacked_data_image', type=str)
-    parser.add_argument('--psf_images_and_tables', type=str)
-    parser.add_argument('--segmentation_images', type=str)
-    parser.add_argument('--stacked_segmentation_image', type=str)
-    parser.add_argument('--detections_tables', type=str)
-    parser.add_argument('--details_table', type=str)
-    parser.add_argument('--shear_estimates', type=str)
+    parser.add_input_arg('--simulation_config', type = str)
+    parser.add_input_arg('--data_images', type = str)
+    parser.add_input_arg('--stacked_data_image', type = str)
+    parser.add_input_arg('--psf_images_and_tables', type = str)
+    parser.add_input_arg('--segmentation_images', type = str)
+    parser.add_input_arg('--stacked_segmentation_image', type = str)
+    parser.add_input_arg('--detections_tables', type = str)
+    parser.add_input_arg('--details_table', type = str)
+    parser.add_input_arg('--shear_estimates', type = str)
 
-    parser.add_argument('--shear_bias_statistics_in', type=str)  # Needed to ensure it waits until ready
-
-    parser.add_argument("--pipeline_config", default=None, type=str,
-                        help="Pipeline-wide configuration file.")
+    parser.add_input_arg('--shear_bias_statistics_in', type = str)  # Needed to ensure it waits until ready
 
     # Output arguments
-    parser.add_argument('--shear_bias_statistics_out', type=str)
+    parser.add_output_arg('--shear_bias_statistics_out', type = str)
 
-    # Required pipeline arguments
-    parser.add_argument('--workdir', type=str,)
-    parser.add_argument('--logdir', type=str,)
-    parser.add_argument('--debug', action='store_true',
-                        help="Set to enable debugging protocols")
-    parser.add_argument('--profile', action='store_true')
-
-    logger.debug('# Exiting SHE_Pipeline_Run defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -86,8 +93,6 @@ def cleanup_bias_measurement_from_args(args):
         in the bias measurement pipeline.
     """
 
-    logger = getLogger(__name__)
-
     qualified_stats_in_filename = os.path.join(args.workdir, args.shear_bias_statistics_in)
     qualified_stats_out_filename = os.path.join(args.workdir, args.shear_bias_statistics_out)
 
@@ -95,17 +100,12 @@ def cleanup_bias_measurement_from_args(args):
     if args.pipeline_config is None:
         logger.warning("No pipeline configuration found. Being safe and not cleaning up.")
         return
-    pipeline_config = read_calibration_config(args.pipeline_config, workdir=args.workdir)
+    pipeline_config = args.pipeline_config
 
     # Check for the cleanup key
-    if CalibrationConfigKeys.CBM_CLEANUP.value not in pipeline_config:
-        logger.warning("Key " + CalibrationConfigKeys.CBM_CLEANUP.value + " not found in pipeline config " + args.pipeline_config + ". " +
-                       "Being safe and not cleaning up.")
-        return
-    clean_up = pipeline_config[CalibrationConfigKeys.CBM_CLEANUP.value]
-    if not clean_up.lower() == "true":
-        logger.info("Config is set to " + CalibrationConfigKeys.CBM_CLEANUP.value +
-                    "=" + clean_up + ", so not cleaning up.")
+    clean_up = pipeline_config[CalibrationConfigKeys.CBM_CLEANUP]
+    if not clean_up:
+        logger.info("Config is set to not clean up, so ending execution.")
 
         # Copy the statistics product to the new name
         shutil.copy(qualified_stats_in_filename, qualified_stats_out_filename)
@@ -121,7 +121,7 @@ def cleanup_bias_measurement_from_args(args):
             logger.warning("Attempted to remove directory " + qualified_filename)
             return 1
         if not os.path.exists(qualified_filename):
-            logger.warning("Expected file '" + qualified_filename + "' does not exist.")
+            logger.warning(f"Expected file '{qualified_filename}' does not exist.")
             return 1
         os.remove(qualified_filename)
         return 0
@@ -181,8 +181,6 @@ def cleanup_bias_measurement_from_args(args):
                              args.shear_estimates):
         remove_product(os.path.join(args.workdir, product_filename))
 
-    return
-
 
 def mainMethod(args):
     """
@@ -194,33 +192,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(__name__)
+    executor = SheCteExecutor(run_from_args_function = cleanup_bias_measurement_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_CBM_CONFIG_DEFAULTS,
+                                                           d_config_types = D_CBM_CONFIG_TYPES,
+                                                           d_config_cline_args = D_CBM_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {CalibrationConfigKeys},
+                                                           ))
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_CleanupBiasMeasurement mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_CleanupBiasMeasurement",
-                                    store_true=["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    try:
-
-        if args.profile:
-            import cProfile
-            cProfile.runctx("cleanup_bias_measurement_from_args(args)", {},
-                            {"cleanup_bias_measurement_from_args": cleanup_bias_measurement_from_args,
-                             "args": args, },
-                            filename="cleanup_bias_measurement.prof")
-        else:
-            cleanup_bias_measurement_from_args(args)
-    except Exception as e:
-        logger.warning("Failsafe exception block triggered with exception: " + str(e))
-
-    logger.debug('# Exiting SHE_CTE_CleanupBiasMeasurement mainMethod()')
-
-    return
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
@@ -234,8 +214,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

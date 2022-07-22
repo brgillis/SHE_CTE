@@ -5,7 +5,7 @@
     Unit tests for the control shear estimation methods.
 """
 
-__updated__ = "2021-02-11"
+__updated__ = "2021-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -21,29 +21,22 @@ __updated__ = "2021-02-11"
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
-import time
 
 from SHE_PPT import mdb
 from SHE_PPT.file_io import read_xml_product, find_file, read_listfile
-from SHE_PPT.logging import getLogger
 from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.table_formats.she_ksb_measurements import (tf as ksbm_tf,
-                                                        initialise_ksb_measurements_table)
+from SHE_PPT.table_formats.she_ksb_measurements import tf as ksbm_tf
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf, len_chain
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
-import pytest
 
 from ElementsServices.DataSync import DataSync
 from SHE_CTE_ShearEstimation.control_training_data import load_control_training_data
 from SHE_CTE_ShearEstimation.estimate_shears import fill_measurements_table_meta
 from SHE_CTE_ShearEstimation.galsim_estimate_shear import (KSB_estimate_shear, REGAUSS_estimate_shear)
-import SHE_LensMC.she_measure_shear
 import numpy as np
 
-# from SHE_MomentsML.estimate_shear import estimate_shear as
-# ML_estimate_shear # TODO: Uncomment when MomentsML is updated to EDEN
-# 2.1
+
 test_data_location = "/tmp"
 
 data_images_filename = "vis_calibrated_frames.json"
@@ -55,9 +48,10 @@ detections_tables_filename = "mer_final_catalogs.json"
 ksb_training_filename = "test_ksb_training.xml"
 regauss_training_filename = "test_regauss_training.xml"
 
-expected_observation_id = '-1 -1 -1 -1'
+expected_observation_id = -1
 expected_observation_time = "2020-06-10 15:00:36.660000+00:00"
-expected_tile_id = '1'
+expected_pointing_id_list = "-1 -1 -1 -1"
+expected_tile_id = "1"
 
 
 class TestCase:
@@ -72,7 +66,7 @@ class TestCase:
         # Download the MDB from WebDAV
         sync_mdb = DataSync("testdata/sync.conf", "testdata/test_mdb.txt")
         sync_mdb.download()
-        mdb_filename = sync_mdb.absolutePath("SHE_PPT_8_7/sample_mdb-SC8.xml")
+        mdb_filename = sync_mdb.absolutePath("SHE_PPT_9_0/sample_mdb-SC8.xml")
 
         mdb.init(mdb_filename)
 
@@ -83,7 +77,7 @@ class TestCase:
         # Download the data stack files from WebDAV
         sync_datastack = DataSync("testdata/sync.conf", "testdata/test_data_stack.txt")
         sync_datastack.download()
-        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_8_7/vis_calibrated_frames.json")
+        qualified_data_images_filename = sync_datastack.absolutePath("SHE_PPT_9_0/vis_calibrated_frames.json")
         assert os.path.isfile(qualified_data_images_filename), f"Cannot find file: {qualified_data_images_filename}"
 
         # Get the workdir based on where the data images listfile is
@@ -101,8 +95,6 @@ class TestCase:
                                             clean_detections=True,
                                             memmap=True,
                                             mode='denywrite')
-
-        return
 
     @classmethod
     def teardown_class(cls):
@@ -126,9 +118,7 @@ class TestCase:
             for colname in (ksbm_tf.g1, ksbm_tf.g2, ksbm_tf.g1_err, ksbm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
-                    raise Exception("Bad value for " + colname + ": " + str(g))
-
-        return
+                    raise AssertionError("Bad value for " + colname + ": " + str(g))
 
     def test_regauss(self):
         """Test that the interface for the REGAUSS method works properly.
@@ -147,9 +137,7 @@ class TestCase:
             for colname in (regm_tf.g1, regm_tf.g2, regm_tf.g1_err, regm_tf.g2_err):
                 g = row[colname]
                 if not (g > -1 and g < 1):
-                    raise Exception("Bad value for " + colname + ": " + str(g))
-
-        return
+                    raise AssertionError("Bad value for " + colname + ": " + str(g))
 
     def test_return_chains(self):
 
@@ -190,8 +178,6 @@ class TestCase:
                 assert np.isclose(stddev_val, ex_stddev, rtol=0, atol=1e-8 + 2 * ex_stddev /
                                   np.sqrt(len_chain)), "Error matching stddev for parameter " + param
 
-        return
-
     def test_fill_measurements_table_meta(self):
         """Test that the fill_measurements_table_meta utility function works as expected.
         """
@@ -204,7 +190,7 @@ class TestCase:
             vis_calibrated_frame_products.append(read_xml_product(
                 os.path.join(self.workdir, vis_calibrated_frame_filename)))
 
-        t = initialise_ksb_measurements_table()
+        t = ksbm_tf.init_table()
 
         fill_measurements_table_meta(t=t,
                                      mer_final_catalog_products=mer_final_catalog_products,
@@ -212,6 +198,5 @@ class TestCase:
 
         assert t.meta[sm_tf.m.observation_id] == expected_observation_id
         assert t.meta[sm_tf.m.observation_time] == expected_observation_time
+        assert t.meta[sm_tf.m.pointing_id] == expected_pointing_id_list
         assert t.meta[sm_tf.m.tile_id] == expected_tile_id
-
-        return

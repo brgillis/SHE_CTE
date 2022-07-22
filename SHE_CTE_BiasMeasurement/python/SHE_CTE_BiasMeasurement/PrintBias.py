@@ -5,7 +5,7 @@
     Main program for printing out bias of shear estimates
 """
 
-__updated__ = "2020-07-02"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,19 +20,17 @@ __updated__ = "2020-07-02"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import argparse
-
+from SHE_CTE.executor import CteLogOptions, SheCteExecutor
+from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_args
+from SHE_PPT.argument_parser import SheArgumentParser
+from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.executor import ReadConfigArgs
 from SHE_PPT.logging import getLogger
-from SHE_PPT.utility import get_arguments_string
+from SHE_PPT.pipeline_utility import CalibrationConfigKeys
 
-import SHE_CTE
-from SHE_CTE_BiasMeasurement.print_bias import print_bias_from_product_filename
+EXEC_NAME = 'SHE_CTE_PrintBias'
 
-methods = ["BFD",
-           "KSB",
-           "LensMC",
-           "MomentsML",
-           "REGAUSS"]
+logger = getLogger(__name__)
 
 
 def defineSpecificProgramOptions():
@@ -44,26 +42,17 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger = getLogger(__name__)
-
     logger.debug('#')
-    logger.debug('# Entering SHE_CTE_PrintBias defineSpecificProgramOptions()')
+    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
     logger.debug('#')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--profile', action='store_true',
-                        help='Store profiling data for execution.')
+    parser = SheArgumentParser()
 
     # Input data
-    parser.add_argument('--she_bias_measurements', type=str,
-                        help='Desired name of the output shear bias statistics data product')
+    parser.add_input_arg('--she_bias_measurements', type = str,
+                         help = 'Desired name of the output shear bias statistics data product')
 
-    # Arguments needed by the pipeline runner
-    parser.add_argument('--workdir', type=str, default=".")
-    parser.add_argument('--logdir', type=str, default=".")
-
-    logger.debug('# Exiting SHE_CTE_PrintBias defineSpecificProgramOptions()')
+    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
 
     return parser
 
@@ -78,22 +67,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    logger = getLogger(__name__)
+    executor = SheCteExecutor(run_from_args_function = print_bias_from_args,
+                              log_options = CteLogOptions(executable_name = EXEC_NAME),
+                              config_args = ReadConfigArgs(d_config_defaults = D_GLOBAL_CONFIG_DEFAULTS,
+                                                           d_config_types = D_GLOBAL_CONFIG_TYPES,
+                                                           d_config_cline_args = D_GLOBAL_CONFIG_CLINE_ARGS,
+                                                           s_config_keys_types = {CalibrationConfigKeys},
+                                                           ))
 
-    logger.debug('#')
-    logger.debug('# Entering SHE_CTE_PrintBias mainMethod()')
-    logger.debug('#')
-
-    exec_cmd = get_arguments_string(args, cmd="E-Run SHE_CTE " + SHE_CTE.__version__ + " SHE_CTE_PrintBias",
-                                    store_true=["profile", "debug"])
-    logger.info('Execution command for this step:')
-    logger.info(exec_cmd)
-
-    print_bias_from_product_filename(args.she_bias_measurements, args.workdir)
-
-    logger.debug('# Exiting SHE_CTE_PrintBias mainMethod()')
-
-    return
+    executor.run(args, logger = logger, pass_args_as_dict = False)
 
 
 def main():
@@ -107,8 +89,6 @@ def main():
     args = parser.parse_args()
 
     mainMethod(args)
-
-    return
 
 
 if __name__ == "__main__":

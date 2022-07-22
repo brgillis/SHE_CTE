@@ -5,7 +5,7 @@
     Unit tests for measuring shear bias statistics.
 """
 
-__updated__ = "2020-07-29"
+__updated__ = "2021-08-18"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -22,16 +22,16 @@ __updated__ = "2020-07-29"
 
 from os.path import join
 
-from SHE_PPT import products
-from SHE_PPT.file_io import (write_xml_product, read_xml_product,
-                             get_allowed_filename, write_listfile)
-from SHE_PPT.math import LinregressStatistics
-from numpy.testing import assert_almost_equal
 import pytest
+from numpy.testing import assert_almost_equal
 
 import SHE_CTE
+from SHE_CTE_BiasMeasurement.MeasureBias import D_MB_CONFIG_DEFAULTS, D_MB_CONFIG_TYPES
 from SHE_CTE_BiasMeasurement.measure_bias import measure_bias_from_args
-import numpy as np
+from SHE_PPT import products
+from SHE_PPT.file_io import (get_allowed_filename, read_xml_product, write_listfile, write_xml_product)
+from SHE_PPT.math import LinregressStatistics
+from SHE_PPT.pipeline_utility import read_calibration_config
 
 
 class Args(object):
@@ -47,7 +47,9 @@ class Args(object):
         self.webdav_archive = False
         self.bootstrap_seed = 1
         self.number_threads = 1
-        self.pipeline_config = "None"
+        self.pipeline_config = read_calibration_config(None,
+                                                       d_defaults = D_MB_CONFIG_DEFAULTS,
+                                                       d_types = D_MB_CONFIG_TYPES)
         self.store_measurements_only = False
         self.use_bias_only = False
 
@@ -108,7 +110,7 @@ class TestMeasureStatistics:
 
         return
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse = True)
     def setup(self, tmpdir):
         self.workdir = tmpdir.strpath
         self.logdir = join(tmpdir.strpath, "logs")
@@ -130,10 +132,10 @@ class TestMeasureStatistics:
 
         shear_bias_statistics_prod_0 = products.she_bias_statistics.create_she_bias_statistics_product()
         shear_bias_statistics_prod_0.set_KSB_bias_statistics(
-            (self.g1_0_bias_statistics, self.g2_0_bias_statistics), workdir=self.workdir)
+            (self.g1_0_bias_statistics, self.g2_0_bias_statistics), workdir = self.workdir)
         shear_bias_statistics_prod_1 = products.she_bias_statistics.create_she_bias_statistics_product()
         shear_bias_statistics_prod_1.set_KSB_bias_statistics(
-            (self.g1_1_bias_statistics, self.g2_1_bias_statistics), workdir=self.workdir)
+            (self.g1_1_bias_statistics, self.g2_1_bias_statistics), workdir = self.workdir)
 
         shear_bias_statistics_filenames_0 = []
         shear_bias_statistics_filenames_1 = []
@@ -141,13 +143,13 @@ class TestMeasureStatistics:
 
         for i in range(2):
 
-            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension=".xml", subdir=None,
-                                              version=SHE_CTE.__version__)
-            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension=".xml", subdir=None,
-                                              version=SHE_CTE.__version__)
+            filename_0 = get_allowed_filename("bias-stats-0", str(i), extension = ".xml", subdir = None,
+                                              version = SHE_CTE.__version__)
+            filename_1 = get_allowed_filename("bias-stats-1", str(i), extension = ".xml", subdir = None,
+                                              version = SHE_CTE.__version__)
 
-            write_xml_product(shear_bias_statistics_prod_0, filename_0, workdir=args.workdir)
-            write_xml_product(shear_bias_statistics_prod_1, filename_1, workdir=args.workdir)
+            write_xml_product(shear_bias_statistics_prod_0, filename_0, workdir = args.workdir)
+            write_xml_product(shear_bias_statistics_prod_1, filename_1, workdir = args.workdir)
 
             shear_bias_statistics_filenames_0.append(filename_0)
             shear_bias_statistics_filenames_1.append([filename_1, ])  # We should also be able to read a length-1 tuple
@@ -166,7 +168,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir = self.workdir)
 
         assert_almost_equal(g1_bias.m, self.ex_m1_0)
         assert_almost_equal(g1_bias.c, self.ex_c1_0)
@@ -184,7 +186,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir = self.workdir)
 
         assert_almost_equal(g1_bias.m, self.ex_m1_1)
         assert_almost_equal(g1_bias.c, self.ex_c1_1)
@@ -202,7 +204,7 @@ class TestMeasureStatistics:
         # Read in and check the results
         shear_bias_measurements_product = read_xml_product(join(args.workdir, args.she_bias_measurements))
 
-        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir=self.workdir)
+        g1_bias, g2_bias = shear_bias_measurements_product.get_KSB_bias_measurements(workdir = self.workdir)
 
         assert_almost_equal(g1_bias.m, (self.ex_m1_0 + 2 * self.ex_m1_1) / 3)
         assert_almost_equal(g1_bias.c, (self.ex_c1_0 + 2 * self.ex_c1_1) / 3)

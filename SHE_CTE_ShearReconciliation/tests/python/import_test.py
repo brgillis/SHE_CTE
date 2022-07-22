@@ -1,9 +1,12 @@
-""" @file __init__.py
+""" @file import_test.py
 
-    Created 03 Feb 2020
+    Created 20 August 2021
+
+    This module tests importing all modules in each package, to make sure nothing obvious goes wrong, even if the code
+    is otherwise untested. 
 """
 
-__updated__ = "2021-01-05"
+__updated__ = "2021-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -18,5 +21,13 @@ __updated__ = "2021-01-05"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-from pkgutil import extend_path
-__path__ = extend_path(__path__, __name__)
+from SHE_CTE_ShearReconciliation import *
+
+
+class TestImports():
+
+    def test_import(self):
+        """ Dummy test - the actual testing is done in the wildcard imports above, which can only be done at the
+            module level.
+        """
+        pass

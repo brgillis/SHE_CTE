@@ -1,9 +1,12 @@
-""" @file magic_values.py
+""" @file import_test.py
 
-    Created 7 Apr 2017
+    Created 20 August 2021
 
-    Magic values for measuring bias of shear estimates.
+    This module tests importing all modules in each package, to make sure nothing obvious goes wrong, even if the code
+    is otherwise untested. 
 """
+
+__updated__ = "2021-08-20"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -16,15 +19,15 @@
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-# Boston, MA 02110-1301 USA
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-logger_name = "SHE_CTE_MeasureBias"
+from SHE_CTE_ShearValidation import *
 
-estimation_methods = ["KSB", "REGAUSS", "LensMC", "MomentsML"]
 
-var_e = {"m2": 0.30241731263684996,
-         "m1": 0.27099491059570091,
-         "p0": 0.2422044791810781,
-         "p1": 0.21333834512347458,
-         "p2": 0.18556590758327751}
+class TestImports():
+
+    def test_import(self):
+        """ Dummy test - the actual testing is done in the wildcard imports above, which can only be done at the
+            module level.
+        """
+        pass
