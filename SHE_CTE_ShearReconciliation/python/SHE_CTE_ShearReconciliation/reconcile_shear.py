@@ -22,6 +22,7 @@ __updated__ = "2022-08-22"
 
 
 import os
+from typing import Set
 
 from SHE_PPT import products
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS
@@ -307,8 +308,8 @@ def reconcile_shear_from_args(args):
     she_validated_measurements_filename_list = read_listfile(os.path.join(args.workdir,
                                                                           args.she_validated_measurements_listfile))
 
-    # Start lists of all pointing IDs
-    pointing_id_list = []
+    # Start a set of all pointing IDs
+    s_pointing_ids: Set[int] = set()
 
     # Loop over each product (representing a different observation)
     for she_validated_measurements_filename in she_validated_measurements_filename_list:
@@ -321,12 +322,11 @@ def reconcile_shear_from_args(args):
             if not is_any_type_of_none(estimates_table_filename):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
-        # Add to pointing id list
-        measurements_pointing_id_list = she_validated_measurement_product.Data.PointingIdList
+        # Add to Pointing ID set
+        s_pointing_ids.update(she_validated_measurement_product.Data.PointingIdList)
 
-        for measurements_pointing_id in measurements_pointing_id_list:
-            if measurements_pointing_id not in pointing_id_list:
-                pointing_id_list.append(measurements_pointing_id)
+    # Make a sorted list of Pointing IDs
+    l_pointing_ids = sorted(s_pointing_ids)
 
     # Create a data product for the output
     reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
@@ -345,7 +345,7 @@ def reconcile_shear_from_args(args):
     # Get the tile_id and set it for the new product
     tile_id = mer_final_catalog_product.Data.TileIndex
     reconciled_catalog_product.Data.TileIndex = tile_id
-    reconciled_catalog_product.Data.PointingIdList = pointing_id_list
+    reconciled_catalog_product.Data.PointingIdList = l_pointing_ids
 
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in ShearEstimationMethods:
@@ -399,7 +399,7 @@ def reconcile_shear_from_args(args):
     reconciled_chains_product = products.she_reconciled_lensmc_chains.create_dpd_she_reconciled_lensmc_chains(
         spatial_footprint=mer_final_catalog_product)
     reconciled_chains_product.Data.TileIndex = tile_id
-    reconciled_chains_product.Data.PointingIdList = pointing_id_list
+    reconciled_chains_product.Data.PointingIdList = l_pointing_ids
 
     # If we don't have any data, create an empty table
     if reconciled_chains_catalog is None:
