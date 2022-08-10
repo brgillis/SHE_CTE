@@ -142,14 +142,6 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
         t1 = time.time()
         logger.info(f"Extracted {len(all_ids_array)} objects in observation from catalogue in {t1-t0}s")
 
-    
-    #if we don't want all the IDs, trim the list down to the specified size
-    if max_num_ids is not None:
-        if max_num_ids < len(all_ids_array):
-            all_ids_array = all_ids_array[:max_num_ids]
-            all_ids_indices = all_ids_indices[:max_num_ids]
-
-
     return all_ids_array, all_ids_indices
 
 
@@ -255,7 +247,7 @@ def read_oid_input_data(data_images,
 
 
     #make sure we do have num_batches batches
-    assert len(id_arrays) == num_batches
+    assert len(id_arrays) == limited_num_batches
 
 
     return (limited_num_batches,
