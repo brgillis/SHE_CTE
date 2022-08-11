@@ -308,7 +308,7 @@ def reconcile_shear_from_args(args):
     she_validated_measurements_filename_list = read_listfile(os.path.join(args.workdir,
                                                                           args.she_validated_measurements_listfile))
 
-    # Start a set of all pointing IDs
+    # We'll save all pointing IDs from products in a set (to avoid duplicates), and output the result as a sorted list
     s_pointing_ids: Set[int] = set()
 
     # Loop over each product (representing a different observation)
