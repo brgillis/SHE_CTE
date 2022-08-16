@@ -437,10 +437,19 @@ class TestReconcileShear:
         write_xml_product(mer_final_catalog_product, mer_final_catalog_product_filename,
                           workdir = self.workdir, allow_pickled = False)
 
-        # Create a data product for each input shear estimates table
+        # Create a data product for each input shear estimates table, with overlapping pointing IDs
         sem_product_filename_list = []
-        for i in range(len(self.sem_table_lists[ShearEstimationMethods.LENSMC])):
+        num_products = len(self.sem_table_lists[ShearEstimationMethods.LENSMC])
+
+        for i in range(num_products):
+
+            # Make a separate list of mock Pointing IDs for each product - each will have an ID of 100 (overlapping),
+            # and the rest will be the index of this product
+            l_pointing_ids = [100, i]
+
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
+            sem_product.Data.PointingIdList = l_pointing_ids
+
             for sem in ShearEstimationMethods:
                 sem_table_filename = get_allowed_filename(
                     "SEM-TEST-" + sem.name, str(i), version = SHE_CTE.__version__, )
@@ -503,6 +512,9 @@ class TestReconcileShear:
 
         # Check the reconciled measurements results
         srm_product = read_xml_product(srm_product_filename, workdir = self.workdir, allow_pickled = False)
+
+        # Check the Pointing ID list is as expected - one of each product index, plus 100
+        assert srm_product.Data.PointingIdList == list(range(num_products)) + [100]
 
         for sem in ShearEstimationMethods:
             sem_table_filename = srm_product.get_method_filename(sem)
