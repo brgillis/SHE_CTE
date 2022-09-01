@@ -286,23 +286,24 @@ def she_measurements_merge_from_args(args):
         pool.join()
 
         she_lensmc_chains_tables = [a.get() for a in pool_she_lensmc_chains_tables if a.get() is not None]
+        # End section to handle multithreading
 
-        l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
-        l_observation_ids = np.array([x for x in full_l_observation_ids if x is not None])
-        l_observation_times = np.array([x for x in full_l_observation_times if x is not None])
-        l_pointing_id_lists = np.array([x for x in full_l_pointing_id_lists if x is not None])
-        l_tile_lists = np.array([x for x in full_l_tile_lists if x is not None])
+    l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
+    l_observation_ids = [x for x in full_l_observation_ids if x is not None]
+    l_observation_times = [x for x in full_l_observation_times if x is not None]
+    l_pointing_id_lists = [x for x in full_l_pointing_id_lists if x is not None]
+    l_tile_lists = [x for x in full_l_tile_lists if x is not None]
 
-        # Check metadata is consistent
-        for l in (l_observation_ids, l_observation_times, l_pointing_id_lists, l_tile_lists):
-            if not (l == l[0]).all():
-                logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
+    # Check metadata is consistent
+    for l in (l_observation_ids, l_observation_times, l_pointing_id_lists, l_tile_lists):
+        l_arr = np.array(l)
+        if not (l_arr == l_arr[0]).all():
+            logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
 
-        observation_id = l_observation_ids[0]
-        observation_time = l_observation_times[0]
-        pointing_id_list = l_pointing_id_lists[0]
-        tile_list = l_tile_lists[0]
-    # End section to handle multithreading
+    observation_id = l_observation_ids[0]
+    observation_time = l_observation_times[0]
+    pointing_id_list = l_pointing_id_lists[0]
+    tile_list = l_tile_lists[0]
 
     # Sort the tables into the expected format
     for method in ShearEstimationMethods:
@@ -332,13 +333,13 @@ def she_measurements_merge_from_args(args):
     # Set the metadata for the measurements product
     combined_she_measurements_product.Data.ObservationId = observation_id
     combined_she_measurements_product.Data.ObservationDateTime = observation_time
-    combined_she_measurements_product.Data.PointingIdList = list(pointing_id_list)
+    combined_she_measurements_product.Data.PointingIdList = pointing_id_list
     combined_she_measurements_product.Data.TileList = tile_list
 
     # Set the metadata for the chains product
     combined_she_lensmc_chains_product.Data.ObservationId = observation_id
     combined_she_lensmc_chains_product.Data.ObservationDateTime = observation_time
-    combined_she_lensmc_chains_product.Data.PointingIdList = list(pointing_id_list)
+    combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
     combined_she_lensmc_chains_product.Data.TileList = tile_list
 
     for method in ShearEstimationMethods:

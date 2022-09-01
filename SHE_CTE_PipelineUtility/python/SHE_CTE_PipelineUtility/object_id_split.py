@@ -51,8 +51,7 @@ def get_tile_list(data_stack):
     tile_list = []
     for detections_catalogue_product in data_stack.detections_catalogue_products:
         tile_index = detections_catalogue_product.Data.TileIndex
-        tile_product_id = detections_catalogue_product.Header.ProductId
-        tile_list.append((tile_index, tile_product_id))
+        tile_list.append(tile_index)
 
     return tile_list
 
@@ -141,14 +140,6 @@ def get_ids_array(ids_to_use: Optional[Sequence[int]],
 
         t1 = time.time()
         logger.info(f"Extracted {len(all_ids_array)} objects in observation from catalogue in {t1-t0}s")
-
-    
-    #if we don't want all the IDs, trim the list down to the specified size
-    if max_num_ids is not None:
-        if max_num_ids < len(all_ids_array):
-            all_ids_array = all_ids_array[:max_num_ids]
-            all_ids_indices = all_ids_indices[:max_num_ids]
-
 
     return all_ids_array, all_ids_indices
 
@@ -255,7 +246,7 @@ def read_oid_input_data(data_images,
 
 
     #make sure we do have num_batches batches
-    assert len(id_arrays) == num_batches
+    assert len(id_arrays) == limited_num_batches
 
 
     return (limited_num_batches,
@@ -309,24 +300,7 @@ def write_oid_batch(workdir,
     batch_id_list_product.Data.BatchIndex = i
     batch_id_list_product.Data.PointingIdList = pointing_list
     batch_id_list_product.Data.ObservationId = observation_id
-
-    num_tiles = len(tile_list)
-
-    try:
-        base_tile_object = deepcopy(batch_id_list_product.Data.TileList[0])
-        batch_id_list_product.Data.TileList = [base_tile_object] * num_tiles
-        tile_list_binding = batch_id_list_product.Data.TileList
-
-        for tile_i, (tile_index, tile_product_id) in enumerate(tile_list):
-            tile_list_binding[tile_i].TileIndex = tile_index
-            tile_list_binding[tile_i].TileProductId = tile_product_id
-    except TypeError as e:
-        if "object does not support indexing" not in str(e):
-            raise
-        logger.warning("Cannot list all tiles in data product; will only list first tile.")
-        tile_list_binding = batch_id_list_product.Data.TileList
-        tile_list_binding.TileIndex = tile_list[0][0]
-        tile_list_binding.TileProductId = tile_list[0][1]
+    batch_id_list_product.Data.TileList = tile_list
 
     # Save the product
     write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir = workdir)
