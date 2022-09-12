@@ -308,8 +308,10 @@ def reconcile_shear_from_args(args):
     she_validated_measurements_filename_list = read_listfile(os.path.join(args.workdir,
                                                                           args.she_validated_measurements_listfile))
 
-    # We'll save all pointing IDs from products in a set (to avoid duplicates), and output the result as a sorted list
+    # We'll save all Pointing and Observation IDs from products in a set (to avoid duplicates), and output the result
+    # as a sorted list
     s_pointing_ids: Set[int] = set()
+    s_observation_ids: Set[int] = set()
 
     # Loop over each product (representing a different observation)
     for she_validated_measurements_filename in she_validated_measurements_filename_list:
@@ -322,11 +324,13 @@ def reconcile_shear_from_args(args):
             if not is_any_type_of_none(estimates_table_filename):
                 validated_shear_estimates_table_filenames[shear_estimation_method].append(estimates_table_filename)
 
-        # Add to Pointing ID set
+        # Add to Pointing and Observation ID sets
         s_pointing_ids.update(she_validated_measurement_product.Data.PointingIdList)
+        s_observation_ids.update(she_validated_measurement_product.Data.ObservationId)
 
-    # Make a sorted list of Pointing IDs
+    # Make sorted lists of Pointing and Observation IDs
     l_pointing_ids = sorted(s_pointing_ids)
+    l_observation_ids = sorted(s_observation_ids)
 
     # Create a data product for the output
     reconciled_catalog_product = products.she_reconciled_measurements.create_dpd_she_reconciled_measurements(
@@ -346,6 +350,7 @@ def reconcile_shear_from_args(args):
     tile_id = mer_final_catalog_product.Data.TileIndex
     reconciled_catalog_product.Data.TileIndex = tile_id
     reconciled_catalog_product.Data.PointingIdList = l_pointing_ids
+    reconciled_catalog_product.Data.ObservationIdList = l_observation_ids
 
     # Loop over each method, and reconcile tables for that method
     for shear_estimation_method in ShearEstimationMethods:
@@ -400,6 +405,7 @@ def reconcile_shear_from_args(args):
         spatial_footprint=mer_final_catalog_product)
     reconciled_chains_product.Data.TileIndex = tile_id
     reconciled_chains_product.Data.PointingIdList = l_pointing_ids
+    reconciled_chains_product.Data.ObservationIdList = l_observation_ids
 
     # If we don't have any data, create an empty table
     if reconciled_chains_catalog is None:
