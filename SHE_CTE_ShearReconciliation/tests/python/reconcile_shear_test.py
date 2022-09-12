@@ -443,11 +443,19 @@ class TestReconcileShear:
 
         for i in range(num_products):
 
+            # The ID of each product will be its index, except for the last, which will share index 0 with the first
+            # (to test that overlaps are handled as expected).
+            if i == 0 or i == num_products - 1:
+                observation_id = 0
+            else:
+                observation_id = i
+
             # Make a separate list of mock Pointing IDs for each product - each will have an ID of 100 (overlapping),
             # and the rest will be the index of this product
             l_pointing_ids = [100, i]
 
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
+            sem_product.Data.ObservationSequence.ObservationId = observation_id
             sem_product.Data.PointingIdList = l_pointing_ids
 
             for sem in ShearEstimationMethods:
@@ -502,16 +510,19 @@ class TestReconcileShear:
                                                             d_types = D_REC_SHEAR_CONFIG_TYPES),
                     method = None,
                     chains_method = None,
-                    she_reconciled_measurements = srm_product_filename,
-                    she_reconciled_lensmc_chains = rec_chains_product_filename,
-                    workdir = self.workdir,
-                    logdir = "logs")
+                    she_reconciled_measurements=srm_product_filename,
+                    she_reconciled_lensmc_chains=rec_chains_product_filename,
+                    workdir=self.workdir,
+                    logdir="logs")
 
         # Call the program
         reconcile_shear_from_args(args)
 
         # Check the reconciled measurements results
-        srm_product = read_xml_product(srm_product_filename, workdir = self.workdir, allow_pickled = False)
+        srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
+
+        # Check the Observation ID list is as expected - a range of all indices except the last
+        assert srm_product.Data.ObservationIdList == list(range(num_products - 1))
 
         # Check the Pointing ID list is as expected - one of each product index, plus 100
         assert srm_product.Data.PointingIdList == list(range(num_products)) + [100]
