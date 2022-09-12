@@ -326,7 +326,7 @@ def reconcile_shear_from_args(args):
 
         # Add to Pointing and Observation ID sets
         s_pointing_ids.update(she_validated_measurement_product.Data.PointingIdList)
-        s_observation_ids.update(she_validated_measurement_product.Data.ObservationSequence.ObservationId)
+        s_observation_ids.add(she_validated_measurement_product.Data.ObservationId)
 
     # Make sorted lists of Pointing and Observation IDs
     l_pointing_ids = sorted(s_pointing_ids)

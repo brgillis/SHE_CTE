@@ -455,7 +455,7 @@ class TestReconcileShear:
             l_pointing_ids = [100, i]
 
             sem_product = products.she_validated_measurements.create_she_validated_measurements_product()
-            sem_product.Data.ObservationSequence.ObservationId = observation_id
+            sem_product.Data.ObservationId = observation_id
             sem_product.Data.PointingIdList = l_pointing_ids
 
             for sem in ShearEstimationMethods:
