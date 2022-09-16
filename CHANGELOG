@@ -27,6 +27,7 @@ New Config Features
 
 Miscellaneous
 -------------
+- Removed deprecated parameter "allow_pickled" from read/write_xml_product function calls
 
 
 Changes in v9.0
