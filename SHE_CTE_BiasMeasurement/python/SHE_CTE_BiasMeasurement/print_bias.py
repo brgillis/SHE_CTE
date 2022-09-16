@@ -37,7 +37,7 @@ def print_bias_from_args(args):
 
 
 def print_bias_from_product_filename(product_filename, workdir):
-    p = read_xml_product(os.path.join(workdir, product_filename), allow_pickled = True)
+    p = read_xml_product(os.path.join(workdir, product_filename))
 
     print_bias_from_product(p, workdir)
 

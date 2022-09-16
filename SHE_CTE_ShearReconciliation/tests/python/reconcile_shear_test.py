@@ -435,7 +435,7 @@ class TestReconcileShear:
         mer_final_catalog_product_filename = get_allowed_filename(
             "MFC-P", "TEST", version = SHE_CTE.__version__, subdir = "")
         write_xml_product(mer_final_catalog_product, mer_final_catalog_product_filename,
-                          workdir = self.workdir, allow_pickled = False)
+                          workdir=self.workdir)
 
         # Create a data product for each input shear estimates table, with overlapping pointing IDs
         sem_product_filename_list = []
@@ -519,7 +519,7 @@ class TestReconcileShear:
         reconcile_shear_from_args(args)
 
         # Check the reconciled measurements results
-        srm_product = read_xml_product(srm_product_filename, workdir=self.workdir, allow_pickled=False)
+        srm_product = read_xml_product(srm_product_filename, workdir=self.workdir)
 
         # Check the Observation ID list is as expected - a range of all indices except the last
         assert srm_product.Data.ObservationIdList == list(range(num_products - 1))
@@ -537,8 +537,7 @@ class TestReconcileShear:
             [0], 1, D_SHEAR_ESTIMATION_METHOD_TABLE_FORMATS[sem])
 
         # Check the reconciled chains results
-        rec_chains_product = read_xml_product(rec_chains_product_filename, workdir = self.workdir,
-                                              allow_pickled = False)
+        rec_chains_product = read_xml_product(rec_chains_product_filename, workdir=self.workdir)
 
         rec_chains_table_filename = rec_chains_product.get_filename()
         reconciled_chains = Table.read(os.path.join(self.workdir, rec_chains_table_filename))
