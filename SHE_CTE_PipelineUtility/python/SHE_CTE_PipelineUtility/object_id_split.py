@@ -36,7 +36,7 @@ from astropy.units import degree
 from astropy.coordinates import SkyCoord
 
 from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
-from ST_DM_DmUtils.DmUtils import save_product_metadata, read_product_metadata, get_product_name
+from ST_DM_DmUtils.DmUtils import save_product_metadata, read_product_metadata, get_product_name, get_header_from_wcs_binding
 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import AnalysisConfigKeys
@@ -97,25 +97,49 @@ def read_vis_frames(vis_frame_listfile, workdir):
         pointing_ids.append(dpd.Data.ObservationSequence.PointingId)
         observation_id = dpd.Data.ObservationSequence.ObservationId
 
-        fits_filename = dpd.Data.DataStorage.DataContainer.FileName
-        qualified_fits_filename = os.path.join(workdir,"data",fits_filename)
+        try:
+            # Try to get the WCS list from the xml metadata directly (to avoid reading from FITS)
 
-        if not os.path.exists(qualified_fits_filename):
-            logger.error("VIS FITS file %s does not exist", qualified_fits_filename)
-            raise FileNotFoundError("VIS FITS file %s does not exist"%qualified_fits_filename)
+            exp_wcs_list = []
+
+            nx, ny = dpd.Data.AxisLengths
+            for detector in dpd.Data.DetectorList.Detector:
+                # Sloppy test to see if the data product has valid detector data
+                if len(detector.DetectorId) != 3:
+                    raise ValueError("Detector ID is invalid: %s"%detector.DetectorId)
+                wcs_hdr = get_header_from_wcs_binding(detector.WCS)
+                wcs = WCS(wcs_hdr)
+                wcs._naxis = (nx, ny)
+
+                exp_wcs_list.append(wcs)
+
+
+        except Exception as e:
+
+            # Failsafe - read the WCS from the FITS
+            logger.warning("Unable to extract WCS information from the data product with error %s -  will extract from FITS instead", e)
+
+
+            fits_filename = dpd.Data.DataStorage.DataContainer.FileName
+            qualified_fits_filename = os.path.join(workdir,"data",fits_filename)
+
+            if not os.path.exists(qualified_fits_filename):
+                logger.error("VIS FITS file %s does not exist", qualified_fits_filename)
+                raise FileNotFoundError("VIS FITS file %s does not exist"%qualified_fits_filename)
+            
+            logger.debug("Reading VIS DET FITS %s",qualified_fits_filename)
+            with fits.open(qualified_fits_filename) as hdul:
+                # The VIS fits file contains n_detectors x 3 hdus, plus a PrimaryHDU
+                # Some SHE mock files (made by SHE_GST) do not contain the PrimaryHDU
+                n_hdus = len(hdul)
+                offset = n_hdus%3
+
+                det_hdus = hdul[offset::3]
+
+                exp_wcs_list = [ WCS(hdu.header) for hdu in det_hdus]
+            
+            logger.debug("Extracted %d WCS(s) from %s", len(exp_wcs_list), qualified_fits_filename)
         
-        logger.debug("Reading VIS DET FITS %s",qualified_fits_filename)
-        with fits.open(qualified_fits_filename) as hdul:
-            # The VIS fits file contains n_detectors x 3 hdus, plus a PrimaryHDU
-            # Some SHE mock files (made by SHE_GST) do not contain the PrimaryHDU
-            n_hdus = len(hdul)
-            offset = n_hdus%3
-
-            det_hdus = hdul[offset::3]
-
-            exp_wcs_list = [ WCS(hdu.header) for hdu in det_hdus]
-        
-        logger.debug("Extracted %d WCS(s) from %s", len(exp_wcs_list), qualified_fits_filename)
         wcs_list += exp_wcs_list
     
     logger.info("ObservationId = %d", observation_id)
@@ -191,6 +215,59 @@ def read_mer_catalogs(mer_catalog_listfile,workdir):
 
     return mer_final_catalog_table, tile_ids, dpd
 
+def skycoords_in_wcs(skycoords, wcs):
+    """
+    Determines which of a set of skycoords are contained within a WCS.
+
+    Whilst one could just use SkyCoord.contained_by or WCS.footprint_contains, there is a bug 
+    (fixed in Astropy 5.0.5) with WCS and TPV distortions (which VIS images use) whereby if one
+    point fails to converge, all subsequent points also fail. These bad points tend to be very
+    far from the detector, so manually excluding points far from the detector before applying
+    SkyCoord.contained_by mitigates this error. (This also speeds excution up as we no longer
+    need to process as many points!)
+
+    (See https://github.com/astropy/astropy/issues/13750 for details)
+    
+    Inputs:
+      - skycoords: An astropy.coordinates.SkyCoord object, containing one or more object coordinates
+      - wcs: An astropy.wcs.WCS object for a detector
+
+    Returns:
+      - contained_by: A numpy.ndarray(dtype=Bool) containing True if the object is in the detector, False otherwise
+    """
+    
+    from astropy import __version__ as astropy_version
+    from packaging import version
+
+    if version.parse(astropy_version) < version.parse("5.0.5"):
+        logger.warning("Astropy version %s is lower than 5.0.5. There is a known WCS bug which may cause incorrect results!", astropy_version)
+
+    ny, nx = wcs.array_shape
+
+    # First determine the coordinates of the centre of the detector, and its corners
+    centre_sk = wcs.pixel_to_world(nx/2, ny/2)
+    corners = wcs.calc_footprint()
+    corners_sk = SkyCoord(corners[:,0], corners[:,1], unit=degree)
+
+    # now get the maximum distance between the centre and the corners (x1.05 buffer)
+    max_sep = max(centre_sk.separation(corners_sk)) * 1.05
+    
+    # We consider points within max_sep from the centre of the detector as candidate 
+    # points to determine if they are in the detector's FOV
+    candidate_indices = np.where(skycoords.separation(centre_sk) < max_sep)
+
+    # Now detemrine which candidates are within the detector 
+    # (can alternatively use WCS.footprint_contains(SkyCoord))
+    candidates_contained_by = skycoords[candidate_indices].contained_by(wcs)
+
+    # Create and populate the output array
+    contained_by = np.full(len(skycoords), False, dtype=bool)
+
+    contained_by[candidate_indices] = candidates_contained_by
+
+    return contained_by
+
+
 
 
 def prune_objects_not_in_FOV(mer_table, wcs_list, ids_to_use):
@@ -232,11 +309,17 @@ def prune_objects_not_in_FOV(mer_table, wcs_list, ids_to_use):
     
     # find the objects in each detector
     for wcs in wcs_list:
-        present_in_detector = skycoords.contained_by(wcs)
+        present_in_detector = skycoords_in_wcs(skycoords, wcs)
+        if present_in_detector.sum() == 0:
+            logger.warning("No points were found in detector!")
         logger.debug("Found %d objects in detector",np.sum(present_in_detector))
         all_present |= present_in_detector
 
     pruned_table = mer_table[all_present]
+
+    if len(pruned_table) == 0:
+        logger.error("No objects found in the Observation.")
+        raise ValueError("No objects found in the Observation.")
 
     logger.info("Identified %d objects in the FOV", len(pruned_table))
 
