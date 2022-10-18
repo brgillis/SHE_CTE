@@ -21,6 +21,7 @@ Bug Fixes
 New Features
 ------------
 - SHE_CTE_ReconcileShear now fills out the PointingIdList and ObservationIdList attributes of created data products
+- Smoketest for SHE_CTE_ShearEstimatesMerge
 
 New Config Features
 -------------------
