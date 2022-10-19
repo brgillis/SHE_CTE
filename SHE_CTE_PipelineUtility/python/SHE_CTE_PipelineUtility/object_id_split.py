@@ -82,6 +82,7 @@ def read_vis_frames(vis_frame_listfile, workdir):
 
     wcs_list = []
     pointing_ids = []
+    observation_ids = []
 
     for product_filename in product_list:
         qualified_product_filename = os.path.join(workdir, product_filename)
@@ -96,7 +97,7 @@ def read_vis_frames(vis_frame_listfile, workdir):
             raise ValueError("%s is the wrong product type. Expected DpdVisCalibratedFrame - got %s"%(qualified_product_filename,get_product_name(dpd)))
 
         pointing_ids.append(dpd.Data.ObservationSequence.PointingId)
-        observation_id = dpd.Data.ObservationSequence.ObservationId
+        observation_ids.append(dpd.Data.ObservationSequence.ObservationId)
 
         try:
             # Try to get the WCS list from the xml metadata directly (to avoid reading from FITS)
@@ -143,6 +144,12 @@ def read_vis_frames(vis_frame_listfile, workdir):
             logger.debug("Extracted %d WCS(s) from %s", len(exp_wcs_list), qualified_fits_filename)
         
         wcs_list += exp_wcs_list
+
+    s_observation_ids = set(observation_ids)
+    if len(s_observation_ids) != 1:
+        raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
+
+    observation_id = observation_ids.pop()
     
     logger.info("ObservationId = %d", observation_id)
     logger.info("PointingIds = %s", pointing_ids)
