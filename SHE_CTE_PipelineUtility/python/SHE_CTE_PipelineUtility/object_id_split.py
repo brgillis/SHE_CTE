@@ -312,7 +312,7 @@ def prune_objects_not_in_FOV(mer_table, wcs_list, ids_to_use):
     # find the objects in each detector
     for wcs in wcs_list:
         present_in_detector = skycoords_in_wcs(skycoords, wcs)
-        if present_in_detector.sum() == 0:
+        if not np.any(present_in_detector):
             logger.warning("No points were found in detector!")
         logger.debug("Found %d objects in detector",np.sum(present_in_detector))
         all_present |= present_in_detector
