@@ -25,6 +25,7 @@ import os
 import warnings
 import math
 from copy import deepcopy
+import re
 
 import numpy as np
 
@@ -104,8 +105,9 @@ def read_vis_frames(vis_frame_listfile, workdir):
 
             nx, ny = dpd.Data.AxisLengths
             for detector in dpd.Data.DetectorList.Detector:
-                # Sloppy test to see if the data product has valid detector data
-                if len(detector.DetectorId) != 3:
+                # DetectorId should be "x-y" where x and y range from 0-6
+                # In mock SHE products, this is a longer string with random contents
+                if not re.match('^[1-6]-[1-6]$', detector.DetectorId):
                     raise ValueError("Detector ID is invalid: %s"%detector.DetectorId)
                 wcs_hdr = get_header_from_wcs_binding(detector.WCS)
                 wcs = WCS(wcs_hdr)
