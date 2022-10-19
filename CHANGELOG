@@ -20,6 +20,7 @@ Bug Fixes
 New Features
 ------------
 - SHE_CTE_ReconcileShear now fills out the PointingIdList and ObservationIdList attributes of created data products
+- Refactored ObjectIdSplit to avoid using the SheFrameStack, and if at all possible to avoid reading the VIS FITS files at all, instead trying to get all its information from the XML products directly.
 
 New Config Features
 -------------------
