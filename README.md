@@ -32,9 +32,7 @@ This project contains various executables which constitute components in various
 
 ### Internal Euclid Dependencies
 
-* [SHE_LensMC 9.0](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_LensMC)
-* [SHE_MomentsML 9.0](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_MomentsML)
-* [SHE_PPT 9.1 (indirect)](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
+* [SHE_PPT 9.3](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
 
 
 ### External Euclid Dependencies
@@ -104,7 +102,7 @@ make install
   - [`SHE_CTE_ExtractStamps`](#she_cte_extractstamps): Given a list of objects, times itself extracting 400x400 pixel postage stamps around the objects
   - [`SHE_CTE_AnalyseRuntime`](#she_cte_analyseruntime): Analyses the runtime of the pipeline, producing graphs
 * SHE_CTE_ShearEstimation: Shear Estimation executables
-  - [`SHE_CTE_EstimateShear`](#she_cte_estimateshear): Given a list of objects, estimates their shear
+  - [`SHE_CTE_EstimateShear`](#she_cte_estimateshear) *DEPRECATED*: Given a list of objects, estimates their shear
 * SHE_CTE_ShearReconcilliation: Shear Reconciliation Executables
   - [`SHE_CTE_ReconcileShear`](#she_cte_reconcileshear): Reconciles different shear measurements for objects from multiple observations.
 * SHE_CTE_ShearValidation: Shear validation executables
@@ -1627,7 +1625,7 @@ This program is designed to be run on intermediate data generated within an exec
 
 
 
-### `SHE_CTE_EstimateShear`
+### `SHE_CTE_EstimateShear` *DEPRECATED*
 
 This executable measures the shear for a list of input objects. It is used in the analysis pipeline, as well as the calibration pipeline.
 
@@ -2150,4 +2148,3 @@ If all else fails, raise an issue with the developers on GitLab. Be sure to incl
 1. The command you called to trigger the program (or the pipeline which called the program)
 1. The full log of the execution, from the start of the program to the ultimate failure. In the case of a failure during a pipeline run, you can attach the generated log file for this executable, which can be found in the `logs` directory within the work directory, and then in a subdirectory corresponding to this task.
 1. Any steps you've taken to try to resolve this problem on your own.
-

@@ -8,9 +8,4 @@ find_package(ElementsProject)
 # Declare project name, version, and dependencies.
 # We only explicitly depend on direct dependencies, and inherit from them dependencies on SHE_PPT and Elements
 
-elements_project(SHE_CTE 9.1 USE SHE_LensMC 9.1
-                                 SHE_MomentsML 9.1)
-
-# Indirect dependencies
-# ---------------------
-# SHE_PPT 9.2
+elements_project(SHE_CTE 9.1 USE SHE_PPT 9.3)

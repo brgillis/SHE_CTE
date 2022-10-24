@@ -8,10 +8,12 @@ API Changes
 
 Dependency Changes
 ------------------
-- LensMC 9.1, MomentsML 9.1, PPT 9.2
+- SHE_PPT 9.3
+- No longer depends on SHE_LensMC or SHE_MomentsML
 
 Deprecated Features
 -------------------
+- SHE_CTE_EstimateShear
 
 Bug Fixes
 ---------
