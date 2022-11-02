@@ -8,7 +8,7 @@ API Changes
 
 Dependency Changes
 ------------------
-- SHE_PPT 9.3
+- SHE_PPT 9.2.1
 - No longer depends on SHE_LensMC or SHE_MomentsML
 
 Deprecated Features

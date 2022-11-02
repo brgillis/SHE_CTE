@@ -32,7 +32,7 @@ This project contains various executables which constitute components in various
 
 ### Internal Euclid Dependencies
 
-* [SHE_PPT 9.3](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
+* [SHE_PPT 9.2.1](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
 
 
 ### External Euclid Dependencies
