@@ -5,7 +5,7 @@
     Functions to handle split over object IDs in a MER catalog
 """
 
-__updated__ = "2021-08-19"
+__updated__ = "2022-09-21"
 
 # Copyright (C) 2012-2020 Euclid Science Ground Segment
 #
@@ -20,184 +20,347 @@ __updated__ = "2021-08-19"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-import math
+import json
 import os
+import warnings
+import math
 from copy import deepcopy
-from typing import List, Optional, Sequence, Set
-import time
+import re
 
 import numpy as np
-from astropy.coordinates import SkyCoord
-from astropy.units import deg as degrees
-from astropy.table import Column
 
-import SHE_CTE
-from SHE_PPT.file_io import (get_allowed_filename, write_listfile, write_xml_product)
+from astropy.io import fits
+from astropy.io.fits.verify import VerifyWarning
+from astropy.table import Table, vstack
+from astropy.wcs import WCS
+from astropy.units import degree
+from astropy.coordinates import SkyCoord
+
+from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
+from ST_DM_DmUtils.DmUtils import save_product_metadata, read_product_metadata, get_product_name, get_header_from_wcs_binding
+
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import AnalysisConfigKeys
-from SHE_PPT.products import mer_final_catalog, she_object_id_list
-from SHE_PPT.she_frame_stack import SHEFrameStack
-from SHE_PPT.she_image_stack import SHEImageStack
-from SHE_PPT.table_formats.mer_final_catalog import initialise_mer_final_catalog, tf as mfc_tf
-from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR, RTOD
+from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR
 from SHE_PPT.clustering import identify_all_groups, partition_into_batches
 
+from SHE_PPT.table_formats.mer_final_catalog import tf as mer_tf
 from SHE_PPT.table_utility import is_in_format
+
+from SHE_PPT.products import she_object_id_list
+
+from SHE_CTE import __version__ as CTE_VERSION
+
 
 logger = getLogger(__name__)
 
 
-def get_tile_list(data_stack):
-    tile_list = []
-    for detections_catalogue_product in data_stack.detections_catalogue_products:
-        tile_index = detections_catalogue_product.Data.TileIndex
-        tile_list.append(tile_index)
+def read_vis_frames(vis_frame_listfile, workdir):
+    """
+    Reads in a number of VIS frames, returning the list of WCSs for each detector, 
+    the pointing IDs and the Observation ID
 
-    return tile_list
+    Inputs:
+      - vis_frame_listfile: The name of the listfile pointing to VIS products
+      - workdir: The path to the workdir
 
-
-def get_pointing_list_and_observation_id(data_stack):
-    pointing_list = []
-    observation_id = None
-    for exposure_product in data_stack.exposure_products:
-        pointing_list.append(exposure_product.Data.ObservationSequence.PointingId)
-        if observation_id is None:
-            observation_id = exposure_product.Data.ObservationSequence.ObservationId
-        else:
-            new_observation_id = exposure_product.Data.ObservationSequence.ObservationId
-            if not observation_id == new_observation_id:
-                # Check it's consistent and warn if not
-                logger.warning(f"Inconsistent observation IDs: {observation_id} and {new_observation_id}.")
-
-    return pointing_list, observation_id
-
-
-def get_ids_array(ids_to_use: Optional[Sequence[int]],
-                  max_batches: int,
-                  batch_size: int,
-                  data_stack: SHEFrameStack,
-                  sub_batch: bool = False):
-    """Gets the list of all valid object IDs from the catalogue that are in the observation, and the indices of these objects in the catalogue
-       if ids_to_use is not None, get the valid object IDs and indices from this list rather than the whole catalogue"""
-
-    s_all_ids: Set[int]
-  
-    max_num_ids = None
+    Outputs:
+      - wcs_list: list of astropy.WCS objects
+      - pointing_ids: list of pointing_ids for the exposures
+      - observation_id: observation_id of the exposure
+    """
     
-    #get the list of object ids we want, and their indices in the catalogue
-    if ids_to_use is not None:
+    qualified_listfile_filename = os.path.join(workdir, vis_frame_listfile)
+    if not os.path.exists(qualified_listfile_filename):
+        logger.error("VIS frame listfile %s does not exist", qualified_listfile_filename)
+        raise FileNotFoundError("VIS frame listfile %s does not exist"%qualified_listfile_filename)
 
-        #get the unique objects in the catalogue and their indices
-        catalogue_ids, unique_catalogue_indices = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
+    logger.debug("Opening VIS listfile %s",qualified_listfile_filename)
 
-        #get the unique ids_to_use
-        ids_to_use = np.unique(np.asarray(ids_to_use))
+    with open(qualified_listfile_filename) as f:
+        product_list = json.load(f)
 
-        #get the indices of the catalogue object that are in ids_to_use (e.g. we don't want ids that are not in the catalogue)
-        ids_to_use_indices = np.where(np.isin(catalogue_ids,ids_to_use))
+    wcs_list = []
+    pointing_ids = []
+    observation_ids = []
+
+    for product_filename in product_list:
+        qualified_product_filename = os.path.join(workdir, product_filename)
+        if not os.path.exists(qualified_product_filename):
+            logger.error("VIS frame product %s does not exist", qualified_product_filename)
+            raise FileNotFoundError("VIS frame product %s does not exist"%qualified_product_filename)
         
-        #now get the indices of these points in the original catalogue, and their ids
-        indices_in_catalogue = unique_catalogue_indices[ids_to_use_indices]
-        s_all_ids = catalogue_ids[ids_to_use_indices]
+        logger.debug("Reading VIS product %s",qualified_product_filename)
+        dpd = read_product_metadata(qualified_product_filename)
+        if get_product_name(dpd) != "DpdVisCalibratedFrame":
+            logger.error("%s is the wrong product type. Expected DpdVisCalibratedFrame - got %s",qualified_product_filename,get_product_name(dpd))
+            raise ValueError("%s is the wrong product type. Expected DpdVisCalibratedFrame - got %s"%(qualified_product_filename,get_product_name(dpd)))
 
+        pointing_ids.append(dpd.Data.ObservationSequence.PointingId)
+        observation_ids.append(dpd.Data.ObservationSequence.ObservationId)
+
+        try:
+            # Try to get the WCS list from the xml metadata directly (to avoid reading from FITS)
+
+            exp_wcs_list = []
+
+            nx, ny = dpd.Data.AxisLengths
+            for detector in dpd.Data.DetectorList.Detector:
+                # DetectorId should be "x-y" where x and y range from 0-6
+                # In mock SHE products, this is a longer string with random contents
+                if not re.match('^[1-6]-[1-6]$', detector.DetectorId):
+                    raise ValueError("Detector ID is invalid: %s"%detector.DetectorId)
+                wcs_hdr = get_header_from_wcs_binding(detector.WCS)
+                wcs = WCS(wcs_hdr)
+                wcs._naxis = (nx, ny)
+
+                exp_wcs_list.append(wcs)
+
+
+        except Exception as e:
+
+            # Failsafe - read the WCS from the FITS
+            logger.warning("Unable to extract WCS information from the data product with error %s -  will extract from FITS instead", e)
+
+
+            fits_filename = dpd.Data.DataStorage.DataContainer.FileName
+            qualified_fits_filename = os.path.join(workdir,"data",fits_filename)
+
+            if not os.path.exists(qualified_fits_filename):
+                logger.error("VIS FITS file %s does not exist", qualified_fits_filename)
+                raise FileNotFoundError("VIS FITS file %s does not exist"%qualified_fits_filename)
+            
+            logger.debug("Reading VIS DET FITS %s",qualified_fits_filename)
+            with fits.open(qualified_fits_filename) as hdul:
+                # The VIS fits file contains n_detectors x 3 hdus, plus a PrimaryHDU
+                # Some SHE mock files (made by SHE_GST) do not contain the PrimaryHDU
+                n_hdus = len(hdul)
+                offset = n_hdus%3
+
+                det_hdus = hdul[offset::3]
+
+                exp_wcs_list = [ WCS(hdu.header) for hdu in det_hdus]
+            
+            logger.debug("Extracted %d WCS(s) from %s", len(exp_wcs_list), qualified_fits_filename)
         
+        wcs_list += exp_wcs_list
 
-        logger.info("Using input list of IDs.")
+    s_observation_ids = set(observation_ids)
+    if len(s_observation_ids) != 1:
+        raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
 
-    else:
-
-        # Do we need to limit the number of objects to process?
-        if max_batches > 0:
-            max_num_ids = max_batches * batch_size
-
-        #get the unique object ids in the catalogue, and their indices
-        s_all_ids, indices_in_catalogue = np.unique(data_stack.detections_catalogue[mfc_tf.ID].data,return_index=True)
-
-        logger.info("Finished reading in IDs from mer_final_catalog.")
-
-   
-    #get the objects in the observation
+    observation_id = observation_ids.pop()
     
-    if sub_batch:
-        # If this is a sub-batch, checking has already been done so we can trust all IDs are good
-        all_ids_indices = indices_in_catalogue
-        all_ids_array = s_all_ids
-    else:
-        t0 = time.time()
-        logger.info("Extracting objecs in the observation from the catalogue")
+    logger.info("ObservationId = %d", observation_id)
+    logger.info("PointingIds = %s", pointing_ids)
+    logger.info("Extracted %d WCS(s) from %d VIS exposure(s)", len(wcs_list), len(product_list))
 
-        #first get the sky coordinates of all the objects in the candidate list, convert to SkyCoords
-        ras = data_stack.detections_catalogue[mfc_tf.gal_x_world].data[indices_in_catalogue]
-        decs = data_stack.detections_catalogue[mfc_tf.gal_y_world].data[indices_in_catalogue]
-        object_coords = SkyCoord(ras,decs,unit=degrees)
-        
-        #get the indices of all the objects found in the observation (these are relative to the indices in s_all_ids)
-        found_object_indices = data_stack.get_objects_in_observation(object_coords)
-        
-        #get the (catalogue) indices and ids for these objects
-        all_ids_indices = indices_in_catalogue[found_object_indices]
-        all_ids_array = s_all_ids[found_object_indices]
-
-        t1 = time.time()
-        logger.info(f"Extracted {len(all_ids_array)} objects in observation from catalogue in {t1-t0}s")
-
-    return all_ids_array, all_ids_indices
+    return wcs_list, pointing_ids, observation_id
 
 
-def read_oid_input_data(data_images,
-                        mer_final_catalog_tables,
-                        workdir,
-                        ids_to_use,
-                        max_batches,
-                        batch_size,
-                        grouping_radius,
-                        sub_batch = False):
-    # Read in the data images
-    logger.info("Reading data images...")
+def read_mer_catalogs(mer_catalog_listfile,workdir):
+    """
+    Reads in the MER final catalog(ue)s from the listfile, returning the concatenated catalog.
 
-    data_stack = SHEFrameStack.read(exposure_listfile_filename = data_images,
-                                    detections_listfile_filename = mer_final_catalog_tables,
-                                    workdir = workdir,
-                                    save_products = True,
-                                    memmap = (not sub_batch),
-                                    mode = 'denywrite',
-                                    load_images = (not sub_batch))
-
-    first_mer_final_catalog_product = data_stack.detections_catalogue_products[0]
-
-    # Get the tile list, pointing list, and observation id from the input data products
-
-    tile_list = get_tile_list(data_stack)
-
-    pointing_list, observation_id = get_pointing_list_and_observation_id(data_stack)
-
-
-    #get the list of object IDs (and their indices in the catalogue) for objects in the observation
-    all_ids_array, all_ids_indices = get_ids_array(ids_to_use = ids_to_use,
-                                                    max_batches = max_batches,
-                                                    batch_size = batch_size,
-                                                    data_stack = data_stack,
-                                                    sub_batch = sub_batch)
-
-    num_ids = len(all_ids_array)
-
-    # If batch size is zero, use all IDs in one batch
-    if batch_size == 0:
-        batch_size = num_ids
-
-    num_batches = int(math.ceil(num_ids / batch_size))
-
-    if max_batches > 0:
-        limited_num_batches = np.min((num_batches, max_batches))
-    else:
-        limited_num_batches = num_batches
-
-    # We now want to group objects that are possibly blended (separation of <= 1") together.
-    logger.info("Grouping objects into possible blends")
+    Inputs:
+      - mer_catalog_listfile: Listfile pointing to one or more MER Final Catalog products
+      - workdir: The path to the workdir
     
+    Returns:
+      - mer_final_catalog: an astropy.Table MER final catalog
+      - tile_ids: list of the MER tile ids
+      - mfc_dpd: the last dpdMerFinalCatalog data product object read in (used as a template to create output products)
+    """
+
+    qualified_listfile_name = os.path.join(workdir,mer_catalog_listfile)
+    if not os.path.exists(qualified_listfile_name):
+        logger.error("MER final catalog listfile %s does not exist", qualified_listfile_name)
+        raise FileNotFoundError("MER final catalog listfile %s does not exist"%qualified_listfile_name)
+
+    logger.debug("Openeing MER listfile %s", qualified_listfile_name)
+
+    with open(qualified_listfile_name) as f:
+        product_list = json.load(f)
+    
+    mer_catalogues = []
+    tile_ids = []
+
+    for product_filename in product_list:
+        qualified_product_filename = os.path.join(workdir, product_filename)
+        if not os.path.exists(qualified_product_filename):
+            logger.error("MER final catalog product %s does not exist", qualified_product_filename)
+            raise FileNotFoundError("MER final catalog product %s does not exist"%qualified_product_filename)
+        
+        logger.debug("Reading MER final catalog product %s", qualified_product_filename)
+
+        dpd = read_product_metadata(qualified_product_filename)
+        if get_product_name(dpd) != "DpdMerFinalCatalog":
+            logger.error("%s is the wrong product type. Expected DpdMerFinalCatalog - got %s",qualified_product_filename,get_product_name(dpd))
+            raise ValueError("%s is the wrong product type. Expected DpdMerFinalCatalog - got %s"%(qualified_product_filename,get_product_name(dpd)))
+
+        tile_ids.append(dpd.Data.TileIndex)
+
+        fits_filename = dpd.Data.DataStorage.DataContainer.FileName
+
+        qualified_fits_filename = os.path.join(workdir,"data",fits_filename)
+
+        if not os.path.exists(qualified_fits_filename):
+            logger.error("MER FITS file %s does not exist", qualified_fits_filename)
+            raise FileNotFoundError("MER FITS file %s does not exist"%qualified_fits_filename)
+
+        logger.debug("Reading MER Final Catalog table %s", qualified_fits_filename)
+        
+        # Catch verify warnings caused by the MER tables not complying to the FITS standard
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=VerifyWarning)
+            mfc = Table.read(qualified_fits_filename)
+
+        mer_catalogues.append(mfc)
+
+    mer_final_catalog_table = vstack(mer_catalogues, metadata_conflicts="silent")
+
+    logger.info("Extracted %d objects from %d input catalogues",len(mer_final_catalog_table), len(product_list))
+    logger.info("Tile IDs = %s", tile_ids)
+
+    return mer_final_catalog_table, tile_ids, dpd
+
+def skycoords_in_wcs(skycoords, wcs):
+    """
+    Determines which of a set of skycoords are contained within a WCS.
+
+    Whilst one could just use SkyCoord.contained_by or WCS.footprint_contains, there is a bug 
+    (fixed in Astropy 5.0.5) with WCS and TPV distortions (which VIS images use) whereby if one
+    point fails to converge, all subsequent points also fail. These bad points tend to be very
+    far from the detector, so manually excluding points far from the detector before applying
+    SkyCoord.contained_by mitigates this error. (This also speeds excution up as we no longer
+    need to process as many points!)
+
+    (See https://github.com/astropy/astropy/issues/13750 for details)
+    
+    Inputs:
+      - skycoords: An astropy.coordinates.SkyCoord object, containing one or more object coordinates
+      - wcs: An astropy.wcs.WCS object for a detector
+
+    Returns:
+      - contained_by: A numpy.ndarray(dtype=Bool) containing True if the object is in the detector, False otherwise
+    """
+    
+    from astropy import __version__ as astropy_version
+    from packaging import version
+
+    if version.parse(astropy_version) < version.parse("5.0.5"):
+        logger.warning("Astropy version %s is lower than 5.0.5. There is a known WCS bug which may cause incorrect results!", astropy_version)
+
+    ny, nx = wcs.array_shape
+
+    # First determine the coordinates of the centre of the detector, and its corners
+    centre_sk = wcs.pixel_to_world(nx/2, ny/2)
+    corners = wcs.calc_footprint()
+    corners_sk = SkyCoord(corners[:,0], corners[:,1], unit=degree)
+
+    # now get the maximum distance between the centre and the corners (x1.05 buffer)
+    max_sep = max(centre_sk.separation(corners_sk)) * 1.05
+    
+    # We consider points within max_sep from the centre of the detector as candidate 
+    # points to determine if they are in the detector's FOV
+    candidate_indices = np.where(skycoords.separation(centre_sk) < max_sep)
+
+    # Now detemrine which candidates are within the detector 
+    # (can alternatively use WCS.footprint_contains(SkyCoord))
+    candidates_contained_by = skycoords[candidate_indices].contained_by(wcs)
+
+    # Create and populate the output array
+    contained_by = np.full(len(skycoords), False, dtype=bool)
+
+    contained_by[candidate_indices] = candidates_contained_by
+
+    return contained_by
+
+
+
+
+def prune_objects_not_in_FOV(mer_table, wcs_list, ids_to_use):
+    """
+    Returns a new mer table with objects not in the FOV (or in ids_to_use) removed
+
+    Inputs:
+      - mer_table: A MER Final Catalog table
+      - wcs_list: A list of WCS objects for each detector
+      - ids_to_use: A list of objects we wish to use. All others will be pruned. If None, use all objects
+
+    Returns:
+      - pruned_table: The pruned MER Final Catalog table
+    """
+
+    ids = mer_table[mer_tf.ID]
+
+    # prune objects not in ids_to_use
+    if ids_to_use:
+        inds = [ i for i, id_ in enumerate(ids) if id_ in ids_to_use]
+        if len(inds) == 0:
+            logger.error("None of the ids_to_use are in the catalogue")
+            raise ValueError("None of the ids_to_use are in the catalogue")
+        mer_table = mer_table[inds]
+
+    # then check to see if there are any duplicates, remove them if so
+    uniques, indices = np.unique(ids, return_index=True)
+    if len(uniques) != len(ids):
+        logger.warning("%d duplicate objects were detected. Pruning the duplicates", len(ids)-len(uniques))
+        mer_table = mer_table[indices]
+    
+    # construct the SkyCoord object used to check against the WCSs
+    ras = mer_table[mer_tf.gal_x_world]
+    decs = mer_table[mer_tf.gal_y_world]
+    skycoords = SkyCoord(ras, decs, unit=degree)
+
+    n_objs = len(mer_table)
+    all_present = np.full(n_objs, False, dtype=bool)
+    
+    # find the objects in each detector
+    for wcs in wcs_list:
+        present_in_detector = skycoords_in_wcs(skycoords, wcs)
+        if not np.any(present_in_detector):
+            logger.warning("No points were found in detector!")
+        logger.debug("Found %d objects in detector",np.sum(present_in_detector))
+        all_present |= present_in_detector
+
+    pruned_table = mer_table[all_present]
+
+    if len(pruned_table) == 0:
+        logger.error("No objects found in the Observation.")
+        raise ValueError("No objects found in the Observation.")
+
+    logger.info("Identified %d objects in the FOV", len(pruned_table))
+
+    return pruned_table
+
+
+
+def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping_radius):
+    """
+    Groups objects then splits the objects into batches of mean size batch_size, with a maximum
+    number of batches of max_batches, such that all objects belonging to the same group are put
+    into the same batch.
+
+    Inputs:
+      - mer_final_catalog: The mer_final_catalog
+      - batch_size: the mean size of the batches
+      - max_batches: the maximum number of batches
+      - grouping_radius: the maximum separation between objects belonging to the same group (in arcseconds)
+
+    Outputs:
+      - ids_array: list of lists of object_ids for the objects in each batch
+      - index_arrays: list of lists of indices for the objects in each batch
+      - group_arrays: list of lists of group_ids for the objects in each batch
+    """
+    
+
+    # First we want to identify blended/grouped objects
+
     #get ras and decs of the objects
-    ras = data_stack.detections_catalogue[mfc_tf.gal_x_world].data[all_ids_indices]
-    decs = data_stack.detections_catalogue[mfc_tf.gal_y_world].data[all_ids_indices]
+    ras = mer_final_catalog[mer_tf.gal_x_world]
+    decs = mer_final_catalog[mer_tf.gal_y_world]
+    
     
     #  change coordinate system to one centred about the celestial equator so that over the half degree or so
     #  range we can approximate ra/dec as cartesian
@@ -213,173 +376,185 @@ def read_oid_input_data(data_images,
     # calculate the new x and y coordinates, converting to arcseconds
     x = np.cos(decs_eq*DTOR)*ras_eq * 3600.
     y = decs_eq * 3600.
-    
-    # get the groups (separation <= 1"), and the updated positions of all objects for batching (all objects
+
+    # get the groups (separation <= grouping_radius), and the updated positions of all objects for batching (all objects
     # belonging to the same group have the same position to ensure they are partitioned into the same batches below)
     x_group, y_group, group_ids = identify_all_groups(x, y, sep=grouping_radius, metric=euclidean_metric)
+    
+    # Now spatially batch the objects
 
-    logger.info(f"Splitting objects into batches of mean size {batch_size}")
+    num_objs = len(mer_final_catalog)
+
+     # If batch size is zero, use all IDs in one batch
+    if batch_size == 0:
+        batch_size = num_objs
+
+    num_batches = int(math.ceil(num_objs / batch_size))
+    
+    # if max_batches = 0, do not limit the number of batches
+    if max_batches > 0:
+        num_batches = np.min((num_batches, max_batches))
+
+    logger.info("Splitting objects into %d batches of mean size %d", num_batches, batch_size)
     
     #spatially batch objects into batches of mean size batch_size
-    clusters, batch_ids, ns = partition_into_batches(x_group, y_group, batchsize = batch_size)
+    _, batch_ids, _ = partition_into_batches(x_group, y_group, batchsize = batch_size)
 
-    
+
     #now construct the lists of IDs and indices for each batch
+
+    obj_ids = mer_final_catalog[mer_tf.ID]
 
     id_arrays = []
     index_arrays = []
     group_arrays=[]
 
-    unique_batch_ids = list(set(batch_ids))
+    unique_batch_ids = np.unique(batch_ids)
 
-    for batch in unique_batch_ids[:limited_num_batches]:
+    for batch in unique_batch_ids[:num_batches]:
 
         inds = np.where(batch_ids == batch)
 
-        ids = all_ids_array[inds]
-        indices = all_ids_indices[inds]
-        group = group_ids[inds]
+        ids = obj_ids[inds]
+        indices = inds[0]
+        groups = group_ids[inds]
 
         id_arrays.append(ids)
         index_arrays.append(indices)
-        group_arrays.append(group)
+        group_arrays.append(groups)
 
 
-    #make sure we do have num_batches batches
-    assert len(id_arrays) == limited_num_batches
+    # make sure we do have num_batches batches
+    assert len(id_arrays) == num_batches, "Number of batches produced does not match expected number of batches"
+
+    return id_arrays, index_arrays, group_arrays
 
 
-    return (limited_num_batches,
-            id_arrays,
-            group_arrays,
-            index_arrays,
-            pointing_list,
-            observation_id,
-            tile_list,
-            data_stack,
-            first_mer_final_catalog_product)
+def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir, workdir, i):
+    """
+    Writes a dpdSheObjectIdList product, returning its filename
 
+    Inputs:
+      - ids: the list of ids to write to the product
+      - pointing_list: The list of pointing ids
+      - observation_id: the observation id
+      - tile_list: the list of tile_ids
+      - subdir: the subdir to create the product in
+      - workdir: the workdir
+      - i: the instance id of this file
 
-def write_oid_batch(workdir,
-                    id_arrays,
-                    group_arrays,
-                    index_arrays,
-                    pointing_list,
-                    observation_id,
-                    tile_list,
-                    data_stack,
-                    first_mer_final_catalog_product,
-                    i):
-    # For the filenames, we want to set it up in a subfolder so we don't get too many files
-    subfolder_number = i % 256
-    subfolder_name = f"data/s{subfolder_number}"
-
-    qualified_subfolder_name = os.path.join(workdir, subfolder_name)
-
-    if not os.path.exists(qualified_subfolder_name):
-        # Can we create it?
-        try:
-            os.mkdir(qualified_subfolder_name)
-        except Exception as e:
-            logger.error(f"Directory {qualified_subfolder_name} does not exist and cannot be created.")
-            raise e
-
-    logger.debug(f"Writing ID list #{i} to product.")
-
-    # Get a filename for this batch and store it in the list
-    batch_id_list_product_filename = get_allowed_filename(type_name = "OBJ-ID-LIST",
-                                                          instance_id = f"{os.getpid()}-{i}",
-                                                          extension = ".xml",
-                                                          version = SHE_CTE.__version__,
-                                                          subdir = subfolder_name,
-                                                          processing_function = "SHE")
+    Returns:
+      - partially_qualified_id_list_filename: The output filename relative to the workdir
+    """
 
     # Create the product and fill out metadata
-    batch_id_list_product = she_object_id_list.create_dpd_she_object_id_list(id_list = list(id_arrays[i]))
+    dpd = she_object_id_list.create_dpd_she_object_id_list(id_list = list(ids))
 
-    batch_id_list_product.Data.BatchIndex = i
-    batch_id_list_product.Data.PointingIdList = pointing_list
-    batch_id_list_product.Data.ObservationId = observation_id
-    batch_id_list_product.Data.TileList = tile_list
+    dpd.Data.BatchIndex = i
+    dpd.Data.PointingIdList = pointing_list
+    dpd.Data.ObservationId = observation_id
+    dpd.Data.TileList = tile_list
+
+    # Get a filename for the product
+    id_list_filename = FileNameProvider().get_allowed_filename(
+        type_name="P-OBJ-ID-LIST",
+        instance_id="%05d"%i,
+        extension=".xml",
+        release=CTE_VERSION,
+        processing_function="SHE",
+    )
+
+    partially_qualified_id_list_filename = os.path.join(subdir,id_list_filename)
+    fully_qualified_id_list_filename = os.path.join(workdir,partially_qualified_id_list_filename)
 
     # Save the product
-    write_xml_product(batch_id_list_product, batch_id_list_product_filename, workdir = workdir)
+    save_product_metadata(dpd, fully_qualified_id_list_filename)
 
-    logger.debug(f"Successfully wrote ID list #{i} to product: {batch_id_list_product_filename}")
+    return partially_qualified_id_list_filename
 
-    # Create and write out the batch catalog
 
-    # Get a filename for the batch catalog
-    batch_mer_catalog_filename = get_allowed_filename(type_name = "BATCH-MER-CAT",
-                                                      instance_id = f"{os.getpid()}-{i}",
-                                                      extension = ".fits",
-                                                      version = SHE_CTE.__version__,
-                                                      subdir = subfolder_name,
-                                                      processing_function = "SHE")
-    
-    #get the data from the detections_catalogue for this batch, creating a new table
+
+def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
+    """
+    Writes a listfile pointing to a single mer catalog product for a batch
+
+    Inputs:
+      - input_mer_cat - the catalogue we will be taking rows from
+      - inds: The row indices to create the batched catalogue from
+      - groups: the group ids of the objects in the batch
+      - mfc_dpd: a dpdMerFinalCatalog object (from the inputs) that we use as a template for creating the new catalogue
+      - subdir: the subdire we want the files written to
+      - workdir: the working directory
+      - i: the instance id of this catalogue
+
+    Returns:
+      - partially_qualified_listfile_filename: the output filename relative to workdir
+
+    """
+
+    # get the data from the table for this batch, creating a new table
     # (The filled() method creates a copy with this data only)
-    batch_table = data_stack.detections_catalogue[index_arrays[i]].filled()
+    batch_table = input_mer_cat[inds].filled()
     
     #IF the group id is not already in the table, add it
-    if mfc_tf.GROUP_ID not in batch_table.columns:
-        col = Column(name = mfc_tf.GROUP_ID, data = group_arrays[i])
-        batch_table.add_column(col)
+    if mer_tf.GROUP_ID not in batch_table.columns:
+        batch_table.add_column(groups, name = mer_tf.GROUP_ID)
+
+    assert is_in_format(batch_table, mer_tf, verbose=True), "Output MER catalog is not in the correct format"
+
+    # Get a filename for the FITS table
+    table_filename = FileNameProvider().get_allowed_filename(
+        type_name="T-BATCH-MER-CAT",
+        instance_id="%05d"%i,
+        extension=".fits",
+        release=CTE_VERSION,
+        processing_function="SHE",
+    )
+
+    partially_qualified_table_filename = os.path.join(subdir,table_filename)
+    fully_qualified_table_filename = os.path.join(workdir,partially_qualified_table_filename)
+
+    batch_table.write(fully_qualified_table_filename)
+
+    # set up the product
+    dpd = deepcopy(mfc_dpd)
+
+    dpd.Data.DataStorage.DataContainer.FileName = partially_qualified_table_filename
+
+
+    # Get a filename for the product
+    mer_filename = FileNameProvider().get_allowed_filename(
+        type_name="P-BATCH-MER-CAT",
+        instance_id="%05d"%i,
+        extension=".xml",
+        release=CTE_VERSION,
+        processing_function="SHE",
+    )
+
+    partially_qualified_mer_filename = os.path.join(subdir,mer_filename)
+    fully_qualified_mer_filename = os.path.join(workdir,partially_qualified_mer_filename)
+
+    save_product_metadata(dpd, fully_qualified_mer_filename)
+
+    # Get a filename for the listfile
+    listfile_filename = FileNameProvider().get_allowed_filename(
+        type_name="L-BATCH-MER-CAT",
+        instance_id="%05d"%i,
+        extension=".xml",
+        release=CTE_VERSION,
+        processing_function="SHE",
+    )
+
+    partially_qualified_listfile_filename = os.path.join(subdir,listfile_filename)
+    fully_qualified_listfile_filename = os.path.join(workdir,partially_qualified_listfile_filename)
+
+    with open(fully_qualified_listfile_filename,"w") as f:
+        json.dump([partially_qualified_mer_filename],f)
+
+
+    return partially_qualified_listfile_filename
 
     
-    # Init the catalog and copy over metadata and the batch's data
-    #batch_mer_catalog = initialise_mer_final_catalog(optional_columns = data_stack.detections_catalogue.colnames, init_cols = batch_table.columns)
-    batch_mer_catalog = batch_table
-
-    for key in data_stack.detections_catalogue.meta:
-        batch_mer_catalog.meta[key] = data_stack.detections_catalogue.meta[key]
-    
-    # This could be included, but it ads 0.5s time per table... 150s alltogether on runtime
-    assert(is_in_format(batch_mer_catalog, mfc_tf, verbose=True))
-
-    # Write out the catalog
-    batch_mer_catalog.write(os.path.join(workdir, batch_mer_catalog_filename))
-
-    logger.debug(f"Successfully wrote batch MER catalog #{i} to: {batch_mer_catalog_filename}")
-
-    # Create and write out the batch MER product
-    logger.debug(f"Writing batch MER catalog product #{i}.")
-
-    # Get a filename for this product and store it in the list
-    batch_mer_catalog_product_filename = get_allowed_filename(type_name = "P-BATCH-MER-CAT",
-                                                              instance_id = f"{os.getpid()}-{i}",
-                                                              extension = ".xml",
-                                                              version = SHE_CTE.__version__,
-                                                              subdir = subfolder_name,
-                                                              processing_function = "SHE")
-
-    # Create the product and copy metadata from the first catalogue
-    batch_mer_catalog_product = mer_final_catalog.create_dpd_mer_final_catalog()
-
-    for attr in ['CatalogDescription', 'CutoutsCatalogStorage', 'DataStorage', 'ObservationIdList', 'ProcessingMode',
-                 'ProcessingSteps', 'QualityParams', 'SpatialCoverage', 'SpectralCoverage', 'TileIndex']:
-        setattr(batch_mer_catalog_product.Data, attr, getattr(first_mer_final_catalog_product.Data, attr))
-
-    # Overwrite the data filename with the new catalog
-    batch_mer_catalog_product.set_data_filename(batch_mer_catalog_filename)
-
-    # Save the product
-    write_xml_product(batch_mer_catalog_product, batch_mer_catalog_product_filename, workdir = workdir)
-
-    logger.debug(f"Successfully wrote batch MER catalog product #{i} to: {batch_mer_catalog_product_filename}")
-
-    # Write a listfile for this product for a consistent interface
-    batch_mer_catalog_listfile_filename = get_allowed_filename(type_name = "L-BATCH-MER-CAT",
-                                                               instance_id = f"{os.getpid()}-{i}",
-                                                               extension = ".json",
-                                                               version = SHE_CTE.__version__,
-                                                               subdir = subfolder_name,
-                                                               processing_function = "SHE")
-    write_listfile(os.path.join(workdir, batch_mer_catalog_listfile_filename), [batch_mer_catalog_product_filename])
-
-    return (batch_id_list_product_filename,
-            batch_mer_catalog_listfile_filename)
-
 
 def object_id_split_from_args(args,
                               sub_batch = False):
@@ -387,6 +562,14 @@ def object_id_split_from_args(args,
     """
 
     logger.debug('# Entering object_id_split_from_args(args)')
+
+    workdir = args.workdir
+    data_images = args.data_images
+    mer_final_catalog_tables = args.mer_final_catalog_tables
+    output_object_ids = args.object_ids
+    output_batch_mer_catalogs = args.batch_mer_catalogs
+
+    grouping_radius = args.pipeline_config[AnalysisConfigKeys.OID_GROUPING_RADIUS]
 
     if not sub_batch:
         ids_to_use = args.pipeline_config[AnalysisConfigKeys.OID_IDS]
@@ -397,60 +580,60 @@ def object_id_split_from_args(args,
         max_batches = args.pipeline_config[AnalysisConfigKeys.SOID_MAX_BATCHES]
         batch_size = args.pipeline_config[AnalysisConfigKeys.SOID_BATCH_SIZE]
 
-    grouping_radius = args.pipeline_config[AnalysisConfigKeys.OID_GROUPING_RADIUS]
 
-    (limited_num_batches,
-     id_arrays,
-     group_arrays,
-     index_arrays,
-     pointing_list,
-     observation_id,
-     tile_list,
-     data_stack,
-     first_mer_final_catalog_product) = read_oid_input_data(data_images = args.data_images,
-                                                            mer_final_catalog_tables = args.mer_final_catalog_tables,
-                                                            workdir = args.workdir,
-                                                            ids_to_use = ids_to_use,
-                                                            max_batches = max_batches,
-                                                            batch_size = batch_size,
-                                                            grouping_radius = grouping_radius,
-                                                            sub_batch = sub_batch)
+    # Read the data we need from the VIS products
+    wcs_list, pointing_ids, observation_id = read_vis_frames(data_images, workdir)
+    
+    # Read the mer final catalogues in, stacking them to one large catalogue
+    mer_final_catalog, tile_ids, mfc_dpd = read_mer_catalogs(mer_final_catalog_tables, workdir)
+    
+    # If we're sub batching, this has already been done in the batching stage
+    if not sub_batch:
+        # Remove objects outwith the FOV
+        mer_final_catalog = prune_objects_not_in_FOV(mer_final_catalog, wcs_list, ids_to_use)
+    
+    id_arrays, index_arrays, group_arrays = group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping_radius)
+    
+    # Loop over all the batches, writing the products
 
-    # Start outputting the ID lists for each batch and creating trimmed catalogs
+    id_prods = []
+    mer_prods = []
+    i = 0
+    n_batches = len(id_arrays)
+    for ids, inds, groups in zip(id_arrays, index_arrays, group_arrays):
+        
+        # make subdir for products if it doesn't already exist
+        subdir = os.path.join("data","s%d"%(i%256))
+        qualified_subdir = os.path.join(workdir,subdir)
+        if not os.path.exists(qualified_subdir):
+            os.mkdir(qualified_subdir)
 
-    # Keep a list of all product filenames
-    id_list_product_filename_list = []
-    batch_mer_catalog_listfile_filename_list = []
+        id_prod = write_id_list_product(ids, pointing_ids, observation_id, tile_ids, subdir, workdir, i)
 
-    logger.info("Writing ID lists and batch catalogs into products.")
+        mer_prod = write_mer_product(mer_final_catalog, inds, groups, mfc_dpd, subdir, workdir, i)
 
-    for i in range(limited_num_batches):
-        t0 = time.time()
+        id_prods.append(id_prod)
+        mer_prods.append(mer_prod)
 
-        (batch_id_list_product_filename,
-         batch_mer_catalog_listfile_filename) = write_oid_batch(
-            workdir = args.workdir,
-            id_arrays = id_arrays,
-            group_arrays = group_arrays,
-            index_arrays = index_arrays,
-            pointing_list = pointing_list,
-            observation_id = observation_id,
-            tile_list = tile_list,
-            data_stack = data_stack,
-            first_mer_final_catalog_product = first_mer_final_catalog_product,
-            i = i)
+        logger.info("Writen batch %d of %d to file",i+1, n_batches)
 
-        id_list_product_filename_list.append(batch_id_list_product_filename)
-        batch_mer_catalog_listfile_filename_list.append(batch_mer_catalog_listfile_filename)
+        i+=1
 
-        t1=time.time()
-        logger.info(f"Written batch {i+1} of {limited_num_batches} in {t1-t0} seconds")
+    # Finally write the output listfiles
 
-    # Output the listfiles
-    write_listfile(os.path.join(args.workdir, args.object_ids), id_list_product_filename_list)
-    logger.info(f"Finished writing listfile of object ID list products to {args.object_ids}")
+    qualified_mer_listfile = os.path.join(workdir,output_batch_mer_catalogs)
+    with open(qualified_mer_listfile,"w") as f:
+        json.dump(mer_prods, f)
+    logger.info("Written output batch_mer_catalogs listfile to %s", qualified_mer_listfile)
 
-    write_listfile(os.path.join(args.workdir, args.batch_mer_catalogs), batch_mer_catalog_listfile_filename_list)
-    logger.info(f"Finished writing listfile of batch MER catalog products to {args.batch_mer_catalogs}")
+    qualified_obj_ids_listfile = os.path.join(workdir,output_object_ids)
+    with open(qualified_obj_ids_listfile,"w") as f:
+        json.dump(id_prods, f)
+    logger.info("Written output object_ids listfile to %s", qualified_obj_ids_listfile)
 
-    logger.debug('# Exiting object_id_split_from_args normally')
+    
+
+    
+
+
+   
