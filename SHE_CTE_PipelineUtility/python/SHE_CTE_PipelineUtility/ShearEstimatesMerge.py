@@ -107,7 +107,7 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
             os.path.join(workdir, she_lensmc_chains_table_product_filename))
 
         if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensMcChains):
-            raise TypeError(f"Shear product is of invalid type: {type(she_lensmc_chains_product)}")
+            raise TypeError(f"Chains product is of invalid type: {type(she_lensmc_chains_product)}")
 
     except Exception as e:
 
@@ -346,7 +346,7 @@ def she_measurements_merge_from_args(args):
 
         # Skip if no data for this method
         if len(she_measurements_tables[method]) == 0:
-            combined_she_measurements_product.set_method_filename(method, "None")
+            combined_she_measurements_product.set_method_filename(method, None)
             continue
 
         # Combine the tables
