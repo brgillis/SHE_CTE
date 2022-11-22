@@ -5,7 +5,6 @@ elements_subdir(SHE_CTE_BiasMeasurement)
 elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(SHE_CTE)
 elements_depends_on_subdirs(SHE_CTE_PipelineUtility)
-elements_depends_on_subdirs(SHE_CTE_ShearEstimation)
 elements_depends_on_subdirs(SHE_PPT)
 elements_depends_on_subdirs(SHE_BFD_CalculateMoments)
 
@@ -24,4 +23,3 @@ elements_install_conf_files()
 
 # Install the auxiliary files
 # elements_install_aux_files()
-                
