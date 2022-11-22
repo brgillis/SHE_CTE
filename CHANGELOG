@@ -8,19 +8,23 @@ API Changes
 
 Dependency Changes
 ------------------
-- LensMC 9.1, MomentsML 9.1, PPT 9.2
+- SHE_PPT 9.2.1
+- No longer depends on SHE_LensMC or SHE_MomentsML
 
 Deprecated Features
 -------------------
+- SHE_CTE_EstimateShear
 
 Bug Fixes
 ---------
 - Fix for test_shear_estimate_flags not setting the image header correctly
+- Fix bug in ShearEstimatesMerge where methods with no data were given the filename "None"
 
 New Features
 ------------
 - SHE_CTE_ReconcileShear now fills out the PointingIdList and ObservationIdList attributes of created data products
 - Refactored ObjectIdSplit to avoid using the SheFrameStack, and if at all possible to avoid reading the VIS FITS files at all, instead trying to get all its information from the XML products directly.
+- Smoketest for SHE_CTE_ShearEstimatesMerge
 
 New Config Features
 -------------------
