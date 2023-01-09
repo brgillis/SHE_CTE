@@ -28,8 +28,10 @@ import math
 
 from astropy.table import Table
 
+from ST_DM_DmUtils.DmUtils import read_product_metadata
+
 from SHE_PPT.testing import generate_mock_mer_catalogues, generate_mock_vis_images
-from SHE_PPT.file_io import read_listfile, read_xml_product, write_listfile
+from SHE_PPT.file_io import read_listfile, write_listfile
 from SHE_PPT.products.mer_final_catalog import dpdMerFinalCatalog
 from SHE_PPT.products.she_object_id_list import dpdSheObjectIdList
 from SHE_PPT.table_formats.mer_final_catalog import tf as mfc_tf
@@ -127,21 +129,21 @@ class TestCase:
             
             dpd_xml = dpds[0]
 
-            dpd = read_xml_product(dpd_xml,workdir=self.workdir)
+            dpd = read_product_metadata(os.path.join(self.workdir,dpd_xml))
 
             #ensure the read in data product is of the correct type
             assert type(dpd) == dpdMerFinalCatalog, "Expected output to be dpdMerFinalCatalog, but got %s"%(type(dpd).__name__)
             
             #now read in the table, and ensure it is the correct format
-            table_filename = dpd.get_filename()
-            qualified_table_filename = os.path.join(self.workdir,table_filename)
+            table_filename = dpd.Data.DataStorage.DataContainer.FileName
+            qualified_table_filename = os.path.join(self.workdir,"data",table_filename)
             table = Table.read(qualified_table_filename)
             assert is_in_format(table, mfc_tf), "MER final catalog table is not in the correct format"
 
         # check that the output object id lists are of the correct type
         output_objs = []
         for product in object_list:
-            dpd = read_xml_product(product,workdir=self.workdir)
+            dpd = read_product_metadata(os.path.join(self.workdir,product))
 
             assert type(dpd) == dpdSheObjectIdList, "Expected output to be dpdSheObjectIdList, but got %s"%(type(dpd).__name__)
             
