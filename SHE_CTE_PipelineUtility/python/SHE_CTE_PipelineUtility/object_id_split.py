@@ -464,7 +464,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
         processing_function="SHE",
     )
 
-    partially_qualified_id_list_filename = os.path.join(subdir,id_list_filename)
+    partially_qualified_id_list_filename = os.path.join("data",subdir,id_list_filename)
     fully_qualified_id_list_filename = os.path.join(workdir,partially_qualified_id_list_filename)
 
     # Save the product
@@ -483,7 +483,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
       - inds: The row indices to create the batched catalogue from
       - groups: the group ids of the objects in the batch
       - mfc_dpd: a dpdMerFinalCatalog object (from the inputs) that we use as a template for creating the new catalogue
-      - subdir: the subdire we want the files written to
+      - subdir: the subdir we want the files written to
       - workdir: the working directory
       - i: the instance id of this catalogue
 
@@ -512,7 +512,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
     )
 
     partially_qualified_table_filename = os.path.join(subdir,table_filename)
-    fully_qualified_table_filename = os.path.join(workdir,partially_qualified_table_filename)
+    fully_qualified_table_filename = os.path.join(workdir,"data",partially_qualified_table_filename)
 
     batch_table.write(fully_qualified_table_filename)
 
@@ -531,7 +531,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
         processing_function="SHE",
     )
 
-    partially_qualified_mer_filename = os.path.join(subdir,mer_filename)
+    partially_qualified_mer_filename = os.path.join("data",subdir,mer_filename)
     fully_qualified_mer_filename = os.path.join(workdir,partially_qualified_mer_filename)
 
     save_product_metadata(dpd, fully_qualified_mer_filename)
@@ -540,12 +540,12 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
     listfile_filename = FileNameProvider().get_allowed_filename(
         type_name="L-BATCH-MER-CAT",
         instance_id="%05d"%i,
-        extension=".xml",
+        extension=".json",
         release=CTE_VERSION,
         processing_function="SHE",
     )
 
-    partially_qualified_listfile_filename = os.path.join(subdir,listfile_filename)
+    partially_qualified_listfile_filename = os.path.join("data",subdir,listfile_filename)
     fully_qualified_listfile_filename = os.path.join(workdir,partially_qualified_listfile_filename)
 
     with open(fully_qualified_listfile_filename,"w") as f:
@@ -603,8 +603,8 @@ def object_id_split_from_args(args,
     for ids, inds, groups in zip(id_arrays, index_arrays, group_arrays):
         
         # make subdir for products if it doesn't already exist
-        subdir = os.path.join("data","s%d"%(i%256))
-        qualified_subdir = os.path.join(workdir,subdir)
+        subdir = "s%d"%(i%256)
+        qualified_subdir = os.path.join(workdir,"data",subdir)
         if not os.path.exists(qualified_subdir):
             os.mkdir(qualified_subdir)
 
