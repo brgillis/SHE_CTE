@@ -19,6 +19,7 @@ Bug Fixes
 ---------
 - Fix for test_shear_estimate_flags not setting the image header correctly
 - Fix bug in ShearEstimatesMerge where methods with no data were given the filename "None"
+- Fix bug in (Sub)ObjectIdSplit where filenames were not unique enough, and some name conflicts could arise
 
 New Features
 ------------
