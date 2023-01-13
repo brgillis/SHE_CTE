@@ -36,6 +36,8 @@ from astropy.wcs import WCS
 from astropy.units import degree
 from astropy.coordinates import SkyCoord
 
+from EL_PythonUtils.utilities import hash_any
+
 from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
 from ST_DM_DmUtils.DmUtils import save_product_metadata, read_product_metadata, get_product_name, get_header_from_wcs_binding
 
@@ -430,7 +432,7 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     return id_arrays, index_arrays, group_arrays
 
 
-def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir, workdir, i):
+def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir, workdir, i, batch_uuid):
     """
     Writes a dpdSheObjectIdList product, returning its filename
 
@@ -458,7 +460,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
     # Get a filename for the product
     id_list_filename = FileNameProvider().get_allowed_filename(
         type_name="P-OBJ-ID-LIST",
-        instance_id="%05d"%i,
+        instance_id=batch_uuid,
         extension=".xml",
         release=CTE_VERSION,
         processing_function="SHE",
@@ -474,7 +476,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
 
 
 
-def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
+def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, batch_uuid):
     """
     Writes a listfile pointing to a single mer catalog product for a batch
 
@@ -505,7 +507,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
     # Get a filename for the FITS table
     table_filename = FileNameProvider().get_allowed_filename(
         type_name="T-BATCH-MER-CAT",
-        instance_id="%05d"%i,
+        instance_id=batch_uuid,
         extension=".fits",
         release=CTE_VERSION,
         processing_function="SHE",
@@ -525,7 +527,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
     # Get a filename for the product
     mer_filename = FileNameProvider().get_allowed_filename(
         type_name="P-BATCH-MER-CAT",
-        instance_id="%05d"%i,
+        instance_id=batch_uuid,
         extension=".xml",
         release=CTE_VERSION,
         processing_function="SHE",
@@ -539,7 +541,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, i):
     # Get a filename for the listfile
     listfile_filename = FileNameProvider().get_allowed_filename(
         type_name="L-BATCH-MER-CAT",
-        instance_id="%05d"%i,
+        instance_id=batch_uuid,
         extension=".json",
         release=CTE_VERSION,
         processing_function="SHE",
@@ -607,10 +609,15 @@ def object_id_split_from_args(args,
         qualified_subdir = os.path.join(workdir,"data",subdir)
         if not os.path.exists(qualified_subdir):
             os.mkdir(qualified_subdir)
+        
+        # generate a uuid for this batch (from the list of object_ids in the batch) to
+        # use in the filenames of the object_id_list and mer_final_catalog products/files/
+        # This greatly reduces the chances of filename conflitcs (which can happen!)
+        batch_uuid = hash_any(ids, format="hex", max_length=10)
 
-        id_prod = write_id_list_product(ids, pointing_ids, observation_id, tile_ids, subdir, workdir, i)
+        id_prod = write_id_list_product(ids, pointing_ids, observation_id, tile_ids, subdir, workdir, i, batch_uuid)
 
-        mer_prod = write_mer_product(mer_final_catalog, inds, groups, mfc_dpd, subdir, workdir, i)
+        mer_prod = write_mer_product(mer_final_catalog, inds, groups, mfc_dpd, subdir, workdir, batch_uuid)
 
         id_prods.append(id_prod)
         mer_prods.append(mer_prod)
