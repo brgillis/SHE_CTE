@@ -208,16 +208,6 @@ def she_measurements_merge_from_args(args):
 
     logger.debug('# Entering she_measurements_merge_from_args(args)')
 
-    # Read in the pipeline config
-    try:
-        pipeline_config = read_analysis_config(args.pipeline_config, workdir = args.workdir)
-        if pipeline_config is None:
-            pipeline_config = {}
-    except Exception as e:
-        logger.warning("Failsafe exception block triggered when trying to read pipeline config. " +
-                       "Exception was: " + str(e))
-        pipeline_config = {}
-
     # Determine how many threads we'll use
     number_threads = args.pipeline_config[AnalysisConfigKeys.SEM_NUM_THREADS]
 
