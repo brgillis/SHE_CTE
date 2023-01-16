@@ -164,7 +164,7 @@ class TestCase:
     """
 
     def test_shearestimatesmerge_withchains(self, workdir):
-        """Smoketest for the executable"""
+        """Smoketest for the executable - with LensMC chains"""
 
         # Which methods to make products for
         # NOTE: Make some False so we can check that it correctly handles some methods missing
@@ -242,6 +242,7 @@ class TestCase:
                 assert fits is not None, "%s file is not set in the product but it should be" % method
                 t = Table.read(os.path.join(workdir, fits))
                 assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected" % method
+                assert len(t) == len(ids1+ids2), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1+ids2))
             else:
                 assert fits is None, "%s file is set in the product but it should not be" % method
 
@@ -254,7 +255,7 @@ class TestCase:
 
 
     def test_shearestimatesmerge_nochains(self, workdir):
-        """Smoketest for the executable"""
+        """Smoketest for the executable - without LensMC chains"""
 
         # Which methods to make products for
         # NOTE: Make some False so we can check that it correctly handles some methods missing
@@ -349,6 +350,7 @@ class TestCase:
                 assert fits is not None, "%s file is not set in the product but it should be" % method
                 t = Table.read(os.path.join(workdir, fits))
                 assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected" % method
+                assert len(t) == len(ids1+ids2), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1+ids2))
             else:
                 assert fits is None, "%s file is set in the product but it should not be" % method
 

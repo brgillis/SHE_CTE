@@ -331,7 +331,7 @@ def she_measurements_merge_from_args(args):
     logger.info("Combined shear estimates product output to: " + args.merged_she_measurements)
 
     
-    # Process LensMC Chains
+    # Process LensMC Chains (if they are provided)
     if args.she_lensmc_chains_listfile is not None:
         logger.info("Loading chains from files listed in: " + args.she_lensmc_chains_listfile)
 
@@ -383,6 +383,8 @@ def she_measurements_merge_from_args(args):
         
         write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
         logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
+    else:
+        logger.info("Not merging LensMC chains as none were provided")
 
     logger.debug('# Exiting she_measurements_merge_from_args normally')
 
