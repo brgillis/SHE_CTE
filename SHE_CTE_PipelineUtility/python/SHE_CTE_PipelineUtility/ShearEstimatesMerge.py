@@ -231,52 +231,33 @@ def she_measurements_merge_from_args(args):
     chains_product_filenames = read_listfile(
         os.path.join(args.workdir, args.she_lensmc_chains_listfile))
 
-    # If using just one thread, don't bother with multiprocessing to read tables
+    
 
-    if number_threads == 1:
+    # Read the measurements tables
 
-        (full_l_she_measurements_tables,
-         full_l_observation_ids,
-         full_l_observation_times,
-         full_l_pointing_id_lists,
-         full_l_tile_lists) = zip(*[read_method_estimates_tables(
-            f, args.workdir) for f in measurements_product_filenames])
+    input_tuples = [(
+        she_measurements_table_product_filename, args.workdir) for
+        she_measurements_table_product_filename in measurements_product_filenames]
 
-        full_l_she_lensmc_chains_tables = [read_lensmc_chains_tables(
-            f, args.workdir) for f in chains_product_filenames]
+    with mp.Pool(processes = number_threads) as pool:
+        pool_she_measurements_tables_and_metadata = pool.starmap(read_method_estimates_tables, input_tuples)
 
-        she_lensmc_chains_tables = [t for t in full_l_she_lensmc_chains_tables if t is not None]
+    (full_l_she_measurements_tables,
+        full_l_observation_ids,
+        full_l_observation_times,
+        full_l_pointing_id_lists,
+        full_l_tile_lists) = zip(*pool_she_measurements_tables_and_metadata)
 
-    else:
+    # Read the chains tables
 
-        # Read the measurements tables
+    input_tuples = [(
+        she_lensmc_chains_table_product_filename, args.workdir) for 
+        she_lensmc_chains_table_product_filename in chains_product_filenames
+        ]
 
-        pool = mp.Pool(processes = number_threads)
-        pool_she_measurements_tables_and_metadata = [pool.apply_async(read_method_estimates_tables, args = (
-            she_measurements_table_product_filename, args.workdir)) for she_measurements_table_product_filename
-                                                     in measurements_product_filenames]
+    with mp.Pool(processes = number_threads) as pool:
+        she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
 
-        pool.close()
-        pool.join()
-
-        (full_l_she_measurements_tables,
-         full_l_observation_ids,
-         full_l_observation_times,
-         full_l_pointing_id_lists,
-         full_l_tile_lists) = zip(*[a.get() for a in pool_she_measurements_tables_and_metadata if a.get() is not None])
-
-        # Read the chains tables
-
-        pool = mp.Pool(processes = number_threads)
-        pool_she_lensmc_chains_tables = [pool.apply_async(read_lensmc_chains_tables, args = (
-            she_lensmc_chains_table_product_filename, args.workdir)) for she_lensmc_chains_table_product_filename in
-                                         chains_product_filenames]
-
-        pool.close()
-        pool.join()
-
-        she_lensmc_chains_tables = [a.get() for a in pool_she_lensmc_chains_tables if a.get() is not None]
-        # End section to handle multithreading
 
     l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
     l_observation_ids = [x for x in full_l_observation_ids if x is not None]
