@@ -80,11 +80,11 @@ def defineSpecificProgramOptions():
 
     # Input data
     parser.add_input_arg('--shear_estimates_product_listfile', type = str)
-    parser.add_input_arg('--she_lensmc_chains_listfile', type = str)
+    parser.add_input_arg('--she_lensmc_chains_listfile', type = str, default=None)
 
     # Output data
     parser.add_output_arg('--merged_she_measurements', type = str)
-    parser.add_output_arg('--merged_she_lensmc_chains', type = str,
+    parser.add_output_arg('--merged_she_lensmc_chains', type = str, default=None,
                           help = 'XML data product to contain LensMC chains data.')
 
     # Input arguments (can't be used in pipeline)
@@ -208,6 +208,11 @@ def she_measurements_merge_from_args(args):
 
     logger.debug('# Entering she_measurements_merge_from_args(args)')
 
+    # Sanity check arguments (either input and output chains are both None, or both not None)
+    if bool(args.she_lensmc_chains_listfile) != bool(args.merged_she_lensmc_chains):
+        raise ValueError("Inconsistent input arguments. Input chains listfile is %s but output chains product is %s"%(args.she_lensmc_chains_listfile, args.merged_she_lensmc_chains))
+
+
     # Determine how many threads we'll use
     number_threads = args.pipeline_config[AnalysisConfigKeys.SEM_NUM_THREADS]
 
@@ -327,57 +332,57 @@ def she_measurements_merge_from_args(args):
 
     
     # Process LensMC Chains
+    if args.she_lensmc_chains_listfile is not None:
+        logger.info("Loading chains from files listed in: " + args.she_lensmc_chains_listfile)
 
-    logger.info("Loading chains from files listed in: " + args.she_lensmc_chains_listfile)
+        chains_product_filenames = read_listfile(
+            os.path.join(args.workdir, args.she_lensmc_chains_listfile))
 
-    chains_product_filenames = read_listfile(
-        os.path.join(args.workdir, args.she_lensmc_chains_listfile))
+        # Read the LensMC chains tables
 
-    # Read the LensMC chains tables
+        input_tuples = [(
+            she_lensmc_chains_table_product_filename, args.workdir) for 
+            she_lensmc_chains_table_product_filename in chains_product_filenames
+            ]
 
-    input_tuples = [(
-        she_lensmc_chains_table_product_filename, args.workdir) for 
-        she_lensmc_chains_table_product_filename in chains_product_filenames
-        ]
+        with mp.Pool(processes = number_threads) as pool:
+            she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
 
-    with mp.Pool(processes = number_threads) as pool:
-        she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
+        logger.info("Finished loading chains from files listed in: " + args.she_lensmc_chains_listfile)
 
-    logger.info("Finished loading chains from files listed in: " + args.she_lensmc_chains_listfile)
+        # Combine the chains tables
+        combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables,
+                                                        metadata_conflicts = "silent")
 
-    # Combine the chains tables
-    combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables,
-                                                     metadata_conflicts = "silent")
+        # Get a filename for the table
+        combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name = "SHEAR-CHAIN",
+                                                                        instance_id = 'MERGED',
+                                                                        extension = ".fits",
+                                                                        version = SHE_CTE.__version__,
+                                                                        subdir = "data",
+                                                                        processing_function = "SHE")
+        
+        # Create the output product
+        combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
+            spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
 
-    # Get a filename for the table
-    combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name = "SHEAR-CHAIN",
-                                                                     instance_id = 'MERGED',
-                                                                     extension = ".fits",
-                                                                     version = SHE_CTE.__version__,
-                                                                     subdir = "data",
-                                                                     processing_function = "SHE")
-    
-    # Create the output product
-    combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product(
-        spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
-
-    # Set the metadata for the chains product
-    combined_she_lensmc_chains_product.Data.ObservationId = observation_id
-    combined_she_lensmc_chains_product.Data.ObservationDateTime = observation_time
-    combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
-    combined_she_lensmc_chains_product.Data.TileList = tile_list
+        # Set the metadata for the chains product
+        combined_she_lensmc_chains_product.Data.ObservationId = observation_id
+        combined_she_lensmc_chains_product.Data.ObservationDateTime = observation_time
+        combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
+        combined_she_lensmc_chains_product.Data.TileList = tile_list
 
 
-    combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)
+        combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)
 
-    # Output the combined chains table
-    combined_she_lensmc_chains_tables.write(os.path.join(args.workdir,
-                                                         combined_she_lensmc_chains_table_filename),
-                                            format = "fits")
+        # Output the combined chains table
+        combined_she_lensmc_chains_tables.write(os.path.join(args.workdir,
+                                                            combined_she_lensmc_chains_table_filename),
+                                                format = "fits")
 
-    
-    write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
-    logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
+        
+        write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
+        logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
 
     logger.debug('# Exiting she_measurements_merge_from_args normally')
 

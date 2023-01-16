@@ -163,7 +163,7 @@ class TestCase:
     Tests for the SHE_CTE_ShearEstimatesMerge executable
     """
 
-    def test_shearestimatesmerge(self, workdir):
+    def test_shearestimatesmerge_withchains(self, workdir):
         """Smoketest for the executable"""
 
         # Which methods to make products for
@@ -251,3 +251,104 @@ class TestCase:
 
         t = Table.read(os.path.join(workdir, fits))
         assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected"
+
+
+    def test_shearestimatesmerge_nochains(self, workdir):
+        """Smoketest for the executable"""
+
+        # Which methods to make products for
+        # NOTE: Make some False so we can check that it correctly handles some methods missing
+        lensmc = True
+        ksb = True
+        regauss = False
+        momentsml = False
+
+        # create input data
+
+        ids1 = [i for i in range(10)]
+        ids2 = [i for i in range(10, 20)]
+
+        measurements_prod1 = create_mock_measurements_product(
+            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+        )
+        measurements_prod2 = create_mock_measurements_product(
+            workdir=workdir, ids=ids2, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+        )
+
+        measurements_listfile = "mes.json"
+
+        with open(os.path.join(workdir, measurements_listfile), "w") as f:
+            json.dump([measurements_prod1, measurements_prod2], f)
+
+
+        # create args for executable
+
+        measurements_out = "combined_measurements.xml"
+
+        parser = defineSpecificProgramOptions()
+
+        # first test that the executable correctly throws an error if one of the chains input/output products is specified but not the other
+
+        commandlineargs = [
+            "--workdir=%s" % workdir,
+            "--shear_estimates_product_listfile=%s" % measurements_listfile,
+            "--she_lensmc_chains_listfile=%s" % "dummyfile",
+            "--merged_she_measurements=%s" % measurements_out,
+        ]
+        
+        args = parser.parse_args(commandlineargs)
+
+        with pytest.raises(ValueError):
+            mainMethod(args)
+
+
+        commandlineargs = [
+            "--workdir=%s" % workdir,
+            "--shear_estimates_product_listfile=%s" % measurements_listfile,
+            "--merged_she_measurements=%s" % measurements_out,
+            "--merged_she_lensmc_chains=%s" % "dummyfile",
+        ]
+
+        args = parser.parse_args(commandlineargs)
+
+        with pytest.raises(ValueError):
+            mainMethod(args)
+        
+        # Now run the executable proper
+
+        commandlineargs = [
+            "--workdir=%s" % workdir,
+            "--shear_estimates_product_listfile=%s" % measurements_listfile,
+            "--merged_she_measurements=%s" % measurements_out,
+        ]
+
+        args = parser.parse_args(commandlineargs)
+        mainMethod(args)
+
+        # Check existence of outputs
+
+        q_measurements_out = os.path.join(workdir, measurements_out)
+
+        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
+
+        # check validity of measurements product
+        dpd = read_xml_product(q_measurements_out)
+
+        lmc_fits = dpd.get_LensMC_filename()
+        ksb_fits = dpd.get_KSB_filename()
+        regauss_fits = dpd.get_REGAUSS_filename()
+        momentsml_fits = dpd.get_MomentsML_filename()
+
+        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
+        requested = [lensmc, ksb, regauss, momentsml]
+        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
+
+        for method, request, fits in zip(methods, requested, fits_files):
+            # If this method was requested, make sure its file exists and all the objects are there
+            if request:
+                assert fits is not None, "%s file is not set in the product but it should be" % method
+                t = Table.read(os.path.join(workdir, fits))
+                assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected" % method
+            else:
+                assert fits is None, "%s file is set in the product but it should not be" % method
+
