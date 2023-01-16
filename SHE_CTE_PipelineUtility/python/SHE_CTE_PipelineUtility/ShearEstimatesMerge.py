@@ -240,13 +240,13 @@ def she_measurements_merge_from_args(args):
         she_measurements_table_product_filename in measurements_product_filenames]
 
     with mp.Pool(processes = number_threads) as pool:
-        pool_she_measurements_tables_and_metadata = pool.starmap(read_method_estimates_tables, input_tuples)
+        she_measurements_tables_and_metadata = pool.starmap(read_method_estimates_tables, input_tuples)
 
     (full_l_she_measurements_tables,
         full_l_observation_ids,
         full_l_observation_times,
         full_l_pointing_id_lists,
-        full_l_tile_lists) = zip(*pool_she_measurements_tables_and_metadata)
+        full_l_tile_lists) = zip(*she_measurements_tables_and_metadata)
 
     # Read the chains tables
 
