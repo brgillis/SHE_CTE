@@ -51,7 +51,7 @@ from SHE_PPT.table_utility import is_in_format
 
 from SHE_PPT.products import she_object_id_list
 
-from SHE_CTE import __version__ as CTE_VERSION
+from SHE_CTE import SHE_CTE_RELEASE_STRING
 
 
 logger = getLogger(__name__)
@@ -462,7 +462,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
         type_name="P-OBJ-ID-LIST",
         instance_id=batch_uuid,
         extension=".xml",
-        release=CTE_VERSION,
+        release=SHE_CTE_RELEASE_STRING,
         processing_function="SHE",
     )
 
@@ -509,7 +509,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         type_name="T-BATCH-MER-CAT",
         instance_id=batch_uuid,
         extension=".fits",
-        release=CTE_VERSION,
+        release=SHE_CTE_RELEASE_STRING,
         processing_function="SHE",
     )
 
@@ -529,7 +529,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         type_name="P-BATCH-MER-CAT",
         instance_id=batch_uuid,
         extension=".xml",
-        release=CTE_VERSION,
+        release=SHE_CTE_RELEASE_STRING,
         processing_function="SHE",
     )
 
@@ -543,7 +543,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         type_name="L-BATCH-MER-CAT",
         instance_id=batch_uuid,
         extension=".json",
-        release=CTE_VERSION,
+        release=SHE_CTE_RELEASE_STRING,
         processing_function="SHE",
     )
 

@@ -26,6 +26,9 @@ from SHE_CTE_VERSION import SHE_CTE_VERSION_STRING
 
 __version__ = SHE_CTE_VERSION_STRING
 
+import re
+SHE_CTE_RELEASE_STRING = re.match(r"[0-9]{1,2}\.[0-9]{1,2}", SHE_CTE_VERSION_STRING).group()
+
 from pkgutil import extend_path
 
 __path__ = extend_path(__path__, __name__)
