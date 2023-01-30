@@ -4,6 +4,7 @@
 # Linux-specific
 .*
 !.gitignore
+!.gitlab-ci.yml
 *~
 *.sw[a-p]
 

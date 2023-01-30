@@ -35,6 +35,7 @@ New Config Features
 Miscellaneous
 -------------
 - Removed deprecated parameter "allow_pickled" from read/write_xml_product function calls
+- Run pytest in a GitLab CI/CD pipeline
 
 
 Changes in v9.0
