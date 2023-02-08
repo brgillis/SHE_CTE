@@ -109,13 +109,6 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
         if not isinstance(she_lensmc_chains_product, products.she_lensmc_chains.dpdSheLensMcChains):
             raise TypeError(f"Chains product is of invalid type: {type(she_lensmc_chains_product)}")
 
-    except Exception as e:
-
-        logger.warning("Failsafe block encountered exception: " + str(e))
-        return
-
-    try:
-
         she_lensmc_chains_table_filename = she_lensmc_chains_product.get_filename()
 
         if she_lensmc_chains_table_filename is None or she_lensmc_chains_table_filename == "None":
@@ -132,7 +125,7 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
 
     except Exception as e:
 
-        logger.warning("Failsafe block encountered exception: " + str(e))
+        logger.warning("Cannot read chains table from %s: %s",she_lensmc_chains_table_product_filename, str(e))
         return
 
     logger.debug("Finished loading chains from file: " + she_lensmc_chains_table_product_filename)
@@ -166,8 +159,8 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
     except Exception as e:
 
-        logger.warning("Failsafe block encountered exception: " + str(e))
-        return
+        logger.warning("Error reading %s: %s", she_measurements_table_product_filename, str(e))
+        return None, None, None, None, None
 
     # Loop over methods and read in the table
 
@@ -186,16 +179,14 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
             she_measurements_method_table = table.Table.read(os.path.join(
                 workdir, she_measurements_method_table_filename))
 
-            if not is_in_format(she_measurements_method_table, sm_tf, verbose = True, ignore_metadata = True):
+            if not is_in_format(she_measurements_method_table, sm_tf, verbose = False, ignore_metadata = True, strict = False):
                 raise TypeError(f"Input shear estimates table for method {method} is of invalid format.")
 
             # Append the table to the list of tables
             she_measurements_tables[method] = she_measurements_method_table
 
         except Exception as e:
-
-            logger.warning("Failsafe block encountered exception: " + str(e))
-            return
+            logger.warning("Error occurred accessing %s measurements: %s", method, str(e))
 
         logger.debug("Finished loading shear estimates from file: " + she_measurements_table_product_filename)
 
@@ -349,6 +340,8 @@ def she_measurements_merge_from_args(args):
             she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
 
         logger.info("Finished loading chains from files listed in: " + args.she_lensmc_chains_listfile)
+
+        she_lensmc_chains_tables = [t for t in she_lensmc_chains_tables if t is not None]
 
         # Combine the chains tables
         combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables,
