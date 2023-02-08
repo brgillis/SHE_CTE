@@ -46,12 +46,13 @@ from SHE_CTE import __version__ as CTE_VERSION
 from SHE_CTE_PipelineUtility.ShearEstimatesMerge import defineSpecificProgramOptions, mainMethod
 
 # NOTE: To add to PPT eventually?
-def create_mock_chains_product(workdir, ids=[]):
+def create_mock_chains_product(workdir, ids=[], include_data=True):
     """Creates a mock LensMC chains product from a list of object ids
 
     Inputs:
       - workdir: the workdir for the product
       - ids: a list of object IDs
+      - include_data: bool - actually create a FITS file (T) or not (F)
 
     Returns:
       - product_filename: The name of the created product
@@ -68,8 +69,9 @@ def create_mock_chains_product(workdir, ids=[]):
         },
     )
     chains_fname = get_allowed_filename("CHAINS", "LENSMC", version=CTE_VERSION, subdir="")
-    qualified_chains_filename = os.path.join(datadir, chains_fname)
-    t_chains.write(qualified_chains_filename)
+    if include_data:
+        qualified_chains_filename = os.path.join(datadir, chains_fname)
+        t_chains.write(qualified_chains_filename)
 
     dpd = create_dpd_she_lensmc_chains()
     dpd.set_data_filename(chains_fname)
@@ -82,7 +84,7 @@ def create_mock_chains_product(workdir, ids=[]):
 
 
 # NOTE: To add to PPT eventually?
-def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False):
+def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True):
     """Creates a mock shear measurements product from a list of object ids
 
     Inputs:
@@ -92,6 +94,7 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
       - ksb: whether to create KSB measurements table or not
       - momentsml: whether to create MomentsML measurements table or not
       - regauss: whether to create REGAUSS measurements table or not
+      - include_data: bool - actually create a FITS file (T) or not (F)
 
     Returns:
       - product_filename: The name of the created product
@@ -107,19 +110,22 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
         t_lmc = init_table(lmc_tf, init_cols={lmc_tf.ID: ids, lmc_tf.g1: g1, lmc_tf.g2: g2})
         lmc_fname = get_allowed_filename("MEASUREMENTS", "LENSMC", version=CTE_VERSION, subdir="")
         qualified_lmc_filename = os.path.join(datadir, lmc_fname)
-        t_lmc.write(qualified_lmc_filename)
+        if include_data:
+            t_lmc.write(qualified_lmc_filename)
 
     if ksb:
         t_ksb = init_table(ksb_tf, init_cols={ksb_tf.ID: ids, ksb_tf.g1: g1, ksb_tf.g2: g2})
         ksb_fname = get_allowed_filename("MEASUREMENTS", "KSB", version=CTE_VERSION, subdir="")
         qualified_ksb_filename = os.path.join(datadir, ksb_fname)
-        t_ksb.write(qualified_ksb_filename)
+        if include_data:
+            t_ksb.write(qualified_ksb_filename)
 
     if regauss:
         t_regauss = init_table(regauss_tf, init_cols={regauss_tf.ID: ids, regauss_tf.g1: g1, regauss_tf.g2: g2})
         regauss_fname = get_allowed_filename("MEASUREMENTS", "REGAUSS", version=CTE_VERSION, subdir="")
         qualified_regauss_filename = os.path.join(datadir, regauss_fname)
-        t_regauss.write(qualified_regauss_filename)
+        if include_data:
+            t_regauss.write(qualified_regauss_filename)
 
     if momentsml:
         t_momentsml = init_table(
@@ -127,7 +133,8 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
         )
         momentsml_fname = get_allowed_filename("MEASUREMENTS", "MOMENTSML", version=CTE_VERSION, subdir="")
         qualified_momentsml_filename = os.path.join(datadir, momentsml_fname)
-        t_momentsml.write(qualified_momentsml_filename)
+        if include_data:
+            t_momentsml.write(qualified_momentsml_filename)
 
     dpd = create_she_measurements_product()
 
@@ -354,3 +361,184 @@ class TestCase:
             else:
                 assert fits is None, "%s file is set in the product but it should not be" % method
 
+
+
+    def test_shearestimatesmerge_missing_fits(self, workdir):
+        """Smoketest for the executable - with products with missing FITS tables"""
+
+        # Which methods to make products for
+        # NOTE: Make some False so we can check that it correctly handles some methods missing
+        lensmc = True
+        ksb = True
+        regauss = False
+        momentsml = False
+
+        # create input data
+
+        ids1 = [i for i in range(10)]
+        ids2 = [i for i in range(10, 20)]
+
+        measurements_prod1 = create_mock_measurements_product(
+            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+        )
+        measurements_prod2 = create_mock_measurements_product(
+            workdir=workdir, ids=ids2, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml, include_data=False
+        )
+
+        measurements_listfile = "mes.json"
+
+        with open(os.path.join(workdir, measurements_listfile), "w") as f:
+            json.dump([measurements_prod1, measurements_prod2], f)
+
+        chains_prod1 = create_mock_chains_product(workdir=workdir, ids=ids1)
+        chains_prod2 = create_mock_chains_product(workdir=workdir, ids=ids2, include_data=False)
+
+        chains_listfile = "chains.json"
+
+        with open(os.path.join(workdir, chains_listfile), "w") as f:
+            json.dump([chains_prod1, chains_prod2], f)
+
+        # create args for executable
+
+        chains_out = "combined_chains.xml"
+        measurements_out = "combined_measurements.xml"
+
+        commandlineargs = [
+            "--workdir=%s" % workdir,
+            "--shear_estimates_product_listfile=%s" % measurements_listfile,
+            "--she_lensmc_chains_listfile=%s" % chains_listfile,
+            "--merged_she_measurements=%s" % measurements_out,
+            "--merged_she_lensmc_chains=%s" % chains_out,
+        ]
+
+        # Run the executable
+        parser = defineSpecificProgramOptions()
+        args = parser.parse_args(commandlineargs)
+        mainMethod(args)
+
+        # Check existence of outputs
+
+        q_measurements_out = os.path.join(workdir, measurements_out)
+        q_chains_out = os.path.join(workdir, chains_out)
+
+        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
+        assert os.path.exists(q_chains_out), "Output chains product does not exist"
+
+        # check validity of measurements product
+        dpd = read_xml_product(q_measurements_out)
+
+        lmc_fits = dpd.get_LensMC_filename()
+        ksb_fits = dpd.get_KSB_filename()
+        regauss_fits = dpd.get_REGAUSS_filename()
+        momentsml_fits = dpd.get_MomentsML_filename()
+
+        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
+        requested = [lensmc, ksb, regauss, momentsml]
+        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
+
+        for method, request, fits in zip(methods, requested, fits_files):
+            # If this method was requested, make sure its file exists and all the objects are there
+            if request:
+                assert fits is not None, "%s file is not set in the product but it should be" % method
+                t = Table.read(os.path.join(workdir, fits))
+                assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected" % method
+                assert len(t) == len(ids1), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
+            else:
+                assert fits is None, "%s file is set in the product but it should not be" % method
+
+        # check validity of chains product
+        dpd = read_xml_product(q_chains_out)
+        fits = dpd.get_data_filename()
+
+        t = Table.read(os.path.join(workdir, fits))
+        assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected"
+
+
+
+    def test_shearestimatesmerge_missing_products(self, workdir):
+        """Smoketest for the executable - with missing measurement products"""
+
+        # Which methods to make products for
+        # NOTE: Make some False so we can check that it correctly handles some methods missing
+        lensmc = True
+        ksb = True
+        regauss = False
+        momentsml = False
+
+        # create input data
+
+        ids1 = [i for i in range(10)]
+        
+
+        measurements_prod1 = create_mock_measurements_product(
+            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+        )
+        measurements_prod2 = "i_am_not_a_measurements_file.xml"
+
+        measurements_listfile = "mes.json"
+
+        with open(os.path.join(workdir, measurements_listfile), "w") as f:
+            json.dump([measurements_prod1, measurements_prod2], f)
+
+        chains_prod1 = create_mock_chains_product(workdir=workdir, ids=ids1)
+        chains_prod2 = "i_am_not_a_chains_file.xml"
+
+        chains_listfile = "chains.json"
+
+        with open(os.path.join(workdir, chains_listfile), "w") as f:
+            json.dump([chains_prod1, chains_prod2], f)
+
+        # create args for executable
+
+        chains_out = "combined_chains.xml"
+        measurements_out = "combined_measurements.xml"
+
+        commandlineargs = [
+            "--workdir=%s" % workdir,
+            "--shear_estimates_product_listfile=%s" % measurements_listfile,
+            "--she_lensmc_chains_listfile=%s" % chains_listfile,
+            "--merged_she_measurements=%s" % measurements_out,
+            "--merged_she_lensmc_chains=%s" % chains_out,
+        ]
+
+        # Run the executable
+        parser = defineSpecificProgramOptions()
+        args = parser.parse_args(commandlineargs)
+        mainMethod(args)
+
+        # Check existence of outputs
+
+        q_measurements_out = os.path.join(workdir, measurements_out)
+        q_chains_out = os.path.join(workdir, chains_out)
+
+        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
+        assert os.path.exists(q_chains_out), "Output chains product does not exist"
+
+        # check validity of measurements product
+        dpd = read_xml_product(q_measurements_out)
+
+        lmc_fits = dpd.get_LensMC_filename()
+        ksb_fits = dpd.get_KSB_filename()
+        regauss_fits = dpd.get_REGAUSS_filename()
+        momentsml_fits = dpd.get_MomentsML_filename()
+
+        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
+        requested = [lensmc, ksb, regauss, momentsml]
+        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
+
+        for method, request, fits in zip(methods, requested, fits_files):
+            # If this method was requested, make sure its file exists and all the objects are there
+            if request:
+                assert fits is not None, "%s file is not set in the product but it should be" % method
+                t = Table.read(os.path.join(workdir, fits))
+                assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected" % method
+                assert len(t) == len(ids1), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
+            else:
+                assert fits is None, "%s file is set in the product but it should not be" % method
+
+        # check validity of chains product
+        dpd = read_xml_product(q_chains_out)
+        fits = dpd.get_data_filename()
+
+        t = Table.read(os.path.join(workdir, fits))
+        assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected"
