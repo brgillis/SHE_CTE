@@ -533,23 +533,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid)
 
     save_product_metadata(dpd, fully_qualified_mer_filename)
 
-    # Get a filename for the listfile
-    listfile_filename = FileNameProvider().get_allowed_filename(
-        type_name="L-BATCH-MER-CAT",
-        instance_id=batch_uuid,
-        extension=".json",
-        release=SHE_CTE_RELEASE_STRING,
-        processing_function="SHE",
-    )
-
-    partially_qualified_listfile_filename = os.path.join("data", listfile_filename)
-    fully_qualified_listfile_filename = os.path.join(workdir,partially_qualified_listfile_filename)
-
-    with open(fully_qualified_listfile_filename,"w") as f:
-        json.dump([mer_filename], f)
-
-
-    return partially_qualified_listfile_filename
+    return mer_filename
 
     
 
