@@ -465,13 +465,12 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir
         processing_function="SHE",
     )
 
-    partially_qualified_id_list_filename = os.path.join("data", id_list_filename)
-    fully_qualified_id_list_filename = os.path.join(workdir,partially_qualified_id_list_filename)
+    fully_qualified_id_list_filename = os.path.join(workdir, id_list_filename)
 
     # Save the product
     save_product_metadata(dpd, fully_qualified_id_list_filename)
 
-    return partially_qualified_id_list_filename
+    return id_list_filename
 
 
 
@@ -530,8 +529,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid)
         processing_function="SHE",
     )
 
-    partially_qualified_mer_filename = os.path.join("data", mer_filename)
-    fully_qualified_mer_filename = os.path.join(workdir,partially_qualified_mer_filename)
+    fully_qualified_mer_filename = os.path.join(workdir, mer_filename)
 
     save_product_metadata(dpd, fully_qualified_mer_filename)
 
@@ -548,7 +546,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid)
     fully_qualified_listfile_filename = os.path.join(workdir,partially_qualified_listfile_filename)
 
     with open(fully_qualified_listfile_filename,"w") as f:
-        json.dump([partially_qualified_mer_filename],f)
+        json.dump([mer_filename], f)
 
 
     return partially_qualified_listfile_filename
