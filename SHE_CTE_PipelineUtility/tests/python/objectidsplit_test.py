@@ -121,14 +121,7 @@ class TestCase:
                "Unexpected number of object_id batches created. Got %d, expected %d"%(len(object_list), n_batches_expected))
 
         #check the output final catalogs are the correct type, and their tables are in the correct format
-        for product_listfile in catalog_list:
-            dpds = read_listfile(os.path.join(self.workdir,product_listfile))
-            
-            #make sure there is only one product in this listfile
-            assert len(dpds) == 1, "Expected one data product per MER catalogue listfile, but got %d"%len(dpds)
-            
-            dpd_xml = dpds[0]
-
+        for dpd_xml in catalog_list:
             dpd = read_product_metadata(os.path.join(self.workdir,dpd_xml))
 
             #ensure the read in data product is of the correct type
@@ -158,5 +151,3 @@ class TestCase:
         #check all the objects are unique
         all_objs = set(output_objs)
         assert len(all_objs) == num_objects, "Not all object_ids are unique"
-
-
