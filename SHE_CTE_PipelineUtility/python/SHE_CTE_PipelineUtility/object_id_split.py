@@ -432,7 +432,7 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     return id_arrays, index_arrays, group_arrays
 
 
-def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir, workdir, i, batch_uuid):
+def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir, i, batch_uuid):
     """
     Writes a dpdSheObjectIdList product, returning its filename
 
@@ -441,7 +441,6 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
       - pointing_list: The list of pointing ids
       - observation_id: the observation id
       - tile_list: the list of tile_ids
-      - subdir: the subdir to create the product in
       - workdir: the workdir
       - i: the instance id of this file
 
@@ -466,7 +465,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
         processing_function="SHE",
     )
 
-    partially_qualified_id_list_filename = os.path.join("data",subdir,id_list_filename)
+    partially_qualified_id_list_filename = os.path.join("data", id_list_filename)
     fully_qualified_id_list_filename = os.path.join(workdir,partially_qualified_id_list_filename)
 
     # Save the product
@@ -476,7 +475,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, subdir,
 
 
 
-def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, batch_uuid):
+def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid):
     """
     Writes a listfile pointing to a single mer catalog product for a batch
 
@@ -485,7 +484,6 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
       - inds: The row indices to create the batched catalogue from
       - groups: the group ids of the objects in the batch
       - mfc_dpd: a dpdMerFinalCatalog object (from the inputs) that we use as a template for creating the new catalogue
-      - subdir: the subdir we want the files written to
       - workdir: the working directory
       - i: the instance id of this catalogue
 
@@ -513,15 +511,14 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         processing_function="SHE",
     )
 
-    partially_qualified_table_filename = os.path.join(subdir,table_filename)
-    fully_qualified_table_filename = os.path.join(workdir,"data",partially_qualified_table_filename)
+    fully_qualified_table_filename = os.path.join(workdir, "data", table_filename)
 
     batch_table.write(fully_qualified_table_filename)
 
     # set up the product
     dpd = deepcopy(mfc_dpd)
 
-    dpd.Data.DataStorage.DataContainer.FileName = partially_qualified_table_filename
+    dpd.Data.DataStorage.DataContainer.FileName = table_filename
 
 
     # Get a filename for the product
@@ -533,7 +530,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         processing_function="SHE",
     )
 
-    partially_qualified_mer_filename = os.path.join("data",subdir,mer_filename)
+    partially_qualified_mer_filename = os.path.join("data", mer_filename)
     fully_qualified_mer_filename = os.path.join(workdir,partially_qualified_mer_filename)
 
     save_product_metadata(dpd, fully_qualified_mer_filename)
@@ -547,7 +544,7 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, subdir, workdir, bat
         processing_function="SHE",
     )
 
-    partially_qualified_listfile_filename = os.path.join("data",subdir,listfile_filename)
+    partially_qualified_listfile_filename = os.path.join("data", listfile_filename)
     fully_qualified_listfile_filename = os.path.join(workdir,partially_qualified_listfile_filename)
 
     with open(fully_qualified_listfile_filename,"w") as f:
@@ -604,20 +601,14 @@ def object_id_split_from_args(args,
     n_batches = len(id_arrays)
     for ids, inds, groups in zip(id_arrays, index_arrays, group_arrays):
         
-        # make subdir for products if it doesn't already exist
-        subdir = "s%d"%(i%256)
-        qualified_subdir = os.path.join(workdir,"data",subdir)
-        if not os.path.exists(qualified_subdir):
-            os.mkdir(qualified_subdir)
-        
         # generate a uuid for this batch (from the list of object_ids in the batch) to
         # use in the filenames of the object_id_list and mer_final_catalog products/files/
         # This greatly reduces the chances of filename conflitcs (which can happen!)
         batch_uuid = hash_any(ids, format="hex", max_length=10)
 
-        id_prod = write_id_list_product(ids, pointing_ids, observation_id, tile_ids, subdir, workdir, i, batch_uuid)
+        id_prod = write_id_list_product(ids, pointing_ids, observation_id, tile_ids, workdir, i, batch_uuid)
 
-        mer_prod = write_mer_product(mer_final_catalog, inds, groups, mfc_dpd, subdir, workdir, batch_uuid)
+        mer_prod = write_mer_product(mer_final_catalog, inds, groups, mfc_dpd, workdir, batch_uuid)
 
         id_prods.append(id_prod)
         mer_prods.append(mer_prod)
@@ -637,10 +628,3 @@ def object_id_split_from_args(args,
     with open(qualified_obj_ids_listfile,"w") as f:
         json.dump(id_prods, f)
     logger.info("Written output object_ids listfile to %s", qualified_obj_ids_listfile)
-
-    
-
-    
-
-
-   
