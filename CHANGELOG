@@ -20,6 +20,8 @@ Bug Fixes
 New Features
 ------------
 - Suppress verbose table format warnings in ShearEstimatesMerge
+- ObjectIdSplit now returns a listfile of MER catalog xml products instead of a listfile-of-listfiles
+- ObjectIdSplit now writes outputs to workdir and workdir/data instead of subdirectories
 
 New Config Features
 -------------------
