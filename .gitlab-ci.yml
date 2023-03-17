@@ -1,7 +1,7 @@
 pytest:
   stage: test
   image:
-    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.3.1
+    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.4.1
     entrypoint: [ '/bin/sh', '-c' ]
   variables:
     ELEMENTS_AUX_PATH: /usr/share/auxdir
