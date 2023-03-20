@@ -26,6 +26,8 @@ import json
 import shutil
 import math
 
+import pytest
+
 from astropy.table import Table
 
 from ST_DM_DmUtils.DmUtils import read_product_metadata
@@ -47,6 +49,35 @@ batch_size = 10
 
 
 
+@pytest.fixture
+def input_files(tmpdir):
+    """Produces the input data needed by ObjectIdSplit"""
+
+    workdir = tmpdir
+
+    #create the vis images and mer catalogue
+    exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=workdir, n_objs_per_det=num_objects, objsize=2)
+    catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir)
+    
+    #create the contents of the listfiles for the vis and mer products
+    exposure_list = [exposure_product for i in range(4)]
+    catalogue_list = [catalogue_product]
+
+    data_images = "data_images.json"
+    mer_final_catalog_tables = "mer_final_catalog_tables.json"
+    mer_final_catalog_product = catalogue_product
+    pipeline_config = "pipeline_config.txt"
+
+    #write them to disk
+    write_listfile(os.path.join(workdir,data_images), exposure_list)
+    write_listfile(os.path.join(workdir,mer_final_catalog_tables), catalogue_list)
+    
+    #create the pipeline config, specifying the batch size
+    with open(os.path.join(workdir,pipeline_config),"w") as f:
+        f.write("SHE_CTE_ObjectIdSplit_batch_size=%d\n"%batch_size)
+
+    return data_images, mer_final_catalog_tables, mer_final_catalog_product, pipeline_config
+
 
 class TestCase:
     """
@@ -54,89 +85,48 @@ class TestCase:
 
     """
 
-    @classmethod
-    def setup_class(cls):
-        
-        #get a UUID for the workdir for this testcase
-        workdir = str(uuid.uuid4())
-        
-        #create this workdir
-        cls.workdir = os.path.join(base_workdir,workdir)
-        os.makedirs(cls.workdir)
+    def _test_objectidsplit(self, argstring):
+        """Runs ObjectIdSplit with a set of input arguments, and checks its outputs are consistent"""
 
-        #create the vis images and mer catalogue
-        exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=cls.workdir, n_objs_per_det=num_objects, objsize=2)
-        catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=cls.workdir)
-        
-        #create the contents of the listfiles for the vis and mer products
-        exposure_list = [exposure_product for i in range(4)]
-        catalogue_list = [catalogue_product]
-
-        #write them to disk
-        cls.data_images = os.path.join(cls.workdir,"data_images.json")
-        write_listfile(cls.data_images, exposure_list)
-       
-        cls.mer_final_catalog_tables = os.path.join(cls.workdir,"mer_final_catalog_tables.json")
-        write_listfile(cls.mer_final_catalog_tables, catalogue_list)
-        
-        #create the pipeline config, specifying the batch size
-        cls.pipeline_config = os.path.join(cls.workdir,"pipeline_config.txt")
-        with open(cls.pipeline_config,"w") as f:
-            f.write("SHE_CTE_ObjectIdSplit_batch_size=%d\n"%batch_size)
-
-
-    @classmethod
-    def teardown_class(cls):
-        
-        #remove the workdir
-        shutil.rmtree(cls.workdir)
-
-        return
-
-    def test_objectidsplit(self):
-        
-        #define program arguments
         parser = defineSpecificProgramOptions()
-        args = parser.parse_args([])
-        
-        args.workdir = self.workdir
-        args.data_images=self.data_images
-        args.mer_final_catalog_tables = self.mer_final_catalog_tables
-        args.object_ids = "object_ids.json"
-        args.batch_mer_catalogs = "batch_mer_catalogs.json"
-        args.pipeline_config=self.pipeline_config
+
+        args = parser.parse_args(argstring)
         
         #run the executable
         mainMethod(args)
 
         #check that the correct number of batches have been produced (for the mer catalogues and object lists)
         n_batches_expected = math.ceil(num_objects/batch_size)
+        
+        workdir = args.workdir
+        batch_mer_catalogs_listfile = args.batch_mer_catalogs
+        object_ids_prod = args.object_ids
 
-        catalog_list = read_listfile(os.path.join(self.workdir,"batch_mer_catalogs.json"))
+        catalog_list = read_listfile(os.path.join(workdir,batch_mer_catalogs_listfile))
         assert len(catalog_list) == n_batches_expected, (
-               "Unexpected number of mer_final_catalog batches created. Got %d expected %d"%(len(catalog_list), n_batches_expected))
+            "Unexpected number of mer_final_catalog batches created. Got %d expected %d"%(len(catalog_list), n_batches_expected))
 
-        object_list = read_listfile(os.path.join(self.workdir,"object_ids.json"))
+        object_list = read_listfile(os.path.join(workdir,object_ids_prod))
         assert len(object_list) == n_batches_expected, (
-               "Unexpected number of object_id batches created. Got %d, expected %d"%(len(object_list), n_batches_expected))
+            "Unexpected number of object_id batches created. Got %d, expected %d"%(len(object_list), n_batches_expected))
 
         #check the output final catalogs are the correct type, and their tables are in the correct format
         for dpd_xml in catalog_list:
-            dpd = read_product_metadata(os.path.join(self.workdir,dpd_xml))
+            dpd = read_product_metadata(os.path.join(workdir,dpd_xml))
 
             #ensure the read in data product is of the correct type
             assert type(dpd) == dpdMerFinalCatalog, "Expected output to be dpdMerFinalCatalog, but got %s"%(type(dpd).__name__)
             
             #now read in the table, and ensure it is the correct format
             table_filename = dpd.Data.DataStorage.DataContainer.FileName
-            qualified_table_filename = os.path.join(self.workdir,"data",table_filename)
+            qualified_table_filename = os.path.join(workdir,"data",table_filename)
             table = Table.read(qualified_table_filename)
             assert is_in_format(table, mfc_tf), "MER final catalog table is not in the correct format"
 
         # check that the output object id lists are of the correct type
         output_objs = []
         for product in object_list:
-            dpd = read_product_metadata(os.path.join(self.workdir,product))
+            dpd = read_product_metadata(os.path.join(workdir,product))
 
             assert type(dpd) == dpdSheObjectIdList, "Expected output to be dpdSheObjectIdList, but got %s"%(type(dpd).__name__)
             
@@ -151,3 +141,62 @@ class TestCase:
         #check all the objects are unique
         all_objs = set(output_objs)
         assert len(all_objs) == num_objects, "Not all object_ids are unique"
+
+        
+
+    def test_objectidsplit_listfile(self, tmpdir, input_files):
+        """Test ObjectIdSplit with a MER final catalogue listfile as input"""
+
+        workdir = tmpdir
+
+        data_images, mer_final_catalog_tables, _, pipeline_config = input_files
+        
+        argstring = [
+            f"--workdir={workdir}",
+            f"--data_images={data_images}",
+            f"--mer_final_catalog_tables={mer_final_catalog_tables}",
+            "--object_ids=object_ids0.json",
+            "--batch_mer_catalogs=batch_mer_catalogs0.json",
+            f"--pipeline_config={pipeline_config}",
+        ]
+
+        self._test_objectidsplit(argstring)
+
+    def test_objectidsplit_product(self, tmpdir, input_files):
+        """Test ObjectIdSplit with a MER final catalogue product as input"""
+        
+        workdir = tmpdir
+
+        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+        
+        argstring = [
+            f"--workdir={workdir}",
+            f"--data_images={data_images}",
+            f"--mer_final_catalog_tables={mer_final_catalog_product}",
+            "--object_ids=object_ids1.json",
+            "--batch_mer_catalogs=batch_mer_catalogs1.json",
+            f"--pipeline_config={pipeline_config}",
+        ]
+
+        self._test_objectidsplit(argstring)
+
+
+    def test_objectidsplit_unknown(self, tmpdir, input_files):
+        """Test ObjectIdSplit with a MER final catalogue file with an unexpected file extension"""
+        
+        workdir = tmpdir
+
+        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+        
+        argstring = [
+            f"--workdir={workdir}",
+            f"--data_images={data_images}",
+            "--mer_final_catalog_tables=some_file.xyz",
+            "--object_ids=object_ids1.json",
+            "--batch_mer_catalogs=batch_mer_catalogs1.json",
+            f"--pipeline_config={pipeline_config}",
+        ]
+
+        with pytest.raises(ValueError):
+            self._test_objectidsplit(argstring)
+        

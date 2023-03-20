@@ -160,12 +160,12 @@ def read_vis_frames(vis_frame_listfile, workdir):
     return wcs_list, pointing_ids, observation_id
 
 
-def read_mer_catalogs(mer_catalog_listfile,workdir):
+def read_mer_catalogs(mer_catalog,workdir):
     """
     Reads in the MER final catalog(ue)s from the listfile, returning the concatenated catalog.
 
     Inputs:
-      - mer_catalog_listfile: Listfile pointing to one or more MER Final Catalog products
+      - mer_catalog: Listfile pointing to MER final catalog data products, or a single MER Final Catalog product
       - workdir: The path to the workdir
     
     Returns:
@@ -173,16 +173,28 @@ def read_mer_catalogs(mer_catalog_listfile,workdir):
       - tile_ids: list of the MER tile ids
       - mfc_dpd: the last dpdMerFinalCatalog data product object read in (used as a template to create output products)
     """
+    
+    ext = os.path.splitext(mer_catalog)[-1]
 
-    qualified_listfile_name = os.path.join(workdir,mer_catalog_listfile)
-    if not os.path.exists(qualified_listfile_name):
-        logger.error("MER final catalog listfile %s does not exist", qualified_listfile_name)
-        raise FileNotFoundError("MER final catalog listfile %s does not exist"%qualified_listfile_name)
+    if ext == ".json":
+        # Get the list of products from the listfile
+        qualified_listfile_name = os.path.join(workdir,mer_catalog)
+        if not os.path.exists(qualified_listfile_name):
+            logger.error("MER final catalog listfile %s does not exist", qualified_listfile_name)
+            raise FileNotFoundError("MER final catalog listfile %s does not exist"%qualified_listfile_name)
 
-    logger.debug("Openeing MER listfile %s", qualified_listfile_name)
+        logger.debug("Openeing MER listfile %s", qualified_listfile_name)
 
-    with open(qualified_listfile_name) as f:
-        product_list = json.load(f)
+        with open(qualified_listfile_name) as f:
+            product_list = json.load(f)
+
+    elif ext == ".xml":
+        # We have a single product, turn this into a list
+        product_list = [mer_catalog]
+    
+    else:
+        # Unknown file type
+        raise ValueError("Unknown file extension of mer_final_catalog file: %s"%ext)
     
     mer_catalogues = []
     tile_ids = []
