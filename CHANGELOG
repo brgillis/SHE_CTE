@@ -9,6 +9,7 @@ API Changes
 Dependency Changes
 ------------------
 - PPT 9.3.1 -> 9.4.1
+
 Deprecated Features
 -------------------
 
@@ -22,6 +23,7 @@ New Features
 - Suppress verbose table format warnings in ShearEstimatesMerge
 - ObjectIdSplit now returns a listfile of MER catalog xml products instead of a listfile-of-listfiles
 - ObjectIdSplit now writes outputs to workdir and workdir/data instead of subdirectories
+- (Sub)ObjectIdSplit can now read in MER products directly - no Listfile required
 
 New Config Features
 -------------------
