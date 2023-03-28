@@ -94,6 +94,7 @@ make install
   - [`SHE_CTE_SubObjectIdSplit`](#she_cte_subobjectidsplit): Splits batches of objects into even smaller batches (see `SHE_CTE_ObjectIdSplit`)
   - [`SHE_CTE_ShearEstimatesMerge`](#she_cte_shearestimatesmerge): Merges multiple shear estimate products into one.
   - [`SHE_CTE_CleanupBiasMeasurement`](#she_cte_cleanupbiasmeasurement): Cleans up intermediate files involved in bias measurement
+  - [`SHE_CTE_ConvertToHDF5`](#she_cte_converttohdf5): Converts VIS frames and SHE reprojected segmentation maps to HDF5 for more efficient stamp extraction.
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
   - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
   - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
@@ -995,6 +996,72 @@ This program is designed to be run on intermediate data generated within an exec
 
 
 
+### `SHE_CTE_ConvertToHDF5`
+
+Given input VIS Calibrated frames and SHE reprojected segmentation maps, converts these to a HDF5 file for more efficient stamp extraction.
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_ConvertToHDF5` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.2 SHE_CTE_ConvertToHDF5 --vis_frame_prod <file> --remapped_seg_prod <file>  --output_hdf5 <file> [--workdir <dir>]  [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+| --log-dir `<file>`    | The name of the file to output the executable logs to. If not provided, logging data will only be output to the terminal. When run via the pipeline runner, this will be set to a file in the directory `<workdir>/logs/<task_name>/` with a name based off of the command used to call this executable, such as "E_Run_SHE_MyProject_0.1_SHE_MyProject_GenCatPic_retry_0.out" | no           | .        |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --vis_frame_prod `<filename>`     | DpdVisCalibratedFrame product | yes    | N/A         |
+| --remapped_seg_prod`<filename>`     | DpdSheExposureReprojectedSegmentationMap product | yes    | N/A         |
+
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --output_hdf5 `<filename>`  | Name of the `.h5` file | yes          | N/A |
+
+
+**Options**
+
+|  **Options**                | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --chunksize     | The size of chunk (in pixels) for the data  | no           | 100       |
+
+
+_**Inputs**_
+
+_`vis_frame_prod`_:
+
+**Description:** The filename [visCalibratedFrame](https://euclid.esac.esa.int/dm/dpdd/latest/visdpd/dpcards/vis_calibratedframe.html) data product.
+
+**Source:** This is provided as input to the Analysis pipeline
+
+
+_`remapped_seg_prod`_:
+
+**Description:** The filename of a [sheExposureReprojectedSegmentationMap](https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_exposurereprojectedsegmentationmap.html) data product.
+
+**Source:** This is produced by SHE_MER_RemapMosaic 
+
+
+
+_**Outputs**_
+
+_`output_hdf5`_ 
+
+**Description** The desired name for the output HDF5 file.
 
 
 
