@@ -89,14 +89,10 @@ def mainMethod(args):
     seg_dpd = read_product_metadata(qualified_seg_fname)
 
     # get the filenames of each FITS file we need
-
-    def qualified_fits_fname(filename):
-        return os.path.join(args.workdir, "data", filename)
-
-    det_file = qualified_fits_fname(vis_dpd.Data.DataStorage.DataContainer.FileName)
-    wgt_file = qualified_fits_fname(vis_dpd.Data.WeightStorage.DataContainer.FileName)
-    bkg_file = qualified_fits_fname(vis_dpd.Data.BackgroundStorage.DataContainer.FileName)
-    seg_file = qualified_fits_fname(seg_dpd.Data.DataStorage.DataContainer.FileName)
+    det_file = os.path.join(args.workdir, "data", vis_dpd.Data.DataStorage.DataContainer.FileName)
+    wgt_file = os.path.join(args.workdir, "data", vis_dpd.Data.WeightStorage.DataContainer.FileName)
+    bkg_file = os.path.join(args.workdir, "data", vis_dpd.Data.BackgroundStorage.DataContainer.FileName)
+    seg_file = os.path.join(args.workdir, "data", seg_dpd.Data.DataStorage.DataContainer.FileName)
 
     output_filename = os.path.join(args.workdir, args.output_hdf5)
 
