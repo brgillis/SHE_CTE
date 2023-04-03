@@ -60,7 +60,7 @@ def input_products(workdir):
         workdir=workdir, n_objs_per_det=NUM_OBJECTS, objsize=OBJSIZE, seed=2
     )
 
-    object_ids = [i for i in range(NUM_OBJECTS)]
+    object_ids = range(NUM_OBJECTS)
     seg_map_product = generate_mock_reprojected_segmentation_maps.create_reprojected_segmentation_map(
         object_ids, pixel_coords, detectors, wcs_list, objsize=OBJSIZE, workdir=workdir
     )
