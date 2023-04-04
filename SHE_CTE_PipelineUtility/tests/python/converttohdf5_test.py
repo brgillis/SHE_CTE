@@ -44,13 +44,12 @@ OBJSIZE = 2.5
 @pytest.fixture
 def workdir(tmp_path):
     """Creates a workdir (via pytest's tmpdir fixture) and a datadir"""
-    workdir = tmp_path
 
     # make the datadir
-    datadir = os.path.join(workdir, "data")
-    os.mkdir(datadir)
+    datadir = tmp_path / "data"
+    datadir.mkdir()
 
-    return workdir
+    return tmp_path
 
 
 @pytest.fixture
