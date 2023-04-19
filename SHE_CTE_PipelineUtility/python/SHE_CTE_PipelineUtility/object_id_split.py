@@ -151,9 +151,9 @@ def read_vis_frames(vis_frame_listfile, workdir):
     if len(s_observation_ids) != 1:
         raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
 
-    observation_id = observation_ids.pop()
+    observation_id = list(s_observation_ids)
     
-    logger.info("ObservationId = %d", observation_id)
+    logger.info("ObservationId = %s", observation_id)
     logger.info("PointingIds = %s", pointing_ids)
     logger.info("Extracted %d WCS(s) from %d VIS exposure(s)", len(wcs_list), len(product_list))
 
