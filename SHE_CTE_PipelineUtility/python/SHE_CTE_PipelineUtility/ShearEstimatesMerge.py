@@ -240,15 +240,18 @@ def she_measurements_merge_from_args(args):
         full_l_pointing_id_lists,
         full_l_tile_lists) = zip(*she_measurements_tables_and_metadata)
 
-
     l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
     l_observation_ids = [x for x in full_l_observation_ids if x is not None]
     l_observation_times = [x for x in full_l_observation_times if x is not None]
     l_pointing_id_lists = [x for x in full_l_pointing_id_lists if x is not None]
     l_tile_lists = [x for x in full_l_tile_lists if x is not None]
+    
+    # create this list for the below metadata check, as the objects in l_observation_times (spaceObservationDateTime)
+    # cannot be checked for equality
+    l_observation_datetimes = [ x.OBT for x in l_observation_times]
 
-    # Check metadata is consistent
-    for l in (l_observation_ids, l_observation_times, l_pointing_id_lists, l_tile_lists):
+    # Check metadata is consistent (each measurement product should have the same properties)
+    for l in (l_observation_ids, l_observation_datetimes, l_pointing_id_lists, l_tile_lists):
         l_arr = np.array(l)
         if not (l_arr == l_arr[0]).all():
             logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
