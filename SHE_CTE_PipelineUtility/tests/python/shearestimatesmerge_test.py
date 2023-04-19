@@ -1,8 +1,8 @@
-""" @file objectidsplit_smoketest.py
+""" @file shearestimatesmerge_test.py
 
     Created 17 Oct 2022
 
-    Smoke test for SHE_CTE_ObjectIdSplit
+    Smoke test for SHE_CTE_ShearEstimatesMerge
 """
 
 __updated__ = "2022-10-17"
@@ -45,14 +45,30 @@ from SHE_CTE import __version__ as CTE_VERSION
 
 from SHE_CTE_PipelineUtility.ShearEstimatesMerge import defineSpecificProgramOptions, mainMethod
 
+OBS_ID = 12345
+POINTING_IDS = [1,2,3]
+TILE_IDS = [4,5] 
+
+# Which methods to make products for
+# NOTE: Make some False so we can check that it correctly handles some methods missing
+LENSMC = True
+KSB = True
+REGAUSS = False
+MOMENTSML = False
+REQUESTED_METHODS = [LENSMC, KSB, REGAUSS, MOMENTSML]
+METHODS = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
+
 # NOTE: To add to PPT eventually?
-def create_mock_chains_product(workdir, ids=[], include_data=True):
+def create_mock_chains_product(workdir, ids=[], include_data=True, obs_id=OBS_ID, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
     """Creates a mock LensMC chains product from a list of object ids
 
     Inputs:
       - workdir: the workdir for the product
       - ids: a list of object IDs
       - include_data: bool - actually create a FITS file (T) or not (F)
+      - obs_id: the observation id
+      - pointing_ids: the list of pointing ids
+      - tile_ids: the list of MER tile ids
 
     Returns:
       - product_filename: The name of the created product
@@ -75,6 +91,9 @@ def create_mock_chains_product(workdir, ids=[], include_data=True):
 
     dpd = create_dpd_she_lensmc_chains()
     dpd.set_data_filename(chains_fname)
+    dpd.Data.ObservationId = obs_id
+    dpd.Data.PointingIdList = pointing_ids
+    dpd.Data.TileList = tile_ids
 
     product_filename = get_allowed_filename("CHAINS", "PROD", version=CTE_VERSION, subdir="", extension=".xml")
 
@@ -84,7 +103,7 @@ def create_mock_chains_product(workdir, ids=[], include_data=True):
 
 
 # NOTE: To add to PPT eventually?
-def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True):
+def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True, obs_id=OBS_ID, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
     """Creates a mock shear measurements product from a list of object ids
 
     Inputs:
@@ -95,6 +114,9 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
       - momentsml: whether to create MomentsML measurements table or not
       - regauss: whether to create REGAUSS measurements table or not
       - include_data: bool - actually create a FITS file (T) or not (F)
+      - obs_id: the observation id
+      - pointing_ids: the list of pointing ids
+      - tile_ids: the list of MER tile ids
 
     Returns:
       - product_filename: The name of the created product
@@ -103,25 +125,25 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
     datadir = os.path.join(workdir, "data")
 
     ids = np.asarray(ids, np.int64)
-    g1 = np.random.random(len(ids))
-    g2 = np.random.random(len(ids))
+    e1 = np.random.random(len(ids))
+    e2 = np.random.random(len(ids))
 
     if lensmc:
-        t_lmc = init_table(lmc_tf, init_cols={lmc_tf.ID: ids, lmc_tf.g1: g1, lmc_tf.g2: g2})
+        t_lmc = init_table(lmc_tf, init_cols={lmc_tf.ID: ids, lmc_tf.e1: e1, lmc_tf.e2: e2})
         lmc_fname = get_allowed_filename("MEASUREMENTS", "LENSMC", version=CTE_VERSION, subdir="")
         qualified_lmc_filename = os.path.join(datadir, lmc_fname)
         if include_data:
             t_lmc.write(qualified_lmc_filename)
 
     if ksb:
-        t_ksb = init_table(ksb_tf, init_cols={ksb_tf.ID: ids, ksb_tf.g1: g1, ksb_tf.g2: g2})
+        t_ksb = init_table(ksb_tf, init_cols={ksb_tf.ID: ids, ksb_tf.e1: e1, ksb_tf.e2: e2})
         ksb_fname = get_allowed_filename("MEASUREMENTS", "KSB", version=CTE_VERSION, subdir="")
         qualified_ksb_filename = os.path.join(datadir, ksb_fname)
         if include_data:
             t_ksb.write(qualified_ksb_filename)
 
     if regauss:
-        t_regauss = init_table(regauss_tf, init_cols={regauss_tf.ID: ids, regauss_tf.g1: g1, regauss_tf.g2: g2})
+        t_regauss = init_table(regauss_tf, init_cols={regauss_tf.ID: ids, regauss_tf.e1: e1, regauss_tf.e2: e2})
         regauss_fname = get_allowed_filename("MEASUREMENTS", "REGAUSS", version=CTE_VERSION, subdir="")
         qualified_regauss_filename = os.path.join(datadir, regauss_fname)
         if include_data:
@@ -129,7 +151,7 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
 
     if momentsml:
         t_momentsml = init_table(
-            momentsml_tf, init_cols={momentsml_tf.ID: ids, momentsml_tf.g1: g1, momentsml_tf.g2: g2}
+            momentsml_tf, init_cols={momentsml_tf.ID: ids, momentsml_tf.e1: e1, momentsml_tf.e2: e2}
         )
         momentsml_fname = get_allowed_filename("MEASUREMENTS", "MOMENTSML", version=CTE_VERSION, subdir="")
         qualified_momentsml_filename = os.path.join(datadir, momentsml_fname)
@@ -137,6 +159,9 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
             t_momentsml.write(qualified_momentsml_filename)
 
     dpd = create_she_measurements_product()
+    dpd.Data.ObservationId = obs_id
+    dpd.Data.PointingIdList = pointing_ids
+    dpd.Data.TileList = tile_ids
 
     if lensmc:
         dpd.set_LensMC_filename(lmc_fname)
@@ -157,6 +182,49 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
     return product_filename
 
 
+def validate_shear_measurements_product(measurements_product, workdir, expected_obj_ids):
+    q_measurements_prod = os.path.join(workdir, measurements_product)
+
+    assert os.path.exists(q_measurements_prod), "Output measurements product does not exist"
+
+    # check validity of measurements product
+    dpd = read_xml_product(q_measurements_prod)
+
+    assert dpd.Data.ObservationId == OBS_ID, "Output product's ObservationID is an unexpected value"
+    assert dpd.Data.TileList == TILE_IDS, "Output product's TileList is an unexpected value"
+    assert dpd.Data.PointingIdList == POINTING_IDS, "Output product's ObservationID is an unexpected value"
+
+    lmc_fits = dpd.get_LensMC_filename()
+    ksb_fits = dpd.get_KSB_filename()
+    regauss_fits = dpd.get_REGAUSS_filename()
+    momentsml_fits = dpd.get_MomentsML_filename()
+
+    fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
+
+    for method, request, fits in zip(METHODS, REQUESTED_METHODS, fits_files):
+        # If this method was requested, make sure its file exists and all the objects are there
+        if request:
+            assert fits is not None, "%s file is not set in the product but it should be" % method
+            t = Table.read(os.path.join(workdir, fits))
+            assert set(t["OBJECT_ID"]) == set(expected_obj_ids), "%s object ids do not match those expected" % method
+            assert len(t) == len(expected_obj_ids), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
+        else:
+            assert fits is None, "%s file is set in the product but it should not be" % method
+
+
+def validate_chains_product(chains_product, workdir, expected_obj_ids):
+    q_chains_prod = os.path.join(workdir, chains_product)
+    assert os.path.exists(q_chains_prod), "Output chains product does not exist"
+
+    # check validity of chains product
+    dpd = read_xml_product(q_chains_prod)
+    fits = dpd.get_data_filename()
+
+    t = Table.read(os.path.join(workdir, fits))
+    assert set(t["OBJECT_ID"]) == set(expected_obj_ids), "%s object ids do not match those expected"
+
+
+
 @pytest.fixture
 def workdir(tmpdir):
     """Fixture that generates a workdir, and creates the 'data' subdirectory"""
@@ -173,23 +241,16 @@ class TestCase:
     def test_shearestimatesmerge_withchains(self, workdir):
         """Smoketest for the executable - with LensMC chains"""
 
-        # Which methods to make products for
-        # NOTE: Make some False so we can check that it correctly handles some methods missing
-        lensmc = True
-        ksb = True
-        regauss = False
-        momentsml = False
-
         # create input data
 
         ids1 = [i for i in range(10)]
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
 
         measurements_listfile = "mes.json"
@@ -223,53 +284,12 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-        # Check existence of outputs
-
-        q_measurements_out = os.path.join(workdir, measurements_out)
-        q_chains_out = os.path.join(workdir, chains_out)
-
-        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
-        assert os.path.exists(q_chains_out), "Output chains product does not exist"
-
-        # check validity of measurements product
-        dpd = read_xml_product(q_measurements_out)
-
-        lmc_fits = dpd.get_LensMC_filename()
-        ksb_fits = dpd.get_KSB_filename()
-        regauss_fits = dpd.get_REGAUSS_filename()
-        momentsml_fits = dpd.get_MomentsML_filename()
-
-        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
-        requested = [lensmc, ksb, regauss, momentsml]
-        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
-
-        for method, request, fits in zip(methods, requested, fits_files):
-            # If this method was requested, make sure its file exists and all the objects are there
-            if request:
-                assert fits is not None, "%s file is not set in the product but it should be" % method
-                t = Table.read(os.path.join(workdir, fits))
-                assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected" % method
-                assert len(t) == len(ids1+ids2), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1+ids2))
-            else:
-                assert fits is None, "%s file is set in the product but it should not be" % method
-
-        # check validity of chains product
-        dpd = read_xml_product(q_chains_out)
-        fits = dpd.get_data_filename()
-
-        t = Table.read(os.path.join(workdir, fits))
-        assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected"
+        validate_shear_measurements_product(measurements_out, workdir, ids1+ids2)
+        validate_chains_product(chains_out, workdir, ids1+ids2)
 
 
     def test_shearestimatesmerge_nochains(self, workdir):
         """Smoketest for the executable - without LensMC chains"""
-
-        # Which methods to make products for
-        # NOTE: Make some False so we can check that it correctly handles some methods missing
-        lensmc = True
-        ksb = True
-        regauss = False
-        momentsml = False
 
         # create input data
 
@@ -277,10 +297,10 @@ class TestCase:
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
 
         measurements_listfile = "mes.json"
@@ -333,45 +353,12 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-        # Check existence of outputs
-
-        q_measurements_out = os.path.join(workdir, measurements_out)
-
-        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
-
-        # check validity of measurements product
-        dpd = read_xml_product(q_measurements_out)
-
-        lmc_fits = dpd.get_LensMC_filename()
-        ksb_fits = dpd.get_KSB_filename()
-        regauss_fits = dpd.get_REGAUSS_filename()
-        momentsml_fits = dpd.get_MomentsML_filename()
-
-        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
-        requested = [lensmc, ksb, regauss, momentsml]
-        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
-
-        for method, request, fits in zip(methods, requested, fits_files):
-            # If this method was requested, make sure its file exists and all the objects are there
-            if request:
-                assert fits is not None, "%s file is not set in the product but it should be" % method
-                t = Table.read(os.path.join(workdir, fits))
-                assert set(t["OBJECT_ID"]) == set(ids1 + ids2), "%s object ids do not match those expected" % method
-                assert len(t) == len(ids1+ids2), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1+ids2))
-            else:
-                assert fits is None, "%s file is set in the product but it should not be" % method
-
+        # validate outputs
+        validate_shear_measurements_product(measurements_out, workdir, ids1+ids2)
 
 
     def test_shearestimatesmerge_missing_fits(self, workdir):
         """Smoketest for the executable - with products with missing FITS tables"""
-
-        # Which methods to make products for
-        # NOTE: Make some False so we can check that it correctly handles some methods missing
-        lensmc = True
-        ksb = True
-        regauss = False
-        momentsml = False
 
         # create input data
 
@@ -379,10 +366,10 @@ class TestCase:
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml, include_data=False
+            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML, include_data=False
         )
 
         measurements_listfile = "mes.json"
@@ -416,54 +403,15 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-        # Check existence of outputs
+        # validate outputs
+        validate_shear_measurements_product(measurements_out, workdir, ids1)
+        validate_chains_product(chains_out, workdir, ids1)
 
-        q_measurements_out = os.path.join(workdir, measurements_out)
-        q_chains_out = os.path.join(workdir, chains_out)
-
-        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
-        assert os.path.exists(q_chains_out), "Output chains product does not exist"
-
-        # check validity of measurements product
-        dpd = read_xml_product(q_measurements_out)
-
-        lmc_fits = dpd.get_LensMC_filename()
-        ksb_fits = dpd.get_KSB_filename()
-        regauss_fits = dpd.get_REGAUSS_filename()
-        momentsml_fits = dpd.get_MomentsML_filename()
-
-        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
-        requested = [lensmc, ksb, regauss, momentsml]
-        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
-
-        for method, request, fits in zip(methods, requested, fits_files):
-            # If this method was requested, make sure its file exists and all the objects are there
-            if request:
-                assert fits is not None, "%s file is not set in the product but it should be" % method
-                t = Table.read(os.path.join(workdir, fits))
-                assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected" % method
-                assert len(t) == len(ids1), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
-            else:
-                assert fits is None, "%s file is set in the product but it should not be" % method
-
-        # check validity of chains product
-        dpd = read_xml_product(q_chains_out)
-        fits = dpd.get_data_filename()
-
-        t = Table.read(os.path.join(workdir, fits))
-        assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected"
 
 
 
     def test_shearestimatesmerge_missing_products(self, workdir):
         """Smoketest for the executable - with missing measurement products"""
-
-        # Which methods to make products for
-        # NOTE: Make some False so we can check that it correctly handles some methods missing
-        lensmc = True
-        ksb = True
-        regauss = False
-        momentsml = False
 
         # create input data
 
@@ -471,7 +419,7 @@ class TestCase:
         
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=lensmc, ksb=ksb, regauss=regauss, momentsml=momentsml
+            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
         )
         measurements_prod2 = "i_am_not_a_measurements_file.xml"
 
@@ -506,39 +454,13 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-        # Check existence of outputs
 
-        q_measurements_out = os.path.join(workdir, measurements_out)
-        q_chains_out = os.path.join(workdir, chains_out)
+        # validate outputs
+        validate_shear_measurements_product(measurements_out, workdir, ids1)
+        validate_chains_product(chains_out, workdir, ids1)
 
-        assert os.path.exists(q_measurements_out), "Output measurements product does not exist"
-        assert os.path.exists(q_chains_out), "Output chains product does not exist"
 
-        # check validity of measurements product
-        dpd = read_xml_product(q_measurements_out)
 
-        lmc_fits = dpd.get_LensMC_filename()
-        ksb_fits = dpd.get_KSB_filename()
-        regauss_fits = dpd.get_REGAUSS_filename()
-        momentsml_fits = dpd.get_MomentsML_filename()
 
-        methods = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
-        requested = [lensmc, ksb, regauss, momentsml]
-        fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
 
-        for method, request, fits in zip(methods, requested, fits_files):
-            # If this method was requested, make sure its file exists and all the objects are there
-            if request:
-                assert fits is not None, "%s file is not set in the product but it should be" % method
-                t = Table.read(os.path.join(workdir, fits))
-                assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected" % method
-                assert len(t) == len(ids1), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
-            else:
-                assert fits is None, "%s file is set in the product but it should not be" % method
 
-        # check validity of chains product
-        dpd = read_xml_product(q_chains_out)
-        fits = dpd.get_data_filename()
-
-        t = Table.read(os.path.join(workdir, fits))
-        assert set(t["OBJECT_ID"]) == set(ids1), "%s object ids do not match those expected"
