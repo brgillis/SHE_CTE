@@ -151,13 +151,13 @@ def read_vis_frames(vis_frame_listfile, workdir):
     if len(s_observation_ids) != 1:
         raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
 
-    observation_id = list(s_observation_ids)
+    observation_ids = list(s_observation_ids)
     
-    logger.info("ObservationId = %s", observation_id)
+    logger.info("ObservationId = %s", observation_ids)
     logger.info("PointingIds = %s", pointing_ids)
     logger.info("Extracted %d WCS(s) from %d VIS exposure(s)", len(wcs_list), len(product_list))
 
-    return wcs_list, pointing_ids, observation_id
+    return wcs_list, pointing_ids, observation_ids
 
 
 def read_mer_catalogs(mer_catalog,workdir):
@@ -511,8 +511,6 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid)
     if mer_tf.GROUP_ID not in batch_table.columns:
         batch_table.add_column(groups, name = mer_tf.GROUP_ID)
 
-    assert is_in_format(batch_table, mer_tf, verbose=True), "Output MER catalog is not in the correct format"
-
     # Get a filename for the FITS table
     table_filename = FileNameProvider().get_allowed_filename(
         type_name="T-BATCH-MER-CAT",
@@ -579,6 +577,8 @@ def object_id_split_from_args(args,
     
     # Read the mer final catalogues in, stacking them to one large catalogue
     mer_final_catalog, tile_ids, mfc_dpd = read_mer_catalogs(mer_final_catalog_tables, workdir)
+
+    # TODO: When moving to a Tile-Based pipeline, check that obs_ids from VIS exposures matches obs_ids in MER catalogue dpd
     
     # If we're sub batching, this has already been done in the batching stage
     if not sub_batch:

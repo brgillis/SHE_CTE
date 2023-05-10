@@ -48,7 +48,8 @@ num_objects = 45
 batch_size = 10
 num_exposures = 4
 
-
+OBS_ID=1
+TILE_ID=1
 
 @pytest.fixture
 def input_files(tmpdir):
@@ -62,7 +63,7 @@ def input_files(tmpdir):
         exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=workdir, n_objs_per_det=num_objects, objsize=2, obs_id=1, seed=1, pointing_id=_id, noise_seed=_id)
         exposure_list.append(exposure_product)
     
-    catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir)
+    catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir, tile_id=TILE_ID, obs_ids=[OBS_ID])
     
     #create the contents of the listfiles for the vis and mer products
     catalogue_list = [catalogue_product]
