@@ -29,7 +29,7 @@ from SHE_PPT.table_formats.she_momentsml_measurements import tf as mmlm_tf
 from SHE_PPT.table_formats.she_regauss_measurements import tf as regm_tf
 from SHE_PPT.table_formats.she_simulated_catalog import tf as simc_tf
 from astropy import table
-from numpy.testing.utils import assert_allclose
+from numpy.testing import assert_allclose
 
 import numpy as np
 
