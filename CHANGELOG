@@ -17,6 +17,7 @@ Bug Fixes
 ---------
 - Convert 'MAJOR.MINOR.PATCH' version string to 'MAJOR.MINOR' release string for FileNameProvider.get_allowed_filename
 - Ensure ShearEstimatesMerge does not fail if there are missing products or measurement FITS files
+- numpy.testing.utils is removed in numpy 1.25
 
 New Features
 ------------
