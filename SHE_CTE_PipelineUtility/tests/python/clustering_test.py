@@ -26,6 +26,7 @@
 import pytest
 
 import numpy as np
+import functools
 
 from SHE_CTE_PipelineUtility.clustering import spatially_batch, find_groups
 
@@ -114,7 +115,7 @@ def test_spatially_batch():
     assert num_batches_expected < len(batches) < num_batches_expected*2
     
     # make sure we haven't lost any objects
-    n_objs = reduce(lambda x, y: x + len(y), batches, 0)
+    n_objs = functools.reduce(lambda x, y: x + len(y), batches, 0)
     assert n == n_objs
 
 
