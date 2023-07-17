@@ -114,9 +114,7 @@ def test_spatially_batch():
     assert num_batches_expected < len(batches) < num_batches_expected*2
     
     # make sure we haven't lost any objects
-    n_objs=0
-    for batch in batches:
-        n_objs += len(batch)
+    n_objs = reduce(lambda x, y: x + len(y), batches, 0)
     assert n == n_objs
 
 
