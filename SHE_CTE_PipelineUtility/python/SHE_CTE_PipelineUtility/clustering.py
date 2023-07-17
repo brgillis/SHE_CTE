@@ -136,15 +136,6 @@ def spatially_batch(x, y, target_batchsize):
         all_inds = np.asarray([i for i in range(n_objs)])
         return [all_inds]
 
-    # estimate actual batchsize. We use a kd tree, and treat a node as a batch, so there will be around 2**n batches
-    # n = np.log2(n_objs / target_batchsize)
-    # min_nbatch = 2 ** np.floor(n)
-    # max_nbatch = 2 ** np.ceil(n)
-    # min_batchsize = n_objs / max_nbatch
-    # max_batchsize = n_objs / min_nbatch
-
-    # logger.info("Target batchsize: %d, possible output batchsizes are: %d and %d", target_batchsize, min_batchsize, max_batchsize)
-
     xy = np.asarray([x, y]).T
     tree = KDTree(xy)
 
