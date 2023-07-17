@@ -29,9 +29,8 @@ import numpy as np
 from scipy.spatial import KDTree
 import networkx as nx
 
-import ElementsKernel.Logging as log
-
-logger = log.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 
 def find_groups(x, y, sep):
