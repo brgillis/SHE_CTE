@@ -103,12 +103,12 @@ class TestCase:
         object_ids_prod = args.object_ids
 
         catalog_list = read_listfile(os.path.join(workdir,batch_mer_catalogs_listfile))
-        assert len(catalog_list) == n_batches_expected, (
-            "Unexpected number of mer_final_catalog batches created. Got %d expected %d"%(len(catalog_list), n_batches_expected))
+        assert len(catalog_list) >= n_batches_expected, (
+            "Unexpected number of mer_final_catalog batches created. Got %d expected >= %d"%(len(catalog_list), n_batches_expected))
 
         object_list = read_listfile(os.path.join(workdir,object_ids_prod))
-        assert len(object_list) == n_batches_expected, (
-            "Unexpected number of object_id batches created. Got %d, expected %d"%(len(object_list), n_batches_expected))
+        assert len(object_list) >= n_batches_expected, (
+            "Unexpected number of object_id batches created. Got %d, expected >= %d"%(len(object_list), n_batches_expected))
 
         #check the output final catalogs are the correct type, and their tables are in the correct format
         for dpd_xml in catalog_list:

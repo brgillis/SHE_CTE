@@ -28,6 +28,8 @@ New Features
 - (Sub)ObjectIdSplit can now read in MER products directly - no Listfile required
 - New ConvertToHDF5 executable for converting VIS images and reprojected segmentation maps to HDF5
 - New executable SHE_CTE_GenerateDetectorListfile that writes a listfile of each NISP or VIS CCDID
+- New routines for group identification and batching in SHE_CTE_PipelineUtility.clustering
+- ObjectIdSplit now uses the above clustering code
 
 New Config Features
 -------------------
