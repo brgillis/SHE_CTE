@@ -32,16 +32,16 @@ This project contains various executables which constitute components in various
 
 ### Internal Euclid Dependencies
 
-* [SHE_PPT 9.4.2](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
+* [SHE_PPT 9.5](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
 
 
 ### External Euclid Dependencies
 
-* [EL_Utils 1.2.3](https://gitlab.euclid-sgs.uk/EuclidLibs/EL_Utils)
-* [ST_DataModelTools 9.0.3](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelTools)
-* [ST_FitsDataModel 9.0.3](https://gitlab.euclid-sgs.uk/ST-DM/ST_FitsDataModel)
-* [ST_DataModel 9.0.3](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModel)
-* [Elements 6.0.1](https://gitlab.euclid-sgs.uk/ST-TOOLS/Elements)
+* [EL_Utils 1.4.1](https://gitlab.euclid-sgs.uk/EuclidLibs/EL_Utils)
+* [ST_DataModelTools 9.2.1](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModelTools)
+* [ST_FitsDataModel 9.2.1](https://gitlab.euclid-sgs.uk/ST-DM/ST_FitsDataModel)
+* [ST_DataModel 9.2.1](https://gitlab.euclid-sgs.uk/ST-DM/ST_DataModel)
+* [Elements 6.2.1](https://gitlab.euclid-sgs.uk/ST-TOOLS/Elements)
 
 
 ### Configuration
