@@ -147,13 +147,9 @@ def read_vis_frames(vis_frame_listfile, workdir):
         
         wcs_list += exp_wcs_list
 
-    s_observation_ids = set(observation_ids)
-    if len(s_observation_ids) != 1:
-        raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
-
-    observation_ids = list(s_observation_ids)
+    observation_ids = list(set(observation_ids))
     
-    logger.info("ObservationId = %s", observation_ids)
+    logger.info("ObservationIds = %s", observation_ids)
     logger.info("PointingIds = %s", pointing_ids)
     logger.info("Extracted %d WCS(s) from %d VIS exposure(s)", len(wcs_list), len(product_list))
 
@@ -414,7 +410,7 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     return id_arrays, index_arrays, group_arrays
 
 
-def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir, i, batch_uuid):
+def write_id_list_product(ids, pointing_list, observation_id_list, tile_list, workdir, i, batch_uuid):
     """
     Writes a dpdSheObjectIdList product, returning its filename
 
@@ -435,7 +431,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir
 
     dpd.Data.BatchIndex = i
     dpd.Data.PointingIdList = pointing_list
-    dpd.Data.ObservationId = observation_id
+    dpd.Data.ObservationIdList = observation_id_list
     dpd.Data.TileList = tile_list
 
     # Get a filename for the product
