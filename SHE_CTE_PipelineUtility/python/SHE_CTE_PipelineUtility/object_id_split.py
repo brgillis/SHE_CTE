@@ -44,7 +44,6 @@ from ST_DM_DmUtils.DmUtils import save_product_metadata, read_product_metadata, 
 from SHE_PPT.logging import getLogger
 from SHE_PPT.pipeline_utility import AnalysisConfigKeys
 from SHE_PPT.coordinates import reproject_to_equator, euclidean_metric, DTOR
-from SHE_PPT.clustering import identify_all_groups, partition_into_batches
 
 from SHE_PPT.table_formats.mer_final_catalog import tf as mer_tf
 from SHE_PPT.table_utility import is_in_format
@@ -53,6 +52,7 @@ from SHE_PPT.products import she_object_id_list
 
 from SHE_CTE import SHE_CTE_RELEASE_STRING
 
+from .clustering import spatially_batch, find_groups
 
 logger = getLogger(__name__)
 
@@ -374,7 +374,8 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     #get ras and decs of the objects
     ras = mer_final_catalog[mer_tf.gal_x_world]
     decs = mer_final_catalog[mer_tf.gal_y_world]
-    
+
+    obj_ids = mer_final_catalog[mer_tf.ID]
     
     #  change coordinate system to one centred about the celestial equator so that over the half degree or so
     #  range we can approximate ra/dec as cartesian
@@ -393,53 +394,22 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
 
     # get the groups (separation <= grouping_radius), and the updated positions of all objects for batching (all objects
     # belonging to the same group have the same position to ensure they are partitioned into the same batches below)
-    x_group, y_group, group_ids = identify_all_groups(x, y, sep=grouping_radius, metric=euclidean_metric)
+    x_group, y_group, group_ids = find_groups(x, y, sep=grouping_radius)
+
+    # batch objects with a batch size approximately equal (but generally slightly smaller than) batch_size. 
+    # Returns a list of lists of array indices
+    batches = spatially_batch(x_group, y_group, batch_size)
     
-    # Now spatially batch the objects
-
-    num_objs = len(mer_final_catalog)
-
-     # If batch size is zero, use all IDs in one batch
-    if batch_size == 0:
-        batch_size = num_objs
-
-    num_batches = int(math.ceil(num_objs / batch_size))
-    
+    # select max_batches batches
     # if max_batches = 0, do not limit the number of batches
     if max_batches > 0:
-        num_batches = np.min((num_batches, max_batches))
-
-    logger.info("Splitting objects into %d batches of mean size %d", num_batches, batch_size)
+        limited_num_batches = np.min((len(batches), max_batches))
+        batches = batches[:limited_num_batches]
     
-    #spatially batch objects into batches of mean size batch_size
-    _, batch_ids, _ = partition_into_batches(x_group, y_group, batchsize = batch_size)
-
-
-    #now construct the lists of IDs and indices for each batch
-
-    obj_ids = mer_final_catalog[mer_tf.ID]
-
-    id_arrays = []
-    index_arrays = []
-    group_arrays=[]
-
-    unique_batch_ids = np.unique(batch_ids)
-
-    for batch in unique_batch_ids[:num_batches]:
-
-        inds = np.where(batch_ids == batch)
-
-        ids = obj_ids[inds]
-        indices = inds[0]
-        groups = group_ids[inds]
-
-        id_arrays.append(ids)
-        index_arrays.append(indices)
-        group_arrays.append(groups)
-
-
-    # make sure we do have num_batches batches
-    assert len(id_arrays) == num_batches, "Number of batches produced does not match expected number of batches"
+    # construct lists of object ids, indices and group_ids for each batch
+    id_arrays = [obj_ids[inds] for inds in batches]
+    index_arrays = batches
+    group_arrays = [group_ids[inds] for inds in batches]
 
     return id_arrays, index_arrays, group_arrays
 
