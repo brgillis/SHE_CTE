@@ -45,7 +45,7 @@ from SHE_CTE import __version__ as CTE_VERSION
 
 from SHE_CTE_PipelineUtility.ShearEstimatesMerge import defineSpecificProgramOptions, mainMethod
 
-OBS_ID = 12345
+OBS_IDS = [12345, 6789]
 POINTING_IDS = [1,2,3]
 TILE_IDS = [4,5] 
 
@@ -59,14 +59,14 @@ REQUESTED_METHODS = [LENSMC, KSB, REGAUSS, MOMENTSML]
 METHODS = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
 
 # NOTE: To add to PPT eventually?
-def create_mock_chains_product(workdir, ids=[], include_data=True, obs_id=OBS_ID, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
+def create_mock_chains_product(workdir, ids=[], include_data=True, obs_ids=OBS_IDS, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
     """Creates a mock LensMC chains product from a list of object ids
 
     Inputs:
       - workdir: the workdir for the product
       - ids: a list of object IDs
       - include_data: bool - actually create a FITS file (T) or not (F)
-      - obs_id: the observation id
+      - obs_ids: The list of observation ids
       - pointing_ids: the list of pointing ids
       - tile_ids: the list of MER tile ids
 
@@ -91,9 +91,9 @@ def create_mock_chains_product(workdir, ids=[], include_data=True, obs_id=OBS_ID
 
     dpd = create_dpd_she_lensmc_chains()
     dpd.set_data_filename(chains_fname)
-    dpd.Data.ObservationId = obs_id
+    dpd.Data.ObservationIdList = obs_ids
     dpd.Data.PointingIdList = pointing_ids
-    dpd.Data.TileList = tile_ids
+    dpd.Data.TileIndexList = tile_ids
 
     product_filename = get_allowed_filename("CHAINS", "PROD", version=CTE_VERSION, subdir="", extension=".xml")
 
@@ -103,7 +103,7 @@ def create_mock_chains_product(workdir, ids=[], include_data=True, obs_id=OBS_ID
 
 
 # NOTE: To add to PPT eventually?
-def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True, obs_id=OBS_ID, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
+def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True, obs_ids=OBS_IDS, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
     """Creates a mock shear measurements product from a list of object ids
 
     Inputs:
@@ -114,7 +114,7 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
       - momentsml: whether to create MomentsML measurements table or not
       - regauss: whether to create REGAUSS measurements table or not
       - include_data: bool - actually create a FITS file (T) or not (F)
-      - obs_id: the observation id
+      - obs_ids: the list of observation ids
       - pointing_ids: the list of pointing ids
       - tile_ids: the list of MER tile ids
 
@@ -159,9 +159,9 @@ def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, m
             t_momentsml.write(qualified_momentsml_filename)
 
     dpd = create_she_measurements_product()
-    dpd.Data.ObservationId = obs_id
+    dpd.Data.ObservationIdList = obs_ids
     dpd.Data.PointingIdList = pointing_ids
-    dpd.Data.TileList = tile_ids
+    dpd.Data.TileIndexList = tile_ids
 
     if lensmc:
         dpd.set_LensMC_filename(lmc_fname)
@@ -190,8 +190,8 @@ def validate_shear_measurements_product(measurements_product, workdir, expected_
     # check validity of measurements product
     dpd = read_xml_product(q_measurements_prod)
 
-    assert dpd.Data.ObservationId == OBS_ID, "Output product's ObservationID is an unexpected value"
-    assert dpd.Data.TileList == TILE_IDS, "Output product's TileList is an unexpected value"
+    assert dpd.Data.ObservationIdList == OBS_IDS, "Output product's ObservationID is an unexpected value"
+    assert dpd.Data.TileIndexList == TILE_IDS, "Output product's TileList is an unexpected value"
     assert dpd.Data.PointingIdList == POINTING_IDS, "Output product's ObservationID is an unexpected value"
 
     lmc_fits = dpd.get_LensMC_filename()
@@ -218,6 +218,11 @@ def validate_chains_product(chains_product, workdir, expected_obj_ids):
 
     # check validity of chains product
     dpd = read_xml_product(q_chains_prod)
+
+    assert dpd.Data.ObservationIdList == OBS_IDS, "Output product's ObservationID is an unexpected value"
+    assert dpd.Data.TileIndexList == TILE_IDS, "Output product's TileList is an unexpected value"
+    assert dpd.Data.PointingIdList == POINTING_IDS, "Output product's ObservationID is an unexpected value"
+    
     fits = dpd.get_data_filename()
 
     t = Table.read(os.path.join(workdir, fits))
