@@ -139,6 +139,7 @@ class TestCase:
 
             assert dpd.Data.PointingIdList == expected_pointing_ids, "PointingIdlist in output object_list is unexpected"
             assert dpd.Data.ObservationIdList == expected_obs_ids, "ObservationId list in output object_list is unexpected"
+            assert dpd.Data.TileList == [TILE_ID], "TileList in output object_id_list is unexepcted"
             
             #extract the object ids in this product for use below
             ids = dpd.get_id_list()
