@@ -1091,9 +1091,7 @@ with the following options:
 
 |  **Argument**               | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --input_product `<filename>`     | Any xml data product | yes    | N/A         |
-| 
-
+| --input_product `<filename>`     | Any xml data product | yes    | N/A         | 
 
 
 **Output Arguments**
