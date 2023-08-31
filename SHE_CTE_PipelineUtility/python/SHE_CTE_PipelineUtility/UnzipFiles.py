@@ -18,7 +18,7 @@
 
 
 """
-:file: python/SHE_CTE_PipelineUtility/SHE_CTE_UnzipFiles.py
+:file: python/SHE_CTE_PipelineUtility/UnzipFiles.py
 
 :date: 31/08/23
 :author: Gordon Gibb
@@ -80,7 +80,7 @@ def mainMethod(args):
 
 
 def convert_product(workdir, input_product, output_product):
-    """Takes an input product and (g)unzips all its gzipped files, 
+    """Takes an input product and (g)unzips all its gzipped files,
     outputting the product with corrected filenames in it"""
 
     logger.info("Reading input product %s", workdir / input_product)
