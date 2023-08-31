@@ -95,6 +95,7 @@ make install
   - [`SHE_CTE_ShearEstimatesMerge`](#she_cte_shearestimatesmerge): Merges multiple shear estimate products into one.
   - [`SHE_CTE_CleanupBiasMeasurement`](#she_cte_cleanupbiasmeasurement): Cleans up intermediate files involved in bias measurement
   - [`SHE_CTE_ConvertToHDF5`](#she_cte_converttohdf5): Converts VIS frames and SHE reprojected segmentation maps to HDF5 for more efficient stamp extraction.
+  - [`SHE_CTE_UnzipFiles`](#she_cte_unzipfiles): Unzips any gzipped files pointed to by a product, creating a new product pointing to these unzipped files.
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
   - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
   - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
@@ -1063,6 +1064,63 @@ _`output_hdf5`_
 
 **Description** The desired name for the output HDF5 file.
 
+
+
+### `SHE_CTE_UnzipFiles`
+
+Given an input data product, unzipps all gzipped files it points to, and creates a new product pointing to these unzipped files. Any files that are not zipped will be left alone.
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_UnzipFiles` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.2 SHE_CTE_UnzipFiles --input_prod <file> --output_prod <file> [--workdir <dir>]  [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+| --log-dir `<file>`    | The name of the file to output the executable logs to. If not provided, logging data will only be output to the terminal. When run via the pipeline runner, this will be set to a file in the directory `<workdir>/logs/<task_name>/` with a name based off of the command used to call this executable, such as "E_Run_SHE_MyProject_0.1_SHE_MyProject_GenCatPic_retry_0.out" | no           | .        |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --input_product `<filename>`     | Any xml data product | yes    | N/A         |
+| 
+
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --output_product `<filename>`  | Identical product to the input, but pointing to unzipped files | yes          | N/A |
+
+
+**Options**
+
+None
+
+
+_**Inputs**_
+
+_`input_product`_:
+
+**Description:** The filename of any xml data product pointing to files which are gziped.
+**Source:** Any
+
+
+_**Outputs**_
+
+_`output_product`_ 
+
+**Description** The desired name for the output product. This will be the same product type as the input product, and contain the same contents, save for the files it links to will be the unzipped versions of these files.
 
 
 ### `SHE_CTE_SplitFits`
