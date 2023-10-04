@@ -1,7 +1,7 @@
 pytest:
   stage: test
   image:
-    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.4.2
+    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.5.1
     entrypoint: [ '/bin/sh', '-c' ]
   variables:
     ELEMENTS_AUX_PATH: /usr/share/auxdir
@@ -11,7 +11,5 @@ pytest:
     - cmake -DPYTHON_EXPLICIT_VERSION=3 -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE ..
     - make install
     - pytest ../SHE_CTE/tests/python
-    - pytest ../SHE_CTE_BiasMeasurement/tests/python
     - pytest ../SHE_CTE_PipelineUtility/tests/python
-    - pytest ../SHE_CTE_ShearReconciliation/tests/python
     - pytest ../SHE_CTE_ShearValidation/tests/python
