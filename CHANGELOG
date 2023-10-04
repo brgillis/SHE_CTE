@@ -8,7 +8,7 @@ API Changes
 
 Dependency Changes
 ------------------
-- PPT 9.3.1 -> 9.5 (includes Eden 3.1, DM 9.2)
+- PPT 9.3.1 -> 9.5.1 (includes Eden 3.1, DM 9.2)
 
 Deprecated Features
 -------------------
@@ -30,12 +30,9 @@ New Features
 - New executable SHE_CTE_GenerateDetectorListfile that writes a listfile of each NISP or VIS CCDID
 - New routines for group identification and batching in SHE_CTE_PipelineUtility.clustering
 - ObjectIdSplit now uses the above clustering code
-<<<<<<< HEAD
 - Updated ObjectIdsplit to cope with multiple observation ids
 - Updated ShearEstimatesMerge to use the new measurement products (with Obs Id lists)
-=======
 - New SHE_CTE_UnzipFiles executable to unzip any gzipped data files pointed to by an arbitrary data product
->>>>>>> 48aba25c2e73c0a8bafba68d41e7e0469184a9b3
 
 New Config Features
 -------------------
