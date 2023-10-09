@@ -46,20 +46,22 @@ from SHE_CTE import __version__ as CTE_VERSION
 from SHE_CTE_PipelineUtility.ShearEstimatesMerge import defineSpecificProgramOptions, mainMethod
 
 OBS_IDS = [12345, 6789]
-POINTING_IDS = [1,2,3]
-TILE_IDS = [4,5] 
+POINTING_IDS = [1, 2, 3]
+TILE_IDS = [4, 5]
 
 # Which methods to make products for
 # NOTE: Make some False so we can check that it correctly handles some methods missing
-LENSMC = True
-KSB = True
-REGAUSS = False
-MOMENTSML = False
-REQUESTED_METHODS = [LENSMC, KSB, REGAUSS, MOMENTSML]
-METHODS = ["LensMC", "KSB", "REGAUSS", "MomentsML"]
+METHODS = {}
+METHODS["LensMC"] = True
+METHODS["KSB"] = True
+METHODS["MomentsML"] = True
+METHODS["REGAUSS"] = False
+
 
 # NOTE: To add to PPT eventually?
-def create_mock_chains_product(workdir, ids=[], include_data=True, obs_ids=OBS_IDS, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
+def create_mock_chains_product(
+    workdir, ids=[], include_data=True, obs_ids=OBS_IDS, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS
+):
     """Creates a mock LensMC chains product from a list of object ids
 
     Inputs:
@@ -103,7 +105,18 @@ def create_mock_chains_product(workdir, ids=[], include_data=True, obs_ids=OBS_I
 
 
 # NOTE: To add to PPT eventually?
-def create_mock_measurements_product(workdir, ids=[], lensmc=False, ksb=False, momentsml=False, regauss=False, include_data=True, obs_ids=OBS_IDS, pointing_ids=POINTING_IDS, tile_ids=TILE_IDS):
+def create_mock_measurements_product(
+    workdir,
+    ids=[],
+    lensmc=False,
+    ksb=False,
+    momentsml=False,
+    regauss=False,
+    include_data=True,
+    obs_ids=OBS_IDS,
+    pointing_ids=POINTING_IDS,
+    tile_ids=TILE_IDS,
+):
     """Creates a mock shear measurements product from a list of object ids
 
     Inputs:
@@ -194,20 +207,15 @@ def validate_shear_measurements_product(measurements_product, workdir, expected_
     assert dpd.Data.TileIndexList == TILE_IDS, "Output product's TileList is an unexpected value"
     assert dpd.Data.PointingIdList == POINTING_IDS, "Output product's ObservationID is an unexpected value"
 
-    lmc_fits = dpd.get_LensMC_filename()
-    ksb_fits = dpd.get_KSB_filename()
-    regauss_fits = dpd.get_REGAUSS_filename()
-    momentsml_fits = dpd.get_MomentsML_filename()
-
-    fits_files = [lmc_fits, ksb_fits, regauss_fits, momentsml_fits]
-
-    for method, request, fits in zip(METHODS, REQUESTED_METHODS, fits_files):
-        # If this method was requested, make sure its file exists and all the objects are there
-        if request:
+    for method, requested in METHODS.items():
+        fits = getattr(dpd, f"get_{method}_filename")()
+        if requested:
             assert fits is not None, "%s file is not set in the product but it should be" % method
             t = Table.read(os.path.join(workdir, fits))
             assert set(t["OBJECT_ID"]) == set(expected_obj_ids), "%s object ids do not match those expected" % method
-            assert len(t) == len(expected_obj_ids), "Output table has an unexpected number of rows (expected %d, got %d)"%(len(t), len(ids1))
+            assert len(t) == len(
+                expected_obj_ids
+            ), "Output table has an unexpected number of rows (expected %d, got %d)" % (len(t), len(ids1))
         else:
             assert fits is None, "%s file is set in the product but it should not be" % method
 
@@ -222,12 +230,11 @@ def validate_chains_product(chains_product, workdir, expected_obj_ids):
     assert dpd.Data.ObservationIdList == OBS_IDS, "Output product's ObservationID is an unexpected value"
     assert dpd.Data.TileIndexList == TILE_IDS, "Output product's TileList is an unexpected value"
     assert dpd.Data.PointingIdList == POINTING_IDS, "Output product's ObservationID is an unexpected value"
-    
+
     fits = dpd.get_data_filename()
 
     t = Table.read(os.path.join(workdir, fits))
     assert set(t["OBJECT_ID"]) == set(expected_obj_ids), "%s object ids do not match those expected"
-
 
 
 @pytest.fixture
@@ -252,10 +259,20 @@ class TestCase:
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids1,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids2,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
 
         measurements_listfile = "mes.json"
@@ -289,9 +306,8 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-        validate_shear_measurements_product(measurements_out, workdir, ids1+ids2)
-        validate_chains_product(chains_out, workdir, ids1+ids2)
-
+        validate_shear_measurements_product(measurements_out, workdir, ids1 + ids2)
+        validate_chains_product(chains_out, workdir, ids1 + ids2)
 
     def test_shearestimatesmerge_nochains(self, workdir):
         """Smoketest for the executable - without LensMC chains"""
@@ -302,17 +318,26 @@ class TestCase:
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids1,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids2,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
 
         measurements_listfile = "mes.json"
 
         with open(os.path.join(workdir, measurements_listfile), "w") as f:
             json.dump([measurements_prod1, measurements_prod2], f)
-
 
         # create args for executable
 
@@ -328,12 +353,11 @@ class TestCase:
             "--she_lensmc_chains_listfile=%s" % "dummyfile",
             "--merged_she_measurements=%s" % measurements_out,
         ]
-        
+
         args = parser.parse_args(commandlineargs)
 
         with pytest.raises(ValueError):
             mainMethod(args)
-
 
         commandlineargs = [
             "--workdir=%s" % workdir,
@@ -346,7 +370,7 @@ class TestCase:
 
         with pytest.raises(ValueError):
             mainMethod(args)
-        
+
         # Now run the executable proper
 
         commandlineargs = [
@@ -359,8 +383,7 @@ class TestCase:
         mainMethod(args)
 
         # validate outputs
-        validate_shear_measurements_product(measurements_out, workdir, ids1+ids2)
-
+        validate_shear_measurements_product(measurements_out, workdir, ids1 + ids2)
 
     def test_shearestimatesmerge_missing_fits(self, workdir):
         """Smoketest for the executable - with products with missing FITS tables"""
@@ -371,10 +394,21 @@ class TestCase:
         ids2 = [i for i in range(10, 20)]
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids1,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
         measurements_prod2 = create_mock_measurements_product(
-            workdir=workdir, ids=ids2, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML, include_data=False
+            workdir=workdir,
+            ids=ids2,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
+            include_data=False,
         )
 
         measurements_listfile = "mes.json"
@@ -412,19 +446,20 @@ class TestCase:
         validate_shear_measurements_product(measurements_out, workdir, ids1)
         validate_chains_product(chains_out, workdir, ids1)
 
-
-
-
     def test_shearestimatesmerge_missing_products(self, workdir):
         """Smoketest for the executable - with missing measurement products"""
 
         # create input data
 
         ids1 = [i for i in range(10)]
-        
 
         measurements_prod1 = create_mock_measurements_product(
-            workdir=workdir, ids=ids1, lensmc=LENSMC, ksb=KSB, regauss=REGAUSS, momentsml=MOMENTSML
+            workdir=workdir,
+            ids=ids1,
+            lensmc=METHODS["LensMC"],
+            ksb=METHODS["KSB"],
+            regauss=METHODS["REGAUSS"],
+            momentsml=METHODS["MomentsML"],
         )
         measurements_prod2 = "i_am_not_a_measurements_file.xml"
 
@@ -459,13 +494,6 @@ class TestCase:
         args = parser.parse_args(commandlineargs)
         mainMethod(args)
 
-
         # validate outputs
         validate_shear_measurements_product(measurements_out, workdir, ids1)
         validate_chains_product(chains_out, workdir, ids1)
-
-
-
-
-
-
