@@ -134,10 +134,6 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
 
 
 def read_method_estimates_tables(she_measurements_table_product_filename, workdir):
-    observation_id = None
-    observation_time = None
-    pointing_id_list = None
-    tile_list = None
 
     try:
 
@@ -151,11 +147,10 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
         if not isinstance(she_measurements_table_product, products.she_measurements.dpdSheMeasurements):
             raise TypeError(f"Shear product is of invalid type: {type(she_measurements_table_product)}")
 
-        if observation_id is None:
-            observation_id = she_measurements_table_product.Data.ObservationId
-            observation_time = she_measurements_table_product.Data.ObservationDateTime
-            pointing_id_list = she_measurements_table_product.Data.PointingIdList
-            tile_list = she_measurements_table_product.Data.TileList
+        observation_ids = she_measurements_table_product.Data.ObservationIdList
+        observation_time = she_measurements_table_product.Data.ObservationDateTime
+        pointing_id_list = she_measurements_table_product.Data.PointingIdList
+        tile_list = she_measurements_table_product.Data.TileIndexList
 
     except Exception as e:
 
@@ -190,7 +185,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
 
         logger.debug("Finished loading shear estimates from file: " + she_measurements_table_product_filename)
 
-    return (she_measurements_tables, observation_id, observation_time, pointing_id_list, tile_list)
+    return (she_measurements_tables, observation_ids, observation_time, pointing_id_list, tile_list)
 
 
 def she_measurements_merge_from_args(args):
@@ -240,20 +235,23 @@ def she_measurements_merge_from_args(args):
         full_l_pointing_id_lists,
         full_l_tile_lists) = zip(*she_measurements_tables_and_metadata)
 
-
     l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
     l_observation_ids = [x for x in full_l_observation_ids if x is not None]
     l_observation_times = [x for x in full_l_observation_times if x is not None]
     l_pointing_id_lists = [x for x in full_l_pointing_id_lists if x is not None]
     l_tile_lists = [x for x in full_l_tile_lists if x is not None]
+    
+    # create this list for the below metadata check, as the objects in l_observation_times (spaceObservationDateTime)
+    # cannot be checked for equality
+    l_observation_datetimes = [ x.OBT for x in l_observation_times]
 
-    # Check metadata is consistent
-    for l in (l_observation_ids, l_observation_times, l_pointing_id_lists, l_tile_lists):
+    # Check metadata is consistent (each measurement product should have the same properties)
+    for l in (l_observation_ids, l_observation_datetimes, l_pointing_id_lists, l_tile_lists):
         l_arr = np.array(l)
         if not (l_arr == l_arr[0]).all():
             logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
 
-    observation_id = l_observation_ids[0]
+    observation_ids = l_observation_ids[0]
     observation_time = l_observation_times[0]
     pointing_id_list = l_pointing_id_lists[0]
     tile_list = l_tile_lists[0]
@@ -282,10 +280,10 @@ def she_measurements_merge_from_args(args):
         spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
 
     # Set the metadata for the measurements product
-    combined_she_measurements_product.Data.ObservationId = observation_id
+    combined_she_measurements_product.Data.ObservationIdList = observation_ids
     combined_she_measurements_product.Data.ObservationDateTime = observation_time
     combined_she_measurements_product.Data.PointingIdList = pointing_id_list
-    combined_she_measurements_product.Data.TileList = tile_list
+    combined_she_measurements_product.Data.TileIndexList = tile_list
 
     # Create (and write to disk) the output tables for each method (if available)
     for method in ShearEstimationMethods:
@@ -360,10 +358,10 @@ def she_measurements_merge_from_args(args):
             spatial_footprint = os.path.join(args.workdir, measurements_product_filenames[0]))
 
         # Set the metadata for the chains product
-        combined_she_lensmc_chains_product.Data.ObservationId = observation_id
+        combined_she_lensmc_chains_product.Data.ObservationIdList = observation_ids
         combined_she_lensmc_chains_product.Data.ObservationDateTime = observation_time
         combined_she_lensmc_chains_product.Data.PointingIdList = pointing_id_list
-        combined_she_lensmc_chains_product.Data.TileList = tile_list
+        combined_she_lensmc_chains_product.Data.TileIndexList = tile_list
 
 
         combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)

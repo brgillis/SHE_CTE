@@ -102,11 +102,14 @@ def convert_product(workdir, input_product, output_product):
 
         if fits_path.suffix == ".gz":
             unzipped_fits_path = fits_path.with_suffix("")
-            try:
-                gunzip_file(fits_path, unzipped_fits_path)
-                logger.info("Gunzipped %s to %s", fits_path, unzipped_fits_path)
-            except FileNotFoundError:
-                logger.warning("Cannot find file %s to be gunzipped - skipping", fits_path)
+            if unzipped_fits_path.exists():
+                logger.info("Unzipped file %s already exists. Skipping.", unzipped_fits_path)
+            else:
+                try:
+                    gunzip_file(fits_path, unzipped_fits_path)
+                    logger.info("Gunzipped %s to %s", fits_path, unzipped_fits_path)
+                except FileNotFoundError:
+                    logger.warning("Cannot find file %s to be gunzipped - skipping", fits_path)
 
             # set the new name regardless (in case the file has already been unzipped somewhere else)
             el.firstChild.nodeValue = unzipped_fits_path.name

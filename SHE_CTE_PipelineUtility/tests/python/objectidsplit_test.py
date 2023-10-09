@@ -42,12 +42,13 @@ from SHE_PPT.table_utility import is_in_format
 
 from SHE_CTE_PipelineUtility.ObjectIdSplit import defineSpecificProgramOptions, mainMethod
 
-base_workdir="/tmp/SHE_CTE_tests/"
-
 num_objects = 45
 batch_size = 10
+num_exposures = 4
 
-
+OBS_IDS= list(range(num_exposures))
+POINTING_IDS = list(range(num_exposures))
+TILE_ID=1
 
 @pytest.fixture
 def input_files(tmpdir):
@@ -55,12 +56,15 @@ def input_files(tmpdir):
 
     workdir = tmpdir
 
-    #create the vis images and mer catalogue
-    exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=workdir, n_objs_per_det=num_objects, objsize=2)
-    catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir)
+    #create the vis images and mer catalogue (4 exposures with different pointing IDs and noise realisations)
+    exposure_list = []
+    for _id in range(num_exposures):
+        exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=workdir, n_objs_per_det=num_objects, objsize=2, obs_id=_id, seed=1, pointing_id=_id, noise_seed=_id)
+        exposure_list.append(exposure_product)
+    
+    catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir, tile_id=TILE_ID, obs_ids=OBS_IDS)
     
     #create the contents of the listfiles for the vis and mer products
-    exposure_list = [exposure_product for i in range(4)]
     catalogue_list = [catalogue_product]
 
     data_images = "data_images.json"
@@ -102,6 +106,9 @@ class TestCase:
         batch_mer_catalogs_listfile = args.batch_mer_catalogs
         object_ids_prod = args.object_ids
 
+        expected_obs_ids = OBS_IDS
+        expected_pointing_ids = [i for i in range(num_exposures)]
+
         catalog_list = read_listfile(os.path.join(workdir,batch_mer_catalogs_listfile))
         assert len(catalog_list) >= n_batches_expected, (
             "Unexpected number of mer_final_catalog batches created. Got %d expected >= %d"%(len(catalog_list), n_batches_expected))
@@ -129,6 +136,10 @@ class TestCase:
             dpd = read_product_metadata(os.path.join(workdir,product))
 
             assert type(dpd) == dpdSheObjectIdList, "Expected output to be dpdSheObjectIdList, but got %s"%(type(dpd).__name__)
+
+            assert dpd.Data.PointingIdList == expected_pointing_ids, "PointingIdlist in output object_list is unexpected"
+            assert dpd.Data.ObservationIdList == expected_obs_ids, "ObservationId list in output object_list is unexpected"
+            assert dpd.Data.TileList == [TILE_ID], "TileList in output object_id_list is unexepcted"
             
             #extract the object ids in this product for use below
             ids = dpd.get_id_list()

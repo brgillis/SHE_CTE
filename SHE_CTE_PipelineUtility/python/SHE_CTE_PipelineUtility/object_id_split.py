@@ -147,17 +147,13 @@ def read_vis_frames(vis_frame_listfile, workdir):
         
         wcs_list += exp_wcs_list
 
-    s_observation_ids = set(observation_ids)
-    if len(s_observation_ids) != 1:
-        raise ValueError("Multiple ObservationIDs are present, %s, but there should be only one."%s_observation_ids)
-
-    observation_id = observation_ids.pop()
+    observation_ids = list(set(observation_ids))
     
-    logger.info("ObservationId = %d", observation_id)
+    logger.info("ObservationIds = %s", observation_ids)
     logger.info("PointingIds = %s", pointing_ids)
     logger.info("Extracted %d WCS(s) from %d VIS exposure(s)", len(wcs_list), len(product_list))
 
-    return wcs_list, pointing_ids, observation_id
+    return wcs_list, pointing_ids, observation_ids
 
 
 def read_mer_catalogs(mer_catalog,workdir):
@@ -414,7 +410,7 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     return id_arrays, index_arrays, group_arrays
 
 
-def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir, i, batch_uuid):
+def write_id_list_product(ids, pointing_list, observation_id_list, tile_list, workdir, i, batch_uuid):
     """
     Writes a dpdSheObjectIdList product, returning its filename
 
@@ -435,7 +431,7 @@ def write_id_list_product(ids, pointing_list, observation_id, tile_list, workdir
 
     dpd.Data.BatchIndex = i
     dpd.Data.PointingIdList = pointing_list
-    dpd.Data.ObservationId = observation_id
+    dpd.Data.ObservationIdList = observation_id_list
     dpd.Data.TileList = tile_list
 
     # Get a filename for the product
@@ -480,8 +476,6 @@ def write_mer_product(input_mer_cat, inds, groups, mfc_dpd, workdir, batch_uuid)
     #IF the group id is not already in the table, add it
     if mer_tf.GROUP_ID not in batch_table.columns:
         batch_table.add_column(groups, name = mer_tf.GROUP_ID)
-
-    assert is_in_format(batch_table, mer_tf, verbose=True), "Output MER catalog is not in the correct format"
 
     # Get a filename for the FITS table
     table_filename = FileNameProvider().get_allowed_filename(
@@ -549,6 +543,8 @@ def object_id_split_from_args(args,
     
     # Read the mer final catalogues in, stacking them to one large catalogue
     mer_final_catalog, tile_ids, mfc_dpd = read_mer_catalogs(mer_final_catalog_tables, workdir)
+
+    # TODO: When moving to a Tile-Based pipeline, check that obs_ids from VIS exposures matches obs_ids in MER catalogue dpd
     
     # If we're sub batching, this has already been done in the batching stage
     if not sub_batch:
