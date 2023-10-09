@@ -46,8 +46,8 @@ num_objects = 45
 batch_size = 10
 num_exposures = 4
 
-OBS_IDS= [ i for i in range(num_exposures)]
-POINTING_IDS = [i for i in range(num_exposures)]
+OBS_IDS= list(range(num_exposures))
+POINTING_IDS = list(range(num_exposures))
 TILE_ID=1
 
 @pytest.fixture
