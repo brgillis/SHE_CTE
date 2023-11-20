@@ -29,6 +29,7 @@ import argparse
 import pathlib
 import shutil
 import gzip
+import uuid
 
 from ElementsKernel import Logging
 from ST_DM_DmUtils import DmUtils
@@ -100,19 +101,28 @@ def convert_product(workdir, input_product, output_product):
         fits_filename = el.firstChild.nodeValue
         fits_path = datadir / fits_filename
 
+        if not fits_path.exists():
+            logger.warning("Cannot find file %s to be gunzipped - skipping", fits_path)
+            continue
+
         if fits_path.suffix == ".gz":
             unzipped_fits_path = fits_path.with_suffix("")
             if unzipped_fits_path.exists():
+                # set the unzipped name (so the product points to this existing file)
+                el.firstChild.nodeValue = unzipped_fits_path.name
                 logger.info("Unzipped file %s already exists. Skipping.", unzipped_fits_path)
             else:
-                try:
-                    gunzip_file(fits_path, unzipped_fits_path)
-                    logger.info("Gunzipped %s to %s", fits_path, unzipped_fits_path)
-                except FileNotFoundError:
-                    logger.warning("Cannot find file %s to be gunzipped - skipping", fits_path)
+                # unzipped_fits_path is of the form /path/to/thing.fits
+                # we want a unique name /path/to/thing-[uuid].fits
+                stem = unzipped_fits_path.stem
+                instance_uuid = uuid.uuid4().hex[:8]
+                unique_fits_path = unzipped_fits_path.with_stem(f"{stem}-{instance_uuid}")
+                
+                gunzip_file(fits_path, unique_fits_path)
+                logger.info("Gunzipped %s to %s", fits_path, unique_fits_path)
 
-            # set the new name regardless (in case the file has already been unzipped somewhere else)
-            el.firstChild.nodeValue = unzipped_fits_path.name
+                # set the new name
+                el.firstChild.nodeValue = unique_fits_path.name
 
     output_filename = workdir / output_product
 
