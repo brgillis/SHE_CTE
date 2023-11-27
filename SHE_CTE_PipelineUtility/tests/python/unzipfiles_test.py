@@ -25,7 +25,7 @@
 
 import pytest
 import subprocess
-
+import pathlib
 
 from ST_DM_DmUtils import DmUtils
 
@@ -105,7 +105,7 @@ def test_convert_product(workdir, compressed_file):
     data_filenames = [f"{gzipped_file}", "somefile.txt", "anotherfile.txt.gz"]
 
     # filenames we expect in the output
-    expected_filename = [f"{unzipped_file}", "somefile.txt", "anotherfile.txt"]
+    expected_filenames = [f"{unzipped_file}", "somefile.txt", "anotherfile.txt"]
 
     # NOTE: convert_product should work with any data product, so this test is not limited to
     # dpdSheIntermediateGeneral, however this is a simple product (that we control) which can
@@ -143,4 +143,10 @@ def test_convert_product(workdir, compressed_file):
 
     output_filenames = [ds.DataContainer.FileName for ds in output_dpd.Data.DataStorage]
 
-    assert output_filenames == expected_filename
+    for output_fname, expected_fname in zip(output_filenames, expected_filenames):
+        # NOTE: as we add a UUID to the stem of the unzipped file's name, it will not match exactly
+        output_stem = pathlib.Path(output_fname).stem
+        expected_stem = pathlib.Path(expected_fname).stem
+        print(expected_fname, output_fname)
+        assert expected_stem in output_stem
+
