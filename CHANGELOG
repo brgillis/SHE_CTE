@@ -34,6 +34,7 @@ New Features
 - Updated ShearEstimatesMerge to use the new measurement products (with Obs Id lists)
 - New SHE_CTE_UnzipFiles executable to unzip any gzipped data files pointed to by an arbitrary data product
 - Add a UUID to the filenames of unzipped files to prevent the pipeline failing if a pilot crashes in the middle of unzipping files
+- Remove UUID from filenames after unzipping is complete so that subsequent pipeline runs find them and don't repeat the unzipping process
 
 New Config Features
 -------------------
