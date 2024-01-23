@@ -36,6 +36,7 @@ New Features
 - Add a UUID to the filenames of unzipped files to prevent the pipeline failing if a pilot crashes in the middle of unzipping files
 - Remove UUID from filenames after unzipping is complete so that subsequent pipeline runs find them and don't repeat the unzipping process
 - Implement batched iterator
+- New executable SHE_CTE_DetectorSplit to create sparate products containing VIS data for each detector
 
 New Config Features
 -------------------
