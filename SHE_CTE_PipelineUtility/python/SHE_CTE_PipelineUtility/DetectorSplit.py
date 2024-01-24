@@ -37,7 +37,7 @@ from SHE_PPT.file_io import read_xml_product, save_product_metadata
 from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
 
 from SHE_CTE import SHE_CTE_RELEASE_STRING
-from SHE_CTE_PipelineUtility.utils import batched
+from SHE_CTE_PipelineUtility.utils import batched, write_fits_hdus
 
 
 def defineSpecificProgramOptions():
@@ -104,36 +104,15 @@ def mainMethod(args):
             instance_id = f'{observation_id:06}_{dither_id:02}_{exposure_id}_{detector_id}'
 
             # VIS DET
-            vis_detector_det_filename = filename_provider.get_allowed_filename(
-                type_name="DET",
-                instance_id=instance_id,
-                extension=".fits",
-                release=SHE_CTE_RELEASE_STRING,
-                processing_function="SHE",
-            )
-            fits.HDUList([fits.PrimaryHDU(), *det]).writeto(datadir / vis_detector_det_filename)
+            vis_detector_det_filename = write_fits_hdus('DET', instance_id, det, datadir)
             logger.info('Wrote VIS detector data file [filename=%s]', vis_detector_det_filename)
 
             # VIS BKG
-            vis_detector_bkg_filename = filename_provider.get_allowed_filename(
-                type_name="BKG",
-                instance_id=instance_id,
-                extension=".fits",
-                release=SHE_CTE_RELEASE_STRING,
-                processing_function="SHE",
-            )
-            fits.HDUList([fits.PrimaryHDU(), bkg]).writeto(datadir / vis_detector_bkg_filename)
+            vis_detector_bkg_filename = write_fits_hdus('BKG', instance_id, (bkg,), datadir)
             logger.info('Wrote VIS detector background file [filename=%s]', vis_detector_bkg_filename)
 
             # VIS WGT
-            vis_detector_wgt_filename = filename_provider.get_allowed_filename(
-                type_name="WGT",
-                instance_id=instance_id,
-                extension=".fits",
-                release=SHE_CTE_RELEASE_STRING,
-                processing_function="SHE",
-            )
-            fits.HDUList([fits.PrimaryHDU(), wgt]).writeto(datadir / vis_detector_wgt_filename)
+            vis_detector_wgt_filename = write_fits_hdus('WGT', instance_id, (wgt,), datadir)
             logger.info('Wrote VIS detector weights file [filename=%s]', vis_detector_wgt_filename)
 
             # VIS xml

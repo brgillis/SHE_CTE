@@ -27,6 +27,11 @@
 
 from itertools import islice
 
+from astropy.io.fits import HDUList, PrimaryHDU
+from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
+
+from SHE_CTE import SHE_CTE_RELEASE_STRING
+
 
 def batched(iterable, batch_size):
     """
@@ -43,3 +48,26 @@ def batched(iterable, batch_size):
     it = iter(iterable)
     while batch := tuple(islice(it, batch_size)):
         yield batch
+
+
+def write_fits_hdus(type_name, instance_id, hdus, directory):
+    """
+    Write a tuple of FITS HDUs to a FITS file with an automatically generated valid filename.
+
+    :param type_name: Argument passed to get_allowed_filename.
+    :param instance_id: Argument passed to get_allowed_filename.
+    :param hdus: Tuple of (non-primary) FITS HDUs.
+    :param directory: Path object for the directory to which the FITS file will be written.
+
+    :return filename: Valid filename (relative to directory) to which the FITS file was written.
+    """
+
+    filename = FileNameProvider().get_allowed_filename(
+        type_name=type_name,
+        instance_id=instance_id,
+        extension='.fits',
+        release=SHE_CTE_RELEASE_STRING,
+        processing_function='SHE',
+        )
+    HDUList([PrimaryHDU(), *hdus]).writeto(directory / filename)
+    return filename
