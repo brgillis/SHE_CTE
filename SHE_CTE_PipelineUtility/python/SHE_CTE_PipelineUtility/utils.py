@@ -28,6 +28,7 @@
 from itertools import islice
 
 from astropy.io.fits import HDUList, PrimaryHDU
+from SHE_PPT.file_io import save_product_metadata
 from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
 
 from SHE_CTE import SHE_CTE_RELEASE_STRING
@@ -48,6 +49,29 @@ def batched(iterable, batch_size):
     it = iter(iterable)
     while batch := tuple(islice(it, batch_size)):
         yield batch
+
+
+def write_data_product(type_name, instance_id, data_product, directory):
+    """
+    Write an XML data product to an xml file with an automatically generated valid filename.
+
+    :param type_name: Argument passed to get_allowed_filename.
+    :param instance_id: Argument passed to get_allowed_filename.
+    :param data_product: XML data product object.
+    :param directory: Path object for the directory to which the data product will be written.
+
+    :return filename: Valid filename (relative to directory) to which the data product was written.
+    """
+
+    filename = FileNameProvider().get_allowed_filename(
+        type_name=type_name,
+        instance_id=instance_id,
+        extension='.xml',
+        release=SHE_CTE_RELEASE_STRING,
+        processing_function='SHE',
+    )
+    save_product_metadata(data_product, directory / filename)
+    return filename
 
 
 def write_fits_hdus(type_name, instance_id, hdus, directory):

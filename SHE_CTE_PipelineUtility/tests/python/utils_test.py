@@ -33,6 +33,11 @@ from pathlib import Path
 import pytest
 import sys
 
+from ST_DataModelBindings.dpd.she.raw.intermediategeneral_stub import DpdSheIntermediateGeneral
+from ST_DataModelBindings.pro.she_stub import sheIntermediateGeneral
+from ST_DM_DmUtils.DmUtils import get_product_name, read_product_metadata
+from ST_DM_HeaderProvider.GenericHeaderProvider import GenericHeaderGenerator
+
 from SHE_CTE import SHE_CTE_RELEASE_STRING
 from SHE_CTE_PipelineUtility import utils
 
@@ -60,6 +65,43 @@ def test_batched_invalid_batch_size(batch_size):
     with pytest.raises(ValueError, match='batch_size must be at least one'):
         batched = utils.batched(None, batch_size)
         next(batched)
+
+
+@pytest.fixture
+def she_intermediate_general_data_product():
+    dpd = DpdSheIntermediateGeneral()
+    product_name = get_product_name(dpd)
+    hg = GenericHeaderGenerator(product_type=product_name)
+    hg.set_tag_value('SoftwareName', 'SHE_CTE')
+    hg.set_tag_value('SoftwareRelease', SHE_CTE_RELEASE_STRING)
+    hg.set_tag_value('Curator', 'SHE')
+    dpd.Header = hg.generate()
+    dpd.Data = sheIntermediateGeneral()
+    dpd.Data.DataStorage = []
+    return dpd
+
+
+def test_write_data_product(she_intermediate_general_data_product, tmp_path):
+
+    # Call write_data_product for simple data product
+    type_name = 'TN'
+    instance_id = 'IID'
+    filename = utils.write_data_product(type_name, instance_id, she_intermediate_general_data_product, tmp_path)
+
+    # Check filename is valid
+    assert (tmp_path / filename).is_file()
+    assert type_name in filename
+    assert instance_id in filename
+    assert SHE_CTE_RELEASE_STRING in filename
+    assert 'SHE' in filename
+    assert Path(filename).suffix == '.xml'
+
+    # Check file contains a valid data product with expected contents
+    dpd = read_product_metadata(tmp_path / filename)
+    assert dpd.validateBinding()
+    assert dpd.Header.SoftwareName == 'SHE_CTE'
+    assert dpd.Header.SoftwareRelease == SHE_CTE_RELEASE_STRING
+    assert dpd.Header.Curator == 'SHE'
 
 
 def test_write_fits_hdus(tmp_path):

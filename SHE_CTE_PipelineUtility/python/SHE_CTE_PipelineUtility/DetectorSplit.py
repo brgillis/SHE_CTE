@@ -33,11 +33,11 @@ from pathlib import Path
 
 from astropy.io import fits
 from ElementsKernel.Logging import getLogger
-from SHE_PPT.file_io import read_xml_product, save_product_metadata
+from SHE_PPT.file_io import read_xml_product
 from ST_DM_FilenameProvider.FilenameProvider import FileNameProvider
 
 from SHE_CTE import SHE_CTE_RELEASE_STRING
-from SHE_CTE_PipelineUtility.utils import batched, write_fits_hdus
+from SHE_CTE_PipelineUtility.utils import batched, write_data_product, write_fits_hdus
 
 
 def defineSpecificProgramOptions():
@@ -122,14 +122,7 @@ def mainMethod(args):
             det_xml.Data.DataStorage.DataContainer.FileName = vis_detector_det_filename
             det_xml.Data.BackgroundStorage.DataContainer.FileName = vis_detector_bkg_filename
             det_xml.Data.WeightStorage.DataContainer.FileName = vis_detector_wgt_filename
-            det_xml_filename = filename_provider.get_allowed_filename(
-                type_name="DET",
-                instance_id=instance_id,
-                extension=".xml",
-                release=SHE_CTE_RELEASE_STRING,
-                processing_function="SHE",
-            )
-            save_product_metadata(det_xml, workdir / det_xml_filename)
+            det_xml_filename = write_data_product('DET', instance_id, det_xml, workdir)
             vis_products.append(det_xml_filename)
             logger.info('Wrote VIS detector product [filename=%s]', det_xml_filename)
 
