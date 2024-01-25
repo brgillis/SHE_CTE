@@ -95,3 +95,26 @@ def write_fits_hdus(type_name, instance_id, hdus, directory):
         )
     HDUList([PrimaryHDU(), *hdus]).writeto(directory / filename)
     return filename
+
+
+def write_fits_table(type_name, instance_id, table, directory):
+    """
+    Write an astropy Table to a FITS file with an automatically generated valid filename.
+
+    :param type_name: Argument passed to get_allowed_filename.
+    :param instance_id: Argument passed to get_allowed_filename.
+    :param table: Astropy Table.
+    :param directory: Path object for the directory to which the FITS file will be written.
+
+    :return filename: Valid filename (relative to directory) to which the FITS file was written.
+    """
+
+    filename = FileNameProvider().get_allowed_filename(
+        type_name=type_name,
+        instance_id=instance_id,
+        extension='.fits',
+        release=SHE_CTE_RELEASE_STRING,
+        processing_function='SHE',
+        )
+    table.write(directory / filename)
+    return filename
