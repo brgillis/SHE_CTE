@@ -10,6 +10,7 @@ elements_depends_on_subdirs(SHE_PPT)
 elements_install_python_modules()
 
 # Instruction for creating a Python executable
+elements_add_python_program(SHE_CTE_DetectorSplit SHE_CTE_PipelineUtility.DetectorSplit)
 elements_add_python_program(SHE_CTE_ObjectIdSplit SHE_CTE_PipelineUtility.ObjectIdSplit)
 elements_add_python_program(SHE_CTE_SubObjectIdSplit SHE_CTE_PipelineUtility.SubObjectIdSplit)
 elements_add_python_program(SHE_CTE_ShearEstimatesMerge SHE_CTE_PipelineUtility.ShearEstimatesMerge)
@@ -23,4 +24,3 @@ elements_install_conf_files()
 
 # Install the auxiliary files
 # elements_install_aux_files()
-                
