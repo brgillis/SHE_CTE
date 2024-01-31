@@ -90,6 +90,7 @@ make install
   - [`SHE_CTE_PlotPsfSensitivity`](#she_cte_plotpsfsensitivity): (Deprecated)
   - [`SHE_CTE_PrintBias`](#she_cte_printbias): Prints the bias as determined by `SHE_CTE_MeasureBias`
 * SHE_CTE_PipelineUtility: Miscellaneous helper executables
+  - [`SHE_CTE_DetectorCatalog`](#she_cte_detectorcatalog): Create a sub-catalog of objects within a single detector
   - [`SHE_CTE_ObjectIdSplit`](#she_cte_objectidsplit): Splits a list of objects from the input catalogue into a number of smaller batches
   - [`SHE_CTE_SubObjectIdSplit`](#she_cte_subobjectidsplit): Splits batches of objects into even smaller batches (see `SHE_CTE_ObjectIdSplit`)
   - [`SHE_CTE_ShearEstimatesMerge`](#she_cte_shearestimatesmerge): Merges multiple shear estimate products into one.
@@ -676,8 +677,62 @@ _**Example**_
 This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data, *_although as its job is to delete files it may throw an exception as the files it has to delete will no longer exist!_* The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
 
 
+### `SHE_CTE_DetectorCatalog`
 
+Takes a MER final catalog and the WCS from a single VIS detector and outputs a sub-catalog of only those objects that fall within the footprint of that detector.
 
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_DetectorCatalog` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.2 SHE_CTE_DetectorCatalog --workdir <dir> --vis_detector_frame <file> --mer_final_catalog <file> --mer_detector_catalog <file> --she_object_id_list <file> [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**      | **Description**               | **Required** | **Default** |
+| :----------------- | :---------------------------- | :----------: | :----------:|
+| --workdir `<path>` | Name of the working directory | Yes          | N/A         |
+| --logdir `<path>`  | Name of the log directory     | No           | workdir     |
+
+**Input Arguments**
+
+|  **Argument**                       | **Description**                                         | **Required** | **Default** |
+| :---------------------------------- | :------------------------------------------------------ | :----------: | :----------:|
+| --vis_detector_frame `<filename>`   | visCalibratedFrame data product containing one detector | Yes          | N/A         |
+| --mer_final_catalog `<filename>`    | merFinalCatalog data product                            | Yes          | N/A         |
+
+**Output Arguments**
+
+|  **Argument**                       | **Description**                                                      | **Required** | **Default** |
+| :---------------------------------- | :------------------------------------------------------------------- | :----------: | :----------:|
+| --mer_detector_catalog `<filename>` | merFinalCatalog containing objects within the VIS detector footprint | Yes          | N/A         |
+| --she_object_id_list `<filename>`   | sheObjectIdList containing the objects IDs of those objects          | Yes          | N/A         |
+
+_**Inputs**_
+
+_`vis_detector_frame`_:
+
+**Description:** The filename of a VIS calibrated fram data product that has been preprocessed to contain data for only a single detector.
+
+**Source:** SHE_CTE_DetectorSplit
+
+_`mer_final_catalog`_:
+
+**Description:** The filename of a merFinalCatalog data product.
+
+**Source:** MER
+
+_**Outputs**_
+
+_`mer_detector_catalog`_
+
+**Description** A merFinalCatalog data product containing only those object from the input catalog that fall within the footprint of the input VIS detector.
+
+_`she_object_id_list`_
+
+**Description** A sheObjectIdList data product containing the object IDs of objects from the input MER catalog that fall within the footprint of the input VIS detector.
 
 
 ### `SHE_CTE_ObjectIdSplit`

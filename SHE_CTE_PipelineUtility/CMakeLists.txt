@@ -10,6 +10,7 @@ elements_depends_on_subdirs(SHE_PPT)
 elements_install_python_modules()
 
 # Instruction for creating a Python executable
+elements_add_python_program(SHE_CTE_DetectorCatalog SHE_CTE_PipelineUtility.DetectorCatalog)
 elements_add_python_program(SHE_CTE_DetectorSplit SHE_CTE_PipelineUtility.DetectorSplit)
 elements_add_python_program(SHE_CTE_ObjectIdSplit SHE_CTE_PipelineUtility.ObjectIdSplit)
 elements_add_python_program(SHE_CTE_SubObjectIdSplit SHE_CTE_PipelineUtility.SubObjectIdSplit)

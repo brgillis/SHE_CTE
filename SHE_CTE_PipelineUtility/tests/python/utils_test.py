@@ -26,9 +26,11 @@
 """
 
 from astropy.io import fits
+from astropy.table import Table
 from hypothesis import given
 from hypothesis.strategies import integers, iterables
 from itertools import islice, tee
+import numpy as np
 from pathlib import Path
 import pytest
 import sys
@@ -130,3 +132,26 @@ def test_write_fits_hdus(tmp_path):
         assert isinstance(hdulist[2], fits.TableHDU)
         assert hdulist[1].header['TEST1'] == 'TEST1'
         assert hdulist[2].header['TEST2'] == 'TEST2'
+
+
+def test_write_fits_table(tmp_path):
+
+    # Call write_fits_table for random astropy table
+    type_name = 'TN'
+    instance_id = 'IID'
+    data = np.random.uniform(size=(2, 3))
+    input_table = Table(data=data)
+    filename = utils.write_fits_table(type_name, instance_id, input_table, tmp_path)
+
+    # Check filename is valid
+    assert (tmp_path / filename).is_file()
+    assert type_name in filename
+    assert instance_id in filename
+    assert SHE_CTE_RELEASE_STRING in filename
+    assert 'SHE' in filename
+    assert Path(filename).suffix == '.fits'
+
+    # Check file is a valid FITS file with expected contents
+    fits_table = Table.read(tmp_path / filename)
+    np.testing.assert_array_equal(input_table, fits_table)
+

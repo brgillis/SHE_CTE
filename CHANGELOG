@@ -37,7 +37,8 @@ New Features
 - Remove UUID from filenames after unzipping is complete so that subsequent pipeline runs find them and don't repeat the unzipping process
 - Implement batched iterator
 - New executable SHE_CTE_DetectorSplit to create sparate products containing VIS data for each detector
-- write_data_product and write_fits_hdus utility methods
+- write_data_product, write_fits_hdus and write_fits_table utility methods
+- New executable SHE_CTE_DetectorCatalog to make a catalogue of MER sources in the footprint of a given detector exposure
 
 New Config Features
 -------------------
