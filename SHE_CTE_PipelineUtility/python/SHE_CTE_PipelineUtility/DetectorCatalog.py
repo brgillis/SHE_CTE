@@ -34,11 +34,11 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from ElementsKernel.Logging import getLogger
-from SHE_PPT.file_io import read_xml_product
+from SHE_PPT.file_io import read_xml_product, save_product_metadata
 from SHE_PPT.products import she_object_id_list
 
 from SHE_CTE_PipelineUtility.object_id_split import skycoords_in_wcs
-from SHE_CTE_PipelineUtility.utils import write_data_product, write_fits_table
+from SHE_CTE_PipelineUtility.utils import write_fits_table
 
 
 MER_DETECTOR_CATALOG_COLUMNS = ['OBJECT_ID', 'RIGHT_ASCENSION', 'DECLINATION']
@@ -127,8 +127,8 @@ def mainMethod(args):
     # MER batch catalog xml data product
     mer_xml = deepcopy(mer_catalog_product)
     mer_xml.Data.DataStorage.DataContainer.FileName = detector_catalog_filename
-    mer_xml_filename = write_data_product('DET-CAT', instance_id, mer_xml, workdir)
-    logger.info('Wrote MER detector catalog product [filename=%s]', mer_xml_filename)
+    save_product_metadata(mer_xml, workdir / args.mer_detector_catalog)
+    logger.info('Wrote MER detector catalog product [filename=%s]', args.mer_detector_catalog)
 
     # Object ID list xml
     id_list = list(detector_catalog['OBJECT_ID'])
@@ -137,8 +137,8 @@ def mainMethod(args):
     dpd.Data.PointingIdList = [pointing_id]
     dpd.Data.ObservationIdList = [observation_id]
     dpd.Data.TileList = [tile_id]
-    id_list_filename = write_data_product('OBJ-ID-LIST', instance_id, dpd, workdir)
-    logger.info('Wrote SHE object ID list product [filename=%s]', id_list_filename)
+    save_product_metadata(dpd, workdir / args.she_object_id_list)
+    logger.info('Wrote SHE object ID list product [filename=%s]', args.she_object_id_list)
 
     logger.info('#')
     logger.info('# Exiting SHE_CTE_DetectorCatalog mainMethod()')
