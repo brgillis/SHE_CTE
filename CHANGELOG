@@ -19,6 +19,7 @@ Bug Fixes
 - Ensure ShearEstimatesMerge does not fail if there are missing products or measurement FITS files
 - numpy.testing.utils is removed in numpy 1.25
 - Use Table.colnames to check if a named column is present in a table
+- Write SHE_CTE_DetectorCatalog outputs to CLA ports instead of using FilenameProvider
 
 New Features
 ------------
