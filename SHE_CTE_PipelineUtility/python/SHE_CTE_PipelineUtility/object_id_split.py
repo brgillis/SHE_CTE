@@ -94,9 +94,18 @@ def read_vis_frames(vis_frame_listfile, workdir):
         
         logger.debug("Reading VIS product %s",qualified_product_filename)
         dpd = read_product_metadata(qualified_product_filename)
-        if get_product_name(dpd) != "DpdVisCalibratedFrame":
-            logger.error("%s is the wrong product type. Expected DpdVisCalibratedFrame - got %s",qualified_product_filename,get_product_name(dpd))
-            raise ValueError("%s is the wrong product type. Expected DpdVisCalibratedFrame - got %s"%(qualified_product_filename,get_product_name(dpd)))
+        product_name = get_product_name(dpd)
+        if product_name == "DpdVisCalibratedFrame":
+            detectors = dpd.Data.DetectorList.Detector
+            quadrants = False
+        elif product_name == "DpdVisQuadFrame":
+            # NOTE: Yes! There is a typo in the Data product definition - Qadrant used here is deliberate!!
+            detectors = dpd.Data.QuadrantList.Qadrant
+            quadrants = True
+        else:
+            error_msg = f"{qualified_product_filename} is type {product_name}. Expected DpdVisCalibrated[Quad]Frame"
+            logger.warning(error_msg)
+            raise ValueError(error_msg)
 
         pointing_ids.append(dpd.Data.ObservationSequence.PointingId)
         observation_ids.append(dpd.Data.ObservationSequence.ObservationId)
@@ -107,11 +116,18 @@ def read_vis_frames(vis_frame_listfile, workdir):
             exp_wcs_list = []
 
             nx, ny = dpd.Data.AxisLengths
-            for detector in dpd.Data.DetectorList.Detector:
-                # DetectorId should be "x-y" where x and y range from 0-6
+
+            for detector in detectors:
+                if quadrants:
+                    detector_id = detector.QuadrantId
+                else:
+                    detector_id = detector.DetectorId
+
+                # detector_id should be "x-y[.z - if quadrants]" where x and y range from 0-6 and z is E,F,G or H
                 # In mock SHE products, this is a longer string with random contents
-                if not re.match('^[1-6]-[1-6]$', detector.DetectorId):
-                    raise ValueError("Detector ID is invalid: %s"%detector.DetectorId)
+                if not re.match('^[1-6]-[1-6](.[EFGH])?$', detector_id):
+                        raise ValueError("Detector ID is invalid: %s"%detector_id)
+
                 wcs_hdr = get_header_from_wcs_binding(detector.WCS)
                 wcs = WCS(wcs_hdr)
                 wcs._naxis = (nx, ny)

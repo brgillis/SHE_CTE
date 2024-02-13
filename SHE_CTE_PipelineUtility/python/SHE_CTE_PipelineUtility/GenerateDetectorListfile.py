@@ -42,6 +42,7 @@ instrument_specs = {
     'VIS': vis_det_specs,
     }
 
+quadrant_names = ("E", "F", "G", "H", )
 
 def defineSpecificProgramOptions():
     """
@@ -62,6 +63,7 @@ def defineSpecificProgramOptions():
     parser.add_argument('--logdir', type=dir_path, help='Log directory')
     parser.add_argument('--instrument', type=str, choices=instrument_specs.keys(), help='Name of instrument')
     parser.add_argument('--detectors', type=str, help='Output JSON listfile of CCDIDs')
+    parser.add_argument('--quadrants', action="store_true", help="Create VIS quadrants rather than CCDs")
 
     return parser
 
@@ -82,7 +84,10 @@ def mainMethod(args):
 
     ndet_x = instrument_specs[args.instrument].ndet_x
     ndet_y = instrument_specs[args.instrument].ndet_y
-    ccd_ids = [f'{1+y}-{1+x}' for x, y in itertools.product(range(ndet_x), range(ndet_y))]
+    if args.quadrants and args.instrument=="VIS":
+        ccd_ids = [f'{1+y}-{1+x}.{q}' for x, y, q in itertools.product(range(ndet_x), range(ndet_y), quadrant_names)]
+    else:
+        ccd_ids = [f'{1+y}-{1+x}' for x, y in itertools.product(range(ndet_x), range(ndet_y))]
     filename = Path(args.workdir, args.detectors)
     logger.info('# Writing %s %s CCDIDs to %s', len(ccd_ids), args.instrument, str(filename))
     with open(filename, 'w') as filestream:
