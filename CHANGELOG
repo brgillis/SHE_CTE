@@ -20,6 +20,7 @@ Bug Fixes
 - numpy.testing.utils is removed in numpy 1.25
 - Use Table.colnames to check if a named column is present in a table
 - Write SHE_CTE_DetectorCatalog outputs to CLA ports instead of using FilenameProvider
+- ShearEstimatesMerge: SpatialCoverage in output products is now fully copied from input product
 
 New Features
 ------------
