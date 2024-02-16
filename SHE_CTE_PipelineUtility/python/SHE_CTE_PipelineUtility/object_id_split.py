@@ -98,7 +98,7 @@ def read_vis_frames(vis_frame_listfile, workdir):
         if product_name == "DpdVisCalibratedFrame":
             detectors = dpd.Data.DetectorList.Detector
             quadrants = False
-        elif product_name == "DpdVisQuadFrame":
+        elif product_name == "DpdVisCalibratedQuadFrame":
             # NOTE: Yes! There is a typo in the Data product definition - Qadrant used here is deliberate!!
             detectors = dpd.Data.QuadrantList.Qadrant
             quadrants = True
