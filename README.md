@@ -12,6 +12,7 @@
 * Bryan Gillis (b.gillis@roe.ac.uk)
 * Rob Blake (rpb@roe.ac.uk)
 * Gordon Gibb (gordon.gibb@ed.ac.uk)
+* Richard Rollins (@rrollins)
 
 ### Other Contributors
 
@@ -97,6 +98,7 @@ make install
   - [`SHE_CTE_CleanupBiasMeasurement`](#she_cte_cleanupbiasmeasurement): Cleans up intermediate files involved in bias measurement
   - [`SHE_CTE_ConvertToHDF5`](#she_cte_converttohdf5): Converts VIS frames and SHE reprojected segmentation maps to HDF5 for more efficient stamp extraction.
   - [`SHE_CTE_UnzipFiles`](#she_cte_unzipfiles): Unzips any gzipped files pointed to by a product, creating a new product pointing to these unzipped files.
+  - [`SHE_CTE_ReorderListfiles`](#she_cte_reorderlistfiles): takes a pair of listfiles and reorders the second such that its entries correspond to those in the first.
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
   - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
   - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
@@ -1174,6 +1176,84 @@ _**Outputs**_
 _`output_product`_ 
 
 **Description** The desired name for the output product. This will be the same product type as the input product, and contain the same contents, save for the files it links to will be the unzipped versions of these files.
+
+### `SHE_CTE_ReorderListfiles`
+
+Given a reference listfile and an input one, will reorder the input listfile such that its entries correspond to those in the reference listfile, according to user supplied matching criteria.
+
+For example, say we have as a reference listfile containing a list of products with a quantity, where the quantities for each product in the list are [a, b, c, d]. Then consider we have an input listfile with products containing the same quantity, but in different order, e.g. [d, c, b, a]. This executable will re-order the input listfile to have entries in the order such that the quantity appears [a, b, c, d]. E,g, the nth item in the reference listfile corresponds to the nth item in the output listfile.
+
+This executable can also be used to expand a listfile. So, for example, if we have a reference list of exposures (belonging to several observations, but each observation may be represented more than once) such that some observations are duplicated, and a list of input products where there is only one per observation, then the executable can be used to expand the input listfile so there is one entry per reference exposure. E.g., if the reference exposures have observations [a, a, b, b] and the input listfile has observations [a, b] then the output listfile would have observations [a, a, b, b].
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_ReorderListfiles` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.2 SHE_CTE_ReorderListfiles --reference_listfile <file> --input_listfile <file> --output_listfile <file> --reference_path <XML path> --input_path <XML path> [--allow_duplicates] [--workdir <dir>]  [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --reference_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+| --input_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --reference_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+
+
+**Options**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --allow_duplicates     | If set, will allow the reference listfile's products to contain duplicate values, and the output listfile will be expended to include duplicate items where necessary | No   | Unset        | 
+
+
+_**Inputs**_
+
+_`reference_listfile`_:
+
+**Description:** The filename of a listfile pointing to products which the user intends to use for reference. The input listfile will be reordered according to the entries in the reference listfile
+**Source:** Any
+
+_`input_listfile`_:
+
+**Description:** The filename of a listfile pointing to products which the user intends to have reordered relative to the reference listfile
+**Source** Any
+
+_`reference_path`_:
+
+**Description:** The xml path within the reference product to the quantity that the user wishes to reorder relative to. E.g. `Data.ObservationSequence.ObservationId`
+
+_`input_path`_:
+
+**Description:** The xml path within the input product to the quantity that the user wishes to reorder relative to. E.g. `Data.ObservationSequence.ObservationId`
+
+_**Options**_:
+
+_`allow_duplicates`_:
+
+**Description** If set, then the executable will allow the reference listfile to contain duplicate values, and it may produce an output listfile with duplicate entries.
+
+_**Outputs**_
+
+_`output_listfile`_ 
+
+**Description** The desired name for the output listfile, which is the reordered version of the input listfile
 
 
 ### `SHE_CTE_SplitFits`
