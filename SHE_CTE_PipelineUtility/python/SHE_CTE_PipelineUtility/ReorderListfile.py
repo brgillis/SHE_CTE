@@ -48,7 +48,7 @@ def defineSpecificProgramOptions():
     def directory(s):
         p = pathlib.Path(s)
         if not p.is_dir():
-            raise ValueError(f"Directory {s} does not exit")
+            raise NotADirectoryError(f"Directory {s} does not exit or is not a directory")
         return p
 
     parser = argparse.ArgumentParser()
@@ -126,29 +126,34 @@ def mainMethod(args):
 
     workdir = args.workdir
 
-    with open(workdir / args.reference_listfile) as f:
-        reference_files = json.load(f)
-    reference_products = [DmUtils.read_product_metadata(workdir / p) for p in reference_files]
+    def load_listfile_and_get_values(workdir, listfile, xml_path):
+        with open(workdir / listfile) as f:
+            files = json.load(f)
+
+        products = [DmUtils.read_product_metadata(workdir / f) for f in files]
+
+        values = [rgetattr(p, xml_path) for p in products]
+
+        return files, values
+
+    reference_files, reference_vals = load_listfile_and_get_values(
+        workdir, args.reference_listfile, args.reference_path
+    )
     logger.info("Read %d products from reference listfile", len(reference_files))
-
-    with open(workdir / args.input_listfile) as f:
-        input_files = json.load(f)
-    input_products = [DmUtils.read_product_metadata(workdir / p) for p in input_files]
-    logger.info("Read %d projects from input listfile", len(input_files))
-
-    reference_vals = [rgetattr(p, args.reference_path) for p in reference_products]
     logger.info("Reference values are %s", str(reference_vals))
 
-    input_vals = [rgetattr(p, args.input_path) for p in input_products]
+    input_files, input_vals = load_listfile_and_get_values(workdir, args.input_listfile, args.input_path)
+    logger.info("Read %d products from input listfile", len(input_files))
     logger.info("Input values are %s", str(input_vals))
 
+    # Sanity checking
     if not args.allow_duplicates:
         if len(set(reference_vals)) != len(reference_vals):
             raise ValueError(f"There are duplicate reference values: {reference_vals}")
 
-        if len(input_products) != len(reference_products):
+        if len(input_files) != len(reference_files):
             raise ValueError(
-                f"Unexpected number of input products. Expected {len(reference_products)} but got {len(input_products)}"
+                f"Unexpected number of input products. Expected {len(reference_files)} but got {len(input_files)}"
             )
 
     if len(set(input_vals)) != len(input_vals):
