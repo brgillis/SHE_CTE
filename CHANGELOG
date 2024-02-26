@@ -22,6 +22,7 @@ Bug Fixes
 - Write SHE_CTE_DetectorCatalog outputs to CLA ports instead of using FilenameProvider
 - ShearEstimatesMerge: SpatialCoverage in output products is now fully copied from input product
 - ShearEstimatesMerge: Output data product now contains metadata required by LE3
+- Set ObjectCount quality parameter in DetectorCatalog products
 
 New Features
 ------------

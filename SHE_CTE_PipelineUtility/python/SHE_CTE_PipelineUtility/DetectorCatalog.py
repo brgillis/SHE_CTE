@@ -36,6 +36,7 @@ from astropy.wcs import WCS
 from ElementsKernel.Logging import getLogger
 from SHE_PPT.file_io import read_xml_product, save_product_metadata
 from SHE_PPT.products import she_object_id_list
+from ST_DM_DmUtils.DqcDmUtils import set_quality_parameters
 
 from SHE_CTE_PipelineUtility.object_id_split import skycoords_in_wcs
 from SHE_CTE_PipelineUtility.utils import write_fits_table
@@ -127,6 +128,8 @@ def mainMethod(args):
     # MER batch catalog xml data product
     mer_xml = deepcopy(mer_catalog_product)
     mer_xml.Data.DataStorage.DataContainer.FileName = detector_catalog_filename
+    object_count = {"value": len(detector_catalog), "flagged": False}
+    set_quality_parameters(mer_xml.Data.QualityParams, {'ObjectCount': object_count})
     save_product_metadata(mer_xml, workdir / args.mer_detector_catalog)
     logger.info('Wrote MER detector catalog product [filename=%s]', args.mer_detector_catalog)
 
