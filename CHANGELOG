@@ -12,6 +12,7 @@ Dependency Changes
 
 Deprecated Features
 -------------------
+- DetectorCatalog no longer outputs a SheObjectIdList product
 
 Bug Fixes
 ---------
