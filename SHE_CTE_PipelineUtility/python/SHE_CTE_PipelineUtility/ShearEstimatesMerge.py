@@ -334,7 +334,7 @@ def she_measurements_merge_from_args(args):
         # Get a filename for the table
         combined_she_measurements_table_filename = get_allowed_filename(type_name = "SHEAR-EST-" + method.name,
                                                                         instance_id = 'MERGED',
-                                                                        extension = ".fits",
+                                                                        extension = ".fits.gz",
                                                                         version = SHE_CTE.__version__,
                                                                         subdir = "data",
                                                                         processing_function = "SHE")
@@ -382,7 +382,7 @@ def she_measurements_merge_from_args(args):
         # Get a filename for the table
         combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name = "SHEAR-CHAIN",
                                                                         instance_id = 'MERGED',
-                                                                        extension = ".fits",
+                                                                        extension = ".fits.gz",
                                                                         version = SHE_CTE.__version__,
                                                                         subdir = "data",
                                                                         processing_function = "SHE")
