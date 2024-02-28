@@ -49,7 +49,7 @@ def defineSpecificProgramOptions():
     parser = ArgumentParser()
     parser.add_argument('--workdir', type=dir_path, help='Name of the working directory')
     parser.add_argument('--logdir', type=str, help='Log directory')
-    parser.add_argument('--object_id_listfile', type=str, help='Listfile SHE Object ID list data products')
+    parser.add_argument('--mer_catalog_listfile', type=str, help='Listfile MER catalog data products')
     parser.add_argument('--flags', type=str, help='Listfile of flags for empty batches')
 
     return parser
@@ -69,8 +69,8 @@ def mainMethod(args):
     logger.info('# Entering SHE_CTE_FlagEmptyBatches mainMethod()')
     logger.info('#')
 
-    object_id_files = read_listfile(args.object_id_listfile, workdir=args.workdir)
-    batch_flags = [bool(read_xml_product(f, args.workdir).Data.ObjectIdList) for f in object_id_files]
+    mer_files = read_listfile(args.mer_catalog_listfile, workdir=args.workdir)
+    batch_flags = [bool(read_xml_product(f, args.workdir).Data.QualityParams.ObjectCount.value()) for f in mer_files]
     write_listfile(args.flags, batch_flags, workdir=args.workdir)
 
     logger.info('#')

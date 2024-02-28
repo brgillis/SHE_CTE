@@ -12,6 +12,7 @@ Dependency Changes
 
 Deprecated Features
 -------------------
+- DetectorCatalog no longer outputs a SheObjectIdList product
 
 Bug Fixes
 ---------
@@ -44,6 +45,7 @@ New Features
 - write_data_product, write_fits_hdus and write_fits_table utility methods
 - New executable SHE_CTE_DetectorCatalog to make a catalogue of MER sources in the footprint of a given detector exposure
 - New executable SHE_CTE_ReorderListfiles to make sure two listfiles order products correctly
+- Flag empty batches using ObjectCount metadata field in MER catalog products
 
 New Config Features
 -------------------
