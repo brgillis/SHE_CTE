@@ -42,7 +42,6 @@ import json
 import pathlib
 
 from dataclasses import dataclass
-from typing import Optional
 
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
