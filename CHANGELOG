@@ -8,6 +8,31 @@ API Changes
 
 Dependency Changes
 ------------------
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
+
+Changes in v9.2
+===============
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
 - PPT 9.3.1 -> 9.5.2 (includes Eden 3.1, DM 9.2)
 
 Deprecated Features
@@ -47,12 +72,6 @@ New Features
 - New executable SHE_CTE_ReorderListfiles to make sure two listfiles order products correctly
 - Flag empty batches using ObjectCount metadata field in MER catalog products
 - ShearEstimatesMerge now outputs compressed (gzipped) fits files as per pipeline requirements
-
-New Config Features
--------------------
-
-Miscellaneous
--------------
 
 
 Changes in v9.1
