@@ -1,5 +1,30 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes in v9.3
+===============
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
+
 Changes in v9.2
 ===============
 
@@ -47,12 +72,6 @@ New Features
 - New executable SHE_CTE_ReorderListfiles to make sure two listfiles order products correctly
 - Flag empty batches using ObjectCount metadata field in MER catalog products
 - ShearEstimatesMerge now outputs compressed (gzipped) fits files as per pipeline requirements
-
-New Config Features
--------------------
-
-Miscellaneous
--------------
 
 
 Changes in v9.1
