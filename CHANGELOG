@@ -17,6 +17,7 @@ Bug Fixes
 
 New Features
 ------------
+- New executable SHE_CTE_PruneBatchExposures that produces for a set of object batches a listfiles containing only the exposures that cover each object batch
 
 New Config Features
 -------------------
