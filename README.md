@@ -99,6 +99,7 @@ make install
   - [`SHE_CTE_ConvertToHDF5`](#she_cte_converttohdf5): Converts VIS frames and SHE reprojected segmentation maps to HDF5 for more efficient stamp extraction.
   - [`SHE_CTE_UnzipFiles`](#she_cte_unzipfiles): Unzips any gzipped files pointed to by a product, creating a new product pointing to these unzipped files.
   - [`SHE_CTE_ReorderListfiles`](#she_cte_reorderlistfiles): takes a pair of listfiles and reorders the second such that its entries correspond to those in the first.
+  - [`SHE_CTE_PruneBatchExposures`](#she_cte_prunebathexposures): For a list of batch MER catlogues and VIS exposures, returns a listfile that contains for each batch only the VIS exposures that cover that batch.
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
   - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
   - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
@@ -1255,6 +1256,82 @@ _`output_listfile`_
 
 **Description** The desired name for the output listfile, which is the reordered version of the input listfile
 
+
+### `SHE_CTE_PruneBatchExposures`
+
+Takes a list of VIS exposures and batch MER catalogues, determines for each batch the exposures that cover that batch, returning a listfile of VIS exposures for each batch.
+
+The output listfile would be of the form
+```
+[
+    ["exposure1.xml", "exposure2.xml", ...],
+    ["exposure1.xml", "exposure3.xml", ...],
+    ...
+]
+It contains a list of n_batches lists of exposures.
+
+The executable (optionally) if provided a list of input VIS converted to HDF5 files, also returns a listfile of the HDF5 files relevant for each batch.
+```
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_ReorderListfiles` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.3 SHE_CTE_PruneBatchExposures --vis_exposure_listfile <file> --batch_mer_listfile <file> --pruned_batch_vis_listfile <file> [--hdf5_listfile] [--pruned_batch_hdf5_listfile] [--workdir <dir>]  [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --vis_exposure_listfile `<filename>`     | Listfile pointing to DpdVisCalibrated[Quad]Frame products| yes    | N/A         | 
+| --batch_mer_listfile `<filename>`     | Listfile pointing to DpdMerFinalCatalog products| yes    | N/A         | 
+| --hdf5_listfile `<filename>`     | Listfile pointing to HDF5 version of VIS images| no    | N/A         | 
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --pruned_batch_vis_listfile `<filename>`     | Listfile pointing to exposures for each batch| yes    | N/A         | 
+| --pruned_batch_hdf5_listfile `<filename>`     | Listfile pointing to HDF5 files for each batch| no    | N/A         | 
+
+
+_**Inputs**_
+
+_`vis_exposure_listfile`_:
+
+**Description:** The filename of a listfile pointing to DpdVisCalibrated[Quad]Frame products
+**Source:** Pipeline inputs
+
+_`batch_mer_listfile`_:
+
+**Description:** Listfile pointing to DpdMerFinalCatalog products, one per batch
+**Source** SHE_CTE_ObjectIdSplit
+
+_`hdf5_listfile`_:
+
+**Description:** A listfile pointing to HDF5 versions of the VIS images. **If this is set, the output argument `--pruned_batch_hdf5_listfile` must also be set!**
+**Source** Listfile created by the pipeline in a parallel merge. The individual HDF5 files are created by SHE_CTE_ConvertToHDF5
+
+
+_**Outputs**_
+
+_`pruned_batch_vis_listfile`_ 
+
+**Description** Listfile that contains for each batch the lists of DpdVisCalibrated[Quad]Frame exposures present in that batch. **If this is set, the input argument `--hdf5_listfile` must also be set!**
+
+_`pruned_batch_hdf5_listfile`_ 
+
+**Description** Listfile that contains for each batch the lists of HDF5 exposures present in that batch. 
 
 ### `SHE_CTE_SplitFits`
 
