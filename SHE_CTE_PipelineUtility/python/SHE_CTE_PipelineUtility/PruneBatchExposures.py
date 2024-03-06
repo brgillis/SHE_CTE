@@ -140,16 +140,11 @@ def mainMethod(args):
         args.vis_exposure_listfile, workdir=workdir, hdf5_listfile=args.hdf5_listfile, method=method
     )
 
-    print("Number of vis exposures=", len(vis_exposures))
-
     exposure_wcs_lists = [exp.get_wcs_list() for exp in vis_exposures]
 
     exposure_metadata_list = [ExposureMetadata(w, v, h) for w, v, h in zip(exposure_wcs_lists, vis_files, hdf5_files)]
 
-    print("Number of exposure_metadata=", len(exposure_metadata_list))
     batch_mer_filenames = _read_listfile(workdir / args.batch_mer_listfile)
-
-    print("Number of mer catalogues", len(batch_mer_filenames))
 
     vis_batches = []
     hdf5_batches = []
