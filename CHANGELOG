@@ -1,5 +1,31 @@
 Changelog for SHE_CTE Common Testing Environment
 
+Changes in v9.3
+===============
+
+API Changes
+-----------
+
+Dependency Changes
+------------------
+
+Deprecated Features
+-------------------
+
+Bug Fixes
+---------
+
+New Features
+------------
+- ObjectIdSplit and GenerateDetectorListfile now support VIS quadrants
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
+
 Changes in v9.2
 ===============
 
@@ -8,10 +34,11 @@ API Changes
 
 Dependency Changes
 ------------------
-- PPT 9.3.1 -> 9.5.1 (includes Eden 3.1, DM 9.2)
+- PPT 9.3.1 -> 9.5.2 (includes Eden 3.1, DM 9.2)
 
 Deprecated Features
 -------------------
+- DetectorCatalog no longer outputs a SheObjectIdList product
 
 Bug Fixes
 ---------
@@ -20,6 +47,9 @@ Bug Fixes
 - numpy.testing.utils is removed in numpy 1.25
 - Use Table.colnames to check if a named column is present in a table
 - Write SHE_CTE_DetectorCatalog outputs to CLA ports instead of using FilenameProvider
+- ShearEstimatesMerge: SpatialCoverage in output products is now fully copied from input product
+- ShearEstimatesMerge: Output data product now contains metadata required by LE3
+- Set ObjectCount quality parameter in DetectorCatalog products
 
 New Features
 ------------
@@ -40,13 +70,9 @@ New Features
 - New executable SHE_CTE_DetectorSplit to create sparate products containing VIS data for each detector
 - write_data_product, write_fits_hdus and write_fits_table utility methods
 - New executable SHE_CTE_DetectorCatalog to make a catalogue of MER sources in the footprint of a given detector exposure
-- ObjectIdSplit and GenerateDetectorListfile now support VIS quadrants
-
-New Config Features
--------------------
-
-Miscellaneous
--------------
+- New executable SHE_CTE_ReorderListfiles to make sure two listfiles order products correctly
+- Flag empty batches using ObjectCount metadata field in MER catalog products
+- ShearEstimatesMerge now outputs compressed (gzipped) fits files as per pipeline requirements
 
 
 Changes in v9.1

@@ -36,6 +36,7 @@ from astropy.wcs import WCS
 from ElementsKernel.Logging import getLogger
 from SHE_PPT.file_io import read_xml_product, save_product_metadata
 from SHE_PPT.products import she_object_id_list
+from ST_DM_DmUtils.DqcDmUtils import set_quality_parameters
 
 from SHE_CTE_PipelineUtility.object_id_split import skycoords_in_wcs
 from SHE_CTE_PipelineUtility.utils import write_fits_table
@@ -65,7 +66,6 @@ def defineSpecificProgramOptions():
     parser.add_argument('--vis_detector_frame', type=str, help='VIS detector data product')
     parser.add_argument('--mer_final_catalog', type=str, help='MER final catalog data product')
     parser.add_argument('--mer_detector_catalog', type=str, help='MER detector catalog data product')
-    parser.add_argument('--she_object_id_list', type=str, help='SHE Object ID list data product')
 
     return parser
 
@@ -127,18 +127,10 @@ def mainMethod(args):
     # MER batch catalog xml data product
     mer_xml = deepcopy(mer_catalog_product)
     mer_xml.Data.DataStorage.DataContainer.FileName = detector_catalog_filename
+    object_count = {"value": len(detector_catalog), "flagged": False}
+    set_quality_parameters(mer_xml.Data.QualityParams, {'ObjectCount': object_count})
     save_product_metadata(mer_xml, workdir / args.mer_detector_catalog)
     logger.info('Wrote MER detector catalog product [filename=%s]', args.mer_detector_catalog)
-
-    # Object ID list xml
-    id_list = list(detector_catalog['OBJECT_ID'])
-    dpd = she_object_id_list.create_dpd_she_object_id_list(id_list=id_list)
-    dpd.Data.BatchIndex = 0
-    dpd.Data.PointingIdList = [pointing_id]
-    dpd.Data.ObservationIdList = [observation_id]
-    dpd.Data.TileList = [tile_id]
-    save_product_metadata(dpd, workdir / args.she_object_id_list)
-    logger.info('Wrote SHE object ID list product [filename=%s]', args.she_object_id_list)
 
     logger.info('#')
     logger.info('# Exiting SHE_CTE_DetectorCatalog mainMethod()')

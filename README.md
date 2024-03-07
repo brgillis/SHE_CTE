@@ -4,7 +4,7 @@
 * Processing Element Name: PF-SHE
 * Project Name: SHE_CTE (Common Testing Environment)
 * Profile: develop
-* Version: 9.2 (30/01/2023)
+* Version: 9.3 (2024/03/04)
 
 ## Contributors
 ### Active Contributors
@@ -12,6 +12,7 @@
 * Bryan Gillis (b.gillis@roe.ac.uk)
 * Rob Blake (rpb@roe.ac.uk)
 * Gordon Gibb (gordon.gibb@ed.ac.uk)
+* Richard Rollins (@rrollins)
 
 ### Other Contributors
 
@@ -32,7 +33,7 @@ This project contains various executables which constitute components in various
 
 ### Internal Euclid Dependencies
 
-* [SHE_PPT 9.5.1](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
+* [SHE_PPT 9.5.2](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_PPT)
 
 
 ### External Euclid Dependencies
@@ -97,6 +98,7 @@ make install
   - [`SHE_CTE_CleanupBiasMeasurement`](#she_cte_cleanupbiasmeasurement): Cleans up intermediate files involved in bias measurement
   - [`SHE_CTE_ConvertToHDF5`](#she_cte_converttohdf5): Converts VIS frames and SHE reprojected segmentation maps to HDF5 for more efficient stamp extraction.
   - [`SHE_CTE_UnzipFiles`](#she_cte_unzipfiles): Unzips any gzipped files pointed to by a product, creating a new product pointing to these unzipped files.
+  - [`SHE_CTE_ReorderListfiles`](#she_cte_reorderlistfiles): takes a pair of listfiles and reorders the second such that its entries correspond to those in the first.
 * SHE_CTE_ScalingExperiments: Executables for a test pipeline to determine how to improve the scaling of the analysis pipeline
   - [`SHE_CTE_SplitFits`](#she_cte_splitfits): splits fits file for an exposure into individual FITS/HDF5 files, one per CCD
   - [`SHE_CTE_CombineSplitFitsListfile`](#she_cte_combinesplitfitslistfile): Combines output from `SHE_CTE_SplitFits` into a single json
@@ -122,7 +124,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_MeasureStatistics --details_table <file> --shear_estimates <file> --pipeline_config <file> --she_bias_statistics <file> [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_MeasureStatistics --details_table <file> --shear_estimates <file> --pipeline_config <file> --she_bias_statistics <file> [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
 ```
 with the following options:
 
@@ -229,7 +231,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_MeasureBias --she_bias_statistics <file>  --pipeline_config <file> --she_bias_measurements <file> [--details_table_head <str>] [--bootstrap-seed <int>] [--recovery_bias_statistics_filename <filename>] [--recovery_bias_measurements_filename <filename>] [--store_measurements_only] [--use_bias_only] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_MeasureBias --she_bias_statistics <file>  --pipeline_config <file> --she_bias_measurements <file> [--details_table_head <str>] [--bootstrap-seed <int>] [--recovery_bias_statistics_filename <filename>] [--recovery_bias_measurements_filename <filename>] [--store_measurements_only] [--use_bias_only] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile]
 ```
 with the following options:
 
@@ -336,7 +338,7 @@ This executable is deprecated, although may be resurrected in the future.
 
 To run `SHE_CTE_MeasureStatistics` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_PlotBias --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--plot_slopes] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_PlotBias --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--plot_slopes] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -402,7 +404,7 @@ This executable is deprecated.
 
 To run `SHE_CTE_PlotPsfSensitivity` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_PlotPsfSensitivity --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_PlotPsfSensitivity --methods <method list>  --root-data-folder <dir> --bias_measurements_head <str> --output_file_name_head <str> [--output_format <str>] [--hide] [--plot_error] [--normed_only] [--unnormed_only] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -462,7 +464,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_PrintBias` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_PlotPsfSensitivity --she_bias_measurements <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_PlotPsfSensitivity --she_bias_measurements <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -522,7 +524,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_CleanupBiasMeasurement` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_CleanupBiasMeasurement --simulation_config <file> --data_images <file> --stacked_data_image <file> --psf_images_and_tables <file> --segmentation_images <file> --stacked_segmentation_image <file> --detections_tables <file> --details_table <file> --shear_estimates <file> --shear_bias_statistics_in <file> --shear_bias_statistics_out <file> --pipeline_config <file>  [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_CleanupBiasMeasurement --simulation_config <file> --data_images <file> --stacked_data_image <file> --psf_images_and_tables <file> --segmentation_images <file> --stacked_segmentation_image <file> --detections_tables <file> --details_table <file> --shear_estimates <file> --shear_bias_statistics_in <file> --shear_bias_statistics_out <file> --pipeline_config <file>  [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -685,7 +687,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_DetectorCatalog` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_DetectorCatalog --workdir <dir> --vis_detector_frame <file> --mer_final_catalog <file> --mer_detector_catalog <file> --she_object_id_list <file> [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_DetectorCatalog --workdir <dir> --vis_detector_frame <file> --mer_final_catalog <file> --mer_detector_catalog <file> --she_object_id_list <file> [--logdir <dir>]
 ```
 with the following options:
 
@@ -743,7 +745,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -850,7 +852,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_SubObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_SubObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_SubObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -958,7 +960,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ShearEstimatesMerge` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -1060,7 +1062,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ConvertToHDF5` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ConvertToHDF5 --vis_frame_prod <file> --remapped_seg_prod <file>  --output_hdf5 <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_ConvertToHDF5 --vis_frame_prod <file> --remapped_seg_prod <file>  --output_hdf5 <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1129,7 +1131,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_UnzipFiles` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_UnzipFiles --input_prod <file> --output_prod <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_UnzipFiles --input_prod <file> --output_prod <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1175,6 +1177,84 @@ _`output_product`_
 
 **Description** The desired name for the output product. This will be the same product type as the input product, and contain the same contents, save for the files it links to will be the unzipped versions of these files.
 
+### `SHE_CTE_ReorderListfiles`
+
+Given a reference listfile and an input one, will reorder the input listfile such that its entries correspond to those in the reference listfile, according to user supplied matching criteria.
+
+For example, say we have as a reference listfile containing a list of products with a quantity, where the quantities for each product in the list are [a, b, c, d]. Then consider we have an input listfile with products containing the same quantity, but in different order, e.g. [d, c, b, a]. This executable will re-order the input listfile to have entries in the order such that the quantity appears [a, b, c, d]. E,g, the nth item in the reference listfile corresponds to the nth item in the output listfile.
+
+This executable can also be used to expand a listfile. So, for example, if we have a reference list of exposures (belonging to several observations, but each observation may be represented more than once) such that some observations are duplicated, and a list of input products where there is only one per observation, then the executable can be used to expand the input listfile so there is one entry per reference exposure. E.g., if the reference exposures have observations [a, a, b, b] and the input listfile has observations [a, b] then the output listfile would have observations [a, a, b, b].
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_ReorderListfiles` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.3 SHE_CTE_ReorderListfiles --reference_listfile <file> --input_listfile <file> --output_listfile <file> --reference_path <XML path> --input_path <XML path> [--allow_duplicates] [--workdir <dir>]  [--logdir <dir>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --workdir `<path>`          | Name of the working directory, where input data is stored and output data will be created. | no          | .         |
+| --logdir `<path>`     | Name of the directory for misc log files, e.g. profiling files. | no| . |
+
+
+**Input Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --reference_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+| --input_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+
+
+**Output Arguments**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --reference_listfile `<filename>`     | Any listfile pointing to products| yes    | N/A         | 
+
+
+**Options**
+
+|  **Argument**               | **Description**                                                       | **Required** | **Default** |
+| :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
+| --allow_duplicates     | If set, will allow the reference listfile's products to contain duplicate values, and the output listfile will be expended to include duplicate items where necessary | No   | Unset        | 
+
+
+_**Inputs**_
+
+_`reference_listfile`_:
+
+**Description:** The filename of a listfile pointing to products which the user intends to use for reference. The input listfile will be reordered according to the entries in the reference listfile
+**Source:** Any
+
+_`input_listfile`_:
+
+**Description:** The filename of a listfile pointing to products which the user intends to have reordered relative to the reference listfile
+**Source** Any
+
+_`reference_path`_:
+
+**Description:** The xml path within the reference product to the quantity that the user wishes to reorder relative to. E.g. `Data.ObservationSequence.ObservationId`
+
+_`input_path`_:
+
+**Description:** The xml path within the input product to the quantity that the user wishes to reorder relative to. E.g. `Data.ObservationSequence.ObservationId`
+
+_**Options**_:
+
+_`allow_duplicates`_:
+
+**Description** If set, then the executable will allow the reference listfile to contain duplicate values, and it may produce an output listfile with duplicate entries.
+
+_**Outputs**_
+
+_`output_listfile`_ 
+
+**Description** The desired name for the output listfile, which is the reordered version of the input listfile
+
 
 ### `SHE_CTE_SplitFits`
 
@@ -1184,7 +1264,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_SplitFits` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_SplitFits --input_fits_json <file> --pipeline_config <file> --output_json <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_SplitFits --input_fits_json <file> --pipeline_config <file> --output_json <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1295,7 +1375,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_CombineSplitFitsListfile` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_CombineSplitFitsListfile --input_listfile <file> --pipeline_config <file> --output_json <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_CombineSplitFitsListfile --input_listfile <file> --pipeline_config <file> --output_json <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1388,7 +1468,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ExtractObjects` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ExtractObjects --stacked_image <file> --exposures <file> --catalogue_listfile <file> --pipeline_config <file> --output_objects_list <file> --combined_catalogue <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_ExtractObjects --stacked_image <file> --exposures <file> --catalogue_listfile <file> --pipeline_config <file> --output_objects_list <file> --combined_catalogue <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1504,7 +1584,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_MakeBatches` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_MakeBatches --objects_list <file> --pipeline_config <file> --batch_listfile <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_MakeBatches --objects_list <file> --pipeline_config <file> --batch_listfile <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1589,7 +1669,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ExtractStamps` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ExtractStamps --batch_file <file> --exposures <file> --pipeline_config <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_ExtractStamps --batch_file <file> --exposures <file> --pipeline_config <file> --timing_info <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1690,7 +1770,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_AnalyseRuntime` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_AnalyseRuntime --stamp_timing_listfile <file> --split_timing_listfile <file> --pipeline_config <file> --results <file> [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_AnalyseRuntime --stamp_timing_listfile <file> --split_timing_listfile <file> --pipeline_config <file> --results <file> [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1811,7 +1891,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_EstimateShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+E-Run SHE_CTE 9.3 SHE_CTE_EstimateShear --data_images <file> --stacked_image <file> --psf_images_and_tables <file> --segmentation_images <file> stacked_segmentation_image <file> --detections_tables <file> --object_ids <file> --ksb_training_data <file> --lensmc_training_data <file> -momentsml_training_data <file> --regauss_training_data <file> --mdb <file> --pipeline_config <file>  --shear_estimates_product <file> --she_lensmc_chains <file>  [--methods <str>] [--chains_method <str>] [--memmap_images] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
 ```
 with the following options:
 
@@ -2052,7 +2132,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ReconcileShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_ReconcileShear --she_validated_measurements_listfile <file> --she_lensmc_chains_listfile <file> --mer-final-catalog <file> --she_reconciliation_config <file> --pipeline_config <file> --she_reconciled_measurements <file> --she_reconciled_lensmc_chains <file>  [--method <str>] [--chains_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
+E-Run SHE_CTE 9.3 SHE_CTE_ReconcileShear --she_validated_measurements_listfile <file> --she_lensmc_chains_listfile <file> --mer-final-catalog <file> --she_reconciliation_config <file> --pipeline_config <file> --she_reconciled_measurements <file> --she_reconciled_lensmc_chains <file>  [--method <str>] [--chains_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--debug]
 ```
 with the following options:
 
@@ -2191,7 +2271,7 @@ This executable is deprecated.
 
 To run `SHE_CTE_CrossValidateShear` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.2 SHE_CTE_CrossValidateShear --shear_estimates_product <file> --shear_lensmc_chains <file> --pipeline_config <file> --cross_validated_shear_estimates_product <file> [--primary_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--dry_run]
+E-Run SHE_CTE 9.3 SHE_CTE_CrossValidateShear --shear_estimates_product <file> --shear_lensmc_chains <file> --pipeline_config <file> --cross_validated_shear_estimates_product <file> [--primary_method <str>] [--workdir <dir>]  [--logdir <dir>] [--archive_dir <dir>] [--webdav_dir <dir>] [--webdav_archive] [--profile] [--dry_run]
 ```
 with the following options:
 
