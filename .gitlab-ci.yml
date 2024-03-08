@@ -16,6 +16,8 @@ CHANGELOG:
 
 pytest:
   stage: test
+  only: 
+    - merge_requests
   image:
     name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.6.1
     entrypoint: [ '/bin/sh', '-c' ]
