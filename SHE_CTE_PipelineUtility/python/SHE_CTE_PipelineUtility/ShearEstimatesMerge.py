@@ -24,6 +24,7 @@ __updated__ = "2021-08-18"
 import multiprocessing as mp
 import os
 from typing import Any, Dict, Tuple, Type, Union
+import itertools
 
 import numpy as np
 from astropy import table
@@ -246,12 +247,14 @@ def she_measurements_merge_from_args(args):
     with mp.Pool(processes = number_threads) as pool:
         she_measurements_tables_and_metadata = pool.starmap(read_method_estimates_tables, input_tuples)
 
-    (full_l_she_measurements_tables,
+    (
+        full_l_she_measurements_tables,
         full_l_observation_ids,
         full_l_observation_times,
         full_l_pointing_id_lists,
         full_l_tile_lists,
-        full_l_spatial_coverage) = zip(*she_measurements_tables_and_metadata)
+        full_l_spatial_coverage
+    ) = zip(*she_measurements_tables_and_metadata)
 
     l_she_measurements_tables = [x for x in full_l_she_measurements_tables if x is not None]
     l_observation_ids = [x for x in full_l_observation_ids if x is not None]
@@ -259,22 +262,15 @@ def she_measurements_merge_from_args(args):
     l_pointing_id_lists = [x for x in full_l_pointing_id_lists if x is not None]
     l_tile_lists = [x for x in full_l_tile_lists if x is not None]
     l_spatial_coverage = [x for x in full_l_spatial_coverage if x is not None]
-    
-    # create this list for the below metadata check, as the objects in l_observation_times (spaceObservationDateTime)
-    # cannot be checked for equality
-    l_observation_datetimes = [ x.OBT for x in l_observation_times]
 
-    # Check metadata is consistent (each measurement product should have the same properties)
-    for l in (l_observation_ids, l_observation_datetimes, l_pointing_id_lists, l_tile_lists):
-        l_arr = np.array(l)
-        if not (l_arr == l_arr[0]).all():
-            logger.warning("Metadata is not consistent through all batches. Will use metadata from first batch.")
-
-    observation_ids = l_observation_ids[0]
+    # Get list of unique observations, pointings, etc for this run
+    observation_ids = list(set(itertools.chain(*l_observation_ids)))
+    pointing_id_list = list(set(itertools.chain(*l_pointing_id_lists)))
+    tile_list = list(set(itertools.chain(*l_tile_lists)))
+    # NOTE: observation time makes no sense when there are more than one observation being used in a tile
     observation_time = l_observation_times[0]
-    pointing_id_list = l_pointing_id_lists[0]
-    tile_list = l_tile_lists[0]
-    spatial_coverage = full_l_spatial_coverage[0]
+    # All spatial coverages should be the same, so use the first from the list
+    spatial_coverage = l_spatial_coverage[0]
 
     # Sort the tables into the expected format
     for method in ShearEstimationMethods:
