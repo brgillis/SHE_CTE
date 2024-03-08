@@ -13,3 +13,12 @@ pytest:
     - pytest ../SHE_CTE/tests/python
     - pytest ../SHE_CTE_PipelineUtility/tests/python
     - pytest ../SHE_CTE_ShearValidation/tests/python
+
+PEP8:
+  stage: test
+  only:
+    - merge_requests
+  image: python:3.9
+  script:
+    - pip3 install flake8==5.*
+    - git diff -U0 $CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD | flake8 --diff --max-line-length 120
