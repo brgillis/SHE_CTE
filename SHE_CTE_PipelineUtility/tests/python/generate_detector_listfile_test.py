@@ -59,7 +59,7 @@ VIS_QUADRANT_IDS = [
     '3-5.E', '3-5.F', '3-5.G', '3-5.H', '3-6.E', '3-6.F', '3-6.G', '3-6.H',
     '4-1.E', '4-1.F', '4-1.G', '4-1.H', '4-2.E', '4-2.F', '4-2.G', '4-2.H',
     '4-3.E', '4-3.F', '4-3.G', '4-3.H', '4-4.E', '4-4.F', '4-4.G', '4-4.H',
-    '4-5.E', '4-5.F', '4-5.G', '4-5.H', '4-6.E', '4-6.F', '4-6.G', '4-6.H', 
+    '4-5.E', '4-5.F', '4-5.G', '4-5.H', '4-6.E', '4-6.F', '4-6.G', '4-6.H',
     '5-1.E', '5-1.F', '5-1.G', '5-1.H', '5-2.E', '5-2.F', '5-2.G', '5-2.H',
     '5-3.E', '5-3.F', '5-3.G', '5-3.H', '5-4.E', '5-4.F', '5-4.G', '5-4.H',
     '5-5.E', '5-5.F', '5-5.G', '5-5.H', '5-6.E', '5-6.F', '5-6.G', '5-6.H',
@@ -69,7 +69,10 @@ VIS_QUADRANT_IDS = [
 ]
 
 
-@pytest.mark.parametrize("instrument,detectors", [('NISP', NISP_CCD_IDS), ('VIS', VIS_CCD_IDS), ("VIS", VIS_QUADRANT_IDS)])
+@pytest.mark.parametrize(
+    "instrument,detectors",
+    [('NISP', NISP_CCD_IDS), ('VIS', VIS_CCD_IDS), ("VIS", VIS_QUADRANT_IDS)]
+)
 def test_generate_detector_listfile(tmp_path_factory, instrument, detectors):
     parser = defineSpecificProgramOptions()
     arg_string = [

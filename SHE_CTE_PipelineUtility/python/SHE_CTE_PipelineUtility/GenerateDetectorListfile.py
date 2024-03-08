@@ -84,7 +84,7 @@ def mainMethod(args):
 
     ndet_x = instrument_specs[args.instrument].ndet_x
     ndet_y = instrument_specs[args.instrument].ndet_y
-    if args.quadrants and args.instrument=="VIS":
+    if args.quadrants and args.instrument == "VIS":
         ccd_ids = [f'{1+y}-{1+x}.{q}' for x, y, q in itertools.product(range(ndet_x), range(ndet_y), quadrant_names)]
     else:
         ccd_ids = [f'{1+y}-{1+x}' for x, y in itertools.product(range(ndet_x), range(ndet_y))]

@@ -126,7 +126,7 @@ def read_vis_frames(vis_frame_listfile, workdir):
                 # detector_id should be "x-y[.z - if quadrants]" where x and y range from 0-6 and z is E,F,G or H
                 # In mock SHE products, this is a longer string with random contents
                 if not re.match('^[1-6]-[1-6](.[EFGH])?$', detector_id):
-                        raise ValueError("Detector ID is invalid: %s"%detector_id)
+                    raise ValueError("Detector ID is invalid: %s" % detector_id)
 
                 wcs_hdr = get_header_from_wcs_binding(detector.WCS)
                 wcs = WCS(wcs_hdr)
