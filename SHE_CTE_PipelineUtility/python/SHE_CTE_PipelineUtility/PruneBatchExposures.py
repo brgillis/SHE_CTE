@@ -149,7 +149,7 @@ def mainMethod(args):
         hdf5_files = [None for _ in vis_files]
 
     vis_exposures = read_vis_data(
-        args.vis_exposure_listfile, workdir=workdir, hdf5_listfile=args.hdf5_listfile, method=method
+        vis_files, workdir=workdir, hdf5_files=hdf5_files, method=method
     )
 
     exposure_wcs_lists = [exp.get_wcs_list() for exp in vis_exposures]

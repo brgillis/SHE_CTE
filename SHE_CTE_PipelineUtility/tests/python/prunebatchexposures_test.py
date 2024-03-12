@@ -221,8 +221,8 @@ def test_executable_vis_and_hdf5(workdir, vis_and_mer_listfiles, hdf5_listfile):
         hdf5_files = json.load(f)
 
     # Should be one batch per exposure
-    assert len(output_vis_batches) == NUM_EXPOSURES
-    assert len(output_hdf5_batches) == NUM_EXPOSURES
+    assert len(output_vis_batches) == NUM_DETECTORS
+    assert len(output_hdf5_batches) == NUM_DETECTORS
     assert len(output_seg_batches) == NUM_DETECTORS
 
     for i, (vis_batch, seg_batch, hdf5_batch) in enumerate(
