@@ -225,7 +225,9 @@ def test_executable_vis_and_hdf5(workdir, vis_and_mer_listfiles, hdf5_listfile):
     assert len(output_hdf5_batches) == NUM_EXPOSURES
     assert len(output_seg_batches) == NUM_DETECTORS
 
-    for i, (vis_batch, seg_batch, hdf5_batch) in enumerate(zip(output_vis_batches, output_seg_batches, output_hdf5_batches)):
+    for i, (vis_batch, seg_batch, hdf5_batch) in enumerate(
+        zip(output_vis_batches, output_seg_batches, output_hdf5_batches)
+    ):
         # First batch should contain all exposures, second should contain 2 onwards, third 3 onwards etc...
         assert vis_batch == vis_prods[i:]
         assert seg_batch == seg_prods[i:]
