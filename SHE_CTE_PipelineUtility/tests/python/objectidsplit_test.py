@@ -212,7 +212,7 @@ class TestCase:
             self._test_objectidsplit(argstring)
 
     def test_objectidsplit_vis_det(self, tmpdir, input_files):
-        """Tests that ObjectIdSplit removes objects flagged as not being vis_detected"""
+        """Tests that ObjectIdSplit can remove objects flagged as not being vis_detected"""
 
         data_images, _, mer_final_catalog_product, pipeline_config = input_files
 
@@ -226,7 +226,7 @@ class TestCase:
         t = Table.read(mer_table)
         for row in t:
             id = row["OBJECT_ID"]
-            if id%2==1:
+            if id % 2 == 1:
                 row["VIS_DET"] = 0
 
         num_vis_det = t["VIS_DET"].sum()
@@ -245,8 +245,8 @@ class TestCase:
 
         parser = defineSpecificProgramOptions()
         args = parser.parse_args(argstring)
-        
-        #run the executable
+
+        # run the executable
         mainMethod(args)
 
         # Read the output catalogues in, and ensure the correct objects are present
