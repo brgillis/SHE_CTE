@@ -17,6 +17,7 @@ Bug Fixes
 
 New Features
 ------------
+- ObjectIdSplit and GenerateDetectorListfile now support VIS quadrants
 
 New Config Features
 -------------------

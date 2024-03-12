@@ -27,28 +27,22 @@
 
 import json
 from pathlib import Path
+from itertools import product
 import pytest
 
 from SHE_CTE_PipelineUtility.GenerateDetectorListfile import defineSpecificProgramOptions, mainMethod
 
-NISP_CCD_IDS = [
-    '1-1', '1-2', '1-3', '1-4',
-    '2-1', '2-2', '2-3', '2-4',
-    '3-1', '3-2', '3-3', '3-4',
-    '4-1', '4-2', '4-3', '4-4',
-    ]
+NISP_CCD_IDS = [f"{y+1}-{x+1}" for y, x in product(range(4), range(4))]
 
-VIS_CCD_IDS = [
-    '1-1', '1-2', '1-3', '1-4', '1-5', '1-6',
-    '2-1', '2-2', '2-3', '2-4', '2-5', '2-6',
-    '3-1', '3-2', '3-3', '3-4', '3-5', '3-6',
-    '4-1', '4-2', '4-3', '4-4', '4-5', '4-6',
-    '5-1', '5-2', '5-3', '5-4', '5-5', '5-6',
-    '6-1', '6-2', '6-3', '6-4', '6-5', '6-6',
-    ]
+VIS_CCD_IDS = [f"{y+1}-{x+1}" for y, x in product(range(6), range(6))]
+
+VIS_QUADRANT_IDS = [f"{y+1}-{x+1}.{q}" for y, x, q in product(range(6), range(6), ("E", "F", "G", "H"))]
 
 
-@pytest.mark.parametrize("instrument,detectors", [('NISP', NISP_CCD_IDS), ('VIS', VIS_CCD_IDS)])
+@pytest.mark.parametrize(
+    "instrument,detectors",
+    [('NISP', NISP_CCD_IDS), ('VIS', VIS_CCD_IDS), ("VIS", VIS_QUADRANT_IDS)]
+)
 def test_generate_detector_listfile(tmp_path_factory, instrument, detectors):
     parser = defineSpecificProgramOptions()
     arg_string = [
@@ -57,6 +51,8 @@ def test_generate_detector_listfile(tmp_path_factory, instrument, detectors):
         '--instrument', instrument,
         '--detectors', 'listfile.json',
         ]
+    if len(detectors) == 144:
+        arg_string.append("--quadrants")
     args = parser.parse_args(arg_string)
     mainMethod(args)
     detector_listfile = Path(args.workdir, args.detectors)
