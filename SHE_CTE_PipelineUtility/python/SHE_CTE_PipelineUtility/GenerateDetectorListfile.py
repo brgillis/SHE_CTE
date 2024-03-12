@@ -42,7 +42,7 @@ instrument_specs = {
     'VIS': vis_det_specs,
     }
 
-quadrant_names = ("E", "F", "G", "H", )
+QUADRANT_NAMES = ("E", "F", "G", "H", )
 
 def defineSpecificProgramOptions():
     """
@@ -85,7 +85,7 @@ def mainMethod(args):
     ndet_x = instrument_specs[args.instrument].ndet_x
     ndet_y = instrument_specs[args.instrument].ndet_y
     if args.quadrants and args.instrument == "VIS":
-        ccd_ids = [f'{1+y}-{1+x}.{q}' for x, y, q in itertools.product(range(ndet_x), range(ndet_y), quadrant_names)]
+        ccd_ids = [f'{1+y}-{1+x}.{q}' for x, y, q in itertools.product(range(ndet_x), range(ndet_y), QUADRANT_NAMES)]
     else:
         ccd_ids = [f'{1+y}-{1+x}' for x, y in itertools.product(range(ndet_x), range(ndet_y))]
     filename = Path(args.workdir, args.detectors)
