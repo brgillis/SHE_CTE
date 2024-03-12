@@ -19,6 +19,7 @@ New Features
 ------------
 - New executable SHE_CTE_PruneBatchExposures that produces for a set of object batches a listfiles containing only the exposures that cover each object batch
 - SHE_CTE_ShearEstimatesMerge now handles batches with different sets of pointing ids
+- ObjectIdSplit and GenerateDetectorListfile now support VIS quadrants
 
 New Config Features
 -------------------

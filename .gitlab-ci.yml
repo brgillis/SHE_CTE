@@ -1,7 +1,25 @@
+PEP8:
+  stage: test
+  only:
+    - merge_requests
+  image: python:3.9
+  script:
+    - pip3 install flake8==5.*
+    - git diff -U0 $CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD | flake8 --diff --max-line-length 120
+
+CHANGELOG:
+  stage: test
+  only:
+    - merge_requests
+  script:
+    - if ! git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD | grep -q ^CHANGELOG$; then exit 1; fi
+
 pytest:
   stage: test
+  only: 
+    - merge_requests
   image:
-    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.5.2
+    name: gitlab.euclid-sgs.uk:4567/pf-she/she_containers/she_ppt:9.6.1
     entrypoint: [ '/bin/sh', '-c' ]
   variables:
     ELEMENTS_AUX_PATH: /usr/share/auxdir
@@ -13,3 +31,4 @@ pytest:
     - pytest ../SHE_CTE/tests/python
     - pytest ../SHE_CTE_PipelineUtility/tests/python
     - pytest ../SHE_CTE_ShearValidation/tests/python
+
