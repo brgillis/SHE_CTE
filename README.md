@@ -746,7 +746,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.3 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.3 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--skip_vis_non_detections] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -780,6 +780,7 @@ with the following options:
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+| --skip_vis_non_detections  | If set, will not include objects with VIS_DET==0 in the output catalogues  | no           | false       |
 
 
 _**Inputs**_

@@ -560,6 +560,14 @@ def object_id_split_from_args(args,
     # Read the mer final catalogues in, stacking them to one large catalogue
     mer_final_catalog, tile_ids, mfc_dpd = read_mer_catalogs(mer_final_catalog_tables, workdir)
 
+    # Remove objects not detected in VIS
+    if args.skip_vis_non_detections:
+        n_before = len(mer_final_catalog)
+        vis_det = mer_final_catalog["VIS_DET"] == 1
+        mer_final_catalog = mer_final_catalog[vis_det]
+        n_after = len(mer_final_catalog)
+        logger.info("Removed %s non-VIS-detected objects from catalogue", n_before-n_after)
+
     # TODO: When moving to a Tile-Based pipeline, check that obs_ids from VIS exposures matches obs_ids in MER catalogue dpd
     
     # If we're sub batching, this has already been done in the batching stage
