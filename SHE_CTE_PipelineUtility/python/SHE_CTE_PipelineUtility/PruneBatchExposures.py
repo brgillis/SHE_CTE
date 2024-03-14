@@ -130,7 +130,8 @@ def mainMethod(args):
     # Sanity check - if we have an HDF5 input, we should have an HDF5 output!
     if bool(args.hdf5_listfile) != bool(args.pruned_batch_hdf5_listfile):
         raise ValueError(
-            "Inconsistent arguments. hdf5_listfile=%s, pruned_batch_hdf5_listfile=%s. "
+            f"Inconsistent arguments. hdf5_listfile={args.hdf5_listfile}, "
+            f"pruned_batch_hdf5_listfile={args.pruned_batch_hdf5_listfile}. "
             "These must be either both set or both unset",
             args.hdf5_listfile,
             args.pruned_batch_hdf5_listfile,
