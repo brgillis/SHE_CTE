@@ -28,7 +28,7 @@ import math
 
 import pytest
 
-from astropy.table import Table
+from astropy.table import Table, vstack
 
 from ST_DM_DmUtils.DmUtils import read_product_metadata
 
@@ -210,4 +210,58 @@ class TestCase:
 
         with pytest.raises(ValueError):
             self._test_objectidsplit(argstring)
+
+    def test_objectidsplit_vis_det(self, tmpdir, input_files):
+        """Tests that ObjectIdSplit can remove objects flagged as not being vis_detected"""
+
+        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+
+        workdir = tmpdir
+
+        # First we need to edit the catalogue to contain some objects not detected in VIS
+        # We define all odd object_ids as not being vis_detected
+        dpd = read_product_metadata(workdir / mer_final_catalog_product)
+        mer_table = workdir / "data" / dpd.Data.DataStorage.DataContainer.FileName
+
+        t = Table.read(mer_table)
+        for row in t:
+            id = row["OBJECT_ID"]
+            if id % 2 == 1:
+                row["VIS_DET"] = 0
+
+        num_vis_det = t["VIS_DET"].sum()
+
+        t.write(mer_table, overwrite=True)
+
+        argstring = [
+            f"--workdir={workdir}",
+            f"--data_images={data_images}",
+            f"--mer_final_catalog_tables={mer_final_catalog_product}",
+            "--object_ids=object_ids1.json",
+            "--batch_mer_catalogs=batch_mer_catalogs1.json",
+            f"--pipeline_config={pipeline_config}",
+            "--skip_vis_non_detections"
+        ]
+
+        parser = defineSpecificProgramOptions()
+        args = parser.parse_args(argstring)
+
+        # run the executable
+        mainMethod(args)
+
+        # Read the output catalogues in, and ensure the correct objects are present
+        batch_cats = read_listfile("batch_mer_catalogs1.json", workdir=workdir)
+
+        tables = []
+        for batch_cat in batch_cats:
+            dpd = read_product_metadata(workdir / batch_cat)
+            batch_table = workdir / "data" / dpd.Data.DataStorage.DataContainer.FileName
+            tables.append(Table.read(batch_table))
+
+        t = vstack(tables)
+
+        assert len(t) == num_vis_det
+
+        assert (t["OBJECT_ID"] % 2 == 0).all()
+
         
