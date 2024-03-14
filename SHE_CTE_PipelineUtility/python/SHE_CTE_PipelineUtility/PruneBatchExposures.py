@@ -199,7 +199,7 @@ def mainMethod(args):
 
 @dataclass
 class ExposureMetadata:
-    wcs_list: list
+    wcs_list: list["astropy.wcs.WCS"]  # NOQA F821
     vis_filename: str
     seg_filename: str
     hdf5_filename: str = None
