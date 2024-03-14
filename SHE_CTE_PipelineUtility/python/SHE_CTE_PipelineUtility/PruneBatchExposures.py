@@ -88,6 +88,11 @@ def defineSpecificProgramOptions():
         help="Listfile pointing to reprojected segmaps"
     )
 
+    parser.add_argument(
+        "--psf_exposure_listfile", type=str, required=True,
+        help="Listfile of PSF field parameters for each exposure"
+    )
+
     parser.add_argument("--batch_mer_listfile", type=str, required=True, help="Listfile of batch MER catalogues")
 
     parser.add_argument("--hdf5_listfile", type=str, help="Listfile of HDF5 files (optional)")
@@ -102,6 +107,11 @@ def defineSpecificProgramOptions():
     parser.add_argument(
         "--pruned_batch_seg_listfile", type=str, required=True,
         help="Listfile of listfiles pointing to the segmaps in each batch"
+    )
+
+    parser.add_argument(
+        "--pruned_batch_psf_listfile", type=str, required=True,
+        help="Listfile of listfiles pointing to the PSF field params in each batch"
     )
 
     parser.add_argument(
@@ -139,6 +149,7 @@ def mainMethod(args):
 
     vis_files = _read_listfile(workdir / args.vis_exposure_listfile)
     seg_files = _read_listfile(workdir / args.segmap_exposure_listfile)
+    psf_files = _read_listfile(workdir / args.psf_exposure_listfile)
 
     # To avoid code branches further down, if no HDF5 files are passed in, we just make a list of Nones
     # the same length as the VIS filelist
@@ -156,13 +167,16 @@ def mainMethod(args):
     exposure_wcs_lists = [exp.get_wcs_list() for exp in vis_exposures]
 
     exposure_metadata_list = [
-        ExposureMetadata(w, v, s, h) for w, v, s, h in zip(exposure_wcs_lists, vis_files, seg_files, hdf5_files)
+        ExposureMetadata(w, v, s, p, h) for w, v, s, p, h in zip(
+            exposure_wcs_lists, vis_files, seg_files, psf_files, hdf5_files
+        )
     ]
 
     batch_mer_filenames = _read_listfile(workdir / args.batch_mer_listfile)
 
     vis_batches = []
     seg_batches = []
+    psf_batches = []
     hdf5_batches = []
 
     for i, batch_mer_filename in enumerate(batch_mer_filenames):
@@ -174,12 +188,15 @@ def mainMethod(args):
         skycoords = SkyCoord(ra=mer_cat["RIGHT_ASCENSION"], dec=mer_cat["DECLINATION"], unit=degree)
 
         # get the lists of VIS/HDF5 exposure files that contain the objects for this batch
-        vis_batch, seg_batch, hdf5_batch = _get_exposure_lists_with_objects(skycoords, exposure_metadata_list)
+        vis_batch, seg_batch, psf_batch, hdf5_batch = _get_exposure_lists_with_objects(
+            skycoords, exposure_metadata_list
+        )
 
         logger.info("Batch %d: Objects are present in %d exposures", i, len(vis_batch))
 
         vis_batches.append(vis_batch)
         seg_batches.append(seg_batch)
+        psf_batches.append(psf_batch)
         hdf5_batches.append(hdf5_batch)
 
     logger.info("Creating output listfile %s", workdir / args.pruned_batch_vis_listfile)
@@ -187,6 +204,9 @@ def mainMethod(args):
 
     logger.info("Creating output listfile %s", workdir / args.pruned_batch_seg_listfile)
     _write_listfile(seg_batches, workdir / args.pruned_batch_seg_listfile)
+
+    logger.info("Creating output listfile %s", workdir / args.pruned_batch_psf_listfile)
+    _write_listfile(psf_batches, workdir / args.pruned_batch_psf_listfile)
 
     if args.pruned_batch_hdf5_listfile:
         logger.info("Creating output listfile %s", workdir / args.pruned_batch_hdf5_listfile)
@@ -202,6 +222,7 @@ class ExposureMetadata:
     wcs_list: list["astropy.wcs.WCS"]  # NOQA F821
     vis_filename: str
     seg_filename: str
+    psf_filename: str
     hdf5_filename: str = None
 
 
@@ -230,11 +251,14 @@ def _get_exposure_lists_with_objects(skycoords, exposure_metadata_list):
      - exposure_metadata_list: a list of ExposureMetadata objects
     Returns:
      - batch_vis_list: list of VIS products that contain the objects
+     - batch_seg_list: list of Segmap products that contain the objects
+     - batch_vis_list: list of PSF field params products that contain the objects
      - batch_hdf5_list: list of HDF5 files that contain the objects
     """
 
     batch_vis_list = []
     batch_seg_list = []
+    batch_psf_list = []
     batch_hdf5_list = []
 
     for exposure_meta in exposure_metadata_list:
@@ -242,6 +266,7 @@ def _get_exposure_lists_with_objects(skycoords, exposure_metadata_list):
         if _exposure_contains_objects(skycoords, exposure_meta):
             batch_vis_list.append(exposure_meta.vis_filename)
             batch_seg_list.append(exposure_meta.seg_filename)
+            batch_psf_list.append(exposure_meta.psf_filename)
             batch_hdf5_list.append(exposure_meta.hdf5_filename)
 
-    return batch_vis_list, batch_seg_list, batch_hdf5_list
+    return batch_vis_list, batch_seg_list, batch_psf_list, batch_hdf5_list
