@@ -40,12 +40,14 @@ The pipeline runner can use this output listfile to generate a listfile of expos
 import argparse
 import json
 import pathlib
+import warnings
 
 from dataclasses import dataclass
 
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
-from astropy.units import degree
+from astropy.units import degree, UnitsWarning
+from astropy.io.fits.verify import VerifyWarning
 
 import ElementsKernel.Logging as log
 
@@ -77,7 +79,7 @@ def defineSpecificProgramOptions():
 
     parser.add_argument("--workdir", type=directory, default=".", help="Workdir")
 
-    parser.add_argument("--logdir", type=directory, help="logdir")
+    parser.add_argument("--logdir", type=str, help="logdir")
 
     # input args
 
@@ -183,7 +185,11 @@ def mainMethod(args):
         mer_dpd = DmUtils.read_product_metadata(workdir / batch_mer_filename)
         mer_fits = mer_dpd.Data.DataStorage.DataContainer.FileName
 
-        mer_cat = Table.read(workdir / "data" / mer_fits, memmap=False)
+        # Read batch catalogue in, ignoring warnings from MER catalogues not being in the correct format
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=VerifyWarning)
+            warnings.simplefilter("ignore", category=UnitsWarning)
+            mer_cat = Table.read(workdir / "data" / mer_fits, memmap=False)
 
         skycoords = SkyCoord(ra=mer_cat["RIGHT_ASCENSION"], dec=mer_cat["DECLINATION"], unit=degree)
 
