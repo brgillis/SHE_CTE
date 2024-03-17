@@ -1260,7 +1260,7 @@ _`output_listfile`_
 
 ### `SHE_CTE_PruneBatchExposures`
 
-Takes a list of VIS exposures, reprojected segmaps and batch MER catalogues, determines for each batch the exposures that cover that batch, returning a listfile of VIS exposures and a listfile of segmaps for each batch.
+Takes a list of VIS exposures, reprojected segmaps, PSF field parameters and batch MER catalogues, determines for each batch the exposures that cover that batch, returning a listfile of VIS exposures, segmaps and PSF field parameters for each batch.
 
 The output listfile would be of the form
 ```
@@ -1276,9 +1276,9 @@ The executable (optionally) if provided a list of input VIS converted to HDF5 fi
 
 _**Running the Program on EDEN/LODEEN**_
 
-To run `SHE_CTE_ReorderListfiles` on Elements use the following command:
+To run `SHE_CTE_PruneBatchExposures` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.3 SHE_CTE_PruneBatchExposures --vis_exposure_listfile <file> --segmap_exposure_listfile <file> --batch_mer_listfile <file> --pruned_batch_vis_listfile <file> --pruned_batch_seg_listfile <file> [--hdf5_listfile] [--pruned_batch_hdf5_listfile] [--workdir <dir>]  [--logdir <dir>]
+E-Run SHE_CTE 9.3 SHE_CTE_PruneBatchExposures --vis_exposure_listfile <file> --segmap_exposure_listfile <file> --psf_exposure_listfile <file> --batch_mer_listfile <file> --pruned_batch_vis_listfile <file> --pruned_batch_seg_listfile <file> --pruned_batch_psf_listfile <file> [--hdf5_listfile] [--pruned_batch_hdf5_listfile] [--workdir <dir>]  [--logdir <dir>]
 ```
 with the following options:
 
@@ -1296,6 +1296,7 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --vis_exposure_listfile `<filename>`     | Listfile pointing to DpdVisCalibrated[Quad]Frame products| yes    | N/A         | 
 | --segmap_exposure_listfile `<filename>`     | Listfile pointing to DpdSheExposureReprojectedSegmentatinoMap products| yes    | N/A         | 
+| --psf_exposure_listfile `<filename>`     | Listfile pointing to DpdShePSFFieldParams products| yes    | N/A         | 
 | --batch_mer_listfile `<filename>`     | Listfile pointing to DpdMerFinalCatalog products| yes    | N/A         | 
 | --hdf5_listfile `<filename>`     | Listfile pointing to HDF5 version of VIS images| no    | N/A         | 
 
@@ -1305,6 +1306,7 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --pruned_batch_vis_listfile `<filename>`     | Listfile pointing to exposures for each batch| yes    | N/A         | 
 | --pruned_batch_seg_listfile `<filename>`     | Listfile pointing to segmaps for each batch| yes    | N/A         | 
+| --pruned_batch_psf_listfile `<filename>`     | Listfile pointing to psf field params for each batch| yes    | N/A         | 
 | --pruned_batch_hdf5_listfile `<filename>`     | Listfile pointing to HDF5 files for each batch| no    | N/A         | 
 
 
@@ -1318,6 +1320,11 @@ _`vis_exposure_listfile`_:
 _`segmap_exposure_listfile`_:
 
 **Description:** The filename of a listfile pointing to DpdSheExposureReprojectedSegmap products
+**Source:** Pipeline inputs
+
+_`psf_exposure_listfile`_:
+
+**Description:** The filename of a listfile pointing to DpdShePSFFieldParams products
 **Source:** Pipeline inputs
 
 _`batch_mer_listfile`_:
@@ -1340,6 +1347,10 @@ _`pruned_batch_vis_listfile`_
 _`pruned_batch_seg_listfile`_ 
 
 **Description** Listfile that contains for each batch the lists of DpdSheExposureReprojectedSegmaps present in that batch. 
+
+_`pruned_batch_psf_listfile`_ 
+
+**Description** Listfile that contains for each batch the lists of DpdShePSFFieldParams products present in that batch. 
 
 _`pruned_batch_hdf5_listfile`_ 
 
