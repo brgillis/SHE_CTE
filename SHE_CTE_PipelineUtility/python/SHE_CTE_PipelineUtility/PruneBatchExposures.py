@@ -52,6 +52,7 @@ from astropy.io.fits.verify import VerifyWarning
 import ElementsKernel.Logging as log
 
 from ST_DM_DmUtils import DmUtils
+from ST_DM_DPTools import JsonTools
 
 from SHE_PPT.she_io.vis_exposures import read_vis_data
 
@@ -149,15 +150,15 @@ def mainMethod(args):
             args.pruned_batch_hdf5_listfile,
         )
 
-    vis_files = _read_listfile(workdir / args.vis_exposure_listfile)
-    seg_files = _read_listfile(workdir / args.segmap_exposure_listfile)
-    psf_files = _read_listfile(workdir / args.psf_exposure_listfile)
+    vis_files = JsonTools.read_json(workdir / args.vis_exposure_listfile)
+    seg_files = JsonTools.read_json(workdir / args.segmap_exposure_listfile)
+    psf_files = JsonTools.read_json(workdir / args.psf_exposure_listfile)
 
     # To avoid code branches further down, if no HDF5 files are passed in, we just make a list of Nones
     # the same length as the VIS filelist
     if args.hdf5_listfile:
         method = "hdf5"
-        hdf5_files = _read_listfile(workdir / args.hdf5_listfile)
+        hdf5_files = JsonTools.read_json(workdir / args.hdf5_listfile)
     else:
         method = "astropy"
         hdf5_files = [None for _ in vis_files]
@@ -174,7 +175,7 @@ def mainMethod(args):
         )
     ]
 
-    batch_mer_filenames = _read_listfile(workdir / args.batch_mer_listfile)
+    batch_mer_filenames = JsonTools.read_json(workdir / args.batch_mer_listfile)
 
     vis_batches = []
     seg_batches = []
@@ -230,11 +231,6 @@ class ExposureMetadata:
     seg_filename: str
     psf_filename: str
     hdf5_filename: str = None
-
-
-def _read_listfile(filename):
-    with open(filename) as f:
-        return json.load(f)
 
 
 def _write_listfile(data, filename):

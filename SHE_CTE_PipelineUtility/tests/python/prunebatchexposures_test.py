@@ -29,6 +29,7 @@ import json
 import numpy as np
 
 from ST_DM_DmUtils.DmUtils import read_product_metadata
+from ST_DM_DPTools import JsonTools
 
 from SHE_PPT.testing import (
     generate_mock_vis_images,
@@ -113,8 +114,7 @@ def hdf5_listfile(workdir, vis_and_mer_listfiles):
 
     datadir = workdir / "data"
 
-    with open(workdir / vis_listfile) as f:
-        vis_prods = json.load(f)
+    vis_prods = JsonTools.read_json(workdir / vis_listfile)
 
     hdf5_files = []
     for i, vis_prod in enumerate(vis_prods):
@@ -164,23 +164,17 @@ def test_executable_vis_only(workdir, vis_and_mer_listfiles):
 
     mainMethod(args)
 
-    with open(workdir / output_vis_listfile) as f:
-        output_vis_batches = json.load(f)
+    output_vis_batches = JsonTools.read_json(workdir / output_vis_listfile)
 
-    with open(workdir / output_psf_listfile) as f:
-        output_psf_batches = json.load(f)
+    output_seg_batches = JsonTools.read_json(workdir / output_seg_listfile)
 
-    with open(workdir / output_seg_listfile) as f:
-        output_seg_batches = json.load(f)
+    output_psf_batches = JsonTools.read_json(workdir / output_psf_listfile)
 
-    with open(workdir / vis_listfile) as f:
-        vis_prods = json.load(f)
+    vis_prods = JsonTools.read_json(workdir / vis_listfile)
 
-    with open(workdir / seg_listfile) as f:
-        seg_prods = json.load(f)
+    seg_prods = JsonTools.read_json(workdir / seg_listfile)
 
-    with open(workdir / psf_listfile) as f:
-        psf_prods = json.load(f)
+    psf_prods = JsonTools.read_json(workdir / psf_listfile)
 
     # Should be one batch per exposure
     assert len(output_vis_batches) == NUM_DETECTORS
@@ -224,29 +218,21 @@ def test_executable_vis_and_hdf5(workdir, vis_and_mer_listfiles, hdf5_listfile):
 
     mainMethod(args)
 
-    with open(workdir / output_vis_listfile) as f:
-        output_vis_batches = json.load(f)
+    output_vis_batches = JsonTools.read_json(workdir / output_vis_listfile)
 
-    with open(workdir / output_seg_listfile) as f:
-        output_seg_batches = json.load(f)
+    output_seg_batches = JsonTools.read_json(workdir / output_seg_listfile)
 
-    with open(workdir / output_psf_listfile) as f:
-        output_psf_batches = json.load(f)
+    output_psf_batches = JsonTools.read_json(workdir / output_psf_listfile)
 
-    with open(workdir / output_hdf5_listfile) as f:
-        output_hdf5_batches = json.load(f)
+    output_hdf5_batches = JsonTools.read_json(workdir / output_hdf5_listfile)
 
-    with open(workdir / vis_listfile) as f:
-        vis_prods = json.load(f)
+    vis_prods = JsonTools.read_json(workdir / vis_listfile)
 
-    with open(workdir / seg_listfile) as f:
-        seg_prods = json.load(f)
+    seg_prods = JsonTools.read_json(workdir / seg_listfile)
 
-    with open(workdir / psf_listfile) as f:
-        psf_prods = json.load(f)
+    psf_prods = JsonTools.read_json(workdir / psf_listfile)
 
-    with open(workdir / hdf5_listfile) as f:
-        hdf5_files = json.load(f)
+    hdf5_files = JsonTools.read_json(workdir / hdf5_listfile)
 
     # Should be one batch per exposure
     assert len(output_vis_batches) == NUM_DETECTORS
