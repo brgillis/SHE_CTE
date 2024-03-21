@@ -89,8 +89,8 @@ def defineSpecificProgramOptions():
                                  'objects.')
 
     parser.add_argument(
-        "--skip_vis_non_detections", action="store_true",
-        help="If set, objects with VIS_DET=0 will be excluded"
+        "--include_vis_non_detections", action="store_true",
+        help="If set, objects with VIS_DET=0 will be included"
     )
 
     logger.debug('# Exiting SHE_CTE_(Sub)ObjectIdSplit defineSpecificProgramOptions()')

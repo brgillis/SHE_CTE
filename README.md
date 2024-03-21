@@ -780,7 +780,7 @@ with the following options:
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
-| --skip_vis_non_detections  | If set, will not include objects with VIS_DET==0 in the output catalogues  | no           | false       |
+| --include_vis_non_detections| If set, will include objects with VIS_DET==0 in the output catalogues  | no           | false       |
 
 
 _**Inputs**_

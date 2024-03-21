@@ -561,7 +561,7 @@ def object_id_split_from_args(args,
     mer_final_catalog, tile_ids, mfc_dpd = read_mer_catalogs(mer_final_catalog_tables, workdir)
 
     # Remove objects not detected in VIS
-    if args.skip_vis_non_detections:
+    if not args.include_vis_non_detections:
         n_before = len(mer_final_catalog)
         vis_det = mer_final_catalog["VIS_DET"] == 1
         mer_final_catalog = mer_final_catalog[vis_det]
