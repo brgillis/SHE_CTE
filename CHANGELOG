@@ -24,7 +24,7 @@ New Features
 
 New Config Features
 -------------------
-- ObjectIdSplit now accepts the skip_vis_non_detections CLA, which if set, will exclude all non-VIS-detected objects
+- ObjectIdSplit now accepts the skip_vis_non_detections CLA, which if set, will exclude all non-VIS-detected objects. This is switched on by default
 
 Miscellaneous
 -------------
