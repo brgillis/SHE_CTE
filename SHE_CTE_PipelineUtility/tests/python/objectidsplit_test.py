@@ -229,6 +229,7 @@ class TestCase:
             if id % 2 == 1:
                 row["VIS_DET"] = 0
 
+        num_all_objs = len(t)
         num_vis_det = t["VIS_DET"].sum()
 
         t.write(mer_table, overwrite=True)
@@ -240,7 +241,6 @@ class TestCase:
             "--object_ids=object_ids1.json",
             "--batch_mer_catalogs=batch_mer_catalogs1.json",
             f"--pipeline_config={pipeline_config}",
-            "--skip_vis_non_detections"
         ]
 
         parser = defineSpecificProgramOptions()
@@ -263,5 +263,34 @@ class TestCase:
         assert len(t) == num_vis_det
 
         assert (t["OBJECT_ID"] % 2 == 0).all()
+        
+        # Now repeat again, but including vis_detected objects - ensure we get all objects returned
+        argstring = [
+            f"--workdir={workdir}",
+            f"--data_images={data_images}",
+            f"--mer_final_catalog_tables={mer_final_catalog_product}",
+            "--object_ids=object_ids1.json",
+            "--batch_mer_catalogs=batch_mer_catalogs1.json",
+            f"--pipeline_config={pipeline_config}",
+            "--include_vis_non_detections",
+        ]
+
+        args = parser.parse_args(argstring)
+
+        # run the executable
+        mainMethod(args)
+
+        # Read the output catalogues in, and ensure the correct objects are present
+        batch_cats = read_listfile("batch_mer_catalogs1.json", workdir=workdir)
+
+        tables = []
+        for batch_cat in batch_cats:
+            dpd = read_product_metadata(workdir / batch_cat)
+            batch_table = workdir / "data" / dpd.Data.DataStorage.DataContainer.FileName
+            tables.append(Table.read(batch_table))
+
+        t = vstack(tables)
+
+        assert len(t) == num_all_objs
 
         
