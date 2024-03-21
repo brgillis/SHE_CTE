@@ -263,7 +263,7 @@ class TestCase:
         assert len(t) == num_vis_det
 
         assert (t["OBJECT_ID"] % 2 == 0).all()
-        
+
         # Now repeat again, but including vis_detected objects - ensure we get all objects returned
         argstring = [
             f"--workdir={workdir}",
@@ -292,5 +292,3 @@ class TestCase:
         t = vstack(tables)
 
         assert len(t) == num_all_objs
-
-        
