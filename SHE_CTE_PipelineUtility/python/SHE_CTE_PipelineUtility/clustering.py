@@ -53,6 +53,15 @@ def find_groups(x, y, sep):
     x = np.asarray(x)
     y = np.asarray(y)
 
+    group_ids = np.full(len(x), -1, dtype=int)
+    x_group = np.copy(x)
+    y_group = np.copy(y)
+
+    # separation is None or zero, so by definition all objects do not belong to a group
+    if not sep:
+        logger.info("Separation is zero, so no grouping carried out")
+        return x_group, y_group, group_ids
+
     # construct k-d tree, and get the pairs of all points closer that sep
     xy = np.asarray([x, y]).T
 
@@ -70,13 +79,10 @@ def find_groups(x, y, sep):
 
     logger.info("Found %d pairs of objects which form %d discrete groups", len(pairs), len(groups))
 
-    # give each group an id (starting from 0) and adjust the positions of objects within each group to that group's
-    # centre
-    group_ids = np.full(len(x), -1, dtype=int)
-    x_group = np.copy(x)
-    y_group = np.copy(y)
     ns = []
 
+    # give each group an id (starting from 0) and adjust the positions of objects within each group to that group's
+    # centre
     for i, inds in enumerate(groups):
         ns.append(len(inds))
         group_ids[inds] = i
