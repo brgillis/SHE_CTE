@@ -59,7 +59,15 @@ def input_files(tmpdir):
     #create the vis images and mer catalogue (4 exposures with different pointing IDs and noise realisations)
     exposure_list = []
     for _id in range(num_exposures):
-        exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(workdir=workdir, n_objs_per_det=num_objects, objsize=2, obs_id=_id, seed=1, pointing_id=_id, noise_seed=_id)
+        exposure_product, obj_coords, _, _, _ = generate_mock_vis_images.create_exposure(
+            workdir=workdir,
+            n_objs_per_det=num_objects,
+            objsize=2,
+            obs_id=_id,
+            seed=1,
+            pointing_id=_id,
+            noise_seed=_id
+        )
         exposure_list.append(exposure_product)
     
     catalogue_product, _ = generate_mock_mer_catalogues.create_catalogue(obj_coords=obj_coords, workdir=workdir, tile_id=TILE_ID, obs_ids=OBS_IDS)
@@ -70,17 +78,12 @@ def input_files(tmpdir):
     data_images = "data_images.json"
     mer_final_catalog_tables = "mer_final_catalog_tables.json"
     mer_final_catalog_product = catalogue_product
-    pipeline_config = "pipeline_config.txt"
 
     #write them to disk
     write_listfile(os.path.join(workdir,data_images), exposure_list)
     write_listfile(os.path.join(workdir,mer_final_catalog_tables), catalogue_list)
-    
-    #create the pipeline config, specifying the batch size
-    with open(os.path.join(workdir,pipeline_config),"w") as f:
-        f.write("SHE_CTE_ObjectIdSplit_batch_size=%d\n"%batch_size)
 
-    return data_images, mer_final_catalog_tables, mer_final_catalog_product, pipeline_config
+    return data_images, mer_final_catalog_tables, mer_final_catalog_product
 
 
 class TestCase:
@@ -160,7 +163,7 @@ class TestCase:
 
         workdir = tmpdir
 
-        data_images, mer_final_catalog_tables, _, pipeline_config = input_files
+        data_images, mer_final_catalog_tables, _, = input_files
         
         argstring = [
             f"--workdir={workdir}",
@@ -168,7 +171,7 @@ class TestCase:
             f"--mer_final_catalog_tables={mer_final_catalog_tables}",
             "--object_ids=object_ids0.json",
             "--batch_mer_catalogs=batch_mer_catalogs0.json",
-            f"--pipeline_config={pipeline_config}",
+            f"--batch_size={batch_size}"
         ]
 
         self._test_objectidsplit(argstring)
@@ -178,7 +181,7 @@ class TestCase:
         
         workdir = tmpdir
 
-        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+        data_images, _, mer_final_catalog_product = input_files
         
         argstring = [
             f"--workdir={workdir}",
@@ -186,7 +189,7 @@ class TestCase:
             f"--mer_final_catalog_tables={mer_final_catalog_product}",
             "--object_ids=object_ids1.json",
             "--batch_mer_catalogs=batch_mer_catalogs1.json",
-            f"--pipeline_config={pipeline_config}",
+            f"--batch_size={batch_size}"
         ]
 
         self._test_objectidsplit(argstring)
@@ -197,7 +200,7 @@ class TestCase:
         
         workdir = tmpdir
 
-        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+        data_images, _, mer_final_catalog_product = input_files
         
         argstring = [
             f"--workdir={workdir}",
@@ -205,7 +208,7 @@ class TestCase:
             "--mer_final_catalog_tables=some_file.xyz",
             "--object_ids=object_ids1.json",
             "--batch_mer_catalogs=batch_mer_catalogs1.json",
-            f"--pipeline_config={pipeline_config}",
+            f"--batch_size={batch_size}"
         ]
 
         with pytest.raises(ValueError):
@@ -214,7 +217,7 @@ class TestCase:
     def test_objectidsplit_vis_det(self, tmpdir, input_files):
         """Tests that ObjectIdSplit can remove objects flagged as not being vis_detected"""
 
-        data_images, _, mer_final_catalog_product, pipeline_config = input_files
+        data_images, _, mer_final_catalog_product = input_files
 
         workdir = tmpdir
 
@@ -240,7 +243,7 @@ class TestCase:
             f"--mer_final_catalog_tables={mer_final_catalog_product}",
             "--object_ids=object_ids1.json",
             "--batch_mer_catalogs=batch_mer_catalogs1.json",
-            f"--pipeline_config={pipeline_config}",
+            f"--batch_size={batch_size}"
         ]
 
         parser = defineSpecificProgramOptions()
@@ -271,8 +274,8 @@ class TestCase:
             f"--mer_final_catalog_tables={mer_final_catalog_product}",
             "--object_ids=object_ids1.json",
             "--batch_mer_catalogs=batch_mer_catalogs1.json",
-            f"--pipeline_config={pipeline_config}",
             "--include_vis_non_detections",
+            f"--batch_size={batch_size}"
         ]
 
         args = parser.parse_args(argstring)
