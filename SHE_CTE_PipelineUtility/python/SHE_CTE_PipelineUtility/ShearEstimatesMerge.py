@@ -21,47 +21,25 @@ __updated__ = "2021-08-18"
 # You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+import argparse
 import multiprocessing as mp
 import os
-from typing import Any, Dict, Tuple, Type, Union
 import itertools
 
-import numpy as np
 from astropy import table
 
 from ST_DM_DmUtils import DmUtils
 
-import SHE_CTE
-from SHE_CTE.executor import CteLogOptions, SheCteExecutor
 from SHE_PPT import products
-from SHE_PPT.argument_parser import SheArgumentParser
-from SHE_PPT.constants.config import D_GLOBAL_CONFIG_CLINE_ARGS, D_GLOBAL_CONFIG_DEFAULTS, D_GLOBAL_CONFIG_TYPES
+from SHE_PPT.argument_parser import dir_path
 from SHE_PPT.constants.shear_estimation_methods import ShearEstimationMethods
-from SHE_PPT.executor import ReadConfigArgs
-from SHE_PPT.file_io import (get_allowed_filename, read_listfile, read_xml_product, write_xml_product)
+from SHE_PPT.file_io import get_allowed_filename, read_listfile, read_xml_product, write_xml_product
 from SHE_PPT.logging import getLogger
-from SHE_PPT.pipeline_utility import (AnalysisConfigKeys, ConfigKeys, read_analysis_config)
 from SHE_PPT.table_formats.she_lensmc_chains import tf as lmcc_tf
 from SHE_PPT.table_formats.she_measurements import tf as sm_tf
 from SHE_PPT.table_utility import is_in_format
 
-# Set up dicts for pipeline config defaults and types
-D_SEM_CONFIG_DEFAULTS: Dict[ConfigKeys, Any] = {
-    **D_GLOBAL_CONFIG_DEFAULTS,
-    AnalysisConfigKeys.SEM_NUM_THREADS: 8,
-    }
-
-D_SEM_CONFIG_TYPES: Dict[ConfigKeys, Union[Type, Tuple[Type, Type]]] = {
-    **D_GLOBAL_CONFIG_TYPES,
-    AnalysisConfigKeys.SEM_NUM_THREADS: int,
-    }
-
-D_SEM_CONFIG_CLINE_ARGS: Dict[ConfigKeys, str] = {
-    **D_GLOBAL_CONFIG_CLINE_ARGS,
-    AnalysisConfigKeys.SEM_NUM_THREADS: "number_threads",
-    }
-
-EXEC_NAME = "SHE_CTE_ShearEstimatesMerge"
+import SHE_CTE
 
 METHOD_CATALOG_NAMES = {
     ShearEstimationMethods.LENSMC: "She-Lensmc-Shear",
@@ -89,26 +67,31 @@ def defineSpecificProgramOptions():
         An ArgumentParser.
     """
 
-    logger.debug('#')
-    logger.debug(f'# Entering {EXEC_NAME} defineSpecificProgramOptions()')
-    logger.debug('#')
+    parser = argparse.ArgumentParser()
 
-    parser = SheArgumentParser()
+    # Pipeline args
+    parser.add_argument("--workdir", type=dir_path, default=".", help="Workdir")
+    parser.add_argument("--logdir", type=dir_path, default=".", help="Logdir")
 
-    # Input data
-    parser.add_input_arg('--shear_estimates_product_listfile', type = str)
-    parser.add_input_arg('--she_lensmc_chains_listfile', type = str, default=None)
+    # Input args
+    parser.add_argument(
+        '--shear_estimates_product_listfile', type=str,
+        required=True, help="Listfile of shear measurements"
+    )
+    parser.add_argument('--she_lensmc_chains_listfile', type=str, help="Listfile of LensMC chains (optional)")
 
-    # Output data
-    parser.add_output_arg('--merged_she_measurements', type = str)
-    parser.add_output_arg('--merged_she_lensmc_chains', type = str, default=None,
-                          help = 'XML data product to contain LensMC chains data.')
+    # Output args
+    parser.add_argument(
+        '--merged_she_measurements', type=str, required=True,
+        help="Filename of output shear measurements product"
+    )
+    parser.add_argument(
+        '--merged_she_lensmc_chains', type=str,
+        help = 'XML data product to contain LensMC chains data (optional)'
+    )
 
-    # Input arguments (can't be used in pipeline)
-    parser.add_option_arg('--number_threads', type = int,
-                          help = 'Number of parallel threads to use.')
-
-    logger.debug(f'# Exiting {EXEC_NAME} defineSpecificProgramOptions()')
+    # Options
+    parser.add_argument('--num_procs', type=int, help='Number of parallel processes to use')
 
     return parser
 
@@ -134,8 +117,9 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
 
         else:
 
-            she_lensmc_chains_table = table.Table.read(os.path.join(
-                workdir, she_lensmc_chains_table_filename))
+            she_lensmc_chains_table = table.Table.read(
+                os.path.join(workdir, she_lensmc_chains_table_filename)
+            )
 
             if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose = True, ignore_metadata = True):
                 raise TypeError("Input chains table is of invalid format.")
@@ -192,7 +176,9 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
             she_measurements_method_table = table.Table.read(os.path.join(
                 workdir, she_measurements_method_table_filename))
 
-            if not is_in_format(she_measurements_method_table, sm_tf, verbose = False, ignore_metadata = True, strict = False):
+            if not is_in_format(
+                she_measurements_method_table, sm_tf, verbose = False, ignore_metadata = True, strict = False
+            ):
                 raise TypeError(f"Input shear estimates table for method {method} is of invalid format.")
 
             # Append the table to the list of tables
@@ -214,18 +200,16 @@ def she_measurements_merge_from_args(args):
 
     # Sanity check arguments (either input and output chains are both None, or both not None)
     if bool(args.she_lensmc_chains_listfile) != bool(args.merged_she_lensmc_chains):
-        raise ValueError("Inconsistent input arguments. Input chains listfile is %s but output chains product is %s"%(args.she_lensmc_chains_listfile, args.merged_she_lensmc_chains))
+        raise ValueError(
+            "Inconsistent input arguments. Input chains listfile is %s but output chains product is %s"%(
+                args.she_lensmc_chains_listfile, args.merged_she_lensmc_chains
+            )
+        )
 
 
-    # Determine how many threads we'll use
-    number_threads = args.pipeline_config[AnalysisConfigKeys.SEM_NUM_THREADS]
-
-    # If number_threads is 0 or lower, assume it means this many fewer than the cpu count
-    if number_threads <= 0:
-        number_threads = max(1, mp.cpu_count() + number_threads)
-
-
-    # Process measurements
+    # Determine how many processes we'll use
+    # (If this is not set, assume one process)
+    num_procs = args.num_procs if args.num_procs else 1
 
     # Keep a list of all shear estimates tables for each method
     she_measurements_tables = dict.fromkeys(ShearEstimationMethods)
@@ -240,11 +224,12 @@ def she_measurements_merge_from_args(args):
 
     # Read the measurements tables
 
-    input_tuples = [(
-        she_measurements_table_product_filename, args.workdir) for
-        she_measurements_table_product_filename in measurements_product_filenames]
+    input_tuples = [
+        (she_measurements_table_product_filename, args.workdir) for
+        she_measurements_table_product_filename in measurements_product_filenames
+    ]
 
-    with mp.Pool(processes = number_threads) as pool:
+    with mp.Pool(processes=num_procs) as pool:
         she_measurements_tables_and_metadata = pool.starmap(read_method_estimates_tables, input_tuples)
 
     (
@@ -328,22 +313,24 @@ def she_measurements_merge_from_args(args):
                                                                 metadata_conflicts = "silent")
 
         # Get a filename for the table
-        combined_she_measurements_table_filename = get_allowed_filename(type_name = "SHEAR-EST-" + method.name,
-                                                                        instance_id = 'MERGED',
-                                                                        extension = ".fits.gz",
-                                                                        version = SHE_CTE.__version__,
-                                                                        subdir = "data",
-                                                                        processing_function = "SHE")
+        combined_she_measurements_table_filename = get_allowed_filename(
+            type_name = "SHEAR-EST-" + method.name,
+            instance_id = 'MERGED',
+            extension = ".fits.gz",
+            version = SHE_CTE.__version__,
+            subdir = "data",
+            processing_function = "SHE"
+        )
         combined_she_measurements_product.set_method_filename(method, combined_she_measurements_table_filename)
 
         logger.info("Combined shear estimates for method " + method.value +
                 " output to: " + combined_she_measurements_table_filename)
 
         # Output the combined table
-        combined_she_measurements_tables[method].write(os.path.join(args.workdir,
-                                                                    combined_she_measurements_table_filename),
-                                                       format = "fits")
-
+        combined_she_measurements_tables[method].write(
+            os.path.join(args.workdir, combined_she_measurements_table_filename),
+            format = "fits"
+        )
 
     # Save the measurement product
     write_xml_product(combined_she_measurements_product, args.merged_she_measurements, args.workdir)
@@ -359,12 +346,12 @@ def she_measurements_merge_from_args(args):
 
         # Read the LensMC chains tables
 
-        input_tuples = [(
-            she_lensmc_chains_table_product_filename, args.workdir) for 
+        input_tuples = [
+            (she_lensmc_chains_table_product_filename, args.workdir) for 
             she_lensmc_chains_table_product_filename in chains_product_filenames
             ]
 
-        with mp.Pool(processes = number_threads) as pool:
+        with mp.Pool(processes=num_procs) as pool:
             she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
 
         logger.info("Finished loading chains from files listed in: " + args.she_lensmc_chains_listfile)
@@ -376,12 +363,14 @@ def she_measurements_merge_from_args(args):
                                                         metadata_conflicts = "silent")
 
         # Get a filename for the table
-        combined_she_lensmc_chains_table_filename = get_allowed_filename(type_name = "SHEAR-CHAIN",
-                                                                        instance_id = 'MERGED',
-                                                                        extension = ".fits.gz",
-                                                                        version = SHE_CTE.__version__,
-                                                                        subdir = "data",
-                                                                        processing_function = "SHE")
+        combined_she_lensmc_chains_table_filename = get_allowed_filename(
+            type_name = "SHEAR-CHAIN",
+            instance_id = 'MERGED',
+            extension = ".fits.gz",
+            version = SHE_CTE.__version__,
+            subdir = "data",
+            processing_function = "SHE"
+        )
         
         # Create the output product
         combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product()
@@ -410,11 +399,11 @@ def she_measurements_merge_from_args(args):
         combined_she_lensmc_chains_product.set_filename(combined_she_lensmc_chains_table_filename)
 
         # Output the combined chains table
-        combined_she_lensmc_chains_tables.write(os.path.join(args.workdir,
-                                                            combined_she_lensmc_chains_table_filename),
-                                                format = "fits")
+        combined_she_lensmc_chains_tables.write(
+            os.path.join(args.workdir, combined_she_lensmc_chains_table_filename),
+            format = "fits"
+        )
 
-        
         write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
         logger.info("Combined chains product output to: " + args.merged_she_lensmc_chains)
     else:
@@ -433,15 +422,15 @@ def mainMethod(args):
         similar to a main (and it is why it is called mainMethod()).
     """
 
-    executor = SheCteExecutor(run_from_args_function = she_measurements_merge_from_args,
-                              log_options = CteLogOptions(executable_name = EXEC_NAME),
-                              config_args = ReadConfigArgs(d_config_defaults = D_SEM_CONFIG_DEFAULTS,
-                                                           d_config_types = D_SEM_CONFIG_TYPES,
-                                                           d_config_cline_args = D_SEM_CONFIG_CLINE_ARGS,
-                                                           s_config_keys_types = {AnalysisConfigKeys},
-                                                           ), )
+    logger.info('#')
+    logger.info('# Entering SHE_CTE_ShearEstimatesMerge mainMethod()')
+    logger.info('#')
 
-    executor.run(args, logger = logger, pass_args_as_dict = False)
+    she_measurements_merge_from_args(args)
+
+    logger.info('#')
+    logger.info('# Exiting SHE_CTE_ShearEstimatesMerge mainMethod()')
+    logger.info('#')
 
 
 def main():
