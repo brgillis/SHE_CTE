@@ -1,6 +1,6 @@
 Changelog for SHE_CTE Common Testing Environment
 
-Changes in v9.3
+Changes in v9.4
 ===============
 
 API Changes
@@ -8,13 +8,29 @@ API Changes
 
 Dependency Changes
 ------------------
-SHE_PPT 9.6.1 -> 9.6.2
 
 Deprecated Features
 -------------------
 
 Bug Fixes
 ---------
+
+New Features
+------------
+
+New Config Features
+-------------------
+
+Miscellaneous
+-------------
+
+
+Changes in v9.3
+===============
+
+Dependency Changes
+------------------
+SHE_PPT 9.6.1 -> 9.6.2
 
 New Features
 ------------
@@ -26,9 +42,6 @@ New Features
 New Config Features
 -------------------
 - ObjectIdSplit now accepts the include_vis_non_detections CLA, which if set, will include all non-VIS-detected objects.
-
-Miscellaneous
--------------
 
 
 Changes in v9.2
