@@ -29,6 +29,7 @@ from .object_id_split import object_id_split_from_args
 
 logger = getLogger(__name__)
 
+
 def defineSpecificProgramOptions():
     """
     @brief
@@ -49,8 +50,7 @@ def defineSpecificProgramOptions():
         """
         if len(s) == 0:
             return []
-        return [ int(i) for i in s.split(",")]
-
+        return [int(i) for i in s.split(",")]
 
     parser = argparse.ArgumentParser()
 
@@ -62,23 +62,23 @@ def defineSpecificProgramOptions():
 
     # Input arguments
 
-    parser.add_argument('--mer_final_catalog_tables', required=True, type = str)
+    parser.add_argument('--mer_final_catalog_tables', required=True, type=str)
 
     parser.add_argument(
         '--data_images', type=str, required=True,
-        help = '.json listfile containing filenames of data image products.'
+        help='.json listfile containing filenames of data image products.'
     )
 
     # Output arguments
 
     parser.add_argument(
         '--object_ids', type=str, required=True,
-        help = 'Desired filename for output .json listfile of object ID list products.'
+        help='Desired filename for output .json listfile of object ID list products.'
     )
 
     parser.add_argument(
         '--batch_mer_catalogs', type=str, required=True,
-        help = 'Desired filename for output .json listfile of MER catalogues for each batch of objects.'
+        help='Desired filename for output .json listfile of MER catalogues for each batch of objects.'
     )
 
     # option arguments

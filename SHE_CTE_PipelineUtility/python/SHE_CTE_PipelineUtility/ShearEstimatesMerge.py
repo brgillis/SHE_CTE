@@ -87,7 +87,7 @@ def defineSpecificProgramOptions():
     )
     parser.add_argument(
         '--merged_she_lensmc_chains', type=str,
-        help = 'XML data product to contain LensMC chains data (optional)'
+        help='XML data product to contain LensMC chains data (optional)'
     )
 
     # Options
@@ -121,12 +121,12 @@ def read_lensmc_chains_tables(she_lensmc_chains_table_product_filename, workdir)
                 os.path.join(workdir, she_lensmc_chains_table_filename)
             )
 
-            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose = True, ignore_metadata = True):
+            if not is_in_format(she_lensmc_chains_table, lmcc_tf, verbose=True, ignore_metadata=True):
                 raise TypeError("Input chains table is of invalid format.")
 
     except Exception as e:
 
-        logger.warning("Cannot read chains table from %s: %s",she_lensmc_chains_table_product_filename, str(e))
+        logger.warning("Cannot read chains table from %s: %s", she_lensmc_chains_table_product_filename, str(e))
         return
 
     logger.debug("Finished loading chains from file: " + she_lensmc_chains_table_product_filename)
@@ -177,7 +177,7 @@ def read_method_estimates_tables(she_measurements_table_product_filename, workdi
                 workdir, she_measurements_method_table_filename))
 
             if not is_in_format(
-                she_measurements_method_table, sm_tf, verbose = False, ignore_metadata = True, strict = False
+                she_measurements_method_table, sm_tf, verbose=False, ignore_metadata=True, strict=False
             ):
                 raise TypeError(f"Input shear estimates table for method {method} is of invalid format.")
 
@@ -201,11 +201,10 @@ def she_measurements_merge_from_args(args):
     # Sanity check arguments (either input and output chains are both None, or both not None)
     if bool(args.she_lensmc_chains_listfile) != bool(args.merged_she_lensmc_chains):
         raise ValueError(
-            "Inconsistent input arguments. Input chains listfile is %s but output chains product is %s"%(
+            "Inconsistent input arguments. Input chains listfile is %s but output chains product is %s" % (
                 args.she_lensmc_chains_listfile, args.merged_she_lensmc_chains
             )
         )
-
 
     # Determine how many processes we'll use
     # (If this is not set, assume one process)
@@ -309,34 +308,37 @@ def she_measurements_merge_from_args(args):
         combined_she_measurements_product.Data.CatalogDescription.append(catalog_description)
 
         # Combine the tables
-        combined_she_measurements_tables[method] = table.vstack(she_measurements_tables[method],
-                                                                metadata_conflicts = "silent")
+        combined_she_measurements_tables[method] = table.vstack(
+            she_measurements_tables[method],
+            metadata_conflicts="silent"
+        )
 
         # Get a filename for the table
         combined_she_measurements_table_filename = get_allowed_filename(
-            type_name = "SHEAR-EST-" + method.name,
-            instance_id = 'MERGED',
-            extension = ".fits.gz",
-            version = SHE_CTE.__version__,
-            subdir = "data",
-            processing_function = "SHE"
+            type_name="SHEAR-EST-" + method.name,
+            instance_id='MERGED',
+            extension=".fits.gz",
+            version=SHE_CTE.__version__,
+            subdir="data",
+            processing_function="SHE"
         )
         combined_she_measurements_product.set_method_filename(method, combined_she_measurements_table_filename)
 
-        logger.info("Combined shear estimates for method " + method.value +
-                " output to: " + combined_she_measurements_table_filename)
+        logger.info(
+            "Combined shear estimates for method %s output to %s",
+            method.value, combined_she_measurements_table_filename
+        )
 
         # Output the combined table
         combined_she_measurements_tables[method].write(
             os.path.join(args.workdir, combined_she_measurements_table_filename),
-            format = "fits"
+            format="fits"
         )
 
     # Save the measurement product
     write_xml_product(combined_she_measurements_product, args.merged_she_measurements, args.workdir)
     logger.info("Combined shear estimates product output to: " + args.merged_she_measurements)
 
-    
     # Process LensMC Chains (if they are provided)
     if args.she_lensmc_chains_listfile is not None:
         logger.info("Loading chains from files listed in: " + args.she_lensmc_chains_listfile)
@@ -345,11 +347,10 @@ def she_measurements_merge_from_args(args):
             os.path.join(args.workdir, args.she_lensmc_chains_listfile))
 
         # Read the LensMC chains tables
-
         input_tuples = [
-            (she_lensmc_chains_table_product_filename, args.workdir) for 
+            (she_lensmc_chains_table_product_filename, args.workdir) for
             she_lensmc_chains_table_product_filename in chains_product_filenames
-            ]
+        ]
 
         with mp.Pool(processes=num_procs) as pool:
             she_lensmc_chains_tables = pool.starmap(read_lensmc_chains_tables, input_tuples)
@@ -359,19 +360,21 @@ def she_measurements_merge_from_args(args):
         she_lensmc_chains_tables = [t for t in she_lensmc_chains_tables if t is not None]
 
         # Combine the chains tables
-        combined_she_lensmc_chains_tables = table.vstack(she_lensmc_chains_tables,
-                                                        metadata_conflicts = "silent")
+        combined_she_lensmc_chains_tables = table.vstack(
+            she_lensmc_chains_tables,
+            metadata_conflicts="silent"
+        )
 
         # Get a filename for the table
         combined_she_lensmc_chains_table_filename = get_allowed_filename(
-            type_name = "SHEAR-CHAIN",
-            instance_id = 'MERGED',
-            extension = ".fits.gz",
-            version = SHE_CTE.__version__,
-            subdir = "data",
-            processing_function = "SHE"
+            type_name="SHEAR-CHAIN",
+            instance_id='MERGED',
+            extension=".fits.gz",
+            version=SHE_CTE.__version__,
+            subdir="data",
+            processing_function="SHE"
         )
-        
+
         # Create the output product
         combined_she_lensmc_chains_product = products.she_lensmc_chains.create_lensmc_chains_product()
 
@@ -401,7 +404,7 @@ def she_measurements_merge_from_args(args):
         # Output the combined chains table
         combined_she_lensmc_chains_tables.write(
             os.path.join(args.workdir, combined_she_lensmc_chains_table_filename),
-            format = "fits"
+            format="fits"
         )
 
         write_xml_product(combined_she_lensmc_chains_product, args.merged_she_lensmc_chains, args.workdir)
