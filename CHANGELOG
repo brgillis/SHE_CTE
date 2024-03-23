@@ -11,6 +11,7 @@ Dependency Changes
 
 Deprecated Features
 -------------------
+- pipeline_config deprecated from ShearEstimatesMerge and ObjectIdSplit
 
 Bug Fixes
 ---------
@@ -20,10 +21,12 @@ New Features
 
 New Config Features
 -------------------
+- batch_size, max_batches, grouping_radius and ids_to_use arguments added to ObjectIdSplit
+- num_procs added to ShearEstimatesMerge
 
 Miscellaneous
 -------------
-
+- All executables now use the dir_path type for workdirs from SHE_PPT.argument_parser for defineSpecificProgramOptions
 
 Changes in v9.3
 ===============
