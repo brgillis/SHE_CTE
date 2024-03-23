@@ -933,7 +933,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ShearEstimatesMerge` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.4 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.4 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--num_procs]
 ```
 with the following options:
 
@@ -952,7 +952,6 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --shear_estimates_product_listfile `<filename>`     | Listfile pointing to a number of shear measurements | yes    | N/A         |
 | --she_lensmc_chains_listfile `<filename>`     | Listfile pointing to a number of LensMC chains products | yes    | N/A         |
-| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
 
 
 **Output Arguments**
@@ -966,7 +965,7 @@ with the following options:
 
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+| --num_procs    | Number of processes to use when collating the batcges  | no           | 1       |
 
 
 _**Inputs**_
@@ -984,32 +983,6 @@ _`she_lensmc_chains_listfile`_:
 
 **Source:** This is produced by SHE_CTE_EstimateShear in the Analysis pipeline
 
-
-_`pipeline_config`_:
-
-**Description:** One of the following:
-
-1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
-1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
-1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
-1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
-1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
-
-Any of the latter three options may be used for equivalent functionality.
-
-The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
-
-
-|  **Options**                | **Description**                                                       | **Default value** |
-| :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_SHE_CTE_ShearEstimatesMerge_number_threads `<int>` | The number of "threads" (processes) to use when reading in the input files.   | 8 |
-
-
-**Source:** One of the following:
-
-1. May be generated manually, creating the `.txt` file with your text editor of choice.
-1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
-1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
 
 _**Outputs**_
 
