@@ -36,6 +36,7 @@ from pathlib import Path
 from ElementsKernel.Logging import getLogger
 from EL_CoordsUtils.telescope_coords import nisp_det_specs, vis_det_specs
 
+from SHE_PPT.argument_parser import dir_path
 
 instrument_specs = {
     'NISP': nisp_det_specs,
@@ -52,11 +53,6 @@ def defineSpecificProgramOptions():
     @details See the Elements documentation for more details.
     @return An  ArgumentParser.
     """
-
-    def dir_path(path):
-        if not Path(path).is_dir():
-            raise ArgumentTypeError(f"{path} is not a valid directory")
-        return path
 
     parser = ArgumentParser()
     parser.add_argument('--workdir', type=dir_path, help='Work directory')

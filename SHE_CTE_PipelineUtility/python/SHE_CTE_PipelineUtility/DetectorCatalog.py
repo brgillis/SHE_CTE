@@ -34,6 +34,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from ElementsKernel.Logging import getLogger
+from SHE_PPT.argument_parser import dir_path
 from SHE_PPT.file_io import read_xml_product, save_product_metadata
 from SHE_PPT.products import she_object_id_list
 from ST_DM_DmUtils.DqcDmUtils import set_quality_parameters
@@ -54,11 +55,6 @@ def defineSpecificProgramOptions():
     @details See the Elements documentation for more details.
     @return An  ArgumentParser.
     """
-
-    def dir_path(path):
-        if not Path(path).is_dir():
-            raise ArgumentTypeError(f"{path} is not a valid path")
-        return path
 
     parser = ArgumentParser()
     parser.add_argument('--workdir', type=dir_path, help='Name of the working directory')

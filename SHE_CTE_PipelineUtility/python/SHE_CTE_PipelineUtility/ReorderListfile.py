@@ -35,6 +35,8 @@ import ElementsKernel.Logging as log
 
 from ST_DM_DmUtils import DmUtils
 
+from SHE_PPT.argument_parser import dir_path
+
 
 def defineSpecificProgramOptions():
     """
@@ -45,19 +47,13 @@ def defineSpecificProgramOptions():
     @return An  ArgumentParser.
     """
 
-    def directory(s):
-        p = pathlib.Path(s)
-        if not p.is_dir():
-            raise NotADirectoryError(f"Directory {s} does not exit or is not a directory")
-        return p
-
     parser = argparse.ArgumentParser()
 
     # Args required by the pipeline
 
-    parser.add_argument("--workdir", type=directory, default=".", help="The workdir for the pipeline")
+    parser.add_argument("--workdir", type=dir_path, default=".", help="The workdir for the pipeline")
 
-    parser.add_argument("--logdir", type=directory, default=".", help="The workdir for the pipeline")
+    parser.add_argument("--logdir", type=dir_path, default=".", help="The workdir for the pipeline")
 
     # Input file arguments
 
