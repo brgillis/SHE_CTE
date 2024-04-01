@@ -55,6 +55,23 @@ def test_batched_integers(iterable, batch_size):
         assert batch == tuple(islice(i2, batch_size))
 
 
+def test_ceiling_division():
+
+    # Integer Cases
+    assert utils.ceiling_division(-1, 2) == 0
+    assert utils.ceiling_division(0, 2) == 0
+    assert utils.ceiling_division(1, 2) == 1
+    assert utils.ceiling_division(2, 2) == 1
+    assert utils.ceiling_division(3, 2) == 2
+
+    # Float Cases
+    assert utils.ceiling_division(-1.0, 1.5) == 0
+    assert utils.ceiling_division(0.0, 1.5) == 0
+    assert utils.ceiling_division(1.0, 1.5) == 1
+    assert utils.ceiling_division(2.0, 1.5) == 2
+    assert utils.ceiling_division(3.0, 1.5) == 2
+
+
 @given(integers(min_value=1))
 def test_batched_not_iterable(batch_size):
     with pytest.raises(TypeError, match='object is not iterable'):
@@ -154,4 +171,3 @@ def test_write_fits_table(tmp_path):
     # Check file is a valid FITS file with expected contents
     fits_table = Table.read(tmp_path / filename)
     np.testing.assert_array_equal(input_table, fits_table)
-

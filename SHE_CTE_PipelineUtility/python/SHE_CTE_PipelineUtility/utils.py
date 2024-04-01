@@ -51,6 +51,18 @@ def batched(iterable, batch_size):
         yield batch
 
 
+def ceiling_division(numerator, denominator):
+    """
+    Returns the smallest integer greater-than or equal-to the ratio of two arguments.
+
+    :param numerator
+    :param denominator
+
+    :return value: Integer equivalent to ceil(numerator/denominator) without floating point errors.
+    """
+    return -((-numerator) // denominator)
+
+
 def write_data_product(type_name, instance_id, data_product, directory):
     """
     Write an XML data product to an xml file with an automatically generated valid filename.
