@@ -103,6 +103,51 @@ def test_fixed_size_group_assignment(n_objects, group_size):
 
 
 @pytest.fixture
+def vis_bkg_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.BKG'),
+        fits.ImageHDU(name='CCDID 1-2.BKG'),
+    ]
+    return utils.write_fits_hdus('BKG', '0', hdulist, tmp_path)
+
+
+@pytest.fixture
+def vis_det_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.SCI'),
+        fits.ImageHDU(name='CCDID 1-1.RMS'),
+        fits.ImageHDU(name='CCDID 1-1.FLG'),
+        fits.ImageHDU(name='CCDID 1-2.SCI'),
+        fits.ImageHDU(name='CCDID 1-2.RMS'),
+        fits.ImageHDU(name='CCDID 1-2.FLG'),
+    ]
+    return utils.write_fits_hdus('DET', '0', hdulist, tmp_path)
+
+
+@pytest.fixture
+def vis_wgt_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.WGT'),
+        fits.ImageHDU(name='CCDID 1-2.WGT'),
+    ]
+    return utils.write_fits_hdus('BKG', '0', hdulist, tmp_path)
+
+
+def test_vis_detector_hdu_iterator(tmp_path, vis_bkg_fits_file, vis_det_fits_file, vis_wgt_fits_file):
+
+    vis_bkg_file = tmp_path / vis_bkg_fits_file
+    vis_det_file = tmp_path / vis_det_fits_file
+    vis_wgt_file = tmp_path / vis_wgt_fits_file
+
+    for i, (det, bkg, wgt) in enumerate(utils.vis_detector_hdu_iterator(vis_det_file, vis_bkg_file, vis_wgt_file)):
+        assert det[0].name == f'CCDID 1-{i+1}.SCI'
+        assert det[1].name == f'CCDID 1-{i+1}.RMS'
+        assert det[2].name == f'CCDID 1-{i+1}.FLG'
+        assert bkg.name == f'CCDID 1-{i+1}.BKG'
+        assert wgt.name == f'CCDID 1-{i+1}.WGT'
+
+
+@pytest.fixture
 def she_intermediate_general_data_product():
     dpd = DpdSheIntermediateGeneral()
     product_name = get_product_name(dpd)

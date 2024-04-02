@@ -33,7 +33,6 @@ import numpy as np
 from pathlib import Path
 
 from astropy.coordinates import SkyCoord
-from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from ElementsKernel.Logging import getLogger
@@ -43,7 +42,7 @@ from SHE_PPT.products import she_object_id_list
 from ST_DM_DmUtils.DqcDmUtils import set_quality_parameters
 
 from SHE_CTE_PipelineUtility.object_id_split import skycoords_in_wcs
-from SHE_CTE_PipelineUtility.utils import batched, fixed_size_group_assignment
+from SHE_CTE_PipelineUtility.utils import fixed_size_group_assignment, vis_detector_hdu_iterator
 from SHE_CTE_PipelineUtility.utils import write_data_product, write_fits_hdus, write_fits_table
 
 
@@ -121,92 +120,91 @@ def mainMethod(args):
     # Count down how many more batches should be produced
     n_batches_to_process = args.max_batches or np.inf
 
-    with fits.open(vis_det_file) as det_hdus, fits.open(vis_bkg_file) as bkg_hdus, fits.open(vis_wgt_file) as wgt_hdus:
-        batched_det_hdus = batched(islice(det_hdus, 1, None), 3)
-        ibkg_hdus = islice(bkg_hdus, 1, None)
-        iwgt_hdus = islice(wgt_hdus, 1, None)
-        for detector, det, bkg, wgt in zip(vis_det_list, batched_det_hdus, ibkg_hdus, iwgt_hdus):
+    # Iterate over the XML metadata and FITS HDUs for each detector
+    vis_detector_hdus = vis_detector_hdu_iterator(vis_det_file, vis_bkg_file, vis_wgt_file)
+    for detector, (det, bkg, wgt) in zip(vis_det_list, vis_detector_hdus):
 
-            # Terminate if max_batches have been processed
-            if n_batches_to_process == 0:
-                break
+        # Terminate if max_batches have been processed
+        if n_batches_to_process == 0:
+            break
 
-            # Unique instance_id for VIS detector
-            detector_id = detector.DetectorId
-            instance_id = f'{observation_id:06}_{dither_id:02}_{exposure_id}_{detector_id}'
+        # Unique instance_id for VIS detector
+        detector_id = detector.DetectorId
+        instance_id = f'{observation_id:06}_{dither_id:02}_{exposure_id}_{detector_id}'
 
-            # Mask objects outside the VIS detector footprint and write catalog to FITS
-            detector_wcs = WCS(det[WCS_HDU_INDEX].header)
-            in_detector = skycoords_in_wcs(sky_coordinates, detector_wcs)
-            detector_catalog = mer_catalog[in_detector]
-            n_objects = len(detector_catalog)
+        # Mask objects outside the VIS detector footprint
+        detector_wcs = WCS(det[WCS_HDU_INDEX].header)
+        in_detector = skycoords_in_wcs(sky_coordinates, detector_wcs)
+        detector_catalog = mer_catalog[in_detector]
+        n_objects = len(detector_catalog)
 
-            # Skip detector if it contains no objects
-            if n_objects == 0:
-                logger.info('Detector %s contains no objects', detector_id)
-                continue
+        # Skip detector if it contains no objects
+        if n_objects == 0:
+            logger.info('Detector %s contains no objects', detector_id)
+            continue
 
-            # VIS DET
-            vis_detector_det_filename = write_fits_hdus('DET', instance_id, det, datadir)
-            logger.info('Wrote VIS detector data file [filename=%s]', vis_detector_det_filename)
+        # Write VIS DET FITS file for single detector
+        vis_detector_det_filename = write_fits_hdus('DET', instance_id, det, datadir)
+        logger.info('Wrote VIS detector data file [filename=%s]', vis_detector_det_filename)
 
-            # VIS BKG
-            vis_detector_bkg_filename = write_fits_hdus('BKG', instance_id, (bkg,), datadir)
-            logger.info('Wrote VIS detector background file [filename=%s]', vis_detector_bkg_filename)
+        # Write VIS BKG FITS file for single detector
+        vis_detector_bkg_filename = write_fits_hdus('BKG', instance_id, (bkg,), datadir)
+        logger.info('Wrote VIS detector background file [filename=%s]', vis_detector_bkg_filename)
 
-            # VIS WGT
-            vis_detector_wgt_filename = write_fits_hdus('WGT', instance_id, (wgt,), datadir)
-            logger.info('Wrote VIS detector weights file [filename=%s]', vis_detector_wgt_filename)
+        # Write VIS WGT FITS file for single detector
+        vis_detector_wgt_filename = write_fits_hdus('WGT', instance_id, (wgt,), datadir)
+        logger.info('Wrote VIS detector weights file [filename=%s]', vis_detector_wgt_filename)
 
-            # VIS xml
-            det_xml = deepcopy(vis_product)
-            det_xml.Data.DetectorList.Detector = [detector]
-            det_xml.Data.WLQ2Exposures.PRNUCorrectedExposure.DataContainer.FileName = vis_detector_det_filename
-            det_xml.Data.DataStorage.DataContainer.FileName = vis_detector_det_filename
-            det_xml.Data.BackgroundStorage.DataContainer.FileName = vis_detector_bkg_filename
-            det_xml.Data.WeightStorage.DataContainer.FileName = vis_detector_wgt_filename
-            det_xml_filename = write_data_product('DET', instance_id, det_xml, workdir)
-            logger.info('Wrote VIS detector product [filename=%s]', det_xml_filename)
+        # VIS xml for single detector
+        det_xml = deepcopy(vis_product)
+        det_xml.Data.DetectorList.Detector = [detector]
+        det_xml.Data.WLQ2Exposures.PRNUCorrectedExposure.DataContainer.FileName = vis_detector_det_filename
+        det_xml.Data.DataStorage.DataContainer.FileName = vis_detector_det_filename
+        det_xml.Data.BackgroundStorage.DataContainer.FileName = vis_detector_bkg_filename
+        det_xml.Data.WeightStorage.DataContainer.FileName = vis_detector_wgt_filename
+        det_xml_filename = write_data_product('DET', instance_id, det_xml, workdir)
+        logger.info('Wrote VIS detector product [filename=%s]', det_xml_filename)
 
-            # Batching
-            batch_assignment = fixed_size_group_assignment(n_objects, args.batch_size)
-            batched_catalog = detector_catalog.group_by(batch_assignment)
-            n_batches = min(len(batched_catalog.groups), n_batches_to_process)
-            n_batches_to_process -= n_batches
-            logger.info('Batching objects [n_objects=%s, batch_size=%s, n_batches=%s]', n_objects, args.batch_size, n_batches)
+        # Assign objects to fixed-size batches
+        batch_assignment = fixed_size_group_assignment(n_objects, args.batch_size)
+        batched_catalog = detector_catalog.group_by(batch_assignment)
+        n_batches = min(len(batched_catalog.groups), n_batches_to_process)
+        n_batches_to_process -= n_batches
+        logger.info('Batching objects [detector_id: %s, n_objects=%s, batch_size=%s, n_batches=%s]',
+                    detector_id, n_objects, args.batch_size, n_batches)
 
-            # VIS detector product is the same for each batch
-            vis_products += list(repeat(det_xml_filename, n_batches))
+        # VIS detector product is the same for each batch
+        vis_products += list(repeat(det_xml_filename, n_batches))
 
-            # Iterate over batches
-            for batch_id, batch_catalog in enumerate(islice(batched_catalog.groups, n_batches)):
+        # Iterate over batches
+        for batch_id, batch_catalog in enumerate(islice(batched_catalog.groups, n_batches)):
 
-                # Unique instance ID for batch
-                instance_id = f'{tile_id}_{observation_id:06}_{dither_id:02}_{exposure_id}_{detector_id}_{batch_id}'
+            # Unique instance ID for batch
+            instance_id = f'{tile_id}_{observation_id:06}_{dither_id:02}_{exposure_id}_{detector_id}_{batch_id}'
 
-                # Write batch catalog to FITS file
-                batch_catalog_filename = write_fits_table('BATCH-CAT', instance_id, batch_catalog, datadir)
-                logger.info('Wrote detector catalog FITS file [filename=%s]', batch_catalog_filename)
+            # Write batch catalog to FITS file
+            batch_catalog_filename = write_fits_table('BATCH-CAT', instance_id, batch_catalog, datadir)
+            logger.info('Wrote detector catalog FITS file [filename=%s]', batch_catalog_filename)
 
-                # MER batch catalog xml data product
-                mer_xml = deepcopy(mer_catalog_product)
-                mer_xml.Data.DataStorage.DataContainer.FileName = batch_catalog_filename
-                object_count = {"value": len(batch_catalog), "flagged": False}
-                set_quality_parameters(mer_xml.Data.QualityParams, {'ObjectCount': object_count})
-                mer_product_filename = write_data_product('BATCH-CAT', instance_id, mer_xml, workdir)
-                mer_products.append(mer_product_filename)
-                logger.info('Wrote MER detector catalog product [filename=%s]', mer_product_filename)
+            # MER batch catalog xml data product
+            mer_xml = deepcopy(mer_catalog_product)
+            mer_xml.Data.DataStorage.DataContainer.FileName = batch_catalog_filename
+            object_count = {"value": len(batch_catalog), "flagged": False}
+            set_quality_parameters(mer_xml.Data.QualityParams, {'ObjectCount': object_count})
+            mer_product_filename = write_data_product('BATCH-CAT', instance_id, mer_xml, workdir)
+            mer_products.append(mer_product_filename)
+            logger.info('Wrote MER detector catalog product [filename=%s]', mer_product_filename)
 
-                # Object ID list xml
-                id_list = list(batch_catalog['OBJECT_ID'])
-                dpd = she_object_id_list.create_dpd_she_object_id_list(id_list=id_list)
-                dpd.Data.BatchIndex = batch_id
-                dpd.Data.PointingIdList = [pointing_id]
-                dpd.Data.ObservationIdList = [observation_id]
-                dpd.Data.TileList = [tile_id]
-                id_list_filename = write_data_product('OBJ-ID-LIST', instance_id, dpd, workdir)
-                she_products.append(id_list_filename)
-                logger.info('Wrote SHE object ID list product [filename=%s]', id_list_filename)
+            # Object ID list xml
+            id_list = list(batch_catalog['OBJECT_ID'])
+            dpd = she_object_id_list.create_dpd_she_object_id_list(id_list=id_list)
+            dpd.Data.BatchIndex = batch_id
+            dpd.Data.PointingIdList = [pointing_id]
+            dpd.Data.ObservationIdList = [observation_id]
+            dpd.Data.TileList = [tile_id]
+            id_list_filename = write_data_product('OBJ-ID-LIST', instance_id, dpd, workdir)
+            she_products.append(id_list_filename)
+            logger.info('Wrote SHE object ID list product [filename=%s]', id_list_filename)
 
     # Write listfile of VIS detector products
     with open(workdir / args.vis_detector_batches, 'w') as fs:

@@ -25,6 +25,7 @@
 
 """
 
+from astropy.io import fits
 from itertools import islice
 import numpy as np
 
@@ -74,6 +75,21 @@ def fixed_size_group_assignment(n_objects, group_size):
 
     n_batches = ceiling_division(n_objects, group_size)
     return np.repeat(range(n_batches), group_size)[:n_objects]
+
+
+def vis_detector_hdu_iterator(vis_det_file, vis_bkg_file, vis_wgt_file):
+    """Generator yielding VIS DET, BKG and WGT FITS HDUs per-detecto
+
+    :param vis_det_file: VIS DET FITS file
+    :param vis_bkg_file: VIS BKG FITS file
+    :param vis_wgt_file: VIS WGT FITS file
+    """
+
+    with fits.open(vis_det_file) as det_hdus, fits.open(vis_bkg_file) as bkg_hdus, fits.open(vis_wgt_file) as wgt_hdus:
+        batched_det_hdus = batched(islice(det_hdus, 1, None), 3)
+        ibkg_hdus = islice(bkg_hdus, 1, None)
+        iwgt_hdus = islice(wgt_hdus, 1, None)
+        yield from zip(batched_det_hdus, ibkg_hdus, iwgt_hdus)
 
 
 def write_data_product(type_name, instance_id, data_product, directory):
