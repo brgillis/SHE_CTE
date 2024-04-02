@@ -26,6 +26,7 @@
 """
 
 from itertools import islice
+import numpy as np
 
 from astropy.io.fits import HDUList, PrimaryHDU
 from SHE_PPT.file_io import save_product_metadata
@@ -61,6 +62,18 @@ def ceiling_division(numerator, denominator):
     :return value: Integer equivalent to ceil(numerator/denominator) without floating point errors.
     """
     return -((-numerator) // denominator)
+
+
+def fixed_size_group_assignment(n_objects, group_size):
+    """Calculate fixed-size group assignments for a given number of objects.
+
+    :param n_objects: The number of objects to be grouped
+    :param group_size: Number of objects in each group (except for the final one)
+
+    :return value: Array of group IDs each object is assigned to"""
+
+    n_batches = ceiling_division(n_objects, group_size)
+    return np.repeat(range(n_batches), group_size)[:n_objects]
 
 
 def write_data_product(type_name, instance_id, data_product, directory):

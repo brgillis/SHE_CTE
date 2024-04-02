@@ -26,7 +26,6 @@
 """
 
 import json
-import numpy as np
 from argparse import ArgumentParser
 from copy import deepcopy
 from itertools import islice, repeat
@@ -43,7 +42,7 @@ from SHE_PPT.products import she_object_id_list
 from ST_DM_DmUtils.DqcDmUtils import set_quality_parameters
 
 from SHE_CTE_PipelineUtility.object_id_split import skycoords_in_wcs
-from SHE_CTE_PipelineUtility.utils import batched, ceiling_division
+from SHE_CTE_PipelineUtility.utils import batched, fixed_size_group_assignment
 from SHE_CTE_PipelineUtility.utils import write_data_product, write_fits_hdus, write_fits_table
 
 
@@ -162,9 +161,9 @@ def mainMethod(args):
             logger.info('Wrote VIS detector product [filename=%s]', det_xml_filename)
 
             # Batching
-            n_batches = ceiling_division(n_objects, args.batch_size)
-            batch_assignment = np.repeat(range(n_batches), args.batch_size)[:n_objects]
+            batch_assignment = fixed_size_group_assignment(n_objects, args.batch_size)
             batched_catalog = detector_catalog.group_by(batch_assignment)
+            n_batches = len(batched_catalog.groups)
             n_batches = min(n_batches, args.max_batches) if args.max_batches else n_batches
             logger.info('Batching objects [n_objects=%s, batch_size=%s, n_batches=%s]', n_objects, args.batch_size, n_batches)
 

@@ -27,6 +27,7 @@
 
 from astropy.io import fits
 from astropy.table import Table
+from collections import Counter
 from hypothesis import given
 from hypothesis.strategies import integers, iterables
 from itertools import islice, tee
@@ -84,6 +85,21 @@ def test_batched_invalid_batch_size(batch_size):
     with pytest.raises(ValueError, match='batch_size must be at least one'):
         batched = utils.batched(None, batch_size)
         next(batched)
+
+
+@given(integers(min_value=0, max_value=100), integers(min_value=1, max_value=10))
+def test_fixed_size_group_assignment(n_objects, group_size):
+    group_ids = utils.fixed_size_group_assignment(n_objects, group_size)
+    group_id_counter = Counter(group_ids)
+    n_groups = len(group_id_counter)
+    np.testing.assert_array_equal(group_ids, np.sort(group_ids))
+    assert len(group_ids) == n_objects
+    assert n_groups == utils.ceiling_division(n_objects, group_size)
+    for group_id, count in group_id_counter.items():
+        if group_id == n_groups - 1:
+            assert count == n_objects - group_id * group_size
+        else:
+            assert count == group_size
 
 
 @pytest.fixture
