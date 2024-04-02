@@ -29,6 +29,7 @@ import json
 from argparse import ArgumentParser
 from copy import deepcopy
 from itertools import islice, repeat
+import numpy as np
 from pathlib import Path
 
 from astropy.coordinates import SkyCoord
@@ -117,11 +118,18 @@ def mainMethod(args):
     mer_products = list()
     she_products = list()
 
+    # Count down how many more batches should be produced
+    n_batches_to_process = args.max_batches or np.inf
+
     with fits.open(vis_det_file) as det_hdus, fits.open(vis_bkg_file) as bkg_hdus, fits.open(vis_wgt_file) as wgt_hdus:
         batched_det_hdus = batched(islice(det_hdus, 1, None), 3)
         ibkg_hdus = islice(bkg_hdus, 1, None)
         iwgt_hdus = islice(wgt_hdus, 1, None)
         for detector, det, bkg, wgt in zip(vis_det_list, batched_det_hdus, ibkg_hdus, iwgt_hdus):
+
+            # Terminate if max_batches have been processed
+            if n_batches_to_process == 0:
+                break
 
             # Unique instance_id for VIS detector
             detector_id = detector.DetectorId
@@ -163,8 +171,8 @@ def mainMethod(args):
             # Batching
             batch_assignment = fixed_size_group_assignment(n_objects, args.batch_size)
             batched_catalog = detector_catalog.group_by(batch_assignment)
-            n_batches = len(batched_catalog.groups)
-            n_batches = min(n_batches, args.max_batches) if args.max_batches else n_batches
+            n_batches = min(len(batched_catalog.groups), n_batches_to_process)
+            n_batches_to_process -= n_batches
             logger.info('Batching objects [n_objects=%s, batch_size=%s, n_batches=%s]', n_objects, args.batch_size, n_batches)
 
             # VIS detector product is the same for each batch
