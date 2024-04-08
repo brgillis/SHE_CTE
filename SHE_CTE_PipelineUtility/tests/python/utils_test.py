@@ -27,6 +27,7 @@
 
 from astropy.io import fits
 from astropy.table import Table
+from collections import Counter
 from hypothesis import given
 from hypothesis.strategies import integers, iterables
 from itertools import islice, tee
@@ -55,6 +56,23 @@ def test_batched_integers(iterable, batch_size):
         assert batch == tuple(islice(i2, batch_size))
 
 
+def test_ceiling_division():
+
+    # Integer Cases
+    assert utils.ceiling_division(-1, 2) == 0
+    assert utils.ceiling_division(0, 2) == 0
+    assert utils.ceiling_division(1, 2) == 1
+    assert utils.ceiling_division(2, 2) == 1
+    assert utils.ceiling_division(3, 2) == 2
+
+    # Float Cases
+    assert utils.ceiling_division(-1.0, 1.5) == 0
+    assert utils.ceiling_division(0.0, 1.5) == 0
+    assert utils.ceiling_division(1.0, 1.5) == 1
+    assert utils.ceiling_division(2.0, 1.5) == 2
+    assert utils.ceiling_division(3.0, 1.5) == 2
+
+
 @given(integers(min_value=1))
 def test_batched_not_iterable(batch_size):
     with pytest.raises(TypeError, match='object is not iterable'):
@@ -67,6 +85,66 @@ def test_batched_invalid_batch_size(batch_size):
     with pytest.raises(ValueError, match='batch_size must be at least one'):
         batched = utils.batched(None, batch_size)
         next(batched)
+
+
+@given(integers(min_value=0, max_value=100), integers(min_value=1, max_value=10))
+def test_fixed_size_group_assignment(n_objects, group_size):
+    group_ids = utils.fixed_size_group_assignment(n_objects, group_size)
+    group_id_counter = Counter(group_ids)
+    n_groups = len(group_id_counter)
+    np.testing.assert_array_equal(group_ids, np.sort(group_ids))
+    assert len(group_ids) == n_objects
+    assert n_groups == utils.ceiling_division(n_objects, group_size)
+    for group_id, count in group_id_counter.items():
+        if group_id == n_groups - 1:
+            assert count == n_objects - group_id * group_size
+        else:
+            assert count == group_size
+
+
+@pytest.fixture
+def vis_bkg_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.BKG'),
+        fits.ImageHDU(name='CCDID 1-2.BKG'),
+    ]
+    return utils.write_fits_hdus('BKG', '0', hdulist, tmp_path)
+
+
+@pytest.fixture
+def vis_det_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.SCI'),
+        fits.ImageHDU(name='CCDID 1-1.RMS'),
+        fits.ImageHDU(name='CCDID 1-1.FLG'),
+        fits.ImageHDU(name='CCDID 1-2.SCI'),
+        fits.ImageHDU(name='CCDID 1-2.RMS'),
+        fits.ImageHDU(name='CCDID 1-2.FLG'),
+    ]
+    return utils.write_fits_hdus('DET', '0', hdulist, tmp_path)
+
+
+@pytest.fixture
+def vis_wgt_fits_file(tmp_path):
+    hdulist = [
+        fits.ImageHDU(name='CCDID 1-1.WGT'),
+        fits.ImageHDU(name='CCDID 1-2.WGT'),
+    ]
+    return utils.write_fits_hdus('BKG', '0', hdulist, tmp_path)
+
+
+def test_vis_detector_hdu_iterator(tmp_path, vis_bkg_fits_file, vis_det_fits_file, vis_wgt_fits_file):
+
+    vis_bkg_file = tmp_path / vis_bkg_fits_file
+    vis_det_file = tmp_path / vis_det_fits_file
+    vis_wgt_file = tmp_path / vis_wgt_fits_file
+
+    for i, (det, bkg, wgt) in enumerate(utils.vis_detector_hdu_iterator(vis_det_file, vis_bkg_file, vis_wgt_file)):
+        assert det[0].name == f'CCDID 1-{i+1}.SCI'
+        assert det[1].name == f'CCDID 1-{i+1}.RMS'
+        assert det[2].name == f'CCDID 1-{i+1}.FLG'
+        assert bkg.name == f'CCDID 1-{i+1}.BKG'
+        assert wgt.name == f'CCDID 1-{i+1}.WGT'
 
 
 @pytest.fixture
@@ -154,4 +232,3 @@ def test_write_fits_table(tmp_path):
     # Check file is a valid FITS file with expected contents
     fits_table = Table.read(tmp_path / filename)
     np.testing.assert_array_equal(input_table, fits_table)
-
