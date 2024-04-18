@@ -91,6 +91,7 @@ make install
   - [`SHE_CTE_PlotPsfSensitivity`](#she_cte_plotpsfsensitivity): (Deprecated)
   - [`SHE_CTE_PrintBias`](#she_cte_printbias): Prints the bias as determined by `SHE_CTE_MeasureBias`
 * SHE_CTE_PipelineUtility: Miscellaneous helper executables
+  - [`SHE_CTE_DetectorBatches`](#she_cte_detectorbatches): Produce fixed size batches of objects that all appear in the same VIS detector
   - [`SHE_CTE_DetectorCatalog`](#she_cte_detectorcatalog): Create a sub-catalog of objects within a single detector
   - [`SHE_CTE_ObjectIdSplit`](#she_cte_objectidsplit): Splits a list of objects from the input catalogue into a number of smaller batches
   - [`SHE_CTE_SubObjectIdSplit`](#she_cte_subobjectidsplit): Splits batches of objects into even smaller batches (see `SHE_CTE_ObjectIdSplit`)
@@ -678,6 +679,87 @@ _`she_bias_statistics_out`_
 _**Example**_
 
 This program is designed to be run on intermediate data generated within an execution of the [`SHE Calibration`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines/-/blob/develop/SHE_Pipeline/auxdir/SHE_Shear_Calibration/PipScript_SHE_Shear_Calibration.py) pipeline. Please see the documentation of that pipeline for an example run. After that pipeline has been run once, this program can be re-run on the generated intermediate data, *_although as its job is to delete files it may throw an exception as the files it has to delete will no longer exist!_* The command used for the execution of this program will be stored near the top of the log file for its original execution, which can be found in logdir within the workdir after execution.
+
+
+### `SHE_CTE_DetectorBatches`
+
+Takes a VIS exposure and a MER catalog and split the objects into fixed-size batches where all of the objects in a given batch overlap the same VIS detector.
+
+_**Running the Program on EDEN/LODEEN**_
+
+To run `SHE_CTE_DetectorBatches` on Elements use the following command:
+```bash
+E-Run SHE_CTE 9.4 SHE_CTE_DetectorBatches --workdir <dir> --vis_calibrated_frame <file> --mer_final_catalog <file> --vis_detector_batches <file> --mer_catalog_batches <file> --she_objectid_lists <file> [--logdir <dir>] [--batch_size <int>] [--max_batches <int>]
+```
+with the following options:
+
+**Common Elements Arguments**
+
+|  **Argument**      | **Description**               | **Required** | **Default** |
+| :----------------- | :---------------------------- | :----------: | :----------:|
+| --workdir `<path>` | Name of the working directory | Yes          | N/A         |
+| --logdir `<path>`  | Name of the log directory     | No           | workdir     |
+
+**Input Arguments**
+
+|  **Argument**                       | **Description**                 | **Required** | **Default** |
+| :---------------------------------- | :------------------------------ | :----------: | :----------:|
+| --vis_calibrated_frame `<filename>` | visCalibratedFrame data product | Yes          | N/A         |
+| --mer_final_catalog `<filename>`    | merFinalCatalog data product    | Yes          | N/A         |
+
+**Output Arguments**
+
+|  **Argument**                       | **Description**                                                                    | **Required** | **Default** |
+| :---------------------------------- | :--------------------------------------------------------------------------------- | :----------: | :----------:|
+| --vis_detector_batches `<filename>` | Listfile of visCalibratedFrame products each containing data for a single detector | Yes          | N/A         |
+| --mer_catalog_batches `<filename>`  | Listfile of merFinalCatalog products each containing objects for a single batch    | Yes          | N/A         |
+| --she_objectid_lists `<filename>`   | Listfile of sheObjectIdList products each containing objects for a single batch    | Yes          | N/A         |
+
+
+**Options**
+
+|  **Options**          | **Description**                                    | **Required** | **Default** |
+| :-------------------- | :------------------------------------------------- | :----------: | :----------:|
+| --batch_size `<int>`  | The number of objects in each batch                | Yes          | N/A         |
+| --max_batches `<int>` | Limit on the maximum number of batches to produce  | No           | N/A         |
+
+_**Inputs**_
+
+_`vis_calibrated_frame`_:
+
+**Description:** The filename of a VIS calibrated fram data product.
+
+**Source:** VIS
+
+_`mer_final_catalog`_:
+
+**Description:** The filename of a merFinalCatalog data product.
+
+**Source:** MER
+
+_**Outputs**_
+
+_`vis_detector_batches`_
+
+**Description** A listfile of visCalibratedFrame data products each containing data for a single detector. Note that one visCalibratedFrame product will be created for each detector where at least one object from the input MER catalog falls within it's footprint, but each product may appear multiple times in the listfile corresponding to multiple batches of objects.
+
+_`mer_catalog_batches`_
+
+**Description** A listfile of merFinalCatalog data products each containing objects from the input MER catalog corresponding to a single batch.
+
+_`she_objectid_lists`_
+
+**Description** A listfile of sheObjectIdList data products each containing object IDs from the input MER catalog corresponding to a single batch.
+
+_**Options**_
+
+_`batch_size`_
+
+**Description** An integer specifying the fixed-size of every batch of objects (except for the final batch of objects for each detector which may be smaller).
+
+_`max_batches`_
+
+**Description** An integer which, if given, sets a limit on the total number of batches that will be created. Those batches will still contain `batch_size` objects and any remaining objects will not be assigned to a batch.
 
 
 ### `SHE_CTE_DetectorCatalog`

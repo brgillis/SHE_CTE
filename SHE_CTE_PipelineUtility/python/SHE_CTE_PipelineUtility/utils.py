@@ -25,7 +25,9 @@
 
 """
 
+from astropy.io import fits
 from itertools import islice
+import numpy as np
 
 from astropy.io.fits import HDUList, PrimaryHDU
 from SHE_PPT.file_io import save_product_metadata
@@ -49,6 +51,45 @@ def batched(iterable, batch_size):
     it = iter(iterable)
     while batch := tuple(islice(it, batch_size)):
         yield batch
+
+
+def ceiling_division(numerator, denominator):
+    """
+    Returns the smallest integer greater-than or equal-to the ratio of two arguments.
+
+    :param numerator
+    :param denominator
+
+    :return value: Integer equivalent to ceil(numerator/denominator) without floating point errors.
+    """
+    return -((-numerator) // denominator)
+
+
+def fixed_size_group_assignment(n_objects, group_size):
+    """Calculate fixed-size group assignments for a given number of objects.
+
+    :param n_objects: The number of objects to be grouped
+    :param group_size: Number of objects in each group (except for the final one)
+
+    :return value: Array of group IDs each object is assigned to"""
+
+    n_batches = ceiling_division(n_objects, group_size)
+    return np.repeat(range(n_batches), group_size)[:n_objects]
+
+
+def vis_detector_hdu_iterator(vis_det_file, vis_bkg_file, vis_wgt_file):
+    """Generator yielding VIS DET, BKG and WGT FITS HDUs per-detecto
+
+    :param vis_det_file: VIS DET FITS file
+    :param vis_bkg_file: VIS BKG FITS file
+    :param vis_wgt_file: VIS WGT FITS file
+    """
+
+    with fits.open(vis_det_file) as det_hdus, fits.open(vis_bkg_file) as bkg_hdus, fits.open(vis_wgt_file) as wgt_hdus:
+        batched_det_hdus = batched(islice(det_hdus, 1, None), 3)
+        ibkg_hdus = islice(bkg_hdus, 1, None)
+        iwgt_hdus = islice(wgt_hdus, 1, None)
+        yield from zip(batched_det_hdus, ibkg_hdus, iwgt_hdus)
 
 
 def write_data_product(type_name, instance_id, data_product, directory):

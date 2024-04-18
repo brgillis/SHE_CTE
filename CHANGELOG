@@ -18,6 +18,7 @@ Bug Fixes
 
 New Features
 ------------
+- New Executable SHE_CTE_DetectorBatches to produce fixed size batches of objects that all appear in the same VIS detector
 
 New Config Features
 -------------------
