@@ -54,6 +54,7 @@ import ElementsKernel.Logging as log
 from ST_DM_DmUtils import DmUtils
 from ST_DM_DPTools import JsonTools
 
+from SHE_PPT.argument_parser import dir_path
 from SHE_PPT.she_io.vis_exposures import read_vis_data
 
 logger = log.getLogger(__name__)
@@ -68,19 +69,13 @@ def defineSpecificProgramOptions():
     @return An  ArgumentParser.
     """
 
-    def directory(p):
-        path = pathlib.Path(p)
-        if not path.exists():
-            raise NotADirectoryError(f"Specified path {p} is not a directory")
-        return path
-
     parser = argparse.ArgumentParser()
 
     # pipeline args
 
-    parser.add_argument("--workdir", type=directory, default=".", help="Workdir")
+    parser.add_argument("--workdir", type=dir_path, default=".", help="Workdir")
 
-    parser.add_argument("--logdir", type=str, help="logdir")
+    parser.add_argument("--logdir", type=dir_path, help="logdir")
 
     # input args
 

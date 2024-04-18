@@ -29,6 +29,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from pathlib import Path
 
 from ElementsKernel.Logging import getLogger
+from SHE_PPT.argument_parser import dir_path
 from SHE_PPT.file_io import read_listfile, read_xml_product, write_listfile
 
 
@@ -40,11 +41,6 @@ def defineSpecificProgramOptions():
     @details See the Elements documentation for more details.
     @return An  ArgumentParser.
     """
-
-    def dir_path(path):
-        if not Path(path).is_dir():
-            raise ArgumentTypeError(f"{path} is not a valid path")
-        return path
 
     parser = ArgumentParser()
     parser.add_argument('--workdir', type=dir_path, help='Name of the working directory')

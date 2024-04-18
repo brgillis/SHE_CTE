@@ -828,7 +828,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ObjectIdSplit` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.4 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --pipeline_config <file> --object_ids <file> --batch_mer_catalogs <file> [--skip_vis_non_detections] [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.4 SHE_CTE_ObjectIdSplit --mer_final_catalog_tables <file> --data_images <file>  --object_ids <file> --batch_mer_catalogs <file> [--skip_vis_non_detections] [--workdir <dir>]  [--logdir <dir>] [--profile]
 ```
 with the following options:
 
@@ -847,7 +847,6 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --mer_final_catalog_tables `<filename>`     | Listfile pointing to a number of MER final catalogues | yes    | N/A         |
 | --data_images `<filename>`     | Listfile pointing to a number of VIS exposures | yes    | N/A         |
-| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
 
 
 **Output Arguments**
@@ -861,8 +860,10 @@ with the following options:
 
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
-| --include_vis_non_detections| If set, will include objects with VIS_DET==0 in the output catalogues  | no           | false       |
+| --max_batches| Naximum number of batches. If 0/unset, will allow for an unlimited number of batches  | no           | None      |
+| --batch_size | Number of objects per batch  | no           | 400       |
+| --grouping_radius| maximum distance between objects in arcseconds for them to be considered as part of a group  | no           | 1       |
+| --ids_to_use| comma separated list of object ids for objects to be considered. If unset, all objects will be considered  | no           | false       |
 
 
 _**Inputs**_
@@ -879,36 +880,6 @@ _`data_images`_:
 **Description:** The filename of a `.json` listfile pointing to a number of `.xml` [visCalibratedFrame](https://euclid.esac.esa.int/dm/dpdd/latest/visdpd/dpcards/vis_calibratedframe.html) data products.
 
 **Source:** This is provided as input to the Analysis pipeline
-
-
-_`pipeline_config`_:
-
-**Description:** One of the following:
-
-1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
-1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
-1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
-1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
-1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
-
-Any of the latter three options may be used for equivalent functionality.
-
-The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
-
-
-|  **Options**                | **Description**                                                       | **Default value** |
-| :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_ObjectIdSplit_batch_size `<int>` | The number of objects per batch.   | 400 |
-| SHE_CTE_ObjectIdSplit_max_batches `<int>`  | The maximum number of batches to use. If it's 0, the number of batches is unlimited | 0 |
-| SHE_CTE_ObjectIdSplit_batch_ids `<str>` | A list of object IDs to use | None |
-| SHE_CTE_ObjectIdSplit_grouping_radius `<float>` | The grouping radius (in arcseconds) | 1.0 |
-
-
-**Source:** One of the following:
-
-1. May be generated manually, creating the `.txt` file with your text editor of choice.
-1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
-1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
 
 _**Outputs**_
 
@@ -1044,7 +1015,7 @@ _**Running the Program on EDEN/LODEEN**_
 
 To run `SHE_CTE_ShearEstimatesMerge` on Elements use the following command:
 ```bash
-E-Run SHE_CTE 9.4 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --pipeline_config <file> ----merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--profile]
+E-Run SHE_CTE 9.4 SHE_CTE_ShearEstimatesMerge --shear_estimates_product_listfile <file> --she_lensmc_chains_listfile <file>  --merged_she_measurements <file> --merged_she_lensmc_chains <file> [--workdir <dir>]  [--logdir <dir>] [--num_procs]
 ```
 with the following options:
 
@@ -1063,7 +1034,6 @@ with the following options:
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
 | --shear_estimates_product_listfile `<filename>`     | Listfile pointing to a number of shear measurements | yes    | N/A         |
 | --she_lensmc_chains_listfile `<filename>`     | Listfile pointing to a number of LensMC chains products | yes    | N/A         |
-| --pipeline_config `<filename>` | Config file for the pipeline, containing a number of key-value pairs | no          | None         |
 
 
 **Output Arguments**
@@ -1077,7 +1047,7 @@ with the following options:
 
 |  **Options**                | **Description**                                                       | **Required** | **Default** |
 | :------------------------   | :-------------------------------------------------------------------- | :----------: | :----------:|
-| --profile (`store true`)    | If set, will generate profiling information via cProfile in the logdir  | no           | false       |
+| --num_procs    | Number of processes to use when collating the batcges  | no           | 1       |
 
 
 _**Inputs**_
@@ -1095,32 +1065,6 @@ _`she_lensmc_chains_listfile`_:
 
 **Source:** This is produced by SHE_CTE_EstimateShear in the Analysis pipeline
 
-
-_`pipeline_config`_:
-
-**Description:** One of the following:
-
-1. The word "None" (without quotes), which signals that default values for all configuration parameters shall be used.
-1. The filename of an empty `.json` listfile, which similarly indicates the use of all default values.
-1. The filename of a `.txt` file in the workdir listing configuration parameters and values for executables in the current pipeline run. This shall have the one or more lines, each with the format "SHE_MyProject_config_parameter = config_value".
-1. The filename of a `.xml` data product of format DpdSheAnalysisConfig, pointing to a text file as described above. The format of this data product is described in detail in the Euclid DPDD at https://euclid.esac.esa.int/dm/dpdd/latest/shedpd/dpcards/she_calibrationconfig.html.
-1. The filename of a `.json` listfile which contains the filename of a `.xml` data product as described above.
-
-Any of the latter three options may be used for equivalent functionality.
-
-The `.txt` pipeline configuration file may have any number of configuration arguments which apply to other executables, in addition to optionally any of the following which apply to this executable:
-
-
-|  **Options**                | **Description**                                                       | **Default value** |
-| :------------------------   | :-------------------------------------------------------------------- | :----------:|
-| SHE_CTE_SHE_CTE_ShearEstimatesMerge_number_threads `<int>` | The number of "threads" (processes) to use when reading in the input files.   | 8 |
-
-
-**Source:** One of the following:
-
-1. May be generated manually, creating the `.txt` file with your text editor of choice.
-1. Retrieved from the EAS, querying for a desired product of type DpdSheAnalysisConfig.
-1. If run as part of a pipeline triggered by the [`SHE_Pipeline_Run`](https://gitlab.euclid-sgs.uk/PF-SHE/SHE_IAL_Pipelines) helper script, may be created automatically by providing the argument `--config_args ...` to it (see documentation of that executable for further information).
 
 _**Outputs**_
 

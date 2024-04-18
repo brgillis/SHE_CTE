@@ -32,6 +32,7 @@ import ElementsKernel.Logging as log
 
 from ST_DM_DmUtils.DmUtils import read_product_metadata
 
+from SHE_PPT.argument_parser import dir_path
 from SHE_PPT.she_io.hdf5 import convert_to_hdf5
 
 
@@ -46,17 +47,25 @@ def defineSpecificProgramOptions():
 
     parser = argparse.ArgumentParser()
 
+    # Pipeline arguments
+
+    parser.add_argument("--workdir", type=dir_path, default=".", help="The working directory")
+
+    parser.add_argument("--logdir", type=dir_path, default=".", help="The log directory")
+
+    # Input arguments
+
     parser.add_argument("--vis_frame_prod", type=str, help="The VIS product to convert")
 
     parser.add_argument("--remapped_seg_prod", type=str, help="The Remapped Segmentation Map product")
 
+    # Output argument
+
     parser.add_argument("--output_hdf5", type=str, help="The name of the output hdf5 file")
 
-    parser.add_argument("--workdir", type=str, default=".", help="The working directory")
+    # Option arguments
 
     parser.add_argument("--chunksize", type=int, default=100, help="The chunk size in pixels (0 means no chunking)")
-
-    parser.add_argument("--logdir", type=str, default=".", help="The log directory")
 
     return parser
 

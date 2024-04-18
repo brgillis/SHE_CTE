@@ -34,6 +34,8 @@ import uuid
 from ElementsKernel import Logging
 from ST_DM_DmUtils import DmUtils
 
+from SHE_PPT.argument_parser import dir_path
+
 logger = Logging.getLogger(__name__)
 
 
@@ -48,9 +50,9 @@ def defineSpecificProgramOptions():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--workdir", type=str, default=".", help="Working directory")
+    parser.add_argument("--workdir", type=dir_path, default=".", help="Working directory")
 
-    parser.add_argument("--logdir", type=str, default=".", help="Logging directory")
+    parser.add_argument("--logdir", type=dir_path, default=".", help="Logging directory")
 
     parser.add_argument("--input_product", required=True, type=str, help="Product to unzip")
 

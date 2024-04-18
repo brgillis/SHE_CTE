@@ -172,7 +172,7 @@ def read_vis_frames(vis_frame_listfile, workdir):
     return wcs_list, pointing_ids, observation_ids
 
 
-def read_mer_catalogs(mer_catalog,workdir):
+def read_mer_catalogs(mer_catalog, workdir):
     """
     Reads in the MER final catalog(ue)s from the listfile, returning the concatenated catalog.
 
@@ -414,8 +414,11 @@ def group_and_batch_objects(mer_final_catalog, batch_size, max_batches, grouping
     
     # select max_batches batches
     # if max_batches = 0, do not limit the number of batches
-    if max_batches > 0:
+    if max_batches:
+        if max_batches < 0:
+            raise ValueError(f"Maximum number of batches must be positive not {max_batches}! ")
         limited_num_batches = np.min((len(batches), max_batches))
+        logger.info("Limiting number of output batches to %d", limited_num_batches)
         batches = batches[:limited_num_batches]
     
     # construct lists of object ids, indices and group_ids for each batch
@@ -542,17 +545,10 @@ def object_id_split_from_args(args,
     output_object_ids = args.object_ids
     output_batch_mer_catalogs = args.batch_mer_catalogs
 
-    grouping_radius = args.pipeline_config[AnalysisConfigKeys.OID_GROUPING_RADIUS]
-
-    if not sub_batch:
-        ids_to_use = args.pipeline_config[AnalysisConfigKeys.OID_IDS]
-        max_batches = args.pipeline_config[AnalysisConfigKeys.OID_MAX_BATCHES]
-        batch_size = args.pipeline_config[AnalysisConfigKeys.OID_BATCH_SIZE]
-    else:
-        ids_to_use = args.pipeline_config[AnalysisConfigKeys.SOID_IDS]
-        max_batches = args.pipeline_config[AnalysisConfigKeys.SOID_MAX_BATCHES]
-        batch_size = args.pipeline_config[AnalysisConfigKeys.SOID_BATCH_SIZE]
-
+    grouping_radius = args.grouping_radius
+    ids_to_use = args.ids_to_use
+    max_batches = args.max_batches
+    batch_size = args.batch_size
 
     # Read the data we need from the VIS products
     wcs_list, pointing_ids, observation_id = read_vis_frames(data_images, workdir)
